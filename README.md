@@ -15,22 +15,23 @@ This repository provides a working MVP that integrates:
 
 ---
 
-# Architecture
+## Architecture
 
 ```mermaid
 flowchart TD
-    UI[AI-EFFECT Solution Studio UI<br/>Next.js]
-    API[Solution Studio API<br/>FastAPI]
-    ORCH[WP3 Orchestrator]
-    PT[Portuguese Node Services]
-    NL[Dutch Node Services]
-    FUTURE[Future Stakeholder Services]
+    UI["AI-EFFECT Solution Studio UI (Next.js)"]
+    API["Solution Studio API (FastAPI)"]
+    ORCH["WP3 Orchestrator"]
+    PT["Portuguese Node Services"]
+    NL["Dutch Node Services"]
+    FUTURE["Future Stakeholder Services"]
 
     UI --> API
     API --> ORCH
     ORCH --> PT
     ORCH --> NL
     ORCH --> FUTURE
+```
 
 ---
 
