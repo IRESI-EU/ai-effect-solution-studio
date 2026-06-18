@@ -2,6 +2,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from uuid import uuid4
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from app.schemas.wp3_import import WP3ImportRequest
+from app.services.wp3_importer import import_wp3_package
+from app.schemas.data_reference import DataReferencePreviewRequest
+from app.services.data_reference_service import preview_data_reference
+
+
 
 from app.db import Base, engine, get_db
 from app.models.service import Service
@@ -40,6 +46,7 @@ def submit_workflow_to_orchestrator(workflow: WorkflowSubmitRequest):
     return submit_to_orchestrator(payload)
 
 
+
 @app.get("/orchestrator/workflows/{workflow_id}")
 def orchestrator_workflow_status(workflow_id: str):
     return get_workflow_status(workflow_id)
@@ -53,6 +60,16 @@ def orchestrator_workflow_tasks(workflow_id: str):
 def health():
     return {"status": "ok"}
 
+@app.post("/admin/import/wp3-package")
+def admin_import_wp3_package(
+    payload: WP3ImportRequest,
+    db: Session = Depends(get_db),
+):
+    return import_wp3_package(payload, db)
+
+@app.post("/data-references/preview")
+def preview_data_reference_endpoint(payload: DataReferencePreviewRequest):
+    return preview_data_reference(payload.protocol, payload.uri)
 
 @app.get("/services", response_model=list[ServiceRead])
 def list_services(db: Session = Depends(get_db)):

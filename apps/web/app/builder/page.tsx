@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -13,6 +13,7 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+
 
 type Service = {
   id: string;
@@ -59,6 +60,13 @@ export default function BuilderPage() {
   function onConnect(connection: Connection) {
     setEdges((eds) => addEdge(connection, eds));
   }
+  const onEdgesDelete = useCallback((deletedEdges: any[]) => {
+  setEdges((eds) =>
+    eds.filter(
+      (edge) => !deletedEdges.some((deleted) => deleted.id === edge.id)
+    )
+  );
+}, [setEdges]);
 
   function addServiceToCanvas(service: Service) {
     const nodeId = `service-${service.id}-${Date.now()}`;
@@ -141,6 +149,8 @@ export default function BuilderPage() {
     });
     return;
   }
+
+ 
 
   const data = await res.json();
 setDeploymentResult(data);
@@ -278,6 +288,8 @@ if (data.workflow_id) {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
+              onEdgesDelete={onEdgesDelete}
+              deleteKeyCode={["Backspace", "Delete"]}
               onNodeClick={(_, node) => {
                 const service = node.data?.service as Service | undefined;
                 setSelectedService(service || null);

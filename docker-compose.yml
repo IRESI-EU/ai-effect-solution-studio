@@ -15,8 +15,11 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://solution_studio:solution_studio@postgres:5432/solution_studio
       ORCHESTRATOR_BASE_URL: http://host.docker.internal:18000
+      ARTIFACT_BASE_PATH: /wp3-artifacts
     ports:
       - "18080:8080"
+    volumes:
+      - wp3_artifacts:/wp3-artifacts:ro
     depends_on:
       - postgres
 
@@ -24,6 +27,7 @@ services:
     build: ./apps/web
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://api:8080
+      NEXT_PUBLIC_BROWSER_API_BASE_URL: http://localhost:18080
     ports:
       - "13000:3000"
     depends_on:
@@ -31,3 +35,5 @@ services:
 
 volumes:
   postgres_data:
+  wp3_artifacts:
+    external: true
