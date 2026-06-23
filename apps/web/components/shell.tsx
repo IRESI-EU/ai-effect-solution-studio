@@ -5,6 +5,7 @@ const nav = [
   ["Catalogue", "/catalogue"],
   ["Publish service", "/publish"],
   ["Build solution", "/builder"],
+  ["Solutions", "/solutions"],
   ["Deployments", "/deployments"],
   ["Admin", "/admin"],
 ];

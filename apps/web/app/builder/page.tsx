@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
   Background,
@@ -14,7 +15,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-
 type Service = {
   id: string;
   name: string;
@@ -24,30 +24,45 @@ type Service = {
   input_type: string;
   output_type: string;
   trust_badge: string;
+  container_name?: string;
+  image?: string;
+  proto_uri?: string;
+  node_type?: string;
+  operation_name?: string;
+  input_message_name?: string;
+  output_message_name?: string;
+  internal_host?: string;
+  internal_port?: string;
 };
 
+const initialNodes: Node[] = [
+  {
+    id: "input",
+    position: { x: 120, y: 180 },
+    data: { label: "Workflow Input" },
+    type: "input",
+  },
+  {
+    id: "output",
+    position: { x: 760, y: 180 },
+    data: { label: "Workflow Output" },
+    type: "output",
+  },
+];
+
 export default function BuilderPage() {
+  const searchParams = useSearchParams();
+  const solutionId = searchParams.get("solutionId");
+
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [validationResults, setValidationResults] = useState<string[]>([]);
   const [deploymentResult, setDeploymentResult] = useState<any>(null);
   const [submittingToOrchestrator, setSubmittingToOrchestrator] = useState(false);
+  const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
+  const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([
-    {
-      id: "input",
-      position: { x: 120, y: 180 },
-      data: { label: "Workflow Input" },
-      type: "input",
-    },
-    {
-      id: "output",
-      position: { x: 760, y: 180 },
-      data: { label: "Workflow Output" },
-      type: "output",
-    },
-  ]);
-
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   useEffect(() => {
@@ -57,16 +72,38 @@ export default function BuilderPage() {
       .catch(() => setServices([]));
   }, []);
 
+  useEffect(() => {
+    async function loadSolution() {
+      if (!solutionId) return;
+
+      const res = await fetch(`http://localhost:18080/solutions/${solutionId}`);
+      if (!res.ok) return;
+
+      const solution = await res.json();
+
+      setCurrentSolutionId(solution.id);
+      setSolutionName(solution.name);
+      setNodes(solution.nodes || initialNodes);
+      setEdges(solution.edges || []);
+    }
+
+    loadSolution();
+  }, [solutionId, setNodes, setEdges]);
+
   function onConnect(connection: Connection) {
     setEdges((eds) => addEdge(connection, eds));
   }
-  const onEdgesDelete = useCallback((deletedEdges: any[]) => {
-  setEdges((eds) =>
-    eds.filter(
-      (edge) => !deletedEdges.some((deleted) => deleted.id === edge.id)
-    )
+
+  const onEdgesDelete = useCallback(
+    (deletedEdges: any[]) => {
+      setEdges((eds) =>
+        eds.filter(
+          (edge) => !deletedEdges.some((deleted) => deleted.id === edge.id)
+        )
+      );
+    },
+    [setEdges]
   );
-}, [setEdges]);
 
   function addServiceToCanvas(service: Service) {
     const nodeId = `service-${service.id}-${Date.now()}`;
@@ -87,133 +124,171 @@ export default function BuilderPage() {
     ]);
   }
 
-  async function submitToOrchestrator() {
-  setSubmittingToOrchestrator(true);
-  setDeploymentResult(null);
-
-  const serviceNodes = nodes.filter((node) => node.id.startsWith("service-"));
-
-  if (serviceNodes.length === 0) {
-    alert("Add at least one service before submitting.");
-    setSubmittingToOrchestrator(false);
-    return;
-  }
-
-  const workflowNodes = serviceNodes.map((node) => {
-    const service = node.data.service as any;
-
-    return {
-      node_id: node.id,
-      service_id: service.id,
-      name: service.name,
-      container_name: service.container_name,
-      image: service.image,
-      proto_uri: service.proto_uri,
-      node_type: service.node_type || "MLModel",
-      operation_name: service.operation_name,
-      input_message_name: service.input_message_name || "Request",
-      output_message_name: service.output_message_name || "Response",
-      internal_host: service.internal_host || service.container_name,
-      internal_port: service.internal_port || "8080",
-    };
-  });
-
-  const validNodeIds = new Set(serviceNodes.map((node) => node.id));
-
-  const workflowEdges = edges
-    .filter((edge) => validNodeIds.has(edge.source) && validNodeIds.has(edge.target))
-    .map((edge) => ({
-      source: edge.source,
-      target: edge.target,
-    }));
-
-  const res = await fetch("http://localhost:18080/workflows/submit-to-orchestrator", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name: "Solution Studio Workflow",
-      nodes: workflowNodes,
-      edges: workflowEdges,
-    }),
-  });
-
-  setSubmittingToOrchestrator(false);
-
-  if (!res.ok) {
-    const error = await res.text();
-    setDeploymentResult({
-      status: "failed",
-      error,
-    });
-    return;
-  }
-
- 
-
-  const data = await res.json();
-setDeploymentResult(data);
-
-if (data.workflow_id) {
-  const existing = JSON.parse(localStorage.getItem("ai-effect-deployments") || "[]");
-
-  const next = [
-    {
-      workflow_id: data.workflow_id,
-      status: data.status || "submitted",
-      name: "Solution Studio Workflow",
-      created_at: new Date().toISOString(),
-    },
-    ...existing,
-  ];
-
-  localStorage.setItem("ai-effect-deployments", JSON.stringify(next));
-}
-}
-
   function validateWorkflow() {
-  const results: string[] = [];
+    const results: string[] = [];
 
-  edges.forEach((edge) => {
-    const sourceNode = nodes.find((n) => n.id === edge.source);
-    const targetNode = nodes.find((n) => n.id === edge.target);
+    edges.forEach((edge) => {
+      const sourceNode = nodes.find((n) => n.id === edge.source);
+      const targetNode = nodes.find((n) => n.id === edge.target);
 
-    const sourceService = sourceNode?.data?.service as Service | undefined;
-    const targetService = targetNode?.data?.service as Service | undefined;
+      const sourceService = sourceNode?.data?.service as Service | undefined;
+      const targetService = targetNode?.data?.service as Service | undefined;
 
-    if (!sourceService || !targetService) {
+      if (!sourceService || !targetService) return;
+
+      if (sourceService.output_type === targetService.input_type) {
+        results.push(`✓ ${sourceService.name} → ${targetService.name}`);
+      } else {
+        results.push(
+          `❌ ${sourceService.name} → ${targetService.name}
+Output: ${sourceService.output_type}
+Input: ${targetService.input_type}`
+        );
+      }
+    });
+
+    if (results.length === 0) {
+      results.push("No workflow connections found.");
+    }
+
+    setValidationResults(results);
+  }
+
+  async function saveSolution() {
+    const payload = {
+      name: solutionName || "Untitled AI-EFFECT Solution",
+      description: "Saved workflow design from Builder",
+      nodes,
+      edges,
+      status: "draft",
+    };
+
+    const url = currentSolutionId
+      ? `http://localhost:18080/solutions/${currentSolutionId}`
+      : "http://localhost:18080/solutions";
+
+    const res = await fetch(url, {
+      method: currentSolutionId ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      alert("Failed to save solution.");
       return;
     }
 
-    if (sourceService.output_type === targetService.input_type) {
-      results.push(
-        `✓ ${sourceService.name} → ${targetService.name}`
-      );
-    } else {
-      results.push(
-        `❌ ${sourceService.name} → ${targetService.name}
-      Output: ${sourceService.output_type}
-      Input: ${targetService.input_type}`
-      );
-    }
-  });
-
-  if (results.length === 0) {
-    results.push("No workflow connections found.");
+    const saved = await res.json();
+    setCurrentSolutionId(saved.id);
+    setSolutionName(saved.name);
+    alert("Solution saved successfully.");
   }
 
-  setValidationResults(results);
-}
+  async function submitToOrchestrator() {
+    setSubmittingToOrchestrator(true);
+    setDeploymentResult(null);
+
+    const serviceNodes = nodes.filter((node) => node.id.startsWith("service-"));
+
+    if (serviceNodes.length === 0) {
+      alert("Add at least one service before submitting.");
+      setSubmittingToOrchestrator(false);
+      return;
+    }
+
+    const workflowNodes = serviceNodes.map((node) => {
+      const service = node.data.service as Service;
+
+      return {
+        node_id: node.id,
+        service_id: service.id,
+        name: service.name,
+        container_name: service.container_name,
+        image: service.image,
+        proto_uri: service.proto_uri,
+        node_type: service.node_type || "MLModel",
+        operation_name: service.operation_name,
+        input_message_name: service.input_message_name || "Request",
+        output_message_name: service.output_message_name || "Response",
+        internal_host: service.internal_host || service.container_name,
+        internal_port: service.internal_port || "8080",
+      };
+    });
+
+    const validNodeIds = new Set(serviceNodes.map((node) => node.id));
+
+    const workflowEdges = edges
+      .filter((edge) => validNodeIds.has(edge.source) && validNodeIds.has(edge.target))
+      .map((edge) => ({
+        source: edge.source,
+        target: edge.target,
+      }));
+
+    const res = await fetch("http://localhost:18080/workflows/submit-to-orchestrator", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: solutionName || "Solution Studio Workflow",
+        nodes: workflowNodes,
+        edges: workflowEdges,
+      }),
+    });
+
+    setSubmittingToOrchestrator(false);
+
+    if (!res.ok) {
+      const error = await res.text();
+      setDeploymentResult({ status: "failed", error });
+      return;
+    }
+
+    const data = await res.json();
+    setDeploymentResult(data);
+
+    if (data.workflow_id) {
+      const existing = JSON.parse(
+        localStorage.getItem("ai-effect-deployments") || "[]"
+      );
+
+      const next = [
+        {
+          workflow_id: data.workflow_id,
+          status: data.status || "submitted",
+          name: solutionName || "Solution Studio Workflow",
+          created_at: new Date().toISOString(),
+        },
+        ...existing,
+      ];
+
+      localStorage.setItem("ai-effect-deployments", JSON.stringify(next));
+    }
+  }
 
   return (
     <div className="page">
       <span className="badge">AI Vendor Studio</span>
       <h1 style={{ fontSize: 40, marginBottom: 8 }}>Build a solution</h1>
+
       <p style={{ color: "#526173", fontSize: 17, maxWidth: 900 }}>
-        Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
-        workflow, and prepare the solution for orchestrator deployment.
+        Compose AI-EFFECT services visually. Add services from the catalogue,
+        connect them into a workflow, and prepare the solution for orchestrator
+        deployment.
       </p>
+
+      <input
+        value={solutionName}
+        onChange={(event) => setSolutionName(event.target.value)}
+        placeholder="Solution name"
+        style={{
+          marginTop: 16,
+          width: "100%",
+          maxWidth: 520,
+          padding: "12px 14px",
+          borderRadius: 12,
+          border: "1px solid #d6dee9",
+          fontWeight: 700,
+        }}
+      />
 
       <div
         style={{
@@ -268,16 +343,19 @@ if (data.workflow_id) {
             }}
           >
             <strong>Workflow canvas</strong>
+
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={validateWorkflow} style={primaryButton}>
-                  Validate workflow
+                Validate workflow
               </button>
 
               <button onClick={submitToOrchestrator} style={primaryButton}>
-                  {submittingToOrchestrator ? "Submitting..." : "Submit to WP3"}
+                {submittingToOrchestrator ? "Submitting..." : "Submit to WP3"}
               </button>
 
-              <button style={secondaryButton}>Save draft</button>
+              <button onClick={saveSolution} style={secondaryButton}>
+                Save draft
+              </button>
             </div>
           </div>
 
@@ -303,13 +381,13 @@ if (data.workflow_id) {
           </div>
         </main>
 
-        <aside className="card" style={{ padding: 18 }}>
+        <aside className="card" style={{ padding: 18, overflow: "auto" }}>
           <h2 style={{ marginTop: 0 }}>Node details</h2>
 
           {!selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
-              Select a service node on the canvas to inspect its provider, interface, and trust
-              status.
+              Select a service node on the canvas to inspect its provider,
+              interface, and trust status.
             </p>
           )}
 
@@ -324,62 +402,59 @@ if (data.workflow_id) {
               <Info label="Output" value={selectedService.output_type} />
             </div>
           )}
+
           <div style={{ marginTop: 30 }}>
-  <h3>Validation Results</h3>
+            <h3>Validation Results</h3>
 
-  {validationResults.length === 0 && (
-    <p style={{ color: "#667085" }}>
-      Run workflow validation.
-    </p>
-  )}
+            {validationResults.length === 0 && (
+              <p style={{ color: "#667085" }}>Run workflow validation.</p>
+            )}
 
-  <div style={{ marginTop: 30 }}>
-  <h3>Deployment Result</h3>
+            <div style={{ display: "grid", gap: 10 }}>
+              {validationResults.map((result, index) => (
+                <div
+                  key={index}
+                  style={{
+                    padding: 10,
+                    borderRadius: 10,
+                    background: result.startsWith("✓") ? "#ecfdf3" : "#fef3f2",
+                    color: result.startsWith("✓") ? "#067647" : "#b42318",
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {result}
+                </div>
+              ))}
+            </div>
+          </div>
 
-  {!deploymentResult && (
-    <p style={{ color: "#667085" }}>
-      Submit a validated workflow to the WP3 orchestrator.
-    </p>
-  )}
+          <div style={{ marginTop: 30 }}>
+            <h3>Deployment Result</h3>
 
-  {deploymentResult && (
-    <div
-      style={{
-        padding: 12,
-        borderRadius: 12,
-        background: deploymentResult.status === "failed" ? "#fef3f2" : "#ecfdf3",
-        color: deploymentResult.status === "failed" ? "#b42318" : "#067647",
-        whiteSpace: "pre-line",
-      }}
-    >
-      {deploymentResult.workflow_id
-        ? `Workflow submitted\nID: ${deploymentResult.workflow_id}\nStatus: ${deploymentResult.status}`
-        : `Submission failed\n${deploymentResult.error}`}
-    </div>
-  )}
-</div>
+            {!deploymentResult && (
+              <p style={{ color: "#667085" }}>
+                Submit a validated workflow to the WP3 orchestrator.
+              </p>
+            )}
 
-  <div style={{ display: "grid", gap: 10 }}>
-    {validationResults.map((result, index) => (
-      <div
-        key={index}
-        style={{
-          padding: 10,
-          borderRadius: 10,
-          background: result.startsWith("✓")
-            ? "#ecfdf3"
-            : "#fef3f2",
-          color: result.startsWith("✓")
-            ? "#067647"
-            : "#b42318",
-          whiteSpace: "pre-line",
-        }}
-      >
-        {result}
-      </div>
-    ))}
-  </div>
-</div>
+            {deploymentResult && (
+              <div
+                style={{
+                  padding: 12,
+                  borderRadius: 12,
+                  background:
+                    deploymentResult.status === "failed" ? "#fef3f2" : "#ecfdf3",
+                  color:
+                    deploymentResult.status === "failed" ? "#b42318" : "#067647",
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {deploymentResult.workflow_id
+                  ? `Workflow submitted\nID: ${deploymentResult.workflow_id}\nStatus: ${deploymentResult.status}`
+                  : `Submission failed\n${deploymentResult.error}`}
+              </div>
+            )}
+          </div>
         </aside>
       </div>
     </div>

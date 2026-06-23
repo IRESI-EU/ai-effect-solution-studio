@@ -6,7 +6,9 @@ from app.schemas.wp3_import import WP3ImportRequest
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.services.data_reference_service import preview_data_reference
-
+from datetime import datetime
+from app.models.solution import Solution
+from app.schemas.solution import SolutionCreate, SolutionRead, SolutionUpdate
 
 
 from app.db import Base, engine, get_db
@@ -151,6 +153,61 @@ def get_tasks(workflow_id: str):
         ],
     }
 
+@app.post("/solutions", response_model=SolutionRead)
+def create_solution(payload: SolutionCreate, db: Session = Depends(get_db)):
+    solution = Solution(
+        id=str(uuid4()),
+        name=payload.name,
+        description=payload.description,
+        nodes=payload.nodes,
+        edges=payload.edges,
+        status=payload.status,
+    )
+    db.add(solution)
+    db.commit()
+    db.refresh(solution)
+    return solution
+
+
+@app.get("/solutions", response_model=list[SolutionRead])
+def list_solutions(db: Session = Depends(get_db)):
+    return db.query(Solution).order_by(Solution.updated_at.desc()).all()
+
+
+@app.get("/solutions/{solution_id}", response_model=SolutionRead)
+def get_solution(solution_id: str, db: Session = Depends(get_db)):
+    solution = db.query(Solution).filter(Solution.id == solution_id).first()
+    if not solution:
+        raise HTTPException(status_code=404, detail="Solution not found")
+    return solution
+
+
+@app.put("/solutions/{solution_id}", response_model=SolutionRead)
+def update_solution(
+    solution_id: str,
+    payload: SolutionUpdate,
+    db: Session = Depends(get_db),
+):
+    solution = db.query(Solution).filter(Solution.id == solution_id).first()
+    if not solution:
+        raise HTTPException(status_code=404, detail="Solution not found")
+
+    if payload.name is not None:
+        solution.name = payload.name
+    if payload.description is not None:
+        solution.description = payload.description
+    if payload.nodes is not None:
+        solution.nodes = payload.nodes
+    if payload.edges is not None:
+        solution.edges = payload.edges
+    if payload.status is not None:
+        solution.status = payload.status
+
+    solution.updated_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(solution)
+    return solution
 
 def seed_services(db: Session):
     examples = [
