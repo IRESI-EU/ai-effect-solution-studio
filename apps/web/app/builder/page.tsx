@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
@@ -24,6 +24,7 @@ type Service = {
   input_type: string;
   output_type: string;
   trust_badge: string;
+  lifecycle_status?: "active" | "deprecated" | "archived" | string | null;
   container_name?: string;
   image?: string;
   proto_uri?: string;
@@ -34,6 +35,8 @@ type Service = {
   internal_host?: string;
   internal_port?: string;
 };
+
+const API_BASE_URL = "http://localhost:18080";
 
 const initialNodes: Node[] = [
   {
@@ -65,8 +68,26 @@ export default function BuilderPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
+  const canvasServices = useMemo(
+    () =>
+      nodes
+        .map((node) => node.data?.service as Service | undefined)
+        .filter(Boolean) as Service[],
+    [nodes]
+  );
+
+  const deprecatedCanvasServices = useMemo(
+    () => canvasServices.filter((service) => getLifecycleStatus(service) === "deprecated"),
+    [canvasServices]
+  );
+
+  const deprecatedAvailableCount = useMemo(
+    () => services.filter((service) => getLifecycleStatus(service) === "deprecated").length,
+    [services]
+  );
+
   useEffect(() => {
-    fetch("http://localhost:18080/services")
+    fetch(`${API_BASE_URL}/services`)
       .then((res) => res.json())
       .then(setServices)
       .catch(() => setServices([]));
@@ -76,7 +97,7 @@ export default function BuilderPage() {
     async function loadSolution() {
       if (!solutionId) return;
 
-      const res = await fetch(`http://localhost:18080/solutions/${solutionId}`);
+      const res = await fetch(`${API_BASE_URL}/solutions/${solutionId}`);
       if (!res.ok) return;
 
       const solution = await res.json();
@@ -97,9 +118,7 @@ export default function BuilderPage() {
   const onEdgesDelete = useCallback(
     (deletedEdges: any[]) => {
       setEdges((eds) =>
-        eds.filter(
-          (edge) => !deletedEdges.some((deleted) => deleted.id === edge.id)
-        )
+        eds.filter((edge) => !deletedEdges.some((deleted) => deleted.id === edge.id))
       );
     },
     [setEdges]
@@ -107,6 +126,7 @@ export default function BuilderPage() {
 
   function addServiceToCanvas(service: Service) {
     const nodeId = `service-${service.id}-${Date.now()}`;
+    const lifecycleStatus = getLifecycleStatus(service);
 
     setNodes((existing) => [
       ...existing,
@@ -117,7 +137,10 @@ export default function BuilderPage() {
           y: 120 + Math.random() * 180,
         },
         data: {
-          label: service.name,
+          label:
+            lifecycleStatus === "deprecated"
+              ? `${service.name} (deprecated)`
+              : service.name,
           service,
         },
       },
@@ -126,6 +149,17 @@ export default function BuilderPage() {
 
   function validateWorkflow() {
     const results: string[] = [];
+
+    const deprecatedServices = nodes
+      .map((node) => node.data?.service as Service | undefined)
+      .filter((service): service is Service => Boolean(service))
+      .filter((service) => getLifecycleStatus(service) === "deprecated");
+
+    deprecatedServices.forEach((service) => {
+      results.push(
+        `⚠ ${service.name} is deprecated. Existing workflows may still use it, but prefer an active replacement for new designs.`
+      );
+    });
 
     edges.forEach((edge) => {
       const sourceNode = nodes.find((n) => n.id === edge.source);
@@ -164,8 +198,8 @@ Input: ${targetService.input_type}`
     };
 
     const url = currentSolutionId
-      ? `http://localhost:18080/solutions/${currentSolutionId}`
-      : "http://localhost:18080/solutions";
+      ? `${API_BASE_URL}/solutions/${currentSolutionId}`
+      : `${API_BASE_URL}/solutions`;
 
     const res = await fetch(url, {
       method: currentSolutionId ? "PUT" : "POST",
@@ -224,7 +258,7 @@ Input: ${targetService.input_type}`
         target: edge.target,
       }));
 
-    const res = await fetch("http://localhost:18080/workflows/submit-to-orchestrator", {
+    const res = await fetch(`${API_BASE_URL}/workflows/submit-to-orchestrator`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -235,34 +269,33 @@ Input: ${targetService.input_type}`
       }),
     });
 
-    setSubmittingToOrchestrator(false);
-
     if (!res.ok) {
       const error = await res.text();
       setDeploymentResult({ status: "failed", error });
+      setSubmittingToOrchestrator(false);
       return;
     }
 
     const data = await res.json();
     setDeploymentResult(data);
 
-if (data.workflow_id) {
-  await fetch("http://localhost:18080/deployments", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      workflow_id: data.workflow_id,
-      solution_id: currentSolutionId,
-      name: solutionName || "Solution Studio Workflow",
-      status: data.status || "submitted",
-    }),
-  });
-}
+    if (data.workflow_id) {
+      await fetch(`${API_BASE_URL}/deployments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workflow_id: data.workflow_id,
+          solution_id: currentSolutionId,
+          name: solutionName || "Solution Studio Workflow",
+          status: data.status || "submitted",
+        }),
+      });
+    }
 
-setSubmittingToOrchestrator(false);
-}
+    setSubmittingToOrchestrator(false);
+  }
 
   return (
     <div className="page">
@@ -270,9 +303,8 @@ setSubmittingToOrchestrator(false);
       <h1 style={{ fontSize: 40, marginBottom: 8 }}>Build a solution</h1>
 
       <p style={{ color: "#526173", fontSize: 17, maxWidth: 900 }}>
-        Compose AI-EFFECT services visually. Add services from the catalogue,
-        connect them into a workflow, and prepare the solution for orchestrator
-        deployment.
+        Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
+        workflow, and prepare the solution for orchestrator deployment.
       </p>
 
       <input
@@ -290,44 +322,120 @@ setSubmittingToOrchestrator(false);
         }}
       />
 
+      {deprecatedCanvasServices.length > 0 && (
+        <div
+          className="card"
+          style={{
+            marginTop: 20,
+            padding: 18,
+            border: "1px solid #fde68a",
+            background: "#fffbeb",
+          }}
+        >
+          <strong style={{ color: "#92400e" }}>This solution uses deprecated services</strong>
+          <p style={{ color: "#92400e", margin: "8px 0 0", lineHeight: 1.6 }}>
+            Deprecated services remain runnable for compatibility, but new workflows should move to
+            active replacements where available.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            {deprecatedCanvasServices.map((service) => (
+              <span key={service.id} style={lifecycleBadgeStyle("deprecated")}>
+                {service.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "320px 1fr 320px",
           gap: 18,
           height: "680px",
-          marginTop: 28,
+          marginTop: deprecatedCanvasServices.length > 0 ? 36 : 28,
         }}
       >
         <aside className="card" style={{ padding: 18, overflow: "auto" }}>
           <h2 style={{ marginTop: 0 }}>Available services</h2>
           <p style={{ color: "#667085", fontSize: 14 }}>
-            Click a service to add it to the workflow canvas.
+            Click a service to add it to the workflow canvas. Archived services are hidden.
           </p>
 
+          {deprecatedAvailableCount > 0 && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: 12,
+                borderRadius: 12,
+                background: "#fef3c7",
+                color: "#92400e",
+                fontSize: 13,
+                lineHeight: 1.5,
+                fontWeight: 600,
+              }}
+            >
+              {deprecatedAvailableCount} deprecated service
+              {deprecatedAvailableCount === 1 ? "" : "s"} available. Use only for compatibility.
+            </div>
+          )}
+
           <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
-            {services.map((service) => (
-              <button
-                key={service.id}
-                onClick={() => addServiceToCanvas(service)}
-                style={{
-                  textAlign: "left",
-                  padding: 14,
-                  borderRadius: 14,
-                  border: "1px solid #d6dee9",
-                  background: "white",
-                  cursor: "pointer",
-                }}
-              >
-                <strong>{service.name}</strong>
-                <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
-                  {service.provider}
-                </div>
-                <div style={{ marginTop: 8 }}>
-                  <span className="badge">{service.trust_badge}</span>
-                </div>
-              </button>
-            ))}
+            {services.map((service) => {
+              const lifecycleStatus = getLifecycleStatus(service);
+              const isDeprecated = lifecycleStatus === "deprecated";
+
+              return (
+                <button
+                  key={service.id}
+                  onClick={() => addServiceToCanvas(service)}
+                  style={{
+                    textAlign: "left",
+                    padding: 14,
+                    borderRadius: 14,
+                    border: isDeprecated ? "1px solid #f59e0b" : "1px solid #d6dee9",
+                    background: isDeprecated ? "#fffbeb" : "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 8,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <strong>{service.name}</strong>
+                    <span style={lifecycleBadgeStyle(lifecycleStatus)}>
+                      {lifecycleStatus}
+                    </span>
+                  </div>
+
+                  <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
+                    {service.provider}
+                  </div>
+
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+                    <span className="badge">{service.trust_badge}</span>
+                  </div>
+
+                  {isDeprecated && (
+                    <div
+                      style={{
+                        marginTop: 10,
+                        color: "#92400e",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      Deprecated. Prefer an active replacement for new workflows.
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </aside>
 
@@ -349,7 +457,14 @@ setSubmittingToOrchestrator(false);
                 Validate workflow
               </button>
 
-              <button onClick={submitToOrchestrator} style={primaryButton}>
+              <button
+                onClick={submitToOrchestrator}
+                style={{
+                  ...primaryButton,
+                  opacity: submittingToOrchestrator ? 0.7 : 1,
+                }}
+                disabled={submittingToOrchestrator}
+              >
                 {submittingToOrchestrator ? "Submitting..." : "Submit to WP3"}
               </button>
 
@@ -386,15 +501,38 @@ setSubmittingToOrchestrator(false);
 
           {!selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
-              Select a service node on the canvas to inspect its provider,
-              interface, and trust status.
+              Select a service node on the canvas to inspect its provider, interface, lifecycle, and
+              trust status.
             </p>
           )}
 
           {selectedService && (
             <div style={{ display: "grid", gap: 12 }}>
-              <span className="badge">{selectedService.trust_badge}</span>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span className="badge">{selectedService.trust_badge}</span>
+                <span style={lifecycleBadgeStyle(getLifecycleStatus(selectedService))}>
+                  {getLifecycleStatus(selectedService)}
+                </span>
+              </div>
+
               <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
+
+              {getLifecycleStatus(selectedService) === "deprecated" && (
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    background: "#fef3c7",
+                    color: "#92400e",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    fontWeight: 600,
+                  }}
+                >
+                  This selected node uses a deprecated service.
+                </div>
+              )}
+
               <Info label="Provider" value={selectedService.provider} />
               <Info label="Category" value={selectedService.category} />
               <Info label="Version" value={`v${selectedService.version}`} />
@@ -417,8 +555,8 @@ setSubmittingToOrchestrator(false);
                   style={{
                     padding: 10,
                     borderRadius: 10,
-                    background: result.startsWith("✓") ? "#ecfdf3" : "#fef3f2",
-                    color: result.startsWith("✓") ? "#067647" : "#b42318",
+                    background: validationResultBackground(result),
+                    color: validationResultColor(result),
                     whiteSpace: "pre-line",
                   }}
                 >
@@ -444,8 +582,7 @@ setSubmittingToOrchestrator(false);
                   borderRadius: 12,
                   background:
                     deploymentResult.status === "failed" ? "#fef3f2" : "#ecfdf3",
-                  color:
-                    deploymentResult.status === "failed" ? "#b42318" : "#067647",
+                  color: deploymentResult.status === "failed" ? "#b42318" : "#067647",
                   whiteSpace: "pre-line",
                 }}
               >
@@ -461,6 +598,67 @@ setSubmittingToOrchestrator(false);
   );
 }
 
+function getLifecycleStatus(service: Service) {
+  return service.lifecycle_status || "active";
+}
+
+function lifecycleBadgeStyle(status: string): CSSProperties {
+  if (status === "deprecated") {
+    return {
+      background: "#fef3c7",
+      color: "#92400e",
+      border: "1px solid #fde68a",
+      padding: "5px 8px",
+      borderRadius: 999,
+      fontSize: 10,
+      fontWeight: 900,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      whiteSpace: "nowrap",
+    };
+  }
+
+  if (status === "archived") {
+    return {
+      background: "#f1f5f9",
+      color: "#475569",
+      border: "1px solid #cbd5e1",
+      padding: "5px 8px",
+      borderRadius: 999,
+      fontSize: 10,
+      fontWeight: 900,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      whiteSpace: "nowrap",
+    };
+  }
+
+  return {
+    background: "#dcfce7",
+    color: "#166534",
+    border: "1px solid #bbf7d0",
+    padding: "5px 8px",
+    borderRadius: 999,
+    fontSize: 10,
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    whiteSpace: "nowrap",
+  };
+}
+
+function validationResultBackground(result: string) {
+  if (result.startsWith("✓")) return "#ecfdf3";
+  if (result.startsWith("⚠")) return "#fffbeb";
+  return "#fef3f2";
+}
+
+function validationResultColor(result: string) {
+  if (result.startsWith("✓")) return "#067647";
+  if (result.startsWith("⚠")) return "#92400e";
+  return "#b42318";
+}
+
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ background: "#f8fafc", padding: 12, borderRadius: 12 }}>
@@ -470,7 +668,7 @@ function Info({ label, value }: { label: string; value: string }) {
   );
 }
 
-const primaryButton = {
+const primaryButton: CSSProperties = {
   background: "#075985",
   color: "white",
   padding: "10px 14px",
@@ -480,7 +678,7 @@ const primaryButton = {
   cursor: "pointer",
 };
 
-const secondaryButton = {
+const secondaryButton: CSSProperties = {
   background: "white",
   color: "#075985",
   padding: "10px 14px",
