@@ -119,6 +119,14 @@ The backend workflow compiler resolves service runtime metadata from the current
 
 ---
 
+## Local Development
+
+Start the local stack:
+
+```powershell
+docker compose up -d --build
+
+```
 # Tested Use Cases
 
 ## Portuguese Node
