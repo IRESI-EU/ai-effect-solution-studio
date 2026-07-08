@@ -12,6 +12,17 @@ class ServiceImportPreviewRequest(BaseModel):
     branch: str = "main"
     manifest_path: str = "ai-effect.service.json"
 
+class ServiceImportManualPreviewRequest(BaseModel):
+    repo_url: str = "manual-upload"
+    branch: str = "main"
+    manifest_path: str = "ai-effect.service.json"
+    manifest: dict[str, Any]
+
+class ServiceImportManualConfirmRequest(BaseModel):
+    repo_url: str = "manual-upload"
+    branch: str = "main"
+    manifest_path: str = "ai-effect.service.json"
+    manifest: dict[str, Any]
 
 class ValidationMessage(BaseModel):
     level: Literal["success", "warning", "error"]

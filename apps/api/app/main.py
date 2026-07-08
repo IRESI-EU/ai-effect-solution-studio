@@ -32,8 +32,13 @@ from app.services.orchestrator_adapter import (
 )
 from app.services.workflow_compiler import compile_to_wp3_payload
 from app.services.wp3_importer import import_wp3_package
-from app.schemas.service_import import ServiceImportPreviewRequest, ServiceImportPreviewResponse
-from app.services.service_manifest_importer import preview_service_manifest
+from app.schemas.service_import import (
+    ServiceImportManualConfirmRequest,
+    ServiceImportManualPreviewRequest,
+    ServiceImportPreviewRequest,
+    ServiceImportPreviewResponse,
+)
+from app.services.service_manifest_importer import normalize_manifest, preview_service_manifest
 
 
 Base.metadata.create_all(bind=engine)
@@ -137,6 +142,93 @@ def preview_service_import(request: ServiceImportPreviewRequest):
         branch=request.branch,
         manifest_path=request.manifest_path,
     )
+
+@app.post("/services/import/preview-manual", response_model=ServiceImportPreviewResponse)
+def preview_manual_service_import(request: ServiceImportManualPreviewRequest):
+    validation = []
+    service = normalize_manifest(
+        manifest=request.manifest,
+        repo_url=request.repo_url,
+        branch=request.branch,
+        manifest_path=request.manifest_path,
+        validation=validation,
+    )
+
+    has_errors = any(item.level == "error" for item in validation)
+    has_warnings = any(item.level == "warning" for item in validation)
+
+    if has_errors:
+        status = "invalid"
+    elif has_warnings:
+        status = "warning"
+    else:
+        status = "valid"
+
+    return ServiceImportPreviewResponse(
+        status=status,
+        raw_manifest=request.manifest,
+        service=None if has_errors else service,
+        validation=validation,
+    )
+
+@app.post("/services/import/confirm-manual", response_model=ServiceRead)
+def confirm_manual_service_import(
+    request: ServiceImportManualConfirmRequest,
+    db: Session = Depends(get_db),
+):
+    validation = []
+    imported = normalize_manifest(
+        manifest=request.manifest,
+        repo_url=request.repo_url,
+        branch=request.branch,
+        manifest_path=request.manifest_path,
+        validation=validation,
+    )
+
+    has_errors = any(item.level == "error" for item in validation)
+    if has_errors:
+        raise HTTPException(
+            status_code=400,
+            detail=[item.model_dump() for item in validation],
+        )
+
+    service_id = imported.id or f"svc-imported-{uuid4().hex[:12]}"
+
+    existing = db.query(Service).filter(Service.id == service_id).first()
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Service with id '{service_id}' already exists.",
+        )
+
+    service = Service(
+        id=service_id,
+        name=imported.name,
+        provider=imported.provider,
+        category=imported.category,
+        version=imported.version,
+        description=imported.description,
+        status="pending_review",
+        trust_badge="pending_review",
+        lifecycle_status="active",
+        container_name=imported.container_name,
+        image=imported.image or "",
+        proto_uri=imported.proto_uri or imported.contract_uri or request.manifest_path,
+        node_type="MLModel",
+        operation_name=imported.operation_name,
+        input_message_name=imported.input_message_name,
+        output_message_name=imported.output_message_name,
+        input_type=imported.input_type,
+        output_type=imported.output_type,
+        internal_host=imported.container_name,
+        internal_port=imported.internal_port,
+    )
+
+    db.add(service)
+    db.commit()
+    db.refresh(service)
+
+    return service
 
 @app.get("/services/{service_id}", response_model=ServiceRead)
 def get_service(service_id: str, db: Session = Depends(get_db)):
