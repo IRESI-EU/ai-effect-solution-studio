@@ -1,0 +1,29 @@
+﻿{
+  "schema_version": "1.0",
+  "service": {
+    "id": "example-control-service",
+    "name": "Example Native Control Service",
+    "provider": "Example Node",
+    "category": "Example Analytics",
+    "version": "1.0.0",
+    "description": "A Dockerized AI service that directly implements the AI-EFFECT Control Interface.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "example-control-service",
+    "image": "ghcr.io/iresi-eu/example-control-service:1.0.0",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "control",
+    "operation_name": "ProcessData",
+    "input_type": "Input DataReference",
+    "output_type": "Output DataReference",
+    "contract_uri": "ai-effect.service.json"
+  },
+  "orchestration": {
+    "mode": "native"
+  }
+}

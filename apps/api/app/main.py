@@ -32,6 +32,8 @@ from app.services.orchestrator_adapter import (
 )
 from app.services.workflow_compiler import compile_to_wp3_payload
 from app.services.wp3_importer import import_wp3_package
+from app.schemas.service_import import ServiceImportPreviewRequest, ServiceImportPreviewResponse
+from app.services.service_manifest_importer import preview_service_manifest
 
 
 Base.metadata.create_all(bind=engine)
@@ -128,7 +130,13 @@ def create_service(payload: ServiceCreate, db: Session = Depends(get_db)):
     db.refresh(service)
 
     return service
-
+@app.post("/services/import/preview", response_model=ServiceImportPreviewResponse)
+def preview_service_import(request: ServiceImportPreviewRequest):
+    return preview_service_manifest(
+        repo_url=request.repo_url,
+        branch=request.branch,
+        manifest_path=request.manifest_path,
+    )
 
 @app.get("/services/{service_id}", response_model=ServiceRead)
 def get_service(service_id: str, db: Session = Depends(get_db)):

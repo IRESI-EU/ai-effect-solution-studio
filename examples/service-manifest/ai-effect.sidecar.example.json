@@ -1,0 +1,37 @@
+﻿{
+  "schema_version": "1.0",
+  "service": {
+    "id": "example-legacy-sidecar-service",
+    "name": "Example Legacy Sidecar Service",
+    "provider": "Example Node",
+    "category": "Legacy AI Integration",
+    "version": "1.0.0",
+    "description": "A legacy Dockerized AI service exposed to the orchestrator through a sidecar adapter.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "example-legacy-sidecar-adapter",
+    "image": "ghcr.io/iresi-eu/example-legacy-sidecar-adapter:1.0.0",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "legacy_sidecar",
+    "operation_name": "RunLegacyModel",
+    "input_type": "Input DataReference",
+    "output_type": "Output DataReference",
+    "contract_uri": "ai-effect.service.json",
+    "legacy_sidecar": {
+      "adapter_type": "custom",
+      "target_protocol": "http",
+      "target_method": "POST",
+      "target_path": "/legacy/predict",
+      "notes": "The sidecar translates AI-EFFECT /control/execute calls into the legacy service API."
+    }
+  },
+  "orchestration": {
+    "mode": "sidecar",
+    "adapter": "custom"
+  }
+}

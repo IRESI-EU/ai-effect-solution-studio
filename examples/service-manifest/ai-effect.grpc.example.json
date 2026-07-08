@@ -1,0 +1,34 @@
+﻿{
+  "schema_version": "1.0",
+  "service": {
+    "id": "example-grpc-service",
+    "name": "Example gRPC Service",
+    "provider": "Example Node",
+    "category": "Example Analytics",
+    "version": "1.0.0",
+    "description": "A Dockerized AI service with protobuf/gRPC data-plane support.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "example-grpc-service",
+    "image": "ghcr.io/iresi-eu/example-grpc-service:1.0.0",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "grpc",
+    "operation_name": "AnalyzeData",
+    "input_type": "Energy Dataset DataReference",
+    "output_type": "Analysis Result DataReference",
+    "grpc": {
+      "proto_uri": "proto/service.proto",
+      "operation_name": "AnalyzeData",
+      "input_message_name": "AnalyzeDataRequest",
+      "output_message_name": "AnalyzeDataResponse"
+    }
+  },
+  "orchestration": {
+    "mode": "native"
+  }
+}

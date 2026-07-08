@@ -1,0 +1,36 @@
+﻿{
+  "schema_version": "1.0",
+  "service": {
+    "id": "example-http-service",
+    "name": "Example HTTP AI Service",
+    "provider": "Example Node",
+    "category": "Example Inference",
+    "version": "1.0.0",
+    "description": "A Dockerized REST/FastAPI-style AI service onboarded through an AI-EFFECT sidecar adapter.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "example-http-service-adapter",
+    "image": "ghcr.io/iresi-eu/example-http-service-adapter:1.0.0",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "http",
+    "operation_name": "Predict",
+    "input_type": "JSON DataReference",
+    "output_type": "Prediction Result DataReference",
+    "contract_uri": "openapi.json",
+    "http": {
+      "method": "POST",
+      "path": "/predict",
+      "input_content_type": "application/json",
+      "output_content_type": "application/json"
+    }
+  },
+  "orchestration": {
+    "mode": "sidecar",
+    "adapter": "http-json"
+  }
+}

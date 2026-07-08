@@ -1,0 +1,37 @@
+﻿{
+  "schema_version": "1.0",
+  "service": {
+    "id": "example-container-job-service",
+    "name": "Example Container Job Service",
+    "provider": "Example Node",
+    "category": "Batch Processing",
+    "version": "1.0.0",
+    "description": "A Dockerized batch-style AI service invoked through an adapter that runs a command and returns a DataReference.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "example-container-job-adapter",
+    "image": "ghcr.io/iresi-eu/example-container-job-adapter:1.0.0",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "container_job",
+    "operation_name": "RunJob",
+    "input_type": "CSV DataReference",
+    "output_type": "JSON Result DataReference",
+    "contract_uri": "ai-effect.service.json",
+    "container_job": {
+      "command": "python run_model.py --input /input/data.csv --output /output/result.json",
+      "input_path": "/input",
+      "output_path": "/output",
+      "input_format": "csv",
+      "output_format": "json"
+    }
+  },
+  "orchestration": {
+    "mode": "sidecar",
+    "adapter": "file-job"
+  }
+}
