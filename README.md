@@ -652,7 +652,7 @@ Planned:
 ---
 
 
-## 3. Add database migration note
+## Note : Database migration 
 
 If you do not already have a migration section, add:
 
