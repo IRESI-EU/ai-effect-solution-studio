@@ -650,3 +650,19 @@ Planned:
 ⬜ AWS Deployment
 
 ---
+
+
+## 3. Add database migration note
+
+If you do not already have a migration section, add:
+
+```md
+## Local Database Notes
+
+This MVP currently uses SQLAlchemy `Base.metadata.create_all(...)` for table creation. Existing local databases may require manual column additions when new lifecycle fields are introduced.
+```
+Deployment archive column:
+
+```powershell
+docker compose exec postgres psql -U <POSTGRES_USER> -d <POSTGRES_DB> -c "ALTER TABLE deployments ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE;"
+```
