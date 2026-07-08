@@ -666,3 +666,17 @@ Deployment archive column:
 ```powershell
 docker compose exec postgres psql -U <POSTGRES_USER> -d <POSTGRES_DB> -c "ALTER TABLE deployments ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE;"
 ```
+
+
+
+
+##  Run quick verification before committing
+
+Run:
+
+```powershell
+Invoke-RestMethod http://localhost:18080/health
+Invoke-RestMethod http://localhost:18080/solutions/summary | ConvertTo-Json -Depth 10
+Invoke-RestMethod http://localhost:18080/deployments | ConvertTo-Json -Depth 10
+Invoke-RestMethod http://localhost:18080/services | ConvertTo-Json -Depth 10
+```
