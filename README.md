@@ -68,6 +68,57 @@ flowchart TD
 
 ---
 
+## Current MVP Capabilities
+
+AI-EFFECT Solution Studio is a local marketplace and workflow management portal for publishing, composing, deploying, and monitoring AI services connected to the WP3/orchestrator stack.
+
+### Core workflow
+
+- Publish or import AI services into the service catalogue.
+- Compose services into saved workflow solutions using the Builder.
+- Submit saved solutions to the orchestrator.
+- Persist deployment records in the Solution Studio database.
+- Synchronize deployment status from the orchestrator.
+- Inspect workflow tasks and DataReferences.
+- Preview supported artifacts such as inline JSON and CSV outputs.
+
+### Solution lifecycle
+
+Solutions support a production-style lifecycle:
+
+- Active solutions appear in the main Solutions dashboard.
+- Archived solutions are hidden from active operations.
+- Archived solutions remain accessible in the Archived Solutions page.
+- Archived solution workspaces are read-only.
+- Deployment history is retained for audit and traceability.
+
+### Deployment lifecycle
+
+Deployments support audit-safe lifecycle management:
+
+- Active deployments appear in operational monitoring.
+- Archived deployments are hidden from active dashboards.
+- Archived deployments remain recoverable from the Archived Deployments page.
+- Solution workspaces show active deployments by default.
+- Archived deployments can be filtered by solution.
+
+### Service governance
+
+Services support provider lifecycle governance:
+
+- `active` services are visible in Catalogue and Builder.
+- `deprecated` services remain visible but should be treated as legacy.
+- `archived` services are hidden from default service listings.
+- Archived services are blocked from new workflow submissions.
+- Admin users can activate, deprecate, archive, and restore services.
+
+### Runtime hardening
+
+The backend workflow compiler resolves service runtime metadata from the current service registry at submission time. This prevents stale saved solution metadata, such as outdated hostnames or ports, from breaking future workflow submissions.
+
+
+---
+
 # Tested Use Cases
 
 ## Portuguese Node
