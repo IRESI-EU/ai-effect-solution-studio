@@ -19,9 +19,12 @@ class ServiceCreate(BaseModel):
     output_message_name: str = "Response"
     internal_host: str = ""
     internal_port: str = "8080"
+    lifecycle_status: str = "active"
 
 
 class ServiceRead(ServiceCreate):
     id: str
     status: str
     trust_badge: str
+    description: str | None = None
+    lifecycle_status: str = "active"

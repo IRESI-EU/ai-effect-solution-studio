@@ -229,6 +229,7 @@ Input: ${targetService.input_type}`
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: solutionName || "Solution Studio Workflow",
+        solution_id: currentSolutionId,
         nodes: workflowNodes,
         edges: workflowEdges,
       }),
@@ -245,24 +246,23 @@ Input: ${targetService.input_type}`
     const data = await res.json();
     setDeploymentResult(data);
 
-    if (data.workflow_id) {
-      const existing = JSON.parse(
-        localStorage.getItem("ai-effect-deployments") || "[]"
-      );
+if (data.workflow_id) {
+  await fetch("http://localhost:18080/deployments", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      workflow_id: data.workflow_id,
+      solution_id: currentSolutionId,
+      name: solutionName || "Solution Studio Workflow",
+      status: data.status || "submitted",
+    }),
+  });
+}
 
-      const next = [
-        {
-          workflow_id: data.workflow_id,
-          status: data.status || "submitted",
-          name: solutionName || "Solution Studio Workflow",
-          created_at: new Date().toISOString(),
-        },
-        ...existing,
-      ];
-
-      localStorage.setItem("ai-effect-deployments", JSON.stringify(next));
-    }
-  }
+setSubmittingToOrchestrator(false);
+}
 
   return (
     <div className="page">

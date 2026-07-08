@@ -32,3 +32,11 @@ class SolutionRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SolutionWithDeploymentsRead(SolutionRead):
+    deployments: list["DeploymentRead"] = []
+
+
+from app.schemas.deployment import DeploymentRead
+
+SolutionWithDeploymentsRead.model_rebuild()

@@ -1,27 +1,27 @@
 from pydantic import BaseModel
 
 
-class WorkflowServiceNode(BaseModel):
+class WorkflowSubmitNode(BaseModel):
     node_id: str
-    service_id: str
-    name: str
+    service_id: str | None = None
     container_name: str
-    image: str
-    proto_uri: str
-    node_type: str = "MLModel"
+    proto_uri: str | None = None
+    image: str | None = None
+    node_type: str | None = None
     operation_name: str
-    input_message_name: str = "Request"
-    output_message_name: str = "Response"
-    internal_host: str
-    internal_port: str = "8080"
+    input_message_name: str | None = None
+    output_message_name: str | None = None
+    internal_host: str | None = None
+    internal_port: str | None = None
 
 
-class WorkflowEdge(BaseModel):
+class WorkflowSubmitEdge(BaseModel):
     source: str
     target: str
 
 
 class WorkflowSubmitRequest(BaseModel):
-    name: str = "AI-EFFECT Solution Workflow"
-    nodes: list[WorkflowServiceNode]
-    edges: list[WorkflowEdge]
+    name: str
+    solution_id: str | None = None
+    nodes: list[WorkflowSubmitNode]
+    edges: list[WorkflowSubmitEdge]

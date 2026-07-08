@@ -1,4 +1,4 @@
-from sqlalchemy import String, Text
+from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db import Base
 
@@ -14,6 +14,7 @@ class Service(Base):
     status: Mapped[str] = mapped_column(String(50), default="draft")
     version: Mapped[str] = mapped_column(String(50), default="0.1.0")
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    lifecycle_status = Column(String, default="active")
 
     input_type: Mapped[str] = mapped_column(String(100), nullable=False)
     output_type: Mapped[str] = mapped_column(String(100), nullable=False)

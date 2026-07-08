@@ -20,6 +20,7 @@ services:
       - "18080:8080"
     volumes:
       - wp3_artifacts:/wp3-artifacts:ro
+      - wp3_artifacts:/app/data:ro
     depends_on:
       - postgres
 
@@ -28,6 +29,7 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://api:8080
       NEXT_PUBLIC_BROWSER_API_BASE_URL: http://localhost:18080
+      INTERNAL_API_URL: http://api:8080
     ports:
       - "13000:3000"
     depends_on:
