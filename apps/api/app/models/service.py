@@ -1,5 +1,6 @@
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import JSONB
 from app.db import Base
 
 
@@ -29,3 +30,15 @@ class Service(Base):
     output_message_name: Mapped[str] = mapped_column(String(150), default="Response")
     internal_host: Mapped[str] = mapped_column(String(150), default="")
     internal_port: Mapped[str] = mapped_column(String(20), default="8080")
+
+    repository_url = Column(Text, nullable=True)
+    repository_branch = Column(String, nullable=True)
+    manifest_path = Column(Text, nullable=True)
+
+    interface_type = Column(String, default="control")
+    interface_contract = Column(JSONB, nullable=True)
+    orchestration_mode = Column(String, default="native")
+    adapter_type = Column(String, nullable=True)
+
+    health_path = Column(String, default="/health")
+    contract_uri = Column(Text, nullable=True)

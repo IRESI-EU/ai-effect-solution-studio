@@ -21,6 +21,16 @@ class ServiceCreate(BaseModel):
     internal_port: str = "8080"
     lifecycle_status: str = "active"
 
+    repository_url: str | None = None
+    repository_branch: str | None = None
+    manifest_path: str | None = None
+    interface_type: str | None = "control"
+    interface_contract: dict | None = None
+    orchestration_mode: str | None = "native"
+    adapter_type: str | None = None
+    health_path: str | None = "/health"
+    contract_uri: str | None = None
+
 
 class ServiceRead(ServiceCreate):
     id: str
@@ -28,3 +38,14 @@ class ServiceRead(ServiceCreate):
     trust_badge: str
     description: str | None = None
     lifecycle_status: str = "active"
+    repository_url: str | None = None
+    repository_branch: str | None = None
+    manifest_path: str | None = None
+
+    interface_type: str | None = "control"
+    interface_contract: dict | None = None
+    orchestration_mode: str | None = "native"
+    adapter_type: str | None = None
+
+    health_path: str | None = "/health"
+    contract_uri: str | None = None

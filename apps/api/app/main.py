@@ -211,6 +211,17 @@ def confirm_manual_service_import(
      status="pending_review",
      trust_badge="pending_review",
      lifecycle_status="active",
+
+     repository_url=imported.repository_url,
+     repository_branch=imported.repository_branch,
+     manifest_path=imported.manifest_path,
+     interface_type=imported.interface_type,
+     interface_contract=imported.interface_contract,
+     orchestration_mode=imported.orchestration_mode,
+     adapter_type=imported.adapter_type,
+     health_path=imported.health_path,
+     contract_uri=imported.contract_uri,
+
      container_name=imported.container_name,
      image=imported.image or "",
      proto_uri=imported.proto_uri or imported.contract_uri or request.manifest_path,
