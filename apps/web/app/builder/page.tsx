@@ -25,6 +25,7 @@ type Service = {
   output_type: string;
   trust_badge: string;
   lifecycle_status?: "active" | "deprecated" | "archived" | string | null;
+
   container_name?: string;
   image?: string;
   proto_uri?: string;
@@ -34,6 +35,15 @@ type Service = {
   output_message_name?: string;
   internal_host?: string;
   internal_port?: string;
+
+  repository_url?: string | null;
+  repository_branch?: string | null;
+  manifest_path?: string | null;
+  interface_type?: string | null;
+  orchestration_mode?: string | null;
+  adapter_type?: string | null;
+  health_path?: string | null;
+  contract_uri?: string | null;
 };
 
 const API_BASE_URL = "http://localhost:18080";
@@ -127,6 +137,8 @@ export default function BuilderPage() {
   function addServiceToCanvas(service: Service) {
     const nodeId = `service-${service.id}-${Date.now()}`;
     const lifecycleStatus = getLifecycleStatus(service);
+    const interfaceType = getInterfaceType(service);
+    const orchestrationMode = getOrchestrationMode(service);
 
     setNodes((existing) => [
       ...existing,
@@ -140,7 +152,9 @@ export default function BuilderPage() {
           label:
             lifecycleStatus === "deprecated"
               ? `${service.name} (deprecated)`
-              : service.name,
+              : `${service.name} [${formatValue(interfaceType)} / ${formatValue(
+                  orchestrationMode
+                )}]`,
           service,
         },
       },
@@ -150,14 +164,29 @@ export default function BuilderPage() {
   function validateWorkflow() {
     const results: string[] = [];
 
-    const deprecatedServices = nodes
+    const workflowServices = nodes
       .map((node) => node.data?.service as Service | undefined)
-      .filter((service): service is Service => Boolean(service))
-      .filter((service) => getLifecycleStatus(service) === "deprecated");
+      .filter((service): service is Service => Boolean(service));
+
+    const deprecatedServices = workflowServices.filter(
+      (service) => getLifecycleStatus(service) === "deprecated"
+    );
 
     deprecatedServices.forEach((service) => {
       results.push(
         `⚠ ${service.name} is deprecated. Existing workflows may still use it, but prefer an active replacement for new designs.`
+      );
+    });
+
+    const sidecarServices = workflowServices.filter(
+      (service) => getOrchestrationMode(service) === "sidecar"
+    );
+
+    sidecarServices.forEach((service) => {
+      results.push(
+        `ℹ ${service.name} uses sidecar orchestration (${getInterfaceType(
+          service
+        )}). The compiler will use the AI-EFFECT Control Interface compatibility path.`
       );
     });
 
@@ -407,18 +436,14 @@ Input: ${targetService.input_type}`
                     }}
                   >
                     <strong>{service.name}</strong>
-                    <span style={lifecycleBadgeStyle(lifecycleStatus)}>
-                      {lifecycleStatus}
-                    </span>
+                    <span style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
                   </div>
 
                   <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
                     {service.provider}
                   </div>
 
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-                    <span className="badge">{service.trust_badge}</span>
-                  </div>
+                  <ServiceBadges service={service} />
 
                   {isDeprecated && (
                     <div
@@ -515,6 +540,8 @@ Input: ${targetService.input_type}`
                 </span>
               </div>
 
+              <ServiceBadges service={selectedService} />
+
               <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
 
               {getLifecycleStatus(selectedService) === "deprecated" && (
@@ -533,9 +560,34 @@ Input: ${targetService.input_type}`
                 </div>
               )}
 
+              {getOrchestrationMode(selectedService) === "sidecar" && (
+                <div
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    background: "#fffbeb",
+                    color: "#92400e",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    fontWeight: 600,
+                  }}
+                >
+                  This node uses sidecar orchestration. It will run through the AI-EFFECT Control
+                  Interface compatibility path.
+                </div>
+              )}
+
               <Info label="Provider" value={selectedService.provider} />
               <Info label="Category" value={selectedService.category} />
               <Info label="Version" value={`v${selectedService.version}`} />
+              <Info label="Interface" value={formatValue(getInterfaceType(selectedService))} />
+              <Info
+                label="Orchestration"
+                value={formatValue(getOrchestrationMode(selectedService))}
+              />
+              <Info label="Adapter" value={selectedService.adapter_type || "none"} />
+              <Info label="Contract URI" value={selectedService.contract_uri || "Not declared"} />
+              <Info label="Proto URI" value={selectedService.proto_uri || "Not declared"} />
               <Info label="Input" value={selectedService.input_type} />
               <Info label="Output" value={selectedService.output_type} />
             </div>
@@ -598,8 +650,38 @@ Input: ${targetService.input_type}`
   );
 }
 
+function ServiceBadges({ service }: { service: Service }) {
+  return (
+    <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+      <span className="badge">{service.trust_badge}</span>
+      <span style={interfaceBadgeStyle(getInterfaceType(service))}>
+        {formatValue(getInterfaceType(service))}
+      </span>
+      <span style={orchestrationBadgeStyle(getOrchestrationMode(service))}>
+        {formatValue(getOrchestrationMode(service))}
+      </span>
+      {service.adapter_type && (
+        <span style={metadataBadgeStyle}>adapter: {service.adapter_type}</span>
+      )}
+    </div>
+  );
+}
+
 function getLifecycleStatus(service: Service) {
   return service.lifecycle_status || "active";
+}
+
+function getInterfaceType(service: Service) {
+  return service.interface_type || "control";
+}
+
+function getOrchestrationMode(service: Service) {
+  return service.orchestration_mode || "native";
+}
+
+function formatValue(value?: string | null) {
+  if (!value) return "Not specified";
+  return value.replaceAll("_", " ");
 }
 
 function lifecycleBadgeStyle(status: string): CSSProperties {
@@ -647,15 +729,117 @@ function lifecycleBadgeStyle(status: string): CSSProperties {
   };
 }
 
+const metadataBadgeStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  border: "1px solid #cbd5e1",
+  borderRadius: 999,
+  padding: "5px 8px",
+  fontSize: 10,
+  fontWeight: 900,
+  textTransform: "uppercase",
+  letterSpacing: 0.35,
+  whiteSpace: "nowrap",
+  background: "#ffffff",
+  color: "#334155",
+};
+
+function interfaceBadgeStyle(value?: string | null): CSSProperties {
+  const normalized = value || "control";
+
+  if (normalized === "grpc") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#eef2ff",
+      color: "#3730a3",
+      borderColor: "#c7d2fe",
+    };
+  }
+
+  if (normalized === "http") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#ecfeff",
+      color: "#0e7490",
+      borderColor: "#a5f3fc",
+    };
+  }
+
+  if (normalized === "container_job") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#f5f3ff",
+      color: "#6d28d9",
+      borderColor: "#ddd6fe",
+    };
+  }
+
+  if (normalized === "legacy_sidecar") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#fff7ed",
+      color: "#c2410c",
+      borderColor: "#fed7aa",
+    };
+  }
+
+  return {
+    ...metadataBadgeStyle,
+    background: "#f0fdf4",
+    color: "#047857",
+    borderColor: "#bbf7d0",
+  };
+}
+
+function orchestrationBadgeStyle(value?: string | null): CSSProperties {
+  const normalized = value || "native";
+
+  if (normalized === "sidecar") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#fffbeb",
+      color: "#92400e",
+      borderColor: "#fde68a",
+    };
+  }
+
+  if (normalized === "external") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#f8fafc",
+      color: "#475569",
+      borderColor: "#cbd5e1",
+    };
+  }
+
+  if (normalized === "manual_review") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#fef2f2",
+      color: "#b91c1c",
+      borderColor: "#fecaca",
+    };
+  }
+
+  return {
+    ...metadataBadgeStyle,
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    borderColor: "#bfdbfe",
+  };
+}
+
 function validationResultBackground(result: string) {
   if (result.startsWith("✓")) return "#ecfdf3";
   if (result.startsWith("⚠")) return "#fffbeb";
+  if (result.startsWith("ℹ")) return "#eff6ff";
   return "#fef3f2";
 }
 
 function validationResultColor(result: string) {
   if (result.startsWith("✓")) return "#067647";
   if (result.startsWith("⚠")) return "#92400e";
+  if (result.startsWith("ℹ")) return "#1d4ed8";
   return "#b42318";
 }
 
@@ -663,7 +847,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ background: "#f8fafc", padding: 12, borderRadius: 12 }}>
       <div style={{ color: "#667085", fontSize: 13 }}>{label}</div>
-      <strong>{value}</strong>
+      <strong style={{ wordBreak: "break-word" }}>{value}</strong>
     </div>
   );
 }

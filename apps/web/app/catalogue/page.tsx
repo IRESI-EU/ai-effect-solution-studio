@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 type Service = {
   id: string;
   name: string;
@@ -9,6 +11,15 @@ type Service = {
   input_type?: string | null;
   output_type?: string | null;
   lifecycle_status?: "active" | "deprecated" | "archived" | string | null;
+
+  repository_url?: string | null;
+  repository_branch?: string | null;
+  manifest_path?: string | null;
+  interface_type?: string | null;
+  orchestration_mode?: string | null;
+  adapter_type?: string | null;
+  health_path?: string | null;
+  contract_uri?: string | null;
 };
 
 async function getServices(): Promise<Service[]> {
@@ -29,7 +40,114 @@ function getLifecycleStatus(service: Service) {
   return service.lifecycle_status || "active";
 }
 
-function lifecycleBadgeStyle(status: string): React.CSSProperties {
+function formatInterfaceType(value?: string | null) {
+  if (!value) return "control";
+  return value.replaceAll("_", " ");
+}
+
+function formatOrchestrationMode(value?: string | null) {
+  if (!value) return "native";
+  return value.replaceAll("_", " ");
+}
+
+function interfaceBadgeStyle(value?: string | null): CSSProperties {
+  const normalized = value || "control";
+
+  if (normalized === "grpc") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#eef2ff",
+      color: "#3730a3",
+      borderColor: "#c7d2fe",
+    };
+  }
+
+  if (normalized === "http") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#ecfeff",
+      color: "#0e7490",
+      borderColor: "#a5f3fc",
+    };
+  }
+
+  if (normalized === "container_job") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#f5f3ff",
+      color: "#6d28d9",
+      borderColor: "#ddd6fe",
+    };
+  }
+
+  if (normalized === "legacy_sidecar") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#fff7ed",
+      color: "#c2410c",
+      borderColor: "#fed7aa",
+    };
+  }
+
+  return {
+    ...metadataBadgeStyle,
+    background: "#f0fdf4",
+    color: "#047857",
+    borderColor: "#bbf7d0",
+  };
+}
+
+function orchestrationBadgeStyle(value?: string | null): CSSProperties {
+  const normalized = value || "native";
+
+  if (normalized === "sidecar") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#fffbeb",
+      color: "#92400e",
+      borderColor: "#fde68a",
+    };
+  }
+
+  if (normalized === "external") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#f8fafc",
+      color: "#475569",
+      borderColor: "#cbd5e1",
+    };
+  }
+
+  if (normalized === "manual_review") {
+    return {
+      ...metadataBadgeStyle,
+      background: "#fef2f2",
+      color: "#b91c1c",
+      borderColor: "#fecaca",
+    };
+  }
+
+  return {
+    ...metadataBadgeStyle,
+    background: "#eff6ff",
+    color: "#1d4ed8",
+    borderColor: "#bfdbfe",
+  };
+}
+
+const metadataBadgeStyle: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  border: "1px solid",
+  borderRadius: 999,
+  padding: "5px 9px",
+  fontSize: 11,
+  fontWeight: 800,
+  textTransform: "uppercase",
+  letterSpacing: "0.03em",
+};
+
+function lifecycleBadgeStyle(status: string): CSSProperties {
   if (status === "deprecated") {
     return {
       background: "#fef3c7",
@@ -174,6 +292,24 @@ export default async function CataloguePage() {
               >
                 <h2 style={{ margin: 0 }}>{service.name}</h2>
                 <span style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                <span style={interfaceBadgeStyle(service.interface_type)}>
+                  {formatInterfaceType(service.interface_type)}
+                </span>
+
+                <span style={orchestrationBadgeStyle(service.orchestration_mode)}>
+                  {formatOrchestrationMode(service.orchestration_mode)}
+                </span>
+
+                {service.adapter_type && (
+                  <span style={metadataBadgeStyle}>adapter: {service.adapter_type}</span>
+                )}
+
+                {service.contract_uri && (
+                  <span style={metadataBadgeStyle}>contract: {service.contract_uri}</span>
+                )}
               </div>
 
               {isDeprecated && (
