@@ -202,27 +202,27 @@ def confirm_manual_service_import(
         )
 
     service = Service(
-        id=service_id,
-        name=imported.name,
-        provider=imported.provider,
-        category=imported.category,
-        version=imported.version,
-        description=imported.description,
-        status="pending_review",
-        trust_badge="pending_review",
-        lifecycle_status="active",
-        container_name=imported.container_name,
-        image=imported.image or "",
-        proto_uri=imported.proto_uri or imported.contract_uri or request.manifest_path,
-        node_type="MLModel",
-        operation_name=imported.operation_name,
-        input_message_name=imported.input_message_name,
-        output_message_name=imported.output_message_name,
-        input_type=imported.input_type,
-        output_type=imported.output_type,
-        internal_host=imported.container_name,
-        internal_port=imported.internal_port,
-    )
+     id=service_id,
+     name=imported.name,
+     provider=imported.provider,
+     category=imported.category,
+     version=imported.version,
+     description=imported.description,
+     status="pending_review",
+     trust_badge="pending_review",
+     lifecycle_status="active",
+     container_name=imported.container_name,
+     image=imported.image or "",
+     proto_uri=imported.proto_uri or imported.contract_uri or request.manifest_path,
+     node_type="MLModel",
+     operation_name=imported.operation_name,
+     input_message_name=imported.input_message_name,
+     output_message_name=imported.output_message_name,
+     input_type=imported.input_type,
+     output_type=imported.output_type,
+     internal_host=imported.container_name,
+     internal_port=imported.internal_port,
+ )
 
     db.add(service)
     db.commit()
