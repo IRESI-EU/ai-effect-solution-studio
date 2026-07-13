@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
@@ -11,6 +11,7 @@ import {
   useEdgesState,
   useNodesState,
   type Connection,
+  type Edge,
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -64,6 +65,14 @@ const initialNodes: Node[] = [
 ];
 
 export default function BuilderPage() {
+  return (
+    <Suspense fallback={<div className="page"><div className="card" style={{ padding: 28 }}>Loading workflow studio...</div></div>}>
+      <BuilderContent />
+    </Suspense>
+  );
+}
+
+function BuilderContent() {
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
 
@@ -74,9 +83,10 @@ export default function BuilderPage() {
   const [submittingToOrchestrator, setSubmittingToOrchestrator] = useState(false);
   const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
   const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
+  const [serviceSearch, setServiceSearch] = useState("");
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   const canvasServices = useMemo(
     () =>
@@ -95,6 +105,17 @@ export default function BuilderPage() {
     () => services.filter((service) => getLifecycleStatus(service) === "deprecated").length,
     [services]
   );
+
+  const filteredServices = useMemo(() => {
+    const query = serviceSearch.trim().toLowerCase();
+    if (!query) return services;
+    return services.filter((service) =>
+      [service.name, service.provider, service.category, getInterfaceType(service)]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [services, serviceSearch]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/services`)
@@ -126,7 +147,7 @@ export default function BuilderPage() {
   }
 
   const onEdgesDelete = useCallback(
-    (deletedEdges: any[]) => {
+    (deletedEdges: Edge[]) => {
       setEdges((eds) =>
         eds.filter((edge) => !deletedEdges.some((deleted) => deleted.id === edge.id))
       );
@@ -327,29 +348,33 @@ Input: ${targetService.input_type}`
   }
 
   return (
-    <div className="page">
-      <span className="badge">AI Vendor Studio</span>
-      <h1 style={{ fontSize: 40, marginBottom: 8 }}>Build a solution</h1>
+    <div className="page builder-page">
+      <div className="builder-page-header">
+        <div>
+          <span className="badge">AI Vendor Studio</span>
+          <h1 style={{ fontSize: 42, margin: "14px 0 8px", letterSpacing: "-0.04em" }}>Build a solution</h1>
+          <p style={{ color: "#626a83", fontSize: 16, maxWidth: 850, margin: 0, lineHeight: 1.65 }}>
+            Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
+            workflow, and prepare the solution for orchestrator deployment.
+          </p>
+        </div>
+        <div className="builder-top-actions">
+          <button onClick={saveSolution} style={secondaryButton}>Save draft</button>
+          <button onClick={validateWorkflow} style={secondaryButton}>Validate workflow</button>
+          <button
+            onClick={submitToOrchestrator}
+            style={{ ...primaryButton, opacity: submittingToOrchestrator ? 0.7 : 1 }}
+            disabled={submittingToOrchestrator}
+          >
+            {submittingToOrchestrator ? "Submitting..." : "Submit to WP3"}
+          </button>
+        </div>
+      </div>
 
-      <p style={{ color: "#526173", fontSize: 17, maxWidth: 900 }}>
-        Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
-        workflow, and prepare the solution for orchestrator deployment.
-      </p>
-
-      <input
-        value={solutionName}
-        onChange={(event) => setSolutionName(event.target.value)}
-        placeholder="Solution name"
-        style={{
-          marginTop: 16,
-          width: "100%",
-          maxWidth: 520,
-          padding: "12px 14px",
-          borderRadius: 12,
-          border: "1px solid #d6dee9",
-          fontWeight: 700,
-        }}
-      />
+      <div className="builder-name-row">
+        <div><span>Solution name</span><input value={solutionName} onChange={(event) => setSolutionName(event.target.value)} placeholder="Solution name" /></div>
+        <div className="builder-health-summary"><span>{nodes.length}</span> nodes <span>{edges.length}</span> connections <span>{validationResults.length}</span> checks</div>
+      </div>
 
       {deprecatedCanvasServices.length > 0 && (
         <div
@@ -376,20 +401,17 @@ Input: ${targetService.input_type}`
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "320px 1fr 320px",
-          gap: 18,
-          height: "680px",
-          marginTop: deprecatedCanvasServices.length > 0 ? 36 : 28,
-        }}
-      >
-        <aside className="card" style={{ padding: 18, overflow: "auto" }}>
-          <h2 style={{ marginTop: 0 }}>Available services</h2>
-          <p style={{ color: "#667085", fontSize: 14 }}>
+      <div className="builder-workbench" style={{ marginTop: deprecatedCanvasServices.length > 0 ? 32 : 24 }}>
+        <aside className="card builder-palette-card">
+          <div className="builder-panel-heading"><div><span>Service palette</span><h2>Available services</h2></div><strong>{filteredServices.length}</strong></div>
+          <p style={{ color: "#697087", fontSize: 12, lineHeight: 1.55 }}>
             Click a service to add it to the workflow canvas. Archived services are hidden.
           </p>
+
+          <label className="builder-search-control">
+            <span aria-hidden="true">⌕</span>
+            <input value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services..." aria-label="Search services" />
+          </label>
 
           {deprecatedAvailableCount > 0 && (
             <div
@@ -409,13 +431,14 @@ Input: ${targetService.input_type}`
             </div>
           )}
 
-          <div style={{ display: "grid", gap: 12, marginTop: 18 }}>
-            {services.map((service) => {
+          <div style={{ display: "grid", gap: 11, marginTop: 15 }}>
+            {filteredServices.map((service) => {
               const lifecycleStatus = getLifecycleStatus(service);
               const isDeprecated = lifecycleStatus === "deprecated";
 
               return (
                 <button
+                  className="builder-service-card"
                   key={service.id}
                   onClick={() => addServiceToCanvas(service)}
                   style={{
@@ -461,45 +484,19 @@ Input: ${targetService.input_type}`
                 </button>
               );
             })}
+            {filteredServices.length === 0 && <div className="builder-empty-palette">No services match your search.</div>}
           </div>
         </aside>
 
-        <main className="card" style={{ overflow: "hidden" }}>
+        <main className="card builder-canvas-card">
           <div
-            style={{
-              height: 56,
-              borderBottom: "1px solid #e4e9f2",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "0 18px",
-            }}
+            className="builder-canvas-header"
           >
-            <strong>Workflow canvas</strong>
-
-            <div style={{ display: "flex", gap: 10 }}>
-              <button onClick={validateWorkflow} style={primaryButton}>
-                Validate workflow
-              </button>
-
-              <button
-                onClick={submitToOrchestrator}
-                style={{
-                  ...primaryButton,
-                  opacity: submittingToOrchestrator ? 0.7 : 1,
-                }}
-                disabled={submittingToOrchestrator}
-              >
-                {submittingToOrchestrator ? "Submitting..." : "Submit to WP3"}
-              </button>
-
-              <button onClick={saveSolution} style={secondaryButton}>
-                Save draft
-              </button>
-            </div>
+            <div><span>Visual workflow</span><strong>Workflow canvas</strong></div>
+            <div className="builder-canvas-legend"><i /> Service node <i /> Connection</div>
           </div>
 
-          <div style={{ height: "624px" }}>
+          <div className="builder-canvas-area">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -521,8 +518,8 @@ Input: ${targetService.input_type}`
           </div>
         </main>
 
-        <aside className="card" style={{ padding: 18, overflow: "auto" }}>
-          <h2 style={{ marginTop: 0 }}>Node details</h2>
+        <aside className="card builder-details-card">
+          <div className="builder-panel-heading"><div><span>Inspector</span><h2>Node details</h2></div></div>
 
           {!selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
@@ -643,6 +640,13 @@ Input: ${targetService.input_type}`
                   : `Submission failed\n${deploymentResult.error}`}
               </div>
             )}
+          </div>
+
+          <div className="builder-workflow-health">
+            <span>Workflow health</span>
+            <div><strong>{canvasServices.length}</strong><small>Service nodes</small></div>
+            <div><strong>{edges.length}</strong><small>Connections</small></div>
+            <div><strong>{deprecatedCanvasServices.length}</strong><small>Deprecated</small></div>
           </div>
         </aside>
       </div>
@@ -853,7 +857,7 @@ function Info({ label, value }: { label: string; value: string }) {
 }
 
 const primaryButton: CSSProperties = {
-  background: "#075985",
+  background: "linear-gradient(135deg, #5b2cf2, #4320ca)",
   color: "white",
   padding: "10px 14px",
   borderRadius: 10,
@@ -864,10 +868,10 @@ const primaryButton: CSSProperties = {
 
 const secondaryButton: CSSProperties = {
   background: "white",
-  color: "#075985",
+  color: "#5635ce",
   padding: "10px 14px",
   borderRadius: 10,
-  border: "1px solid #bae6fd",
+  border: "1px solid #d1c8f3",
   fontWeight: 800,
   cursor: "pointer",
 };

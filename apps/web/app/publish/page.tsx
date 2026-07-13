@@ -116,6 +116,14 @@ export default function PublishServicePage() {
     return Boolean(preview?.service && preview.raw_manifest && preview.status !== "invalid");
   }, [preview]);
 
+  const activeStep = confirmed
+    ? 4
+    : preview?.status === "invalid"
+      ? 2
+      : preview?.status === "valid" || preview?.status === "warning"
+        ? 3
+        : 1;
+
   async function previewFromGit() {
     setLoading(true);
     setConfirmed(null);
@@ -232,14 +240,13 @@ export default function PublishServicePage() {
   }
 
   return (
-    <main style={pageStyle}>
+    <main className="page publish-page" style={pageStyle}>
       <section style={heroStyle}>
-        <p style={eyebrowStyle}>AI-EFFECT Solution Studio</p>
-        <h1 style={titleStyle}>Publish service</h1>
+        <p style={eyebrowStyle}>Node Provider Onboarding</p>
+        <h1 style={titleStyle}>Publish my service</h1>
         <p style={subtitleStyle}>
-          Onboard Dockerized AI services into the service registry using an AI-EFFECT manifest.
-          Services can use native control endpoints, gRPC/protobuf, HTTP adapters, container jobs,
-          or legacy sidecar integration.
+          Add a Dockerized AI service to the AI-EFFECT marketplace through a guided workflow. The
+          service will be submitted for review before becoming fully validated.
         </p>
 
         <div style={heroActionsStyle}>
@@ -252,7 +259,33 @@ export default function PublishServicePage() {
         </div>
       </section>
 
+      <div className="publish-workbench">
+        <aside className="card publish-step-card">
+          <p style={{ ...eyebrowStyle, marginBottom: 16 }}>Onboarding progress</p>
+          {[
+            ["1", "Service profile", "Provider and service identity"],
+            ["2", "Interface contract", "Inputs, outputs and protocol"],
+            ["3", "Deployment details", "Container and runtime settings"],
+            ["4", "Review & submit", "Validate and publish for review"],
+          ].map(([number, title, description], index) => (
+            <div className={`publish-step${index + 1 === activeStep ? " publish-step-active" : ""}`} key={number}>
+              <span className="publish-step-number">{number}</span>
+              <div><strong>{title}</strong><small>{description}</small></div>
+            </div>
+          ))}
+          <div className="publish-step-note">
+            <strong>Manifest-powered</strong>
+            <span>The guided steps map directly to your existing AI-EFFECT service manifest.</span>
+          </div>
+        </aside>
+
+        <div className="publish-main-column">
       <section style={cardStyle}>
+        <div style={{ marginBottom: 17 }}>
+          <p style={eyebrowStyle}>Import manifest</p>
+          <h2 style={{ ...sectionTitleStyle, marginTop: 6 }}>Service declaration</h2>
+          <p style={{ ...helpTextStyle, marginTop: 7 }}>Choose how to load the manifest that describes your service.</p>
+        </div>
         <div style={tabRowStyle}>
           <button
             type="button"
@@ -422,6 +455,12 @@ export default function PublishServicePage() {
           </div>
         </section>
       )}
+        <aside className="publish-review-callout">
+          <span aria-hidden="true">i</span>
+          <div><strong>Review before publication</strong><p>Your service will be reviewed by the AI-EFFECT team before it is available in the catalogue.</p></div>
+        </aside>
+        </div>
+      </div>
     </main>
   );
 }
@@ -532,9 +571,7 @@ function validationItemStyle(level: ValidationMessage["level"]): CSSProperties {
 }
 
 const pageStyle: CSSProperties = {
-  padding: "32px",
-  maxWidth: 1180,
-  margin: "0 auto",
+  maxWidth: 1380,
 };
 
 const heroStyle: CSSProperties = {
@@ -547,18 +584,18 @@ const eyebrowStyle: CSSProperties = {
   fontWeight: 700,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
-  color: "#2563eb",
+  color: "#6543df",
 };
 
 const titleStyle: CSSProperties = {
   margin: "8px 0",
-  fontSize: 40,
+  fontSize: 42,
   lineHeight: 1.1,
   color: "#0f172a",
 };
 
 const subtitleStyle: CSSProperties = {
-  maxWidth: 860,
+  maxWidth: 820,
   margin: "0 0 18px",
   fontSize: 16,
   lineHeight: 1.6,
@@ -574,10 +611,10 @@ const heroActionsStyle: CSSProperties = {
 
 const cardStyle: CSSProperties = {
   background: "#ffffff",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #e5e4f1",
   borderRadius: 18,
   padding: 22,
-  boxShadow: "0 12px 30px rgba(15, 23, 42, 0.06)",
+  boxShadow: "0 12px 32px rgba(30, 24, 70, 0.07)",
   marginBottom: 22,
 };
 
@@ -606,9 +643,9 @@ const tabStyle: CSSProperties = {
 
 const activeTabStyle: CSSProperties = {
   ...tabStyle,
-  background: "#eff6ff",
-  color: "#1d4ed8",
-  borderColor: "#93c5fd",
+  background: "#f0ecff",
+  color: "#4f2bc9",
+  borderColor: "#c9bcfa",
 };
 
 const noticeStyle: CSSProperties = {
@@ -667,7 +704,7 @@ const textareaStyle: CSSProperties = {
 const primaryButtonStyle: CSSProperties = {
   marginTop: 14,
   border: "none",
-  background: "#2563eb",
+  background: "linear-gradient(135deg, #5b2cf2, #4320ca)",
   color: "#ffffff",
   borderRadius: 12,
   padding: "11px 16px",
@@ -700,8 +737,8 @@ const secondaryButtonStyle: CSSProperties = {
 
 const primaryLinkStyle: CSSProperties = {
   ...secondaryButtonStyle,
-  borderColor: "#2563eb",
-  background: "#2563eb",
+  borderColor: "#5b2cf2",
+  background: "#5b2cf2",
   color: "#ffffff",
 };
 
