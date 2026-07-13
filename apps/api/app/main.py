@@ -241,6 +241,46 @@ def confirm_manual_service_import(
 
     return service
 
+
+def update_service_review(
+    service_id: str,
+    status: str,
+    trust_badge: str,
+    db: Session,
+):
+    service = db.query(Service).filter(Service.id == service_id).first()
+
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+
+    service.status = status
+    service.trust_badge = trust_badge
+
+    if service.lifecycle_status != "archived":
+        service.lifecycle_status = "active"
+
+    touch_updated_at(service)
+    db.commit()
+    db.refresh(service)
+
+    return service
+
+
+@app.post("/services/{service_id}/review/approve", response_model=ServiceRead)
+def approve_service_review(service_id: str, db: Session = Depends(get_db)):
+    return update_service_review(service_id, "approved", "validated", db)
+
+
+@app.post("/services/{service_id}/review/reject", response_model=ServiceRead)
+def reject_service_review(service_id: str, db: Session = Depends(get_db)):
+    return update_service_review(service_id, "rejected", "rejected", db)
+
+
+@app.post("/services/{service_id}/review/reopen", response_model=ServiceRead)
+def reopen_service_review(service_id: str, db: Session = Depends(get_db)):
+    return update_service_review(service_id, "pending_review", "pending_review", db)
+
+
 @app.get("/services/{service_id}", response_model=ServiceRead)
 def get_service(service_id: str, db: Session = Depends(get_db)):
     service = db.query(Service).filter(Service.id == service_id).first()

@@ -87,6 +87,47 @@ export default function AdminPage() {
     }
   }
 
+  async function updateReview(
+    serviceId: string,
+    action: "approve" | "reject" | "reopen"
+  ) {
+    const labels = {
+      approve: "approve",
+      reject: "reject",
+      reopen: "reopen the review for",
+    };
+
+    const confirmed = window.confirm(
+      `Are you sure you want to ${labels[action]} this service?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionServiceId(serviceId);
+    setError("");
+
+    try {
+      const res = await fetch(
+        `http://localhost:18080/services/${serviceId}/review/${action}`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Review update failed.");
+      }
+
+      await loadServices();
+    } catch {
+      setError("Could not update the service review status.");
+    } finally {
+      setActionServiceId(null);
+    }
+  }
+
   useEffect(() => {
     async function init() {
       try {
@@ -270,6 +311,7 @@ export default function AdminPage() {
 
                 {filteredServices.map((service) => {
                   const lifecycle = getLifecycle(service);
+                  const reviewState = getReviewState(service);
                   const busy = actionServiceId === service.id;
 
                   return (
@@ -354,9 +396,16 @@ export default function AdminPage() {
                       </Td>
 
                       <Td>
-                        <span className="badge">{service.status}</span>
-                        <div style={{ color: "#667085", fontSize: 13, marginTop: 8 }}>
+                        <span
+                          className="badge"
+                          style={reviewBadgeStyle(reviewState)}
+                        >
                           {service.trust_badge}
+                        </span>
+                        <div
+                          style={{ color: "#667085", fontSize: 13, marginTop: 8 }}
+                        >
+                          Status: {service.status}
                         </div>
                       </Td>
 
@@ -379,7 +428,7 @@ export default function AdminPage() {
                             alignItems: "center",
                           }}
                         >
-                          {lifecycle !== "active" && (
+                          {lifecycle === "archived" && (
                             <button
                               onClick={() =>
                                 updateLifecycle(service.id, "restore")
@@ -391,8 +440,45 @@ export default function AdminPage() {
                             </button>
                           )}
 
-                          {lifecycle !== "deprecated" &&
-                            lifecycle !== "archived" && (
+                          {lifecycle !== "archived" &&
+                            reviewState === "pending_review" && (
+                              <>
+                                <button
+                                  onClick={() =>
+                                    updateReview(service.id, "approve")
+                                  }
+                                  disabled={busy}
+                                  style={buttonStyle("success", busy)}
+                                >
+                                  {busy ? "Updating..." : "Approve"}
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    updateReview(service.id, "reject")
+                                  }
+                                  disabled={busy}
+                                  style={buttonStyle("danger", busy)}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+
+                          {lifecycle === "active" &&
+                            reviewState === "rejected" && (
+                              <button
+                                onClick={() =>
+                                  updateReview(service.id, "reopen")
+                                }
+                                disabled={busy}
+                                style={buttonStyle("primary", busy)}
+                              >
+                                {busy ? "Updating..." : "Reopen review"}
+                              </button>
+                            )}
+
+                          {lifecycle === "active" &&
+                            reviewState !== "rejected" && (
                               <button
                                 onClick={() =>
                                   updateLifecycle(service.id, "deprecate")
@@ -404,18 +490,6 @@ export default function AdminPage() {
                               </button>
                             )}
 
-                          {lifecycle !== "archived" && (
-                            <button
-                              onClick={() =>
-                                updateLifecycle(service.id, "archive")
-                              }
-                              disabled={busy}
-                              style={buttonStyle("danger", busy)}
-                            >
-                              Archive
-                            </button>
-                          )}
-
                           {lifecycle === "deprecated" && (
                             <button
                               onClick={() =>
@@ -425,6 +499,18 @@ export default function AdminPage() {
                               style={buttonStyle("neutral", busy)}
                             >
                               Activate
+                            </button>
+                          )}
+
+                          {lifecycle !== "archived" && (
+                            <button
+                              onClick={() =>
+                                updateLifecycle(service.id, "archive")
+                              }
+                              disabled={busy}
+                              style={buttonStyle("danger", busy)}
+                            >
+                              Archive
                             </button>
                           )}
                         </div>
@@ -517,6 +603,46 @@ function getLifecycle(service: Service) {
   return service.lifecycle_status || "active";
 }
 
+function getReviewState(service: Service) {
+  const status = service.status.toLowerCase();
+  const trustBadge = service.trust_badge.toLowerCase();
+
+  if (status === "rejected" || trustBadge === "rejected") {
+    return "rejected";
+  }
+
+  if (
+    status === "approved" ||
+    status === "validated" ||
+    trustBadge === "validated"
+  ) {
+    return "validated";
+  }
+
+  return "pending_review";
+}
+
+function reviewBadgeStyle(status: string) {
+  if (status === "validated") {
+    return {
+      background: "#dcfae6",
+      color: "#027a48",
+    };
+  }
+
+  if (status === "rejected") {
+    return {
+      background: "#fee4e2",
+      color: "#b42318",
+    };
+  }
+
+  return {
+    background: "#f4ebff",
+    color: "#6941c6",
+  };
+}
+
 function lifecycleBadgeStyle(status: string) {
   if (status === "active") {
     return {
@@ -543,7 +669,7 @@ function lifecycleBadgeStyle(status: string) {
 }
 
 function buttonStyle(
-  tone: "primary" | "warning" | "danger" | "neutral",
+  tone: "primary" | "success" | "warning" | "danger" | "neutral",
   disabled: boolean
 ) {
   const colors = {
@@ -551,6 +677,11 @@ function buttonStyle(
       border: "1px solid #bae6fd",
       background: "white",
       color: "#075985",
+    },
+    success: {
+      border: "1px solid #abefc6",
+      background: "white",
+      color: "#027a48",
     },
     warning: {
       border: "1px solid #fedf89",
