@@ -1,4 +1,6 @@
 import type { CSSProperties } from "react";
+import Link from "next/link";
+import { ArrowRight, Boxes, Building2, Search, SlidersHorizontal } from "lucide-react";
 
 type Service = {
   id: string;
@@ -189,49 +191,89 @@ function lifecycleBadgeStyle(status: string): CSSProperties {
   };
 }
 
-export default async function CataloguePage() {
+export default async function CataloguePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string; provider?: string }>;
+}) {
   const services = await getServices();
+  const filters = await searchParams;
+  const query = (filters.q || "").trim().toLowerCase();
 
   const activeCount = services.filter((service) => getLifecycleStatus(service) === "active").length;
   const deprecatedCount = services.filter(
     (service) => getLifecycleStatus(service) === "deprecated"
   ).length;
+  const archivedCount = services.filter(
+    (service) => getLifecycleStatus(service) === "archived"
+  ).length;
+  const categories = [...new Set(services.map((service) => service.category).filter(Boolean))] as string[];
+  const providers = [...new Set(services.map((service) => service.provider).filter(Boolean))] as string[];
+  const visibleServices = services.filter((service) => {
+    const searchable = [service.name, service.description, service.provider, service.category]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      (!query || searchable.includes(query)) &&
+      (!filters.category || service.category === filters.category) &&
+      (!filters.provider || service.provider === filters.provider)
+    );
+  });
+  const hasFilters = Boolean(filters.q || filters.category || filters.provider);
 
   return (
     <div className="page">
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 24 }}>
+      <div className="catalogue-page-header">
         <div>
           <span className="badge">Service Marketplace</span>
-          <h1 style={{ fontSize: 40, marginBottom: 8 }}>Discover AI-EFFECT services</h1>
-          <p style={{ color: "#526173", fontSize: 17 }}>
+          <h1 style={{ margin: "14px 0 8px", fontSize: 42, letterSpacing: "-0.04em" }}>Discover AI-EFFECT services</h1>
+          <p style={{ maxWidth: 700, margin: 0, color: "#626a83", fontSize: 16, lineHeight: 1.65 }}>
             Browse trusted, Dockerized AI services published by AI-EFFECT nodes.
           </p>
         </div>
 
-        <div
-          className="card"
-          style={{
-            padding: 18,
-            minWidth: 260,
-            alignSelf: "flex-start",
-            display: "grid",
-            gap: 10,
-          }}
-        >
-          <strong>Catalogue status</strong>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-            <span style={{ color: "#526173" }}>Active services</span>
-            <strong>{activeCount}</strong>
+        <div className="card catalogue-status-card" style={{ padding: 19 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}>
+            <div style={{ display: "grid", width: 34, height: 34, placeItems: "center", borderRadius: 10, background: "#f0ecff", color: "#6240dd" }}><Boxes size={18} /></div>
+            <div><strong style={{ display: "block", fontSize: 13 }}>Catalogue status</strong><span style={{ color: "#7a7f94", fontSize: 9 }}>Live service registry</span></div>
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-            <span style={{ color: "#526173" }}>Deprecated services</span>
-            <strong>{deprecatedCount}</strong>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+            <StatusMetric label="Active" value={activeCount} color="#178055" background="#eaf8f1" />
+            <StatusMetric label="Deprecated" value={deprecatedCount} color="#a86711" background="#fff5e5" />
+            <StatusMetric label="Archived" value={archivedCount} color="#5e6477" background="#f1f2f5" />
           </div>
-          <p style={{ color: "#667085", fontSize: 13, margin: 0, lineHeight: 1.5 }}>
-            Archived services are hidden from the catalogue and cannot be added to new workflow
-            submissions.
-          </p>
+          <p style={{ margin: "13px 0 0", color: "#777c90", fontSize: 10, lineHeight: 1.5 }}>Archived services remain hidden from new workflow submissions.</p>
         </div>
+      </div>
+
+      <form className="catalogue-filter-bar" method="get">
+        <label className="catalogue-search-control">
+          <Search size={18} color="#777c90" />
+          <input name="q" defaultValue={filters.q || ""} placeholder="Search services by name, provider or capability..." aria-label="Search services" />
+        </label>
+        <label className="catalogue-select-control">
+          <SlidersHorizontal size={15} color="#777c90" />
+          <select name="category" defaultValue={filters.category || ""} aria-label="Filter by category">
+            <option value="">All categories</option>
+            {categories.map((category) => <option value={category} key={category}>{category}</option>)}
+          </select>
+        </label>
+        <label className="catalogue-select-control">
+          <Building2 size={15} color="#777c90" />
+          <select name="provider" defaultValue={filters.provider || ""} aria-label="Filter by provider">
+            <option value="">All providers</option>
+            {providers.map((provider) => <option value={provider} key={provider}>{provider}</option>)}
+          </select>
+        </label>
+        <button type="submit" style={{ whiteSpace: "nowrap" }}>Apply filters</button>
+        {hasFilters && <Link href="/catalogue" style={{ alignSelf: "center", padding: "8px 5px", color: "#5d3ddd", fontSize: 11, fontWeight: 800 }}>Clear</Link>}
+      </form>
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "25px 2px 13px" }}>
+        <div><span style={{ color: "#6b49e7", fontSize: 9, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase" }}>Trusted services</span><h2 style={{ margin: "5px 0 0", fontSize: 20 }}>Available in the catalogue</h2></div>
+        <span style={{ color: "#777c90", fontSize: 11 }}>{visibleServices.length} of {services.length} services</span>
       </div>
 
       {deprecatedCount > 0 && (
@@ -252,15 +294,8 @@ export default async function CataloguePage() {
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          gap: 20,
-          marginTop: 28,
-        }}
-      >
-        {services.map((service) => {
+      <div className="catalogue-service-grid">
+        {visibleServices.map((service) => {
           const lifecycleStatus = getLifecycleStatus(service);
           const isDeprecated = lifecycleStatus === "deprecated";
 
@@ -269,14 +304,17 @@ export default async function CataloguePage() {
               className="card"
               key={service.id}
               style={{
-                padding: 24,
+                display: "flex",
+                minHeight: 400,
+                padding: 22,
+                flexDirection: "column",
                 border: isDeprecated ? "1px solid #fde68a" : undefined,
                 background: isDeprecated ? "#fffdf7" : undefined,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
                 <span className="badge">{service.trust_badge || "Trusted"}</span>
-                <span style={{ color: "#667085", fontSize: 13 }}>
+                <span style={{ color: "#777c90", fontSize: 11, fontWeight: 700 }}>
                   v{service.version || "1.0.0"}
                 </span>
               </div>
@@ -287,11 +325,16 @@ export default async function CataloguePage() {
                   justifyContent: "space-between",
                   gap: 12,
                   alignItems: "flex-start",
-                  marginTop: 14,
+                  marginTop: 16,
                 }}
               >
-                <h2 style={{ margin: 0 }}>{service.name}</h2>
+                <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-0.02em" }}>{service.name}</h2>
                 <span style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 9, color: "#646b82", fontSize: 11 }}>
+                <span><strong style={{ color: "#343955" }}>Provider:</strong> {service.provider || "Unknown"}</span>
+                <span><strong style={{ color: "#343955" }}>Category:</strong> {service.category || "Uncategorised"}</span>
               </div>
 
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
@@ -330,65 +373,70 @@ export default async function CataloguePage() {
                 </div>
               )}
 
-              <p style={{ color: "#526173", lineHeight: 1.6, minHeight: 78 }}>
+              <p style={{ color: "#606880", lineHeight: 1.65, minHeight: 68, marginTop: 17 }}>
                 {service.description || "No description provided."}
               </p>
 
-              <div style={{ display: "grid", gap: 8, marginTop: 18, fontSize: 14 }}>
-                <div>
-                  <strong>Provider:</strong> {service.provider || "Unknown"}
-                </div>
-                <div>
-                  <strong>Category:</strong> {service.category || "Uncategorised"}
-                </div>
-                <div>
-                  <strong>Input:</strong> {service.input_type || "Not specified"}
-                </div>
-                <div>
-                  <strong>Output:</strong> {service.output_type || "Not specified"}
-                </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4, padding: 13, borderRadius: 12, background: "#f9f8fd", fontSize: 11 }}>
+                <div><span style={{ display: "block", color: "#85899a", fontSize: 9 }}>INPUT</span><strong style={{ wordBreak: "break-word" }}>{service.input_type || "Not specified"}</strong></div>
+                <div><span style={{ display: "block", color: "#85899a", fontSize: 9 }}>OUTPUT</span><strong style={{ wordBreak: "break-word" }}>{service.output_type || "Not specified"}</strong></div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
-                <a
+              <div style={{ display: "flex", gap: 10, marginTop: "auto", paddingTop: 20 }}>
+                <Link
                   href={`/catalogue/${service.id}`}
                   style={{
-                    background: "#075985",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 7,
+                    background: "linear-gradient(135deg, #5b2cf2, #4320ca)",
                     color: "white",
                     padding: "10px 14px",
                     borderRadius: 10,
-                    fontWeight: 700,
+                    fontSize: 11,
+                    fontWeight: 800,
                   }}
                 >
-                  View details
-                </a>
-                <a
+                  View details <ArrowRight size={14} />
+                </Link>
+                <Link
                   href="/builder"
                   style={{
-                    border: "1px solid #bae6fd",
-                    color: "#075985",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid #d8d2f2",
+                    background: "#f8f6ff",
+                    color: "#5637ce",
                     padding: "10px 14px",
                     borderRadius: 10,
-                    fontWeight: 700,
+                    fontSize: 11,
+                    fontWeight: 800,
                   }}
                 >
-                  Add to solution
-                </a>
+                  Add to workflow
+                </Link>
               </div>
             </div>
           );
         })}
       </div>
 
-      {services.length === 0 && (
+      {visibleServices.length === 0 && (
         <div className="card" style={{ padding: 24, marginTop: 28 }}>
-          <h2>No catalogue services available</h2>
+          <h2>{services.length === 0 ? "No catalogue services available" : "No matching services"}</h2>
           <p style={{ color: "#526173" }}>
-            No active or deprecated services are currently visible. Archived services can be managed
-            from Admin Governance.
+            {services.length === 0
+              ? "No active or deprecated services are currently visible. Archived services can be managed from Admin Governance."
+              : "Try adjusting your search, category, or provider filters."}
           </p>
         </div>
       )}
     </div>
   );
+}
+
+function StatusMetric({ label, value, color, background }: { label: string; value: number; color: string; background: string }) {
+  return <div style={{ padding: "10px 8px", borderRadius: 10, background, textAlign: "center" }}><strong style={{ display: "block", color, fontSize: 19 }}>{value}</strong><span style={{ color, fontSize: 8, fontWeight: 800, textTransform: "uppercase" }}>{label}</span></div>;
 }

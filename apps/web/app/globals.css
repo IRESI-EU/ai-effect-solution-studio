@@ -645,3 +645,158 @@ tbody tr:hover {
   overflow: hidden !important;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08) !important;
 }
+
+/* Dashboard and catalogue responsive layout helpers */
+.dashboard-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.dashboard-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.dashboard-lower-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr);
+  gap: 15px;
+  margin-top: 26px;
+}
+
+.dashboard-metric-card,
+.dashboard-role-card,
+.catalogue-service-grid > .card {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.dashboard-metric-card:hover,
+.dashboard-role-card:hover,
+.catalogue-service-grid > .card:hover {
+  border-color: #d7d1ee;
+  box-shadow: 0 16px 38px rgba(35, 27, 82, 0.1);
+  transform: translateY(-2px);
+}
+
+.catalogue-page-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 355px;
+  align-items: start;
+  gap: 26px;
+}
+
+.catalogue-status-card {
+  min-width: 0;
+}
+
+.catalogue-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.catalogue-search-control,
+.catalogue-select-control {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.catalogue-search-control {
+  min-width: 260px;
+  flex: 1;
+}
+
+.catalogue-search-control input,
+.catalogue-select-control select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.catalogue-select-control {
+  width: 190px;
+}
+
+.catalogue-service-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-metric-grid,
+  .catalogue-service-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-filter-bar {
+    flex-wrap: wrap;
+  }
+
+  .catalogue-search-control {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 820px) {
+  .dashboard-lower-grid,
+  .catalogue-page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-status-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .dashboard-hero {
+    padding: 32px 24px !important;
+  }
+
+  .dashboard-metric-grid,
+  .catalogue-service-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-filter-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .catalogue-search-control,
+  .catalogue-select-control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-activity-row {
+    grid-template-columns: 36px 1fr !important;
+  }
+
+  .dashboard-activity-row time {
+    display: none;
+  }
+}
