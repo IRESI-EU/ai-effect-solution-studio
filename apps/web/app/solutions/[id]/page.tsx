@@ -190,7 +190,16 @@ export default function SolutionDetailsPage({
 
       {solution && (
         <>
-          <section className="card" style={{ padding: 30, marginTop: 20 }}>
+          <section
+            className="card"
+            style={{
+              padding: 30,
+              marginTop: 20,
+              background: "linear-gradient(135deg, #ffffff 0%, #f7f4ff 100%)",
+              border: "1px solid #ded7f5",
+              boxShadow: "0 18px 46px rgba(48, 35, 104, 0.08)",
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -206,6 +215,13 @@ export default function SolutionDetailsPage({
                   {solution.name}
                 </h1>
 
+                <span
+                  className="badge"
+                  style={solutionStatusBadgeStyle(solution.status)}
+                >
+                  {solution.status}
+                </span>
+
                 <p style={{ color: "#526173", fontSize: 17, maxWidth: 850 }}>
                   {solution.description || "No description provided."}
                 </p>
@@ -216,9 +232,9 @@ export default function SolutionDetailsPage({
                   onClick={refreshWorkspace}
                   disabled={refreshing}
                   style={{
-                    border: "1px solid #bae6fd",
+                    border: "1px solid #d7ceff",
                     background: refreshing ? "#f8fafc" : "white",
-                    color: "#075985",
+                    color: "#6941c6",
                     padding: "12px 16px",
                     borderRadius: 12,
                     fontWeight: 800,
@@ -233,7 +249,7 @@ export default function SolutionDetailsPage({
                   <Link
                     href={`/builder?solutionId=${solution.id}`}
                     style={{
-                      background: "#075985",
+                      background: "#6d4aff",
                       color: "white",
                       padding: "12px 16px",
                       borderRadius: 12,
@@ -415,7 +431,15 @@ export default function SolutionDetailsPage({
             </div>
           </section>
 
-          <section className="card" style={{ padding: 30, marginTop: 20 }}>
+          <section
+            className="card"
+            style={{
+              padding: 30,
+              marginTop: 20,
+              border: "1px solid #e8e4f4",
+              boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -455,7 +479,15 @@ export default function SolutionDetailsPage({
             </div>
           </section>
 
-          <section className="card" style={{ padding: 30, marginTop: 20 }}>
+          <section
+            className="card"
+            style={{
+              padding: 30,
+              marginTop: 20,
+              border: "1px solid #e8e4f4",
+              boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+            }}
+          >
             <div
               style={{
                 display: "flex",
@@ -624,7 +656,14 @@ export default function SolutionDetailsPage({
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: "#f8fafc", padding: 16, borderRadius: 14 }}>
+    <div
+      style={{
+        background: "rgba(255, 255, 255, 0.88)",
+        padding: 16,
+        borderRadius: 14,
+        border: "1px solid #e8e4f4",
+      }}
+    >
       <div style={{ color: "#667085", fontSize: 13 }}>{label}</div>
       <strong>{value}</strong>
     </div>
@@ -713,4 +752,18 @@ function statusBadgeStyle(status: string) {
   }
 
   return {};
+}
+
+function solutionStatusBadgeStyle(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized === "archived") {
+    return { background: "#f2f4f7", color: "#475467" };
+  }
+
+  if (normalized === "submitted" || normalized === "running") {
+    return { background: "#eaf2ff", color: "#2457a6" };
+  }
+
+  return { background: "#eee8ff", color: "#6941c6" };
 }

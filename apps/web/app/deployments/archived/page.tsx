@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Deployment = {
@@ -16,6 +16,22 @@ type Deployment = {
 };
 
 export default function ArchivedDeploymentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="page">
+          <section className="card" style={{ padding: 30 }}>
+            Loading archived deployments...
+          </section>
+        </div>
+      }
+    >
+      <ArchivedDeploymentsContent />
+    </Suspense>
+  );
+}
+
+function ArchivedDeploymentsContent() {
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
 
@@ -117,7 +133,55 @@ export default function ArchivedDeploymentsPage() {
         )}
       </div>
 
-      <div className="card" style={{ marginTop: 28, overflow: "hidden" }}>
+      {!loading && !error && (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(220px, 0.35fr) minmax(0, 1fr)",
+            gap: 16,
+            marginTop: 26,
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              padding: 20,
+              background: "#f5f1ff",
+              border: "1px solid #ded5ff",
+            }}
+          >
+            <div style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+              Archived deployments
+            </div>
+            <div style={{ color: "#4d2ca3", fontSize: 32, fontWeight: 900, marginTop: 6 }}>
+              {deployments.length}
+            </div>
+          </div>
+          <div
+            className="card"
+            style={{
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              color: "#526173",
+              border: "1px solid #e8e4f4",
+            }}
+          >
+            Restore a deployment to return it to operational monitoring while
+            keeping the same workflow ID and audit history.
+          </div>
+        </section>
+      )}
+
+      <div
+        className="card"
+        style={{
+          marginTop: 22,
+          overflow: "hidden",
+          border: "1px solid #e8e4f4",
+          boxShadow: "0 16px 40px rgba(44, 36, 86, 0.06)",
+        }}
+      >
         {loading && (
           <div style={{ padding: 24, color: "#667085" }}>
             Loading archived deployments...
@@ -128,7 +192,7 @@ export default function ArchivedDeploymentsPage() {
 
         {!loading && !error && (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ background: "#f8fafc" }}>
+            <thead style={{ background: "#faf9ff" }}>
               <tr>
                 <Th>Name</Th>
                 <Th>Workflow ID</Th>
@@ -190,16 +254,16 @@ export default function ArchivedDeploymentsPage() {
                           textDecoration: "none",
                         }}
                       >
-                        View →
+                        View run details
                       </Link>
 
                       <button
                         onClick={() => restoreDeployment(deployment.id)}
                         disabled={restoringId === deployment.id}
                         style={{
-                          border: "1px solid #bae6fd",
-                          background: "white",
-                          color: "#075985",
+                          border: "1px solid #6d4aff",
+                          background: "#6d4aff",
+                          color: "white",
                           padding: "8px 10px",
                           borderRadius: 10,
                           fontWeight: 800,

@@ -25,6 +25,7 @@ type SolutionSummary = {
 
 type SolutionsResult = {
   solutions: SolutionSummary[];
+  archivedCount: number;
   error?: string;
 };
 
@@ -50,9 +51,25 @@ async function getSolutions(): Promise<SolutionsResult> {
       }
 
       const data = await res.json();
+      let archivedCount = 0;
+
+      try {
+        const archivedRes = await fetch(
+          `${baseUrl}/solutions/summary?archived_only=true`,
+          { cache: "no-store" }
+        );
+
+        if (archivedRes.ok) {
+          const archivedData = await archivedRes.json();
+          archivedCount = Array.isArray(archivedData) ? archivedData.length : 0;
+        }
+      } catch {
+        archivedCount = 0;
+      }
 
       return {
         solutions: Array.isArray(data) ? data : [],
+        archivedCount,
       };
     } catch {
       continue;
@@ -61,17 +78,29 @@ async function getSolutions(): Promise<SolutionsResult> {
 
   return {
     solutions: [],
+    archivedCount: 0,
     error:
       "Could not load saved solutions. The web app could not reach the Solution Studio API.",
   };
 }
 
 export default async function SolutionsPage() {
-  const { solutions, error } = await getSolutions();
+  const { solutions, archivedCount, error } = await getSolutions();
+  const draftCount = solutions.filter(
+    (solution) => solution.status.toLowerCase() === "draft"
+  ).length;
+  const submittedCount = solutions.filter((solution) => {
+    const status = solution.status.toLowerCase();
+    return (
+      status === "submitted" ||
+      status === "running" ||
+      solution.running_deployments_count > 0
+    );
+  }).length;
 
   return (
     <div className="page">
-      <span className="badge">AI Vendor Workspace</span>
+      <span className="badge">Solution Workspace</span>
 
       <div
         style={{
@@ -83,9 +112,9 @@ export default async function SolutionsPage() {
       >
         <div>
           <h1 style={{ fontSize: 40, marginBottom: 8 }}>Saved solutions</h1>
-          <p style={{ color: "#526173", fontSize: 17, maxWidth: 950 }}>
-            Reopen saved workflow designs, inspect operational health, edit them
-            in the Builder, validate them, and submit them to the orchestrator.
+          <p style={{ color: "#526173", fontSize: 17, maxWidth: 760 }}>
+            Manage draft and submitted AI-EFFECT workflows composed from
+            trusted marketplace services.
           </p>
         </div>
 
@@ -109,7 +138,7 @@ export default async function SolutionsPage() {
   <Link
     href="/builder"
     style={{
-      background: "#075985",
+      background: "#6d4aff",
       color: "white",
       padding: "12px 16px",
       borderRadius: 12,
@@ -122,6 +151,26 @@ export default async function SolutionsPage() {
   </Link>
 </div>
       </div>
+
+      {!error && (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 16,
+            marginTop: 26,
+          }}
+        >
+          <MetricCard label="Total solutions" value={solutions.length} />
+          <MetricCard label="Draft" value={draftCount} tone="purple" />
+          <MetricCard
+            label="Submitted / Running"
+            value={submittedCount}
+            tone="blue"
+          />
+          <MetricCard label="Archived" value={archivedCount} tone="muted" />
+        </section>
+      )}
 
       {error && (
         <section
@@ -152,9 +201,37 @@ export default async function SolutionsPage() {
       )}
 
       {!error && solutions.length > 0 && (
-        <section className="card" style={{ marginTop: 28, overflow: "hidden" }}>
+        <section
+          className="card"
+          style={{
+            marginTop: 24,
+            overflow: "hidden",
+            border: "1px solid #e8e4f4",
+            boxShadow: "0 16px 40px rgba(44, 36, 86, 0.06)",
+          }}
+        >
+          <div
+            style={{
+              padding: "20px 22px",
+              borderBottom: "1px solid #ece8f5",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 16,
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <h2 style={{ margin: 0, fontSize: 20 }}>Solution library</h2>
+              <p style={{ margin: "5px 0 0", color: "#667085", fontSize: 14 }}>
+                Saved designs and their latest orchestrator activity.
+              </p>
+            </div>
+            <span style={{ color: "#6941c6", fontWeight: 800, fontSize: 14 }}>
+              {solutions.length} active
+            </span>
+          </div>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ background: "#f8fafc" }}>
+            <thead style={{ background: "#faf9ff" }}>
               <tr>
                 <Th>Name</Th>
                 <Th>Design</Th>
@@ -189,7 +266,12 @@ export default async function SolutionsPage() {
                     </div>
 
                     <div style={{ marginTop: 10 }}>
-                      <span className="badge">{solution.status}</span>
+                      <span
+                        className="badge"
+                        style={solutionStatusBadgeStyle(solution.status)}
+                      >
+                        {solution.status}
+                      </span>
                     </div>
                   </Td>
 
@@ -291,10 +373,14 @@ export default async function SolutionsPage() {
                       <Link
                         href={`/solutions/${solution.id}`}
                         style={{
-                          color: "#075985",
+                          color: "white",
+                          background: "#6d4aff",
                           fontWeight: 800,
                           textDecoration: "none",
                           whiteSpace: "nowrap",
+                          padding: "8px 11px",
+                          borderRadius: 9,
+                          fontSize: 13,
                         }}
                       >
                         Open workspace →
@@ -303,24 +389,31 @@ export default async function SolutionsPage() {
                       <Link
                         href={`/builder?solutionId=${solution.id}`}
                         style={{
-                          color: "#475467",
+                          color: "#5f42c7",
+                          border: "1px solid #d9d0ff",
+                          background: "#faf9ff",
                           fontWeight: 800,
                           textDecoration: "none",
+                          padding: "8px 11px",
+                          borderRadius: 9,
+                          fontSize: 13,
                         }}
                       >
-                        Edit
+                        Edit in Builder
                       </Link>
                       <form action={archiveSolutionAction}>
   <input type="hidden" name="solutionId" value={solution.id} />
   <button
     type="submit"
     style={{
-      border: "none",
-      background: "transparent",
+      border: "1px solid #fecdca",
+      background: "white",
       color: "#b42318",
       fontWeight: 800,
       cursor: "pointer",
-      padding: 0,
+      padding: "8px 11px",
+      borderRadius: 9,
+      fontSize: 13,
     }}
   >
     Archive
@@ -367,6 +460,61 @@ async function archiveSolutionAction(formData: FormData) {
 
   revalidatePath("/solutions");
   redirect("/solutions");
+}
+
+function MetricCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number;
+  tone?: "neutral" | "purple" | "blue" | "muted";
+}) {
+  const tones = {
+    neutral: { background: "#ffffff", color: "#17152b", accent: "#6d4aff" },
+    purple: { background: "#f5f1ff", color: "#4d2ca3", accent: "#8b5cf6" },
+    blue: { background: "#eef5ff", color: "#2457a6", accent: "#4f7cff" },
+    muted: { background: "#f7f7fb", color: "#475467", accent: "#98a2b3" },
+  };
+  const selected = tones[tone];
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: 18,
+        background: selected.background,
+        border: "1px solid #e8e4f4",
+        boxShadow: "0 10px 26px rgba(44, 36, 86, 0.05)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+        <span style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+          {label}
+        </span>
+        <span
+          style={{
+            width: 9,
+            height: 9,
+            borderRadius: 99,
+            background: selected.accent,
+            marginTop: 4,
+          }}
+        />
+      </div>
+      <div
+        style={{
+          color: selected.color,
+          fontSize: 30,
+          fontWeight: 900,
+          marginTop: 8,
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
 }
 
 
@@ -446,4 +594,18 @@ function statusBadgeStyle(status: string) {
   }
 
   return {};
+}
+
+function solutionStatusBadgeStyle(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized === "submitted" || normalized === "running") {
+    return { background: "#eaf2ff", color: "#2457a6" };
+  }
+
+  if (normalized === "archived") {
+    return { background: "#f2f4f7", color: "#475467" };
+  }
+
+  return { background: "#f2edff", color: "#6941c6" };
 }

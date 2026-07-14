@@ -144,9 +144,51 @@ export default function DeploymentDetailPage({
         ← Back to deployments
       </Link>
 
-      <section className="card" style={{ padding: 30, marginTop: 20 }}>
+      <section
+        className="card"
+        style={{
+          padding: 30,
+          marginTop: 20,
+          background: "linear-gradient(135deg, #ffffff 0%, #f5f1ff 100%)",
+          border: "1px solid #ded7f5",
+          boxShadow: "0 18px 46px rgba(48, 35, 104, 0.08)",
+        }}
+      >
         <span className="badge">Orchestrator Deployment</span>
-        <h1 style={{ fontSize: 40 }}>Workflow {workflowId}</h1>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 20,
+            alignItems: "flex-start",
+            margin: "16px 0 24px",
+          }}
+        >
+          <div>
+            <h1 style={{ fontSize: 40, margin: 0 }}>Run details</h1>
+            <div
+              style={{
+                marginTop: 10,
+                color: "#667085",
+                fontFamily: "monospace",
+                wordBreak: "break-all",
+              }}
+            >
+              Workflow {workflowId}
+            </div>
+          </div>
+          {workflow?.status && (
+            <span
+              className="badge"
+              style={{
+                ...statusBadgeStyle(workflow.status),
+                padding: "8px 12px",
+              }}
+            >
+              {workflow.status}
+            </span>
+          )}
+        </div>
 
         {error && <p style={{ color: "#b42318" }}>{error}</p>}
 
@@ -176,14 +218,43 @@ export default function DeploymentDetailPage({
               fontSize: 14,
             }}
           >
-            Backend deployment record synced as{" "}
+            <strong>{deploymentRecord.name}</strong>
+            {deploymentRecord.solution_id
+              ? ` · Solution ${deploymentRecord.solution_id}`
+              : " · No linked solution"}
+            {" · "}Backend record synced as{" "}
             <strong>{deploymentRecord.status}</strong>.
           </div>
         )}
       </section>
 
-      <section className="card" style={{ padding: 30, marginTop: 20 }}>
-        <h2>Tasks & Data References</h2>
+      <section
+        className="card"
+        style={{
+          padding: 30,
+          marginTop: 20,
+          border: "1px solid #e8e4f4",
+          boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+        }}
+      >
+        <h2 style={{ marginTop: 0 }}>Tasks &amp; Data References</h2>
+        <p style={{ color: "#667085", marginTop: -4, marginBottom: 20 }}>
+          Orchestrator task states and the input or output artifacts attached to
+          each workflow node.
+        </p>
+
+        {!error && workflow && tasks.length === 0 && (
+          <div
+            style={{
+              padding: 18,
+              borderRadius: 14,
+              background: "#f8f7fc",
+              color: "#667085",
+            }}
+          >
+            No task records are available for this workflow yet.
+          </div>
+        )}
 
         <div style={{ display: "grid", gap: 16 }}>
           {tasks.map((task: any) => (
@@ -210,7 +281,12 @@ export default function DeploymentDetailPage({
                   </div>
                 </div>
 
-                <span className="badge">{task.status}</span>
+                <span
+                  className="badge"
+                  style={statusBadgeStyle(task.status)}
+                >
+                  {task.status}
+                </span>
               </div>
 
               <div
@@ -462,11 +538,36 @@ function PreviewHeader({ preview }: { preview: any }) {
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: "#f8fafc", padding: 16, borderRadius: 14 }}>
+    <div
+      style={{
+        background: "rgba(255, 255, 255, 0.9)",
+        padding: 16,
+        borderRadius: 14,
+        border: "1px solid #e8e4f4",
+      }}
+    >
       <div style={{ color: "#667085", fontSize: 13 }}>{label}</div>
       <strong>{value}</strong>
     </div>
   );
+}
+
+function statusBadgeStyle(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized === "completed") {
+    return { background: "#dcfae6", color: "#027a48" };
+  }
+
+  if (normalized === "failed") {
+    return { background: "#fee4e2", color: "#b42318" };
+  }
+
+  if (normalized === "running") {
+    return { background: "#eaf2ff", color: "#2457a6" };
+  }
+
+  return { background: "#f2edff", color: "#6941c6" };
 }
 
 function ReferenceList({
@@ -520,9 +621,9 @@ function ReferenceList({
               onClick={() => onPreview(ref)}
               style={{
                 marginTop: 10,
-                border: "1px solid #bae6fd",
+                border: "1px solid #d7ceff",
                 background: "white",
-                color: "#075985",
+                color: "#6941c6",
                 borderRadius: 10,
                 padding: "8px 12px",
                 fontWeight: 800,

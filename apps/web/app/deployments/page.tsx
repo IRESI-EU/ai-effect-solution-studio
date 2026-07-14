@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Deployment = {
   id: string;
@@ -28,9 +28,15 @@ export default function DeploymentsPage() {
   const [archivingId, setArchivingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [syncSummary, setSyncSummary] = useState<SyncSummary | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [archivedCount, setArchivedCount] = useState(0);
 
   async function loadDeployments() {
-    const res = await fetch("http://localhost:18080/deployments");
+    const [res, archivedRes] = await Promise.all([
+      fetch("http://localhost:18080/deployments"),
+      fetch("http://localhost:18080/deployments?archived_only=true"),
+    ]);
 
     if (!res.ok) {
       throw new Error("Failed to load deployments.");
@@ -38,6 +44,11 @@ export default function DeploymentsPage() {
 
     const data = await res.json();
     setDeployments(Array.isArray(data) ? data : []);
+
+    if (archivedRes.ok) {
+      const archivedData = await archivedRes.json();
+      setArchivedCount(Array.isArray(archivedData) ? archivedData.length : 0);
+    }
   }
 
   async function syncStatuses() {
@@ -118,6 +129,35 @@ export default function DeploymentsPage() {
     init();
   }, []);
 
+  const statusCounts = useMemo(() => {
+    const normalized = deployments.map((deployment) =>
+      deployment.status.toLowerCase()
+    );
+
+    return {
+      running: normalized.filter((status) => status === "running").length,
+      completed: normalized.filter((status) => status === "completed").length,
+      failed: normalized.filter((status) => status === "failed").length,
+    };
+  }, [deployments]);
+
+  const filteredDeployments = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return deployments.filter((deployment) => {
+      const matchesStatus =
+        statusFilter === "all" ||
+        deployment.status.toLowerCase() === statusFilter;
+      const matchesSearch =
+        !query ||
+        deployment.name.toLowerCase().includes(query) ||
+        deployment.workflow_id.toLowerCase().includes(query) ||
+        deployment.solution_id?.toLowerCase().includes(query);
+
+      return matchesStatus && Boolean(matchesSearch);
+    });
+  }, [deployments, search, statusFilter]);
+
   return (
     <div className="page">
       <span className="badge">Execution Monitoring</span>
@@ -132,9 +172,9 @@ export default function DeploymentsPage() {
       >
         <div>
           <h1 style={{ fontSize: 40, marginBottom: 8 }}>Deployments</h1>
-          <p style={{ color: "#526173", fontSize: 17, maxWidth: 900 }}>
-            Track active workflows submitted from Solution Studio to the
-            orchestrator. Archive old test runs without deleting audit history.
+          <p style={{ color: "#526173", fontSize: 17, maxWidth: 760 }}>
+            Track submitted workflows, execution states, and orchestrator
+            results.
           </p>
         </div>
 
@@ -159,9 +199,9 @@ export default function DeploymentsPage() {
             onClick={syncStatuses}
             disabled={syncing}
             style={{
-              border: "1px solid #bae6fd",
-              background: syncing ? "#f8fafc" : "white",
-              color: "#075985",
+              border: "1px solid #d7ceff",
+              background: syncing ? "#f8f7fc" : "#6d4aff",
+              color: syncing ? "#6941c6" : "white",
               borderRadius: 12,
               padding: "12px 16px",
               fontWeight: 800,
@@ -173,6 +213,25 @@ export default function DeploymentsPage() {
           </button>
         </div>
       </div>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+          gap: 14,
+          marginTop: 26,
+        }}
+      >
+        <MetricCard label="Total deployments" value={deployments.length} />
+        <MetricCard label="Running" value={statusCounts.running} tone="blue" />
+        <MetricCard
+          label="Completed"
+          value={statusCounts.completed}
+          tone="good"
+        />
+        <MetricCard label="Failed" value={statusCounts.failed} tone="bad" />
+        <MetricCard label="Archived" value={archivedCount} tone="muted" />
+      </section>
 
       {syncSummary && (
         <div
@@ -190,7 +249,44 @@ export default function DeploymentsPage() {
         </div>
       )}
 
-      <div className="card" style={{ marginTop: 28, overflow: "hidden" }}>
+      <section
+        className="card"
+        style={{
+          marginTop: 22,
+          padding: 16,
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+          border: "1px solid #e8e4f4",
+        }}
+      >
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search deployments by name, workflow or solution..."
+          style={{ flex: 1, minWidth: 240 }}
+        />
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          style={{ minWidth: 170 }}
+        >
+          <option value="all">All statuses</option>
+          <option value="running">Running</option>
+          <option value="completed">Completed</option>
+          <option value="failed">Failed</option>
+        </select>
+      </section>
+
+      <div
+        className="card"
+        style={{
+          marginTop: 18,
+          overflow: "hidden",
+          border: "1px solid #e8e4f4",
+          boxShadow: "0 16px 40px rgba(44, 36, 86, 0.06)",
+        }}
+      >
         {loading && (
           <div style={{ padding: 24, color: "#667085" }}>
             Loading deployments...
@@ -201,7 +297,7 @@ export default function DeploymentsPage() {
 
         {!loading && !error && (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ background: "#f8fafc" }}>
+            <thead style={{ background: "#faf9ff" }}>
               <tr>
                 <Th>Name</Th>
                 <Th>Workflow ID</Th>
@@ -213,16 +309,16 @@ export default function DeploymentsPage() {
             </thead>
 
             <tbody>
-              {deployments.length === 0 && (
+              {filteredDeployments.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ padding: 24, color: "#667085" }}>
-                    No active deployments. Submit a workflow from the Builder or
-                    check archived deployments.
+                    No deployments match the current view. Submit a workflow
+                    from the Builder or check archived deployments.
                   </td>
                 </tr>
               )}
 
-              {deployments.map((deployment) => (
+              {filteredDeployments.map((deployment) => (
                 <tr
                   key={deployment.id}
                   style={{ borderTop: "1px solid #e4e9f2" }}
@@ -259,27 +355,33 @@ export default function DeploymentsPage() {
                       <Link
                         href={`/deployments/${deployment.workflow_id}`}
                         style={{
-                          color: "#075985",
+                          color: "white",
+                          background: "#6d4aff",
                           fontWeight: 800,
                           textDecoration: "none",
+                          padding: "8px 11px",
+                          borderRadius: 9,
+                          fontSize: 13,
                         }}
                       >
-                        View →
+                        View run details
                       </Link>
 
                       <button
                         onClick={() => archiveDeployment(deployment.id)}
                         disabled={archivingId === deployment.id}
                         style={{
-                          border: "none",
-                          background: "transparent",
+                          border: "1px solid #fecdca",
+                          background: "white",
                           color: "#b42318",
                           fontWeight: 800,
                           cursor:
                             archivingId === deployment.id
                               ? "not-allowed"
                               : "pointer",
-                          padding: 0,
+                          padding: "8px 11px",
+                          borderRadius: 9,
+                          fontSize: 13,
                         }}
                       >
                         {archivingId === deployment.id
@@ -293,6 +395,62 @@ export default function DeploymentsPage() {
             </tbody>
           </table>
         )}
+      </div>
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number | string;
+  tone?: "neutral" | "blue" | "good" | "bad" | "muted";
+}) {
+  const tones = {
+    neutral: { background: "#ffffff", color: "#17152b", accent: "#6d4aff" },
+    blue: { background: "#eef5ff", color: "#2457a6", accent: "#4f7cff" },
+    good: { background: "#effbf4", color: "#027a48", accent: "#12b76a" },
+    bad: { background: "#fff2f1", color: "#b42318", accent: "#f04438" },
+    muted: { background: "#f7f7fb", color: "#475467", accent: "#98a2b3" },
+  };
+  const selected = tones[tone];
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: 17,
+        background: selected.background,
+        border: "1px solid #e8e4f4",
+        boxShadow: "0 10px 26px rgba(44, 36, 86, 0.05)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+        <span style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+          {label}
+        </span>
+        <span
+          style={{
+            width: 9,
+            height: 9,
+            borderRadius: 99,
+            background: selected.accent,
+            marginTop: 4,
+          }}
+        />
+      </div>
+      <div
+        style={{
+          color: selected.color,
+          fontSize: typeof value === "number" ? 29 : 20,
+          fontWeight: 900,
+          marginTop: 8,
+        }}
+      >
+        {value}
       </div>
     </div>
   );

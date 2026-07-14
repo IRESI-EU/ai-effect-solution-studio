@@ -101,6 +101,46 @@ export default async function ArchivedSolutionsPage() {
         </div>
       </div>
 
+      {!error && (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(220px, 0.35fr) minmax(0, 1fr)",
+            gap: 16,
+            marginTop: 26,
+          }}
+        >
+          <div
+            className="card"
+            style={{
+              padding: 20,
+              background: "#f5f1ff",
+              border: "1px solid #ded5ff",
+            }}
+          >
+            <div style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+              Archived solutions
+            </div>
+            <div style={{ color: "#4d2ca3", fontSize: 32, fontWeight: 900, marginTop: 6 }}>
+              {solutions.length}
+            </div>
+          </div>
+          <div
+            className="card"
+            style={{
+              padding: 20,
+              display: "flex",
+              alignItems: "center",
+              color: "#526173",
+              border: "1px solid #e8e4f4",
+            }}
+          >
+            Restore a solution to return it to the active workspace and Builder.
+            Historical deployments remain linked throughout the lifecycle.
+          </div>
+        </section>
+      )}
+
       {error && (
         <section
           className="card"
@@ -127,9 +167,17 @@ export default async function ArchivedSolutionsPage() {
       )}
 
       {!error && solutions.length > 0 && (
-        <section className="card" style={{ marginTop: 28, overflow: "hidden" }}>
+        <section
+          className="card"
+          style={{
+            marginTop: 22,
+            overflow: "hidden",
+            border: "1px solid #e8e4f4",
+            boxShadow: "0 16px 40px rgba(44, 36, 86, 0.06)",
+          }}
+        >
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead style={{ background: "#f8fafc" }}>
+            <thead style={{ background: "#faf9ff" }}>
               <tr>
                 <Th>Name</Th>
                 <Th>Design</Th>
@@ -251,9 +299,9 @@ export default async function ArchivedSolutionsPage() {
                         <button
                           type="submit"
                           style={{
-                            border: "1px solid #bae6fd",
-                            background: "white",
-                            color: "#075985",
+                            border: "1px solid #6d4aff",
+                            background: "#6d4aff",
+                            color: "white",
                             padding: "8px 10px",
                             borderRadius: 10,
                             fontWeight: 800,
