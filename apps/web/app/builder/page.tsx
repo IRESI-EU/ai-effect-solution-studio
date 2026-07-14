@@ -450,7 +450,7 @@ Input: ${targetService.input_type}`
       )}
 
       <div className="builder-workbench" style={{ marginTop: deprecatedCanvasServices.length > 0 ? 32 : 24 }}>
-        <aside className="card builder-palette-card">
+        <aside className="card builder-palette-card builder-service-palette">
           <div className="builder-panel-heading"><div><span>Service palette</span><h2>Available services</h2></div><strong>{filteredServices.length}</strong></div>
           <p style={{ color: "#697087", fontSize: 12, lineHeight: 1.55 }}>
             Click a service to add it to the workflow canvas. Archived services are hidden.
@@ -479,7 +479,7 @@ Input: ${targetService.input_type}`
             </div>
           )}
 
-          <div style={{ display: "grid", gap: 11, marginTop: 15 }}>
+          <div className="builder-service-list-scroll">
             {filteredServices.map((service) => {
               const lifecycleStatus = getLifecycleStatus(service);
               const isDeprecated = lifecycleStatus === "deprecated";
