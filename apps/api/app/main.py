@@ -366,7 +366,6 @@ def compile_workflow(
 ):
     return compile_to_wp3_payload(workflow, db)
 
-
 @app.post("/workflows/submit-to-orchestrator")
 def submit_workflow_to_orchestrator_endpoint(
     workflow: WorkflowSubmitRequest,
@@ -402,8 +401,35 @@ def submit_workflow_to_orchestrator_endpoint(
                 detail=f"Archived service cannot be submitted: {service.name}",
             )
 
-    payload = compile_to_wp3_payload(workflow, db)
-    return submit_to_orchestrator(payload)
+        if getattr(service, "trust_badge", "") == "rejected":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Rejected service cannot be submitted: {service.name}. Reopen or approve it in Admin first.",
+            )
+
+    compiled_payload = compile_to_wp3_payload(workflow, db)
+
+    orchestrator_payload = {
+        "blueprint": compiled_payload["blueprint"],
+        "dockerinfo": compiled_payload["dockerinfo"],
+    }
+
+    if "inputs" in compiled_payload:
+        orchestrator_payload["inputs"] = compiled_payload["inputs"]
+
+    if "services_api_key" in compiled_payload:
+        orchestrator_payload["services_api_key"] = compiled_payload["services_api_key"]
+
+    orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+
+    if isinstance(orchestrator_result, dict):
+        orchestrator_result["solution_studio_metadata"] = compiled_payload.get(
+            "solution_studio_metadata"
+        )
+
+    return orchestrator_result
+
+
 
 
 @app.post("/workflows/validate")

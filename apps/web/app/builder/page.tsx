@@ -269,14 +269,45 @@ Input: ${targetService.input_type}`
   }
 
   async function submitToOrchestrator() {
-    setSubmittingToOrchestrator(true);
-    setDeploymentResult(null);
+  setSubmittingToOrchestrator(true);
+  setDeploymentResult(null);
 
+  try {
     const serviceNodes = nodes.filter((node) => node.id.startsWith("service-"));
 
     if (serviceNodes.length === 0) {
-      alert("Add at least one service before submitting.");
-      setSubmittingToOrchestrator(false);
+      setDeploymentResult({
+        status: "failed",
+        error: "Add at least one service before submitting.",
+      });
+      return;
+    }
+
+    const rejectedServices = serviceNodes
+      .map((node) => node.data.service as Service)
+      .filter((service) => service.trust_badge === "rejected");
+
+    if (rejectedServices.length > 0) {
+      setDeploymentResult({
+        status: "failed",
+        error: `Rejected services cannot be submitted: ${rejectedServices
+          .map((service) => service.name)
+          .join(", ")}. Reopen or approve these services in Admin first.`,
+      });
+      return;
+    }
+
+    const archivedServices = serviceNodes
+      .map((node) => node.data.service as Service)
+      .filter((service) => service.lifecycle_status === "archived");
+
+    if (archivedServices.length > 0) {
+      setDeploymentResult({
+        status: "failed",
+        error: `Archived services cannot be submitted: ${archivedServices
+          .map((service) => service.name)
+          .join(", ")}.`,
+      });
       return;
     }
 
@@ -321,8 +352,10 @@ Input: ${targetService.input_type}`
 
     if (!res.ok) {
       const error = await res.text();
-      setDeploymentResult({ status: "failed", error });
-      setSubmittingToOrchestrator(false);
+      setDeploymentResult({
+        status: "failed",
+        error: error || `Submit failed with HTTP ${res.status}.`,
+      });
       return;
     }
 
@@ -330,22 +363,37 @@ Input: ${targetService.input_type}`
     setDeploymentResult(data);
 
     if (data.workflow_id) {
-      await fetch(`${API_BASE_URL}/deployments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workflow_id: data.workflow_id,
-          solution_id: currentSolutionId,
-          name: solutionName || "Solution Studio Workflow",
-          status: data.status || "submitted",
-        }),
-      });
+      try {
+        await fetch(`${API_BASE_URL}/deployments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            workflow_id: data.workflow_id,
+            solution_id: currentSolutionId,
+            name: solutionName || "Solution Studio Workflow",
+            status: data.status || "submitted",
+          }),
+        });
+      } catch (deploymentError) {
+        console.warn("Workflow submitted, but deployment record could not be saved.", deploymentError);
+      }
     }
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not submit workflow to the API.";
 
+    setDeploymentResult({
+      status: "failed",
+      error: `Could not reach the API at ${API_BASE_URL}. Check that the backend container is running. Details: ${message}`,
+    });
+  } finally {
     setSubmittingToOrchestrator(false);
   }
+}
 
   return (
     <div className="page builder-page">
