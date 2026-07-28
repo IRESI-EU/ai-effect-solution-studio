@@ -339,7 +339,7 @@ function BuilderContent() {
       reverseAdjacency.set(edge.target, [...(reverseAdjacency.get(edge.target) || []), edge.source]);
     });
 
-    if (serviceNodes.length === 0) blockers.push("Blocked: Add at least one service node.");
+    if (serviceNodes.length === 0) blockers.push("Blocked: Add at least one service.");
     if (inputNodeIds.length === 0) blockers.push("Blocked: Add a workflow input node.");
     if (outputNodeIds.length === 0) blockers.push("Blocked: Add a workflow output node.");
 
@@ -384,10 +384,11 @@ function BuilderContent() {
     });
 
     const valid = blockers.length === 0;
+    const issueLabel = blockers.length === 1 ? "issue" : "issues";
     return {
       valid,
       results: [
-        valid ? "Passed: Workflow design is valid." : `Blocked: Workflow design has ${blockers.length} issue(s).`,
+        valid ? "Passed: Workflow design is valid." : `Blocked: Workflow design has ${blockers.length} ${issueLabel}.`,
         ...blockers,
         ...notices,
       ],
@@ -536,7 +537,7 @@ function BuilderContent() {
           <h1 style={{ fontSize: 42, margin: "14px 0 8px", letterSpacing: "-0.04em" }}>Build a solution</h1>
           <p style={{ color: "#626a83", fontSize: 16, maxWidth: 850, margin: 0, lineHeight: 1.65 }}>
             Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
-            workflow, and prepare the solution for orchestrator deployment.
+            workflow, and prepare the solution for deployment.
           </p>
         </div>
         <div className="builder-top-actions">
@@ -554,7 +555,7 @@ function BuilderContent() {
 
       <div className="builder-name-row">
         <div><span>Solution name</span><input value={solutionName} onChange={(event) => setSolutionName(event.target.value)} placeholder="Solution name" /></div>
-        <div className="builder-health-summary"><span>{nodes.length}</span> nodes <span>{edges.length}</span> connections <span>{validationResults.length}</span> checks</div>
+        <div className="builder-health-summary"><span>{nodes.length}</span> {nodes.length === 1 ? "node" : "nodes"} <span>{edges.length}</span> {edges.length === 1 ? "connection" : "connections"} <span>{validationResults.length}</span> {validationResults.length === 1 ? "check" : "checks"}</div>
       </div>
 
       {solutionNeedsRevalidation && (
@@ -679,7 +680,7 @@ function BuilderContent() {
             className="builder-canvas-header"
           >
             <div><span>Visual workflow</span><strong>Workflow canvas</strong></div>
-            <div className="builder-canvas-legend"><i /> Service node <i /> Connection</div>
+            <div className="builder-canvas-legend"><i /> Service <i /> Connection</div>
           </div>
 
           <div className="builder-canvas-area">
@@ -705,11 +706,11 @@ function BuilderContent() {
         </main>
 
         <aside className="card builder-details-card">
-          <div className="builder-panel-heading"><div><span>Inspector</span><h2>Node details</h2></div></div>
+          <div className="builder-panel-heading"><div><span>Inspector</span><h2>Service details</h2></div></div>
 
           {!selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
-              Select a service node on the canvas to inspect its provider, interface, lifecycle, and
+              Select a service on the canvas to inspect its provider, interface, lifecycle, and
               trust status.
             </p>
           )}
@@ -739,7 +740,7 @@ function BuilderContent() {
                     fontWeight: 600,
                   }}
                 >
-                  This selected node uses a deprecated service.
+                  This selected service is deprecated.
                 </div>
               )}
 
@@ -755,7 +756,7 @@ function BuilderContent() {
                     fontWeight: 600,
                   }}
                 >
-                  This node uses sidecar orchestration. It will run through the AI-EFFECT Control
+                  This service uses sidecar orchestration. It will run through the AI-EFFECT Control
                   Interface compatibility path.
                 </div>
               )}
@@ -862,7 +863,7 @@ function BuilderContent() {
 
           <div className="builder-workflow-health">
             <span>Workflow health</span>
-            <div><strong>{canvasServices.length}</strong><small>Service nodes</small></div>
+            <div><strong>{canvasServices.length}</strong><small>{canvasServices.length === 1 ? "Service" : "Services"}</small></div>
             <div><strong>{edges.length}</strong><small>Connections</small></div>
             <div><strong>{deprecatedCanvasServices.length}</strong><small>Deprecated</small></div>
           </div>
@@ -910,7 +911,7 @@ function RuntimeReadinessPanel({
         <div>
           <span>Prepare deployment</span>
           <h2>Deployment readiness</h2>
-          <p>Checks service governance, runtime metadata, and provider-managed health before deployment.</p>
+          <p>Confirms that every service is eligible, correctly configured, and operationally ready before deployment.</p>
         </div>
         <button onClick={onPrepare} disabled={preparing} style={secondaryButton}>
           {preparing ? "Preparing deployment..." : "Check readiness again"}
@@ -1035,7 +1036,7 @@ function runtimeOwnershipGuidance(mode: string) {
   if (mode === "manual" || mode === "tef_managed") {
     return "Manual or TEF runtime: operator action or scheduling is required.";
   }
-  return "Provider-managed runtime: ask the provider to prepare the runtime.";
+  return "Runtime preparation is controlled by the service provider.";
 }
 
 function lifecycleBadgeStyle(status: string): CSSProperties {

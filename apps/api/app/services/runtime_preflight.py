@@ -13,7 +13,7 @@ DEPLOYMENT_ELIGIBLE_STATUSES = {"approved", "validated"}
 
 
 def run_runtime_preflight(workflow_nodes, db: Session):
-    """Check governance eligibility and runtime health for every workflow service node."""
+    """Check governance eligibility and runtime health for every workflow service."""
     checks = []
 
     for node in workflow_nodes:
@@ -25,11 +25,11 @@ def run_runtime_preflight(workflow_nodes, db: Session):
                 _result_check(
                     node_id=node_id,
                     service_id="",
-                    service_name="Unconfigured service node",
+                    service_name="Unconfigured service",
                     responsible_party="Solution designer",
                     status="misconfigured",
-                    message="This workflow node does not identify a catalogue service.",
-                    recommended_action="Remove the node or select a catalogue service, then validate the design again.",
+                    message="This workflow item does not identify a catalogue service.",
+                    recommended_action="Remove this item or select a catalogue service, then validate the design again.",
                 )
             )
             continue
@@ -45,7 +45,7 @@ def run_runtime_preflight(workflow_nodes, db: Session):
                     responsible_party="Service publisher",
                     status="unknown",
                     message="The referenced service does not exist in the catalogue.",
-                    recommended_action="Replace this node with an available catalogue service.",
+                    recommended_action="Replace this service selection with an available catalogue service.",
                 )
             )
             continue
@@ -88,6 +88,8 @@ def run_runtime_preflight(workflow_nodes, db: Session):
     }
     blocking_count = sum(1 for check in checks if check["blocking"])
     total_services = len(checks)
+    blocking_service_label = "service" if blocking_count == 1 else "services"
+    blocking_verb = "requires" if blocking_count == 1 else "require"
 
     return {
         "status": "blocked" if total_services == 0 or blocking_count else "ready",
@@ -101,12 +103,12 @@ def run_runtime_preflight(workflow_nodes, db: Session):
             "ineligible": counts["ineligible"],
             "unknown": counts["unknown"],
             "message": (
-                "No service nodes were provided."
+                "No services were provided."
                 if total_services == 0
                 else (
-                    "All service nodes are eligible and their runtimes are ready."
+                    "All services are eligible and their runtimes are ready."
                     if blocking_count == 0
-                    else f"{blocking_count} service node(s) require action before deployment."
+                    else f"{blocking_count} {blocking_service_label} {blocking_verb} action before deployment."
                 )
             ),
         },
