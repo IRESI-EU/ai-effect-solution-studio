@@ -30,6 +30,7 @@ from app.services.orchestrator_adapter import (
     get_workflow_tasks,
     submit_to_orchestrator,
 )
+from app.services.runtime_preflight import run_runtime_preflight
 from app.services.workflow_compiler import compile_to_wp3_payload
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.service_import import (
@@ -366,6 +367,15 @@ def compile_workflow(
 ):
     return compile_to_wp3_payload(workflow, db)
 
+
+@app.post("/workflows/runtime-preflight")
+def runtime_preflight_endpoint(
+    workflow: WorkflowSubmitRequest,
+    db: Session = Depends(get_db),
+):
+    return run_runtime_preflight(workflow.nodes, db)
+
+
 @app.post("/workflows/submit-to-orchestrator")
 def submit_workflow_to_orchestrator_endpoint(
     workflow: WorkflowSubmitRequest,
@@ -383,29 +393,16 @@ def submit_workflow_to_orchestrator_endpoint(
                 detail="Archived solutions cannot be submitted to the orchestrator.",
             )
 
-    for node in workflow.nodes:
-        if not node.service_id:
-            continue
+    preflight = run_runtime_preflight(workflow.nodes, db)
 
-        service = db.query(Service).filter(Service.id == node.service_id).first()
-
-        if not service:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Service not found: {node.service_id}",
-            )
-
-        if getattr(service, "lifecycle_status", "active") == "archived":
-            raise HTTPException(
-                status_code=400,
-                detail=f"Archived service cannot be submitted: {service.name}",
-            )
-
-        if getattr(service, "trust_badge", "") == "rejected":
-            raise HTTPException(
-                status_code=400,
-                detail=f"Rejected service cannot be submitted: {service.name}. Reopen or approve it in Admin first.",
-            )
+    if preflight["status"] == "blocked":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Deployment readiness is blocked. Resolve the reported service issues before confirming deployment.",
+                "preflight": preflight,
+            },
+        )
 
     compiled_payload = compile_to_wp3_payload(workflow, db)
 

@@ -57,6 +57,7 @@ input,
 select,
 textarea {
   font: inherit;
+  font-size: 14px;
 }
 
 button {
@@ -150,7 +151,7 @@ textarea:focus-visible {
 
 .brand-copy span {
   color: #a9a7c7;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -158,7 +159,7 @@ textarea:focus-visible {
 .sidebar-section-label {
   padding: 0 13px 9px;
   color: #747198;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -177,7 +178,7 @@ textarea:focus-visible {
   padding: 0 13px;
   border-radius: 11px;
   color: #b9b8d1;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 650;
   transition: color 160ms ease, background 160ms ease, transform 160ms ease;
 }
@@ -227,7 +228,7 @@ textarea:focus-visible {
 .orchestrator-card p {
   margin: 10px 0 13px;
   color: #aaa8c8;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.55;
 }
 
@@ -237,7 +238,7 @@ textarea:focus-visible {
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   color: #8f8daf;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .orchestrator-status strong {
@@ -271,15 +272,51 @@ textarea:focus-visible {
 }
 
 .sidebar-user-copy strong {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .sidebar-user-copy span {
   overflow: hidden;
   color: #7d7a9c;
-  font-size: 9px;
+  font-size: 12px;
   text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.role-mode-card {
+  align-items: flex-start;
+}
+
+.role-mode-card .sidebar-user-copy > span:first-child {
+  color: #aaa3cf;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.role-mode-select {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 26px 6px 8px;
+  border: 1px solid rgba(184, 170, 255, 0.3);
+  border-radius: 8px;
+  background: #272050;
+  color: #f4f1ff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.role-mode-select:focus {
+  border-color: #9d88ff;
+  outline: 2px solid rgba(157, 136, 255, 0.18);
+  outline-offset: 1px;
+}
+
+.role-mode-card small {
+  color: #918dac;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .app-main {
@@ -314,7 +351,7 @@ textarea:focus-visible {
 
 .topbar-copy span {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .topbar-actions {
@@ -332,7 +369,7 @@ textarea:focus-visible {
   border-radius: 999px;
   background: #f6f3ff;
   color: #53458d;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 750;
 }
 
@@ -345,7 +382,7 @@ textarea:focus-visible {
   background: linear-gradient(135deg, #9877ff, #5430e7);
   color: #ffffff;
   box-shadow: 0 5px 13px rgba(82, 47, 224, 0.25);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -380,7 +417,7 @@ textarea:focus-visible {
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary-dark);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 750;
   line-height: 1;
 }
@@ -432,7 +469,7 @@ td {
 
 th {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -844,7 +881,7 @@ tbody tr:hover {
   border-radius: 10px;
   background: #faf9ff;
   color: #6d7286;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
 }
 
@@ -868,7 +905,7 @@ tbody tr:hover {
 .publish-step small {
   margin-top: 3px;
   color: #85899b;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -884,12 +921,12 @@ tbody tr:hover {
 
 .publish-step-note strong {
   color: #5533c9;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .publish-step-note span {
   color: #73778d;
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -927,7 +964,7 @@ tbody tr:hover {
 .publish-review-callout p {
   margin: 4px 0 0;
   color: #665f7c;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 /* Builder workbench */
@@ -965,7 +1002,7 @@ tbody tr:hover {
 
 .builder-name-row > div:first-child span {
   color: #74798d;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -982,7 +1019,18 @@ tbody tr:hover {
   flex-wrap: wrap;
   gap: 6px;
   color: #7c8092;
-  font-size: 10px;
+  font-size: 12px;
+}
+
+.builder-stale-message {
+  margin-top: 12px;
+  padding: 10px 13px;
+  border: 1px solid #f4d58d;
+  border-radius: 10px;
+  background: #fffbeb;
+  color: #8a5a0a;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .builder-health-summary span {
@@ -1058,7 +1106,7 @@ tbody tr:hover {
 .builder-canvas-header span {
   display: block;
   color: #6847df;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1077,7 +1125,7 @@ tbody tr:hover {
   border-radius: 9px;
   background: #f0ecff;
   color: #5635d0;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .builder-search-control {
@@ -1101,7 +1149,7 @@ tbody tr:hover {
   border: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .builder-service-list-scroll .builder-service-card {
@@ -1132,7 +1180,7 @@ tbody tr:hover {
   border-radius: 12px;
   color: #7a7e91;
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .builder-canvas-card {
@@ -1161,7 +1209,7 @@ tbody tr:hover {
   align-items: center;
   gap: 7px;
   color: #818598;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .builder-canvas-legend i {
@@ -1186,6 +1234,248 @@ tbody tr:hover {
   font-size: 13px;
 }
 
+.runtime-preflight-compact {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e4e0f0;
+  border-radius: 12px;
+  background: #faf9fd;
+  color: #475467;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.runtime-preflight-statuses {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.runtime-preflight-statuses > div {
+  padding: 9px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.runtime-preflight-statuses span,
+.runtime-preflight-statuses strong {
+  display: block;
+}
+
+.runtime-preflight-statuses span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.runtime-preflight-statuses strong {
+  margin-top: 2px;
+  font-size: 13px;
+}
+
+.runtime-preflight-statuses .is-ready {
+  color: #047857;
+}
+
+.runtime-preflight-statuses .is-blocked {
+  color: #be123c;
+}
+
+.runtime-preflight-statuses .is-neutral {
+  color: #667085;
+}
+
+.runtime-preflight-counts {
+  display: flex;
+  gap: 14px;
+  padding-top: 2px;
+  color: #475467;
+}
+
+.runtime-preflight-compact > p {
+  margin: 0;
+  color: #7f1d1d;
+}
+
+.runtime-preflight-compact > a {
+  color: #5b36d6;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.runtime-readiness-panel {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+  padding: 24px;
+  scroll-margin-top: 24px;
+}
+
+.runtime-readiness-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.runtime-readiness-heading span {
+  color: #6741d9;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.runtime-readiness-heading h2 {
+  margin: 4px 0 6px;
+  color: #252842;
+  font-size: 24px;
+}
+
+.runtime-readiness-heading p,
+.runtime-readiness-summary p {
+  margin: 0;
+  color: #667085;
+  line-height: 1.6;
+}
+
+.runtime-role-note {
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid #ddd6fe;
+  border-radius: 999px;
+  background: #f5f3ff;
+  color: #655b7d;
+  font-size: 12px;
+}
+
+.runtime-role-note strong {
+  color: #5b36d6;
+}
+
+.runtime-readiness-summary {
+  padding: 16px 18px;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  background: #f8f7fc;
+}
+
+.runtime-readiness-summary > strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #35304f;
+}
+
+.runtime-readiness-summary--blocked {
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.runtime-readiness-summary--blocked > strong {
+  color: #be123c;
+}
+
+.runtime-readiness-summary--ready {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.runtime-readiness-summary--ready > strong {
+  color: #047857;
+}
+
+.runtime-readiness-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.runtime-readiness-card {
+  padding: 16px;
+  border: 1px solid #ffe4e6;
+  border-radius: 14px;
+  background: #fffafb;
+}
+
+.runtime-readiness-card > span {
+  color: #be123c;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.runtime-readiness-card h3 {
+  margin: 4px 0 12px;
+  color: #881337;
+  font-size: 16px;
+}
+
+.runtime-readiness-card dl {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.runtime-readiness-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(160px, 210px) 1fr;
+  gap: 16px;
+}
+
+.runtime-readiness-card dt {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.runtime-readiness-card dd {
+  margin: 0;
+  color: #3f3a54;
+  overflow-wrap: anywhere;
+}
+
+.runtime-readiness-card-copy {
+  margin: 12px 0 0;
+  color: #53576a;
+  line-height: 1.65;
+}
+
+.runtime-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 12px;
+  padding: 8px 11px;
+  border: 1px solid #cfc5f3;
+  border-radius: 9px;
+  background: #fff;
+  color: #5b36d6;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.runtime-readiness-actions {
+  padding: 18px;
+  border: 1px solid #ddd6fe;
+  border-radius: 14px;
+  background: #f7f5ff;
+}
+
+.runtime-readiness-actions h3 {
+  margin: 0;
+  color: #3f2d87;
+}
+
+.runtime-readiness-actions p {
+  margin: 7px 0 14px;
+  color: #5f5875;
+  line-height: 1.6;
+}
+
 .builder-workflow-health {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1198,7 +1488,7 @@ tbody tr:hover {
 .builder-workflow-health > span {
   grid-column: 1 / -1;
   color: #6b47df;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1224,7 +1514,7 @@ tbody tr:hover {
 .builder-workflow-health small {
   margin-top: 2px;
   color: #85899a;
-  font-size: 7px;
+  font-size: 12px;
 }
 
 @media (max-width: 1180px) {
@@ -1265,6 +1555,16 @@ tbody tr:hover {
 
   .builder-canvas-area {
     height: 620px;
+  }
+
+  .runtime-readiness-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .runtime-readiness-card dl > div {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }
 
