@@ -86,6 +86,11 @@ type RuntimePreflightResult = {
   checks: RuntimePreflightCheck[];
 };
 
+type SavedSolution = {
+  id: string;
+  name: string;
+};
+
 const API_BASE_URL = "http://localhost:18080";
 
 const initialNodes: Node[] = [
@@ -120,6 +125,7 @@ function BuilderContent() {
   const [validationResults, setValidationResults] = useState<string[]>([]);
   const [runtimePreflight, setRuntimePreflight] = useState<RuntimePreflightResult | null>(null);
   const [workflowDesignStatus, setWorkflowDesignStatus] = useState<"valid" | "invalid" | null>(null);
+  const [savingSolution, setSavingSolution] = useState(false);
   const [preparingDeployment, setPreparingDeployment] = useState(false);
   const [deploymentConfirmationReady, setDeploymentConfirmationReady] = useState(false);
   const [solutionNeedsRevalidation, setSolutionNeedsRevalidation] = useState(false);
@@ -130,6 +136,11 @@ function BuilderContent() {
   const [serviceSearch, setServiceSearch] = useState("");
   const [roleMode, setRoleMode] = useState<RoleMode>("solution_designer");
   const workflowRevisionRef = useRef(0);
+  const solutionSavePromiseRef = useRef<Promise<SavedSolution> | null>(null);
+  const saveDraftInFlightRef = useRef(false);
+  const prepareInFlightRef = useRef(false);
+  const confirmInFlightRef = useRef(false);
+  const preparedSolutionIdRef = useRef<string | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -157,6 +168,7 @@ function BuilderContent() {
     setRuntimePreflight(null);
     setDeploymentResult(null);
     setDeploymentConfirmationReady(false);
+    preparedSolutionIdRef.current = null;
     setSolutionNeedsRevalidation(true);
   }, []);
 
@@ -271,7 +283,7 @@ function BuilderContent() {
     invalidateWorkflowResults();
   }
 
-  function buildWorkflowPayload() {
+  function buildWorkflowPayload(solutionIdForPayload: string | null = currentSolutionId) {
     const serviceNodes = nodes.filter((node) => Boolean(node.data?.service));
     const workflowNodes = serviceNodes.map((node) => {
       const service = node.data.service as Service;
@@ -297,7 +309,7 @@ function BuilderContent() {
 
     return {
       name: solutionName || "Solution Studio Workflow",
-      solution_id: currentSolutionId,
+      solution_id: solutionIdForPayload,
       nodes: workflowNodes,
       edges: workflowEdges,
     };
@@ -402,21 +414,46 @@ function BuilderContent() {
     setRuntimePreflight(null);
     setDeploymentResult(null);
     setDeploymentConfirmationReady(false);
+    preparedSolutionIdRef.current = null;
     setSolutionNeedsRevalidation(false);
     return result;
   }
 
   async function prepareDeployment() {
+    if (prepareInFlightRef.current) return;
+    prepareInFlightRef.current = true;
+
     const design = validateWorkflow();
-    if (!design.valid) return;
+    if (!design.valid) {
+      prepareInFlightRef.current = false;
+      return;
+    }
 
     const workflowRevision = workflowRevisionRef.current;
     setPreparingDeployment(true);
     try {
-      const preflight = await runRuntimePreflight(buildWorkflowPayload());
+      let savedSolution: SavedSolution;
+      try {
+        savedSolution = await persistSolution();
+      } catch {
+        if (workflowRevision === workflowRevisionRef.current) {
+          setRuntimePreflight(null);
+          setDeploymentConfirmationReady(false);
+          setDeploymentResult({
+            status: "failed",
+            error: "The solution could not be saved. Deployment preparation was stopped.",
+          });
+        }
+        return;
+      }
+
+      if (workflowRevision !== workflowRevisionRef.current) return;
+
+      const preflight = await runRuntimePreflight(buildWorkflowPayload(savedSolution.id));
       if (workflowRevision !== workflowRevisionRef.current) return;
       setRuntimePreflight(preflight);
       setDeploymentConfirmationReady(preflight.status === "ready");
+      preparedSolutionIdRef.current = preflight.status === "ready" ? savedSolution.id : null;
       if (preflight.status === "blocked") {
         setDeploymentResult({ status: "blocked", error: preflight.summary.message });
       }
@@ -430,10 +467,13 @@ function BuilderContent() {
       });
     } finally {
       setPreparingDeployment(false);
+      prepareInFlightRef.current = false;
     }
   }
 
-  async function saveSolution() {
+  function persistSolution(): Promise<SavedSolution> {
+    if (solutionSavePromiseRef.current) return solutionSavePromiseRef.current;
+
     const payload = {
       name: solutionName || "Untitled AI-EFFECT Solution",
       description: "Saved workflow design from Builder",
@@ -446,31 +486,66 @@ function BuilderContent() {
       ? `${API_BASE_URL}/solutions/${currentSolutionId}`
       : `${API_BASE_URL}/solutions`;
 
-    const res = await fetch(url, {
-      method: currentSolutionId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const request = (async () => {
+      const res = await fetch(url, {
+        method: currentSolutionId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`Solution save failed with HTTP ${res.status}.`);
+
+      const saved = (await res.json()) as SavedSolution;
+      if (!saved.id) throw new Error("The saved solution response did not include an ID.");
+
+      setCurrentSolutionId(saved.id);
+      setSolutionName(saved.name || payload.name);
+      return saved;
+    })();
+
+    let sharedRequest: Promise<SavedSolution>;
+    sharedRequest = request.finally(() => {
+      if (solutionSavePromiseRef.current === sharedRequest) {
+        solutionSavePromiseRef.current = null;
+      }
     });
+    solutionSavePromiseRef.current = sharedRequest;
+    return sharedRequest;
+  }
 
-    if (!res.ok) {
+  async function saveSolution() {
+    if (saveDraftInFlightRef.current) return;
+    saveDraftInFlightRef.current = true;
+    setSavingSolution(true);
+
+    try {
+      await persistSolution();
+      alert("Solution saved successfully.");
+    } catch {
       alert("Failed to save solution.");
-      return;
+    } finally {
+      setSavingSolution(false);
+      saveDraftInFlightRef.current = false;
     }
-
-    const saved = await res.json();
-    setCurrentSolutionId(saved.id);
-    setSolutionName(saved.name);
-    alert("Solution saved successfully.");
   }
 
   async function confirmDeployment() {
-    if (!deploymentConfirmationReady || runtimePreflight?.status !== "ready") return;
+    const preparedSolutionId = preparedSolutionIdRef.current;
+    if (
+      confirmInFlightRef.current ||
+      !deploymentConfirmationReady ||
+      runtimePreflight?.status !== "ready" ||
+      !preparedSolutionId
+    ) {
+      return;
+    }
 
+    confirmInFlightRef.current = true;
     setSubmittingToOrchestrator(true);
     setDeploymentResult(null);
 
     try {
-      const workflowPayload = buildWorkflowPayload();
+      const workflowPayload = buildWorkflowPayload(preparedSolutionId);
       const res = await fetch(`${API_BASE_URL}/workflows/submit-to-orchestrator`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -483,6 +558,7 @@ function BuilderContent() {
         if (backendPreflight) {
           setRuntimePreflight(backendPreflight);
           setDeploymentConfirmationReady(false);
+          preparedSolutionIdRef.current = null;
           setDeploymentResult({
             status: "blocked",
             error: errorBody?.detail?.message || "Deployment readiness changed and is now blocked.",
@@ -510,7 +586,7 @@ function BuilderContent() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               workflow_id: data.workflow_id,
-              solution_id: currentSolutionId,
+              solution_id: preparedSolutionId,
               name: solutionName || "Solution Studio Workflow",
               status: data.status || "submitted",
             }),
@@ -526,6 +602,7 @@ function BuilderContent() {
       });
     } finally {
       setSubmittingToOrchestrator(false);
+      confirmInFlightRef.current = false;
     }
   }
 
@@ -541,12 +618,14 @@ function BuilderContent() {
           </p>
         </div>
         <div className="builder-top-actions">
-          <button onClick={saveSolution} style={secondaryButton}>Save draft</button>
+          <button onClick={saveSolution} style={secondaryButton} disabled={savingSolution || preparingDeployment}>
+            {savingSolution ? "Saving draft..." : "Save draft"}
+          </button>
           <button onClick={validateWorkflow} style={secondaryButton}>Validate design</button>
           <button
             onClick={prepareDeployment}
             style={{ ...primaryButton, opacity: preparingDeployment ? 0.7 : 1 }}
-            disabled={preparingDeployment}
+            disabled={preparingDeployment || savingSolution}
           >
             {preparingDeployment ? "Preparing deployment..." : "Prepare & deploy"}
           </button>
