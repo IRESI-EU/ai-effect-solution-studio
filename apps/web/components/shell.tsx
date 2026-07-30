@@ -15,7 +15,13 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  getStoredRoleMode,
+  roleModeOptions,
+  storeRoleMode,
+  type RoleMode,
+} from "./role-mode";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -30,6 +36,16 @@ const navItems = [
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [roleMode, setRoleMode] = useState<RoleMode>("solution_designer");
+
+  useEffect(() => {
+    setRoleMode(getStoredRoleMode());
+  }, []);
+
+  function changeRoleMode(role: RoleMode) {
+    setRoleMode(role);
+    storeRoleMode(role);
+  }
 
   function isActive(href: string) {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -97,13 +113,23 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <div className="sidebar-user">
+        <div className="sidebar-user role-mode-card">
           <div className="sidebar-user-avatar"><CircleUserRound size={22} aria-hidden="true" /></div>
           <div className="sidebar-user-copy">
-            <strong>TEF Operator</strong>
-            <span>admin@ai-effect.eu</span>
+            <span>Preview experience as</span>
+            <select
+              className="role-mode-select"
+              aria-label="Preview experience as"
+              value={roleMode}
+              onChange={(event) => changeRoleMode(event.target.value as RoleMode)}
+            >
+              {roleModeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            <span>Product experience preview</span>
+            <small>Changes guidance only; permissions are unchanged.</small>
           </div>
-          <ChevronRight size={16} aria-hidden="true" />
         </div>
       </aside>
 
