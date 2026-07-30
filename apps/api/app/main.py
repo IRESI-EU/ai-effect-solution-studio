@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.db import Base, engine, get_db
 from app.models.deployment import Deployment
+from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.models.solution import Solution
+from app.routers.operation_contracts import router as operation_contracts_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
     DeploymentCreate,
@@ -45,6 +47,7 @@ from app.services.service_manifest_importer import normalize_manifest, preview_s
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
+app.include_router(operation_contracts_router)
 
 app.add_middleware(
     CORSMiddleware,

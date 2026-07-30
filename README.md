@@ -341,6 +341,7 @@ The MVP uses SQLAlchemy `Base.metadata.create_all(...)` rather than a migration 
 
 - [Team testing guide](docs/TEAM_TESTING_GUIDE.md)
 - [Current capabilities](docs/CURRENT_CAPABILITIES.md)
+- [Operation Contract Registry V1](docs/OPERATION_CONTRACTS.md)
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [MVP release notes](docs/MVP_RELEASE_NOTES.md)
 - [Service onboarding](docs/service-onboarding.md)
