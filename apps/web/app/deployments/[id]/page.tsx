@@ -331,14 +331,22 @@ export default function DeploymentDetailPage({
             </div>
           )}
 
-          {!previewLoading && preview && <PreviewPanel preview={preview} />}
+          {!previewLoading && preview && <PreviewPanel preview={preview} onPreview={previewReference} />}
         </section>
       )}
     </div>
   );
 }
 
-function PreviewPanel({ preview }: { preview: any }) {
+function PreviewPanel({ preview, onPreview }: { preview: any; onPreview: (ref: any) => void }) {
+  if (preview.kind === "svg" && preview.available && preview.image_data_url) {
+    return (
+      <div style={{ border: "1px solid #e4e9f2", borderRadius: 14, padding: 16, background: "white" }}>
+        <PreviewHeader preview={preview} />
+        <img src={preview.image_data_url} alt="Workflow SVG output" style={{ display: "block", maxWidth: "100%", maxHeight: 700, margin: "auto" }} />
+      </div>
+    );
+  }
   if (preview.kind === "csv" && preview.rows && preview.columns) {
     return (
       <div
@@ -415,6 +423,7 @@ function PreviewPanel({ preview }: { preview: any }) {
   }
 
   if (preview.kind === "json" && preview.content) {
+    const drawings = Array.isArray(preview.content?.drawings) ? preview.content.drawings : [];
     return (
       <div
         style={{
@@ -426,6 +435,17 @@ function PreviewPanel({ preview }: { preview: any }) {
         }}
       >
         <PreviewHeader preview={preview} />
+        {drawings.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+            {drawings.map((drawing: any, index: number) =>
+              typeof drawing?.uri === "string" && drawing.uri.toLowerCase().endsWith(".svg") ? (
+                <button key={`${drawing.uri}-${index}`} type="button" onClick={() => onPreview({ protocol: "file", uri: drawing.uri, format: "svg" })} style={{ padding: "8px 12px", cursor: "pointer" }}>
+                  View drawing {drawing.network_index ?? index + 1}
+                </button>
+              ) : null
+            )}
+          </div>
+        )}
         <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
           {JSON.stringify(preview.content, null, 2)}
         </pre>

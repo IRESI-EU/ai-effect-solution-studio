@@ -1,4 +1,8 @@
+import base64
+import json
+
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 
 from app.models.service import Service
 from app.schemas.workflow_submit import WorkflowSubmitRequest
@@ -86,7 +90,7 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
 
     warnings = build_compile_warnings(resolved_nodes)
 
-    return {
+    result = {
         "blueprint": {
             "name": workflow.name,
             "pipeline_id": "solution-studio-generated",
@@ -108,6 +112,16 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
             "warnings": warnings,
         },
     }
+    if workflow.run_input is not None:
+        encoded = json.dumps(workflow.run_input, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        if len(encoded) > 65536:
+            raise HTTPException(status_code=422, detail="Run input must be at most 64 KiB of JSON.")
+        result["inputs"] = [{
+            "protocol": "inline",
+            "uri": base64.b64encode(encoded).decode("ascii"),
+            "format": "json",
+        }]
+    return result
 
 
 def resolve_node_runtime_metadata(node, db: Session | None):

@@ -25,3 +25,5 @@ class WorkflowSubmitRequest(BaseModel):
     solution_id: str | None = None
     nodes: list[WorkflowSubmitNode]
     edges: list[WorkflowSubmitEdge]
+    # Optional JSON object supplied at run time to the workflow's start nodes.
+    run_input: dict | None = None
