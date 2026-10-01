@@ -100,8 +100,12 @@ export default function DeploymentDetailPage({
   }
 
   useEffect(() => {
+    let cancelled = false;
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
     async function load() {
       const { id } = await params;
+      if (cancelled) return;
       setWorkflowId(id);
 
       try {
@@ -114,7 +118,9 @@ export default function DeploymentDetailPage({
         }
 
         const workflowData = await workflowRes.json();
+        if (cancelled) return;
         setWorkflow(workflowData);
+        setError("");
 
         if (workflowData.status) {
           await syncDeploymentStatus(id, workflowData.status);
@@ -129,13 +135,21 @@ export default function DeploymentDetailPage({
         }
 
         const tasksData = await tasksRes.json();
+        if (cancelled) return;
         setTasks(tasksData.tasks || []);
+        if (!["completed", "failed"].includes(workflowData.status)) {
+          refreshTimer = setTimeout(load, 5000);
+        }
       } catch {
-        setError("Failed to load deployment details.");
+        if (!cancelled) setError("Failed to load deployment details. Refresh the page to retry.");
       }
     }
 
     load();
+    return () => {
+      cancelled = true;
+      if (refreshTimer) clearTimeout(refreshTimer);
+    };
   }, [params]);
 
   return (
