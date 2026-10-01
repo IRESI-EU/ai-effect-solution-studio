@@ -1,6 +1,7 @@
 import base64
 import csv
 import json
+import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -10,6 +11,30 @@ import requests
 MAX_TEXT_PREVIEW_CHARS = 5000
 MAX_CSV_ROWS = 20
 HTTP_TIMEOUT_SECONDS = 10
+MAX_SVG_BYTES = 2 * 1024 * 1024
+
+
+def preview_svg_file(uri: str):
+    """Resolve node /data paths only inside the mounted artifact directory."""
+    root = Path(os.getenv("ARTIFACT_BASE_PATH", "/wp3-artifacts")).resolve()
+    source = Path(uri)
+    if not source.is_absolute() or source.suffix.lower() != ".svg":
+        return {"kind": "svg", "available": False, "message": "Invalid SVG artifact path."}
+    if source.parts[:2] == ("/", "data"):
+        source = root.joinpath(*source.parts[2:])
+    path = source.resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        return {"kind": "svg", "available": False, "message": "SVG artifact is not available in the shared artifact volume."}
+    if path.stat().st_size > MAX_SVG_BYTES:
+        return {"kind": "svg", "available": False, "message": "SVG exceeds the 2 MiB preview limit."}
+    content = path.read_bytes()
+    # SVGs are displayed as images, never injected into the page as markup.
+    if b"<svg" not in content[:2048].lower() or b"<!doctype" in content.lower() or b"<!entity" in content.lower():
+        return {"kind": "svg", "available": False, "message": "Invalid SVG artifact."}
+    return {
+        "kind": "svg", "available": True, "format": "svg", "content_type": "image/svg+xml",
+        "uri": uri, "image_data_url": "data:image/svg+xml;base64," + base64.b64encode(content).decode("ascii"),
+    }
 
 
 def decode_inline_reference(uri: str):
@@ -32,6 +57,8 @@ def decode_inline_reference(uri: str):
 
 
 def preview_file_reference(uri: str):
+    if Path(uri).suffix.lower() == ".svg":
+        return preview_svg_file(uri)
     path = Path(uri)
 
     if not path.exists():
