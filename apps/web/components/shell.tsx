@@ -35,6 +35,8 @@ const navItems = [
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const environmentLabel =
+    process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL || "Local environment";
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [roleMode, setRoleMode] = useState<RoleMode>("solution_designer");
 
@@ -77,7 +79,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <div className="brand-mark" aria-hidden="true">AI</div>
           <div className="brand-copy">
             <strong>AI-EFFECT</strong>
-            <span>Solution Studio</span>
+            <span>Web portal</span>
           </div>
         </div>
 
@@ -106,10 +108,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <span className="status-dot" aria-hidden="true" />
             <strong>WP3 Orchestrator</strong>
           </div>
-          <p>Connected through the backend adapter layer and ready for trusted workflows.</p>
+          <p>Workflow submissions are checked by the backend before they reach WP3.</p>
           <div className="orchestrator-status">
-            <span>System status</span>
-            <strong>Operational</strong>
+            <span>Connection</span>
+            <strong>Checked on deploy</strong>
           </div>
         </div>
 
@@ -137,11 +139,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <header className="topbar">
           <div className="topbar-copy">
             <strong>Trusted Energy AI Marketplace</strong>
-            <span>Publish, compose, validate, and deploy AI services</span>
+            <span>Discover, compose, validate, and run energy AI services</span>
           </div>
           <div className="topbar-actions">
-            <span className="environment-pill"><span aria-hidden="true" /> MVP Environment</span>
-            <div className="topbar-avatar" aria-label="Signed in as TEF Operator">AS</div>
+            <span className="environment-pill"><span aria-hidden="true" /> {environmentLabel}</span>
+            <div className="topbar-avatar" aria-label="Local portal session">AI</div>
           </div>
         </header>
 

@@ -119,6 +119,7 @@ export default function BuilderPage() {
 function BuilderContent() {
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
+  const catalogueServiceId = searchParams.get("serviceId");
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -143,6 +144,7 @@ function BuilderContent() {
   const saveDraftInFlightRef = useRef(false);
   const prepareInFlightRef = useRef(false);
   const confirmInFlightRef = useRef(false);
+  const catalogueServiceHandledRef = useRef<string | null>(null);
   const preparedSolutionIdRef = useRef<string | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
@@ -228,6 +230,20 @@ function BuilderContent() {
 
     loadSolution();
   }, [solutionId, setNodes, setEdges]);
+
+  useEffect(() => {
+    if (!catalogueServiceId || solutionId || services.length === 0) return;
+    if (catalogueServiceHandledRef.current === catalogueServiceId) return;
+
+    const requestedService = services.find(
+      (service) => service.id === catalogueServiceId
+    );
+    if (!requestedService) return;
+
+    catalogueServiceHandledRef.current = catalogueServiceId;
+    addServiceToCanvas(requestedService);
+    setSelectedService(requestedService);
+  }, [catalogueServiceId, services, solutionId]);
 
   function handleNodesChange(changes: NodeChange<Node>[]) {
     onNodesChange(changes);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type DeploymentRecord = {
   id: string;
@@ -26,6 +26,17 @@ export default function DeploymentDetailPage({
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<any>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const previewSectionRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!previewLoading && !preview) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      previewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [previewLoading, preview]);
 
   async function previewReference(ref: any) {
     setPreviewLoading(true);
@@ -329,8 +340,20 @@ export default function DeploymentDetailPage({
       </section>
 
       {(previewLoading || preview) && (
-        <section className="card" style={{ padding: 30, marginTop: 20 }}>
-          <h2>Artifact / DataReference Preview</h2>
+        <section
+          ref={previewSectionRef}
+          className="card deployment-preview-card"
+          aria-live="polite"
+        >
+          <div className="deployment-preview-heading">
+            <div>
+              <span className="badge">Result preview</span>
+              <h2>Artifact / DataReference Preview</h2>
+            </div>
+            {!previewLoading && preview?.kind && (
+              <span className="deployment-preview-kind">{preview.kind}</span>
+            )}
+          </div>
 
           {previewLoading && (
             <div
@@ -438,31 +461,39 @@ function PreviewPanel({ preview, onPreview }: { preview: any; onPreview: (ref: a
 
   if (preview.kind === "json" && preview.content) {
     const drawings = Array.isArray(preview.content?.drawings) ? preview.content.drawings : [];
+    const report = preview.content?.report;
     return (
-      <div
-        style={{
-          padding: 16,
-          borderRadius: 14,
-          background: "#f8fafc",
-          color: "#344054",
-          overflowX: "auto",
-        }}
-      >
+      <div className="deployment-json-preview">
         <PreviewHeader preview={preview} />
+        {report && typeof report === "object" && (
+          <div className="deployment-report-summary">
+            <div>
+              <span>Result summary</span>
+              <strong>{String(report.summary || report.title || "Report generated successfully")}</strong>
+            </div>
+            {report.recommended_network != null && (
+              <div>
+                <span>Recommended network</span>
+                <strong>{String(report.recommended_network)}</strong>
+              </div>
+            )}
+          </div>
+        )}
         {drawings.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+          <div className="deployment-drawing-actions">
             {drawings.map((drawing: any, index: number) =>
               typeof drawing?.uri === "string" && drawing.uri.toLowerCase().endsWith(".svg") ? (
-                <button key={`${drawing.uri}-${index}`} type="button" onClick={() => onPreview({ protocol: "file", uri: drawing.uri, format: "svg" })} style={{ padding: "8px 12px", cursor: "pointer" }}>
+                <button key={`${drawing.uri}-${index}`} type="button" onClick={() => onPreview({ protocol: "file", uri: drawing.uri, format: "svg" })}>
                   View drawing {drawing.network_index ?? index + 1}
                 </button>
               ) : null
             )}
           </div>
         )}
-        <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-          {JSON.stringify(preview.content, null, 2)}
-        </pre>
+        <details className="deployment-raw-output">
+          <summary>View raw JSON output</summary>
+          <pre>{JSON.stringify(preview.content, null, 2)}</pre>
+        </details>
       </div>
     );
   }
@@ -652,6 +683,7 @@ function ReferenceList({
             </div>
 
             <button
+              type="button"
               onClick={() => onPreview(ref)}
               style={{
                 marginTop: 10,

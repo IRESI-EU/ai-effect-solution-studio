@@ -22,7 +22,76 @@ type Service = {
   adapter_type?: string | null;
   health_path?: string | null;
   contract_uri?: string | null;
+  operation_name?: string | null;
+  node_type?: string | null;
 };
+
+type ServicePresentation = {
+  displayName: string;
+  purpose: string;
+  stage: string;
+};
+
+const operationPresentation: Record<string, ServicePresentation> = {
+  BuildRunConfig: {
+    displayName: "SYSLAB configuration assistant",
+    purpose: "Turns a plain-language district-heating request into a structured run configuration for topology generation.",
+    stage: "1 · Configure the scenario",
+  },
+  GenerateTopology: {
+    displayName: "District-heating topology generator",
+    purpose: "Generates feasible SYSLAB network candidates from a validated supply, load, and routing configuration.",
+    stage: "2 · Generate candidate networks",
+  },
+  RenderTopologies: {
+    displayName: "Topology drawing service",
+    purpose: "Renders generated network candidates as SVG diagrams so operators can review and compare the options.",
+    stage: "3 · Review visual results",
+  },
+  ConfigureAndSynthesize: {
+    displayName: "Synthetic grid generator",
+    purpose: "Creates a reproducible pandapower grid model for testing network-optimisation algorithms.",
+    stage: "1 · Generate a test grid",
+  },
+  RunBenchmark: {
+    displayName: "Grid optimisation benchmark",
+    purpose: "Runs a Grid2Op benchmark against a supplied grid and reports scenario-level and aggregate performance indicators.",
+    stage: "2 · Evaluate an algorithm",
+  },
+  GetConfiguration: {
+    displayName: "Energy pipeline configuration",
+    purpose: "Provides the run configuration used to start the Portuguese synthetic energy-data demonstration.",
+    stage: "1 · Prepare the run",
+  },
+  GenerateData: {
+    displayName: "Synthetic energy data generator",
+    purpose: "Produces a repeatable household energy dataset for downstream analysis and reporting.",
+    stage: "2 · Generate energy data",
+  },
+  AnalyzeData: {
+    displayName: "Energy efficiency analyser",
+    purpose: "Analyses an upstream energy CSV for efficiency indicators and potential anomalies.",
+    stage: "3 · Analyse the dataset",
+  },
+  GenerateReport: {
+    displayName: "Energy analysis report",
+    purpose: "Summarises analysed energy data into a compact report of anomalies, efficiency, and power statistics.",
+    stage: "4 · Produce the report",
+  },
+};
+
+function getServicePresentation(service: Service): ServicePresentation {
+  const nameParts = service.name.split("/");
+  const operation =
+    service.operation_name || nameParts[nameParts.length - 1]?.trim() || "";
+  return operationPresentation[operation] || {
+    displayName: service.name,
+    purpose: service.description || "Technical service metadata is available while the provider description is being completed.",
+    stage: service.node_type
+      ? service.node_type.replaceAll("_", " ")
+      : "Workflow service",
+  };
+}
 
 async function getServices(): Promise<Service[]> {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:18080";
@@ -228,9 +297,9 @@ export default async function CataloguePage({
       <div className="catalogue-page-header">
         <div>
           <span className="badge">Service Marketplace</span>
-          <h1 style={{ margin: "14px 0 8px", fontSize: 42, letterSpacing: "-0.04em" }}>Discover AI-EFFECT services</h1>
+          <h1 style={{ margin: "14px 0 8px", fontSize: 42, letterSpacing: "-0.04em" }}>Find the right service for your energy AI workflow</h1>
           <p style={{ maxWidth: 700, margin: 0, color: "#626a83", fontSize: 16, lineHeight: 1.65 }}>
-            Browse trusted, Dockerized AI services published by AI-EFFECT nodes.
+            Understand what each service does, what it needs, and where it fits before adding it to a solution.
           </p>
         </div>
 
@@ -298,10 +367,11 @@ export default async function CataloguePage({
         {visibleServices.map((service) => {
           const lifecycleStatus = getLifecycleStatus(service);
           const isDeprecated = lifecycleStatus === "deprecated";
+          const presentation = getServicePresentation(service);
 
           return (
             <div
-              className="card"
+              className="card catalogue-service-card"
               key={service.id}
               style={{
                 display: "flex",
@@ -328,7 +398,12 @@ export default async function CataloguePage({
                   marginTop: 16,
                 }}
               >
-                <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-0.02em" }}>{service.name}</h2>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-0.02em" }}>{presentation.displayName}</h2>
+                  {presentation.displayName !== service.name && (
+                    <div className="catalogue-technical-name">{service.name}</div>
+                  )}
+                </div>
                 <span style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
               </div>
 
@@ -373,9 +448,11 @@ export default async function CataloguePage({
                 </div>
               )}
 
-              <p style={{ color: "#606880", lineHeight: 1.65, minHeight: 68, marginTop: 17 }}>
-                {service.description || "No description provided."}
+              <p className="catalogue-service-purpose">
+                {presentation.purpose}
               </p>
+
+              <div className="catalogue-workflow-stage">{presentation.stage}</div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4, padding: 13, borderRadius: 12, background: "#f9f8fd", fontSize: 11 }}>
                 <div><span style={{ display: "block", color: "#85899a", fontSize: 9 }}>INPUT</span><strong style={{ wordBreak: "break-word" }}>{service.input_type || "Not specified"}</strong></div>
@@ -401,7 +478,7 @@ export default async function CataloguePage({
                   View details <ArrowRight size={14} />
                 </Link>
                 <Link
-                  href="/builder"
+                  href={`/builder?serviceId=${encodeURIComponent(service.id)}`}
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -415,7 +492,7 @@ export default async function CataloguePage({
                     fontWeight: 800,
                   }}
                 >
-                  Add to workflow
+                  Add to solution
                 </Link>
               </div>
             </div>
