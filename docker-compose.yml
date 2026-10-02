@@ -16,11 +16,13 @@ services:
       DATABASE_URL: postgresql+psycopg://solution_studio:solution_studio@postgres:5432/solution_studio
       ORCHESTRATOR_BASE_URL: http://host.docker.internal:18000
       ARTIFACT_BASE_PATH: /wp3-artifacts
+      ARTIFACT_BASE_PATHS: /denmark-artifacts
     ports:
       - "18080:8080"
     volumes:
       - wp3_artifacts:/wp3-artifacts:ro
       - wp3_artifacts:/app/data:ro
+      - denmark_node_data:/denmark-artifacts:ro
     depends_on:
       - postgres
 
@@ -39,3 +41,6 @@ volumes:
   postgres_data:
   wp3_artifacts:
     external: true
+  denmark_node_data:
+    external: true
+    name: denmark-node-data

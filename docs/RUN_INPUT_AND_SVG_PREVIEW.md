@@ -11,32 +11,34 @@ stored in the reusable solution design.
 In Run details, a file DataReference ending in `.svg` can be viewed as an
 image. JSON output with a `drawings` array containing SVG `uri` values also
 offers a **View drawing** button for each image. The API reads these files from
-`ARTIFACT_BASE_PATH` (default `/wp3-artifacts`); a node path `/data/...` maps
-to that mount. The same shared Docker volume must be attached to the node
-services and Studio API. The API only serves SVGs within the artifact mount,
-with a 2 MiB preview limit. SVG markup is shown through an image element, not
-inserted into the document as HTML. Missing volumes and remote artifact URLs
-need separate storage integration.
+`ARTIFACT_BASE_PATH` (default `/wp3-artifacts`) and any comma-separated roots
+in `ARTIFACT_BASE_PATHS`; a node path `/data/...` is searched within those
+read-only mounts. The same shared Docker volume must be attached to the node
+services and Studio API. JSON, CSV, text and SVG previews use the same
+restricted resolver. The API only serves files within configured artifact
+mounts, and SVG files have a 2 MiB preview limit. SVG markup is shown through
+an image element, not inserted into the document as HTML. Missing volumes and
+remote artifact URLs need separate storage integration.
 
 For the Danish local Compose stack, the named volume is `denmark-node-data`.
-If it is mounted in Studio API at `/data` (as in the existing local override),
-also set `ARTIFACT_BASE_PATH=/data` for the Studio API. The default Studio
-Compose file instead points to the separate `wp3_artifacts` volume at
-`/wp3-artifacts`, which does **not** contain Danish drawings. For example,
-add the following to a local Compose override:
+The default Studio Compose file mounts it read-only at `/denmark-artifacts`
+and includes that path in `ARTIFACT_BASE_PATHS`. It retains the separate
+`wp3_artifacts` mount for other local services. If a deployment uses a
+different node stack, add that stack's artifact volume as another read-only
+mount and append its container path to `ARTIFACT_BASE_PATHS`. For example:
 
 ```yaml
 services:
   api:
     environment:
-      ARTIFACT_BASE_PATH: /data
+      ARTIFACT_BASE_PATHS: /denmark-artifacts,/another-node-artifacts
     volumes:
-      - denmark-node-data:/data:ro
+      - another-node-data:/another-node-artifacts:ro
     networks:
       - default
       - ai-effect-services
 volumes:
-  denmark-node-data:
+  another-node-data:
     external: true
 networks:
   ai-effect-services:

@@ -14,16 +14,49 @@ HTTP_TIMEOUT_SECONDS = 10
 MAX_SVG_BYTES = 2 * 1024 * 1024
 
 
+def artifact_roots() -> list[Path]:
+    """Return the configured read-only roots used to resolve node /data paths."""
+    configured = [os.getenv("ARTIFACT_BASE_PATH", "/wp3-artifacts")]
+    configured.extend(os.getenv("ARTIFACT_BASE_PATHS", "").split(","))
+
+    roots: list[Path] = []
+    for value in configured:
+        value = value.strip()
+        if not value:
+            continue
+        root = Path(value).resolve()
+        if root not in roots:
+            roots.append(root)
+    return roots
+
+
+def resolve_artifact_file(uri: str) -> Path | None:
+    """Resolve a file URI only when it belongs to a configured artifact root."""
+    source = Path(uri)
+    if not source.is_absolute():
+        return None
+
+    roots = artifact_roots()
+    if source.parts[:2] == ("/", "data"):
+        relative_parts = source.parts[2:]
+        for root in roots:
+            candidate = root.joinpath(*relative_parts).resolve()
+            if candidate.is_relative_to(root) and candidate.is_file():
+                return candidate
+        return None
+
+    path = source.resolve()
+    if any(path.is_relative_to(root) for root in roots) and path.is_file():
+        return path
+    return None
+
+
 def preview_svg_file(uri: str):
-    """Resolve node /data paths only inside the mounted artifact directory."""
-    root = Path(os.getenv("ARTIFACT_BASE_PATH", "/wp3-artifacts")).resolve()
     source = Path(uri)
     if not source.is_absolute() or source.suffix.lower() != ".svg":
         return {"kind": "svg", "available": False, "message": "Invalid SVG artifact path."}
-    if source.parts[:2] == ("/", "data"):
-        source = root.joinpath(*source.parts[2:])
-    path = source.resolve()
-    if not path.is_relative_to(root) or not path.is_file():
+    path = resolve_artifact_file(uri)
+    if path is None:
         return {"kind": "svg", "available": False, "message": "SVG artifact is not available in the shared artifact volume."}
     if path.stat().st_size > MAX_SVG_BYTES:
         return {"kind": "svg", "available": False, "message": "SVG exceeds the 2 MiB preview limit."}
@@ -59,9 +92,9 @@ def decode_inline_reference(uri: str):
 def preview_file_reference(uri: str):
     if Path(uri).suffix.lower() == ".svg":
         return preview_svg_file(uri)
-    path = Path(uri)
+    path = resolve_artifact_file(uri)
 
-    if not path.exists():
+    if path is None:
         return {
             "kind": "file",
             "available": False,
@@ -90,7 +123,7 @@ def preview_file_reference(uri: str):
 
     return parse_content_preview(
         content=content,
-        format_hint=path.suffix.lower().replace(".", ""),
+        format_hint=Path(uri).suffix.lower().replace(".", ""),
         source_uri=uri,
         kind="file",
     )

@@ -48,3 +48,43 @@ def test_svg_preview_rejects_outside_artifact_volume(tmp_path, monkeypatch):
     outside.write_text("<svg></svg>", encoding="utf-8")
     assert preview_data_reference("file", str(outside))["available"] is False
     assert preview_data_reference("file", "/data/../private.svg")["available"] is False
+
+
+def test_json_preview_maps_node_path_into_shared_volume(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARTIFACT_BASE_PATH", str(tmp_path))
+    result = tmp_path / "wf-demo" / "result.json"
+    result.parent.mkdir()
+    result.write_text('{"status": "completed", "score": 0.92}', encoding="utf-8")
+
+    preview = preview_data_reference("file", "/data/wf-demo/result.json")
+
+    assert preview["available"] is True
+    assert preview["kind"] == "json"
+    assert preview["content"] == {"status": "completed", "score": 0.92}
+
+
+def test_file_preview_searches_additional_artifact_roots(tmp_path, monkeypatch):
+    primary = tmp_path / "primary"
+    secondary = tmp_path / "denmark"
+    primary.mkdir()
+    result = secondary / "wf-demo" / "result.json"
+    result.parent.mkdir(parents=True)
+    result.write_text('{"drawings": [{"uri": "/data/wf-demo/drawing.svg"}]}', encoding="utf-8")
+    monkeypatch.setenv("ARTIFACT_BASE_PATH", str(primary))
+    monkeypatch.setenv("ARTIFACT_BASE_PATHS", str(secondary))
+
+    preview = preview_data_reference("file", "/data/wf-demo/result.json")
+
+    assert preview["available"] is True
+    assert preview["content"]["drawings"][0]["uri"].endswith("drawing.svg")
+
+
+def test_file_preview_rejects_paths_outside_artifact_roots(tmp_path, monkeypatch):
+    root = tmp_path / "artifacts"
+    root.mkdir()
+    outside = tmp_path / "private.json"
+    outside.write_text('{"secret": true}', encoding="utf-8")
+    monkeypatch.setenv("ARTIFACT_BASE_PATH", str(root))
+
+    assert preview_data_reference("file", str(outside))["available"] is False
+    assert preview_data_reference("file", "/data/../private.json")["available"] is False
