@@ -5,5 +5,8 @@ services:
   villas-chronics:
     ports: !reset []
 
+  villas-node:
+    image: ai-effect-villas-node:f2fbc82b
+
   output-formatter:
     ports: !reset []

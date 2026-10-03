@@ -12,6 +12,12 @@ Pinned source revisions for the first release candidate:
 - Dutch: `paulban/ai-effect-wp3` at
   `ba598b2459f9986dac4e37dcc5d7d3298f25dc3a`
 
+The German stack's historical registry tag has been removed upstream. Build
+`ai-effect-villas-node:f2fbc82b` from `VILLASframework/node` commit
+`f2fbc82b5f7457c6c276260fd977e7a991d02f5e` with
+`packaging/docker/Dockerfile.debian`; the overlay deliberately uses that local,
+pinned image instead of an unversioned registry tag.
+
 The Portuguese stack also requires `data/real_data.csv` and a server-only
 `PORTUGAL_CLICKHOUSE_PASSWORD` value. Never commit either a production password
 or restricted input data to this repository.
