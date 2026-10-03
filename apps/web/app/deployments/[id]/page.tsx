@@ -13,6 +13,16 @@ type DeploymentRecord = {
   updated_at: string;
 };
 
+type DrawingReference = {
+  uri: string;
+  network_index?: number | string;
+};
+
+type DrawingPreviewOptions = {
+  drawings: DrawingReference[];
+  selectedIndex: number;
+};
+
 export default function DeploymentDetailPage({
   params,
 }: {
@@ -26,6 +36,8 @@ export default function DeploymentDetailPage({
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<any>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewDrawings, setPreviewDrawings] = useState<DrawingReference[]>([]);
+  const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -38,7 +50,9 @@ export default function DeploymentDetailPage({
     return () => window.cancelAnimationFrame(frame);
   }, [previewLoading, preview]);
 
-  async function previewReference(ref: any) {
+  async function previewReference(ref: any, drawingOptions?: DrawingPreviewOptions) {
+    setPreviewDrawings(drawingOptions?.drawings || []);
+    setSelectedDrawingIndex(drawingOptions?.selectedIndex ?? null);
     setPreviewLoading(true);
     setPreview(null);
 
@@ -368,18 +382,53 @@ export default function DeploymentDetailPage({
             </div>
           )}
 
-          {!previewLoading && preview && <PreviewPanel preview={preview} onPreview={previewReference} />}
+          {!previewLoading && preview && (
+            <PreviewPanel
+              preview={preview}
+              drawings={previewDrawings}
+              selectedDrawingIndex={selectedDrawingIndex}
+              onPreview={previewReference}
+            />
+          )}
         </section>
       )}
     </div>
   );
 }
 
-function PreviewPanel({ preview, onPreview }: { preview: any; onPreview: (ref: any) => void }) {
+function PreviewPanel({
+  preview,
+  drawings,
+  selectedDrawingIndex,
+  onPreview,
+}: {
+  preview: any;
+  drawings: DrawingReference[];
+  selectedDrawingIndex: number | null;
+  onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
+}) {
   if (preview.kind === "svg" && preview.available && preview.image_data_url) {
     return (
-      <div style={{ border: "1px solid #e4e9f2", borderRadius: 14, padding: 16, background: "white" }}>
+      <div className="deployment-svg-preview">
         <PreviewHeader preview={preview} />
+        {drawings.length > 0 && (
+          <div className="deployment-drawing-gallery-nav">
+            <div className="deployment-drawing-gallery-heading">
+              <div>
+                <strong>Topology drawings</strong>
+                <span>Select another drawing without returning to the output reference.</span>
+              </div>
+              <span>
+                Drawing {(selectedDrawingIndex ?? 0) + 1} of {drawings.length}
+              </span>
+            </div>
+            <DrawingButtons
+              drawings={drawings}
+              selectedIndex={selectedDrawingIndex}
+              onPreview={onPreview}
+            />
+          </div>
+        )}
         <img src={preview.image_data_url} alt="Workflow SVG output" style={{ display: "block", maxWidth: "100%", maxHeight: 700, margin: "auto" }} />
       </div>
     );
@@ -480,15 +529,7 @@ function PreviewPanel({ preview, onPreview }: { preview: any; onPreview: (ref: a
           </div>
         )}
         {drawings.length > 0 && (
-          <div className="deployment-drawing-actions">
-            {drawings.map((drawing: any, index: number) =>
-              typeof drawing?.uri === "string" && drawing.uri.toLowerCase().endsWith(".svg") ? (
-                <button key={`${drawing.uri}-${index}`} type="button" onClick={() => onPreview({ protocol: "file", uri: drawing.uri, format: "svg" })}>
-                  View drawing {drawing.network_index ?? index + 1}
-                </button>
-              ) : null
-            )}
-          </div>
+          <DrawingButtons drawings={drawings} selectedIndex={null} onPreview={onPreview} />
         )}
         <details className="deployment-raw-output">
           <summary>View raw JSON output</summary>
@@ -569,6 +610,45 @@ function PreviewPanel({ preview, onPreview }: { preview: any; onPreview: (ref: a
       {typeof preview.content === "string"
         ? preview.content
         : JSON.stringify(preview, null, 2)}
+    </div>
+  );
+}
+
+function DrawingButtons({
+  drawings,
+  selectedIndex,
+  onPreview,
+}: {
+  drawings: DrawingReference[];
+  selectedIndex: number | null;
+  onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
+}) {
+  const previewableDrawings = drawings.filter(
+    (drawing) =>
+      typeof drawing?.uri === "string" && drawing.uri.toLowerCase().endsWith(".svg")
+  );
+
+  return (
+    <div className="deployment-drawing-actions" aria-label="Available topology drawings">
+      {previewableDrawings.map((drawing, index) => {
+        const isSelected = selectedIndex === index;
+        return (
+          <button
+            className={isSelected ? "is-selected" : undefined}
+            key={`${drawing.uri}-${index}`}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() =>
+              onPreview(
+                { protocol: "file", uri: drawing.uri, format: "svg" },
+                { drawings: previewableDrawings, selectedIndex: index }
+              )
+            }
+          >
+            {isSelected ? "Viewing" : "View"} drawing {drawing.network_index ?? index + 1}
+          </button>
+        );
+      })}
     </div>
   );
 }

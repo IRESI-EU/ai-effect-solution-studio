@@ -2198,6 +2198,51 @@ tbody tr:hover {
   color: #344054;
 }
 
+.deployment-svg-preview {
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid #e4e0f2;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.deployment-drawing-gallery-nav {
+  margin: 4px 0 18px;
+  padding: 15px;
+  border: 1px solid #ded8f2;
+  border-radius: 13px;
+  background: #f8f6ff;
+}
+
+.deployment-drawing-gallery-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.deployment-drawing-gallery-heading strong,
+.deployment-drawing-gallery-heading span {
+  display: block;
+}
+
+.deployment-drawing-gallery-heading > div > span {
+  margin-top: 3px;
+  color: #70768c;
+  font-size: 12px;
+}
+
+.deployment-drawing-gallery-heading > span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #e9e2ff;
+  color: #5534c8;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
 .deployment-report-summary {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(180px, 0.35fr);
@@ -2240,6 +2285,18 @@ tbody tr:hover {
   background: #fff;
   color: #5738c8;
   font-weight: 800;
+}
+
+.deployment-drawing-actions button:hover {
+  border-color: #8e73ed;
+  background: #f4f0ff;
+}
+
+.deployment-drawing-actions button.is-selected {
+  border-color: #5b2cf2;
+  background: linear-gradient(135deg, #5b2cf2, #4320ca);
+  box-shadow: 0 7px 18px rgba(70, 34, 190, 0.2);
+  color: #fff;
 }
 
 .deployment-raw-output {
@@ -2293,5 +2350,14 @@ tbody tr:hover {
 
   .deployment-preview-card {
     padding: 22px;
+  }
+
+  .deployment-drawing-gallery-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .deployment-drawing-gallery-heading > span {
+    width: fit-content;
   }
 }
