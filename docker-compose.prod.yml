@@ -1,0 +1,107 @@
+name: ai-effect-solution-studio
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-solution_studio}
+      POSTGRES_USER: ${POSTGRES_USER:-solution_studio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the production environment file}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-solution_studio} -d ${POSTGRES_DB:-solution_studio}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+
+  api:
+    image: ai-effect-solution-studio-api:${STUDIO_IMAGE_TAG:-latest}
+    build:
+      context: ./apps/api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-solution_studio}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-solution_studio}
+      ORCHESTRATOR_BASE_URL: http://orchestrator-api-1:8000
+      ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY:-}
+      ARTIFACT_BASE_PATH: /wp3-artifacts
+      ARTIFACT_BASE_PATHS: /denmark-artifacts
+    volumes:
+      - wp3_artifacts:/wp3-artifacts:ro
+      - wp3_artifacts:/app/data:ro
+      - denmark_node_data:/denmark-artifacts:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+      - orchestrator
+      - services
+
+  web:
+    image: ai-effect-solution-studio-web:${STUDIO_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      INTERNAL_API_URL: http://api:8080
+    ports:
+      - "${STUDIO_BIND_ADDRESS:-127.0.0.1}:${STUDIO_PORT:-13000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+      - edge
+
+volumes:
+  postgres_data:
+  wp3_artifacts:
+    external: true
+  denmark_node_data:
+    external: true
+    name: denmark-node-data
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  edge:
+    driver: bridge
+  orchestrator:
+    external: true
+    name: orchestrator_default
+  services:
+    external: true
+    name: ai-effect-services

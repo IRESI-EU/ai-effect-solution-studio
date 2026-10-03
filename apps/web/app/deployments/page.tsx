@@ -34,8 +34,8 @@ export default function DeploymentsPage() {
 
   async function loadDeployments() {
     const [res, archivedRes] = await Promise.all([
-      fetch("http://localhost:18080/deployments"),
-      fetch("http://localhost:18080/deployments?archived_only=true"),
+      fetch("/api/deployments"),
+      fetch("/api/deployments?archived_only=true"),
     ]);
 
     if (!res.ok) {
@@ -58,7 +58,7 @@ export default function DeploymentsPage() {
 
     try {
       const syncRes = await fetch(
-        "http://localhost:18080/deployments/sync-statuses",
+        "/api/deployments/sync-statuses",
         {
           method: "POST",
         }
@@ -93,7 +93,7 @@ export default function DeploymentsPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:18080/deployments/${deploymentId}/archive`,
+        `/api/deployments/${deploymentId}/archive`,
         {
           method: "PUT",
         }

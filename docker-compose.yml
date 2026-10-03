@@ -9,6 +9,11 @@ services:
       - "15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U solution_studio -d solution_studio"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   api:
     build: ./apps/api
@@ -24,13 +29,17 @@ services:
       - wp3_artifacts:/app/data:ro
       - denmark_node_data:/denmark-artifacts:ro
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - services
 
   web:
-    build: ./apps/web
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://api:8080
-      NEXT_PUBLIC_BROWSER_API_BASE_URL: http://localhost:18080
       INTERNAL_API_URL: http://api:8080
     ports:
       - "13000:3000"
@@ -44,3 +53,8 @@ volumes:
   denmark_node_data:
     external: true
     name: denmark-node-data
+
+networks:
+  services:
+    external: true
+    name: ai-effect-services

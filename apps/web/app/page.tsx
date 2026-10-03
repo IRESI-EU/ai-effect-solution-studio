@@ -33,8 +33,7 @@ type DashboardData = {
 async function loadDashboardData(): Promise<DashboardData> {
   const apiBaseUrl =
     process.env.INTERNAL_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "http://localhost:18080";
+    "http://api:8080";
 
   try {
     const [servicesResponse, solutionsResponse, deploymentsResponse, healthResponse] =

@@ -56,7 +56,7 @@ export default function SolutionDetailsPage({
   const [syncSummary, setSyncSummary] = useState<SyncSummary | null>(null);
 
   async function loadSolution(id: string) {
-    const res = await fetch(`http://localhost:18080/solutions/${id}/workspace`);
+    const res = await fetch(`/api/solutions/${id}/workspace`);
 
     if (!res.ok) {
       throw new Error("Failed to load solution workspace.");
@@ -77,7 +77,7 @@ export default function SolutionDetailsPage({
 
     try {
       const syncRes = await fetch(
-        "http://localhost:18080/deployments/sync-statuses",
+        "/api/deployments/sync-statuses",
         {
           method: "POST",
         }
@@ -110,7 +110,7 @@ export default function SolutionDetailsPage({
 
     try {
       const res = await fetch(
-        `http://localhost:18080/deployments/${deploymentId}/archive`,
+        `/api/deployments/${deploymentId}/archive`,
         {
           method: "PUT",
         }

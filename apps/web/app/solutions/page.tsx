@@ -34,7 +34,7 @@ function getApiBaseUrls() {
     return [process.env.INTERNAL_API_URL];
   }
 
-  return ["http://api:8080", "http://localhost:18080"];
+  return ["http://api:8080"];
 }
 
 async function getSolutions(): Promise<SolutionsResult> {

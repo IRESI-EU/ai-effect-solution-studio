@@ -57,7 +57,7 @@ export default function DeploymentDetailPage({
     setPreview(null);
 
     try {
-      const res = await fetch("http://localhost:18080/data-references/preview", {
+      const res = await fetch("/api/data-references/preview", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,7 +89,7 @@ export default function DeploymentDetailPage({
   async function syncDeploymentStatus(workflowId: string, status: string) {
     try {
       const deploymentRes = await fetch(
-        `http://localhost:18080/deployments/by-workflow/${workflowId}`
+        `/api/deployments/by-workflow/${workflowId}`
       );
 
       if (!deploymentRes.ok) {
@@ -101,7 +101,7 @@ export default function DeploymentDetailPage({
 
       if (deployment.status !== status) {
         const updateRes = await fetch(
-          `http://localhost:18080/deployments/${deployment.id}`,
+          `/api/deployments/${deployment.id}`,
           {
             method: "PUT",
             headers: {
@@ -135,7 +135,7 @@ export default function DeploymentDetailPage({
 
       try {
         const workflowRes = await fetch(
-          `http://localhost:18080/orchestrator/workflows/${id}`
+          `/api/orchestrator/workflows/${id}`
         );
 
         if (!workflowRes.ok) {
@@ -152,7 +152,7 @@ export default function DeploymentDetailPage({
         }
 
         const tasksRes = await fetch(
-          `http://localhost:18080/orchestrator/workflows/${id}/tasks`
+          `/api/orchestrator/workflows/${id}/tasks`
         );
 
         if (!tasksRes.ok) {

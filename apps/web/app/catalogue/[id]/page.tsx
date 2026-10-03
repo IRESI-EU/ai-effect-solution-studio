@@ -165,7 +165,7 @@ function getPresentation(service: Service): ServicePresentation {
 }
 
 async function getService(id: string): Promise<Service> {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:18080";
+  const apiBaseUrl = process.env.INTERNAL_API_URL || "http://api:8080";
   const res = await fetch(`${apiBaseUrl}/services/${id}`, { cache: "no-store" });
 
   if (!res.ok) throw new Error("Failed to load service");

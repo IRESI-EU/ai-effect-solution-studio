@@ -34,7 +34,7 @@ export default function AdminPage() {
     setError("");
 
     const res = await fetch(
-      "http://localhost:18080/services?include_archived=true"
+      "/api/services?include_archived=true"
     );
 
     if (!res.ok) {
@@ -69,7 +69,7 @@ export default function AdminPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:18080/services/${serviceId}/${action}`,
+        `/api/services/${serviceId}/${action}`,
         {
           method: "PUT",
         }
@@ -110,7 +110,7 @@ export default function AdminPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:18080/services/${serviceId}/review/${action}`,
+        `/api/services/${serviceId}/review/${action}`,
         {
           method: "POST",
         }

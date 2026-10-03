@@ -3,7 +3,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
 
-const API_BASE_URL = "http://localhost:18080";
+const API_BASE_URL = "/api";
 
 type ValidationMessage = {
   level: "success" | "warning" | "error";

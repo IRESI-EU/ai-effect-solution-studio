@@ -1,0 +1,40 @@
+services:
+  web:
+    networks:
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: traefik_network
+
+      traefik.http.services.ai-effect-studio.loadbalancer.server.port: "3000"
+
+      traefik.http.routers.ai-effect-studio.rule: Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)
+      traefik.http.routers.ai-effect-studio.entrypoints: websecure
+      traefik.http.routers.ai-effect-studio.middlewares: ai-effect-studio-retry
+      traefik.http.routers.ai-effect-studio.tls.certresolver: letsencrypt
+      traefik.http.routers.ai-effect-studio.service: ai-effect-studio
+      traefik.http.routers.ai-effect-studio.priority: "10"
+
+      traefik.http.routers.ai-effect-studio-public-api.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && Method(`GET`, `HEAD`) && (Path(`/api/health`) || PathPrefix(`/api/services`))
+      traefik.http.routers.ai-effect-studio-public-api.entrypoints: websecure
+      traefik.http.routers.ai-effect-studio-public-api.middlewares: ai-effect-studio-retry
+      traefik.http.routers.ai-effect-studio-public-api.tls.certresolver: letsencrypt
+      traefik.http.routers.ai-effect-studio-public-api.service: ai-effect-studio
+      traefik.http.routers.ai-effect-studio-public-api.priority: "200"
+
+      traefik.http.routers.ai-effect-studio-management.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && (PathPrefix(`/admin`) || PathPrefix(`/builder`) || PathPrefix(`/publish`) || PathPrefix(`/deployments`) || PathPrefix(`/solutions`) || PathPrefix(`/api`))
+      traefik.http.routers.ai-effect-studio-management.entrypoints: websecure
+      traefik.http.routers.ai-effect-studio-management.middlewares: ai-effect-studio-admin-auth,ai-effect-studio-retry
+      traefik.http.routers.ai-effect-studio-management.tls.certresolver: letsencrypt
+      traefik.http.routers.ai-effect-studio-management.service: ai-effect-studio
+      traefik.http.routers.ai-effect-studio-management.priority: "100"
+
+      traefik.http.middlewares.ai-effect-studio-admin-auth.basicauth.users: ${STUDIO_BASIC_AUTH_USERS:?Set STUDIO_BASIC_AUTH_USERS in the production environment file}
+      traefik.http.middlewares.ai-effect-studio-admin-auth.basicauth.removeheader: "true"
+      traefik.http.middlewares.ai-effect-studio-retry.retry.attempts: "3"
+      traefik.http.middlewares.ai-effect-studio-retry.retry.initialinterval: 100ms
+
+networks:
+  traefik:
+    external: true
+    name: traefik_network

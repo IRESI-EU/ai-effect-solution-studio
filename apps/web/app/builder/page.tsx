@@ -91,7 +91,7 @@ type SavedSolution = {
   name: string;
 };
 
-const API_BASE_URL = "http://localhost:18080";
+const API_BASE_URL = "/api";
 
 const initialNodes: Node[] = [
   {
