@@ -1,0 +1,9 @@
+services:
+  data-provider:
+    ports: !reset []
+
+  villas-chronics:
+    ports: !reset []
+
+  output-formatter:
+    ports: !reset []

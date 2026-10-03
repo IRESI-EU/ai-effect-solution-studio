@@ -1,0 +1,53 @@
+services:
+  clickhouse-server:
+    ports: !reset []
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${PORTUGAL_CLICKHOUSE_PASSWORD:?Set PORTUGAL_CLICKHOUSE_PASSWORD}
+
+  data-provision:
+    ports: !reset []
+    environment:
+      CLICKHOUSE_HOST: clickhouse-server
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ${PORTUGAL_CLICKHOUSE_PASSWORD:?Set PORTUGAL_CLICKHOUSE_PASSWORD}
+      SELF_URL: http://pt-data-provision:600
+    networks:
+      tef-network:
+        aliases:
+          - pt-data-provision
+
+  knowledge-store:
+    ports: !reset []
+    environment:
+      SELF_URL: http://pt-knowledge-store:8000
+      DATA_PROVISION_URL: http://pt-data-provision:600
+    networks:
+      tef-network:
+        aliases:
+          - pt-knowledge-store
+
+  synthetic-data:
+    container_name: pt-synthetic-data
+    ports: !reset []
+    environment:
+      ML_GRETEL_PORT: "600"
+      ML_GRETEL_RELOAD: "False"
+      SELF_URL: http://pt-synthetic-data:600
+    networks:
+      tef-network:
+        aliases:
+          - pt-synthetic-data
+    volumes:
+      - portugal_synthetic_models:/app/models
+
+volumes:
+  portugal_synthetic_models:
+    name: portugal-synthetic-models
+
+networks:
+  tef-network:
+    name: ai-effect-services
+    external: true
+    driver: !reset null

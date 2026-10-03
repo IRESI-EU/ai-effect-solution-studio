@@ -1,0 +1,20 @@
+services:
+  synthetic-data:
+    container_name: nl-grid-synth-service
+    ports: !reset []
+    environment:
+      ML_GRETEL_PORT: "8080"
+      ML_GRETEL_RELOAD: "False"
+      SELF_URL: http://grid_synth_service:8080
+      GRPC_HOST: grid_synth_service
+      GRPC_PORT: "50051"
+    volumes:
+      - dutch_synthetic_models:/app/models
+    networks:
+      services:
+        aliases:
+          - grid_synth_service
+
+volumes:
+  dutch_synthetic_models:
+    name: dutch-synthetic-models
