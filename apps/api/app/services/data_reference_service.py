@@ -1,6 +1,7 @@
 import base64
 import csv
 import json
+import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -10,6 +11,63 @@ import requests
 MAX_TEXT_PREVIEW_CHARS = 5000
 MAX_CSV_ROWS = 20
 HTTP_TIMEOUT_SECONDS = 10
+MAX_SVG_BYTES = 2 * 1024 * 1024
+
+
+def artifact_roots() -> list[Path]:
+    """Return the configured read-only roots used to resolve node /data paths."""
+    configured = [os.getenv("ARTIFACT_BASE_PATH", "/wp3-artifacts")]
+    configured.extend(os.getenv("ARTIFACT_BASE_PATHS", "").split(","))
+
+    roots: list[Path] = []
+    for value in configured:
+        value = value.strip()
+        if not value:
+            continue
+        root = Path(value).resolve()
+        if root not in roots:
+            roots.append(root)
+    return roots
+
+
+def resolve_artifact_file(uri: str) -> Path | None:
+    """Resolve a file URI only when it belongs to a configured artifact root."""
+    source = Path(uri)
+    if not source.is_absolute():
+        return None
+
+    roots = artifact_roots()
+    if source.parts[:2] == ("/", "data"):
+        relative_parts = source.parts[2:]
+        for root in roots:
+            candidate = root.joinpath(*relative_parts).resolve()
+            if candidate.is_relative_to(root) and candidate.is_file():
+                return candidate
+        return None
+
+    path = source.resolve()
+    if any(path.is_relative_to(root) for root in roots) and path.is_file():
+        return path
+    return None
+
+
+def preview_svg_file(uri: str):
+    source = Path(uri)
+    if not source.is_absolute() or source.suffix.lower() != ".svg":
+        return {"kind": "svg", "available": False, "message": "Invalid SVG artifact path."}
+    path = resolve_artifact_file(uri)
+    if path is None:
+        return {"kind": "svg", "available": False, "message": "SVG artifact is not available in the shared artifact volume."}
+    if path.stat().st_size > MAX_SVG_BYTES:
+        return {"kind": "svg", "available": False, "message": "SVG exceeds the 2 MiB preview limit."}
+    content = path.read_bytes()
+    # SVGs are displayed as images, never injected into the page as markup.
+    if b"<svg" not in content[:2048].lower() or b"<!doctype" in content.lower() or b"<!entity" in content.lower():
+        return {"kind": "svg", "available": False, "message": "Invalid SVG artifact."}
+    return {
+        "kind": "svg", "available": True, "format": "svg", "content_type": "image/svg+xml",
+        "uri": uri, "image_data_url": "data:image/svg+xml;base64," + base64.b64encode(content).decode("ascii"),
+    }
 
 
 def decode_inline_reference(uri: str):
@@ -32,9 +90,11 @@ def decode_inline_reference(uri: str):
 
 
 def preview_file_reference(uri: str):
-    path = Path(uri)
+    if Path(uri).suffix.lower() == ".svg":
+        return preview_svg_file(uri)
+    path = resolve_artifact_file(uri)
 
-    if not path.exists():
+    if path is None:
         return {
             "kind": "file",
             "available": False,
@@ -63,7 +123,7 @@ def preview_file_reference(uri: str):
 
     return parse_content_preview(
         content=content,
-        format_hint=path.suffix.lower().replace(".", ""),
+        format_hint=Path(uri).suffix.lower().replace(".", ""),
         source_uri=uri,
         kind="file",
     )

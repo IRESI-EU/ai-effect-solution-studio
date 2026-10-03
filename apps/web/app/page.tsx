@@ -12,145 +12,256 @@ import {
   Users,
 } from "lucide-react";
 
-const stats = [
-  { label: "Services", value: "12", text: "Validated and draft AI services", detail: "+3 this month", icon: Boxes, colors: ["#eeeaff", "#6744df"] },
-  { label: "Providers", value: "5", text: "AI-EFFECT onboarding nodes", detail: "Across 4 regions", icon: Building2, colors: ["#eaf2ff", "#3b6fd8"] },
-  { label: "Workflows", value: "8", text: "Solution drafts and deployments", detail: "2 currently active", icon: Network, colors: ["#e8f8fb", "#1489a4"] },
-  { label: "Trust checks", value: "24", text: "Interface and metadata validations", detail: "100% passing", icon: ShieldCheck, colors: ["#e9f8f1", "#20895e"] },
-];
+export const dynamic = "force-dynamic";
+
+type Service = { provider?: string | null; lifecycle_status?: string | null };
+type Solution = { id: string; name: string; updated_at: string };
+type Deployment = {
+  workflow_id: string;
+  name: string;
+  status: string;
+  created_at: string;
+};
+
+type DashboardData = {
+  services: Service[];
+  solutions: Solution[];
+  deployments: Deployment[];
+  apiAvailable: boolean;
+};
+
+async function loadDashboardData(): Promise<DashboardData> {
+  const apiBaseUrl =
+    process.env.INTERNAL_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "http://localhost:18080";
+
+  try {
+    const [servicesResponse, solutionsResponse, deploymentsResponse, healthResponse] =
+      await Promise.all([
+        fetch(`${apiBaseUrl}/services`, { cache: "no-store" }),
+        fetch(`${apiBaseUrl}/solutions`, { cache: "no-store" }),
+        fetch(`${apiBaseUrl}/deployments`, { cache: "no-store" }),
+        fetch(`${apiBaseUrl}/health`, { cache: "no-store" }),
+      ]);
+
+    if (!servicesResponse.ok || !solutionsResponse.ok || !deploymentsResponse.ok) {
+      throw new Error("Dashboard data is unavailable");
+    }
+
+    return {
+      services: await servicesResponse.json(),
+      solutions: await solutionsResponse.json(),
+      deployments: await deploymentsResponse.json(),
+      apiAvailable: healthResponse.ok,
+    };
+  } catch {
+    return { services: [], solutions: [], deployments: [], apiAvailable: false };
+  }
+}
 
 const journeys = [
   {
-    title: "For nodes",
-    text: "Publish Dockerized AI services using guided metadata, interface validation, and governance approval.",
+    title: "For node providers",
+    text: "Publish a Dockerized service, validate its interface metadata, and submit it for governance review.",
     href: "/publish",
-    cta: "Publish my service",
+    cta: "Publish a service",
     icon: PackagePlus,
     colors: ["#eeeaff", "#6744df"],
   },
   {
-    title: "For AI vendors",
-    text: "Discover trusted services, compose them visually, validate compatibility, and deploy AI solutions.",
+    title: "For solution designers",
+    text: "Discover services, connect them visually, validate readiness, and prepare a traceable workflow run.",
     href: "/builder",
     cta: "Build a solution",
     icon: Sparkles,
     colors: ["#eaf2ff", "#3b6fd8"],
   },
   {
-    title: "For TEF operators",
-    text: "Review services, assign trust badges, monitor executions, and maintain platform governance.",
+    title: "For platform operators",
+    text: "Review service submissions, manage lifecycle states, and inspect deployment evidence without hiding technical detail.",
     href: "/admin",
-    cta: "Review platform",
+    cta: "Open governance",
     icon: Users,
     colors: ["#e9f8f1", "#20895e"],
   },
 ];
 
-const activity = [
-  { title: "Service validated", text: "Grid Load Forecaster passed all trust checks", time: "12 min ago", icon: ShieldCheck },
-  { title: "Workflow saved", text: "Renewable Dispatch Optimizer was updated", time: "1 hour ago", icon: Network },
-  { title: "Deployment completed", text: "Workflow run wf-2038 completed successfully", time: "3 hours ago", icon: CloudCog },
-];
+export default async function Page() {
+  const data = await loadDashboardData();
+  const activeServices = data.services.filter(
+    (service) => (service.lifecycle_status || "active") === "active"
+  ).length;
+  const providers = new Set(
+    data.services.map((service) => service.provider).filter(Boolean)
+  ).size;
+  const completedRuns = data.deployments.filter(
+    (deployment) => deployment.status === "completed"
+  ).length;
+  const recentDeployments = [...data.deployments]
+    .sort(
+      (left, right) =>
+        new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+    )
+    .slice(0, 3);
 
-export default function Page() {
+  const stats = [
+    {
+      label: "Services",
+      value: String(data.services.length),
+      text: `${activeServices} active catalogue entries`,
+      icon: Boxes,
+      colors: ["#eeeaff", "#6744df"],
+    },
+    {
+      label: "Providers",
+      value: String(providers),
+      text: "Providers represented in the catalogue",
+      icon: Building2,
+      colors: ["#eaf2ff", "#3b6fd8"],
+    },
+    {
+      label: "Saved solutions",
+      value: String(data.solutions.length),
+      text: "Draft and submitted workflow designs",
+      icon: Network,
+      colors: ["#e8f8fb", "#1489a4"],
+    },
+    {
+      label: "Completed runs",
+      value: String(completedRuns),
+      text: `${data.deployments.length} deployment records in total`,
+      icon: ShieldCheck,
+      colors: ["#e9f8f1", "#20895e"],
+    },
+  ];
+
   return (
     <div className="page">
-      <section
-        className="dashboard-hero"
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          minHeight: 310,
-          padding: "44px 48px",
-          borderRadius: 22,
-          color: "white",
-          background: "linear-gradient(118deg, #25117e 0%, #5030da 55%, #7547ed 100%)",
-          boxShadow: "0 20px 44px rgba(60, 32, 164, 0.22)",
-        }}
-      >
-        <div style={{ position: "absolute", width: 360, height: 360, right: -90, top: -170, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-        <div style={{ position: "absolute", width: 230, height: 230, right: 205, bottom: -175, borderRadius: "50%", background: "rgba(158,123,255,0.34)" }} />
-        <div style={{ position: "relative", zIndex: 2, maxWidth: 850 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "7px 11px", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 999, background: "rgba(255,255,255,0.09)", fontSize: 11, fontWeight: 800 }}>
-            <Sparkles size={15} /> AI-EFFECT Solution Studio
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-orb dashboard-hero-orb-one" />
+        <div className="dashboard-hero-orb dashboard-hero-orb-two" />
+        <div className="dashboard-hero-content">
+          <span className="dashboard-hero-label">
+            <Sparkles size={15} /> AI-EFFECT Web portal
           </span>
-          <h1 style={{ maxWidth: 850, margin: "18px 0 14px", color: "white", fontSize: "clamp(36px, 4.5vw, 56px)", lineHeight: 1.04, letterSpacing: "-0.045em" }}>
-            Build trusted energy AI solutions from validated service building blocks.
-          </h1>
-          <p style={{ maxWidth: 760, margin: 0, color: "#ded9fb", fontSize: 16, lineHeight: 1.65 }}>
-            A marketplace and visual workflow studio for node providers, AI vendors, and TEF operators, built on top of the AI-EFFECT WP3 orchestrator.
+          <h1>Turn trusted energy AI services into deployable solutions.</h1>
+          <p>
+            Explore services from AI-EFFECT nodes, compose a visual workflow,
+            validate deployment readiness, and inspect evidence from WP3 runs.
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 27 }}>
-            <Link href="/catalogue" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 17px", borderRadius: 10, background: "white", color: "#4a29dd", fontWeight: 800, boxShadow: "0 9px 24px rgba(23,12,83,0.2)" }}>
-              Explore catalogue <ArrowRight size={17} />
+          <div className="dashboard-hero-actions">
+            <Link href="/catalogue" className="dashboard-primary-action">
+              Explore services <ArrowRight size={17} />
             </Link>
-            <Link href="/publish" style={{ display: "inline-flex", alignItems: "center", padding: "12px 17px", border: "1px solid rgba(255,255,255,0.35)", borderRadius: 10, background: "rgba(255,255,255,0.08)", color: "white", fontWeight: 800 }}>
-              Publish my service
+            <Link href="/builder" className="dashboard-secondary-action">
+              Build a solution
             </Link>
           </div>
         </div>
       </section>
 
-      <SectionHeading eyebrow="At a glance" title="Platform overview" trailing={<span style={{ display: "flex", alignItems: "center", gap: 7, color: "#71778f", fontSize: 11 }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#22b979" }} /> Live MVP data</span>} />
+      {!data.apiAvailable && (
+        <div className="dashboard-data-warning" role="status">
+          Live portal data is temporarily unavailable. Start the local API and refresh this page.
+        </div>
+      )}
+
+      <SectionHeading eyebrow="Live workspace" title="Portal overview" />
       <section className="dashboard-metric-grid">
         {stats.map(({ icon: Icon, ...stat }) => (
-          <article className="card dashboard-metric-card" key={stat.label} style={{ position: "relative", padding: 20 }}>
-            <div style={{ display: "grid", width: 42, height: 42, placeItems: "center", borderRadius: 12, background: stat.colors[0], color: stat.colors[1] }}><Icon size={22} /></div>
-            <div style={{ position: "absolute", top: 19, right: 20, fontSize: 30, fontWeight: 900, letterSpacing: "-0.04em" }}>{stat.value}</div>
-            <h3 style={{ margin: "15px 0 3px", fontSize: 15 }}>{stat.label}</h3>
-            <p style={{ margin: 0, color: "#68708a", fontSize: 11 }}>{stat.text}</p>
-            <div style={{ marginTop: 13, color: "#85899b", fontSize: 10 }}>{stat.detail}</div>
+          <article className="card dashboard-metric-card" key={stat.label}>
+            <div className="dashboard-metric-icon" style={{ background: stat.colors[0], color: stat.colors[1] }}>
+              <Icon size={22} />
+            </div>
+            <strong className="dashboard-metric-value">{stat.value}</strong>
+            <h3>{stat.label}</h3>
+            <p>{stat.text}</p>
           </article>
         ))}
       </section>
 
-      <SectionHeading eyebrow="Get started" title="What would you like to do?" />
+      <SectionHeading eyebrow="Choose a path" title="What do you want to accomplish?" />
       <section className="dashboard-role-grid">
         {journeys.map(({ icon: Icon, ...item }) => (
-          <article className="card dashboard-role-card" key={item.title} style={{ display: "flex", gap: 16, padding: 22 }}>
-            <div style={{ display: "grid", width: 46, height: 46, flex: "0 0 46px", placeItems: "center", borderRadius: 13, background: item.colors[0], color: item.colors[1] }}><Icon size={24} /></div>
+          <article className="card dashboard-role-card" key={item.title}>
+            <div className="dashboard-role-icon" style={{ background: item.colors[0], color: item.colors[1] }}>
+              <Icon size={24} />
+            </div>
             <div>
-              <h2 style={{ margin: "1px 0 8px", fontSize: 16 }}>{item.title}</h2>
-              <p style={{ minHeight: 50, margin: "0 0 13px", color: "#606880", fontSize: 12, lineHeight: 1.55 }}>{item.text}</p>
-              <Link href={item.href} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#5d3ddd", fontSize: 11, fontWeight: 850 }}>{item.cta} <ArrowRight size={15} /></Link>
+              <h2>{item.title}</h2>
+              <p>{item.text}</p>
+              <Link href={item.href}>{item.cta} <ArrowRight size={15} /></Link>
             </div>
           </article>
         ))}
       </section>
 
       <section className="dashboard-lower-grid">
-        <div className="card" style={{ padding: 22 }}>
-          <CardHeader title="Recent activity" subtitle="The latest changes across your workspace" action={<Link href="/deployments" style={{ color: "#5d3ddd", fontSize: 11, fontWeight: 800 }}>View all</Link>} />
-          <div>
-            {activity.map(({ icon: Icon, ...item }) => (
-              <div className="dashboard-activity-row" key={item.title} style={{ display: "grid", gridTemplateColumns: "36px 1fr auto", alignItems: "center", gap: 12, padding: "13px 0", borderBottom: "1px solid #efedf5" }}>
-                <div style={{ display: "grid", width: 34, height: 34, placeItems: "center", borderRadius: 10, background: "#f0edff", color: "#6544de" }}><Icon size={18} /></div>
-                <div style={{ display: "grid", gap: 2 }}><strong style={{ fontSize: 11 }}>{item.title}</strong><span style={{ color: "#72778c", fontSize: 10 }}>{item.text}</span></div>
-                <time style={{ color: "#9699a8", fontSize: 9 }}>{item.time}</time>
+        <div className="card dashboard-panel-card">
+          <CardHeader
+            title="Recent deployment activity"
+            subtitle="Latest records stored by the portal"
+            action={<Link href="/deployments">View deployments</Link>}
+          />
+          {recentDeployments.length === 0 ? (
+            <p className="dashboard-empty-copy">No deployment activity is available yet.</p>
+          ) : (
+            recentDeployments.map((deployment) => (
+              <div className="dashboard-activity-row" key={deployment.workflow_id}>
+                <div className="dashboard-activity-icon"><CloudCog size={18} /></div>
+                <div>
+                  <strong>{deployment.name}</strong>
+                  <span>{deployment.workflow_id}</span>
+                </div>
+                <div className="dashboard-activity-meta">
+                  <span className={`dashboard-run-status status-${deployment.status}`}>
+                    {deployment.status}
+                  </span>
+                  <time>{formatDate(deployment.created_at)}</time>
+                </div>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
 
-        <div className="card" style={{ padding: 22 }}>
-          <CardHeader title="Platform status" subtitle="AI-EFFECT infrastructure" action={<span style={{ padding: "5px 9px", borderRadius: 999, background: "#e9f7f0", color: "#198456", fontSize: 9, fontWeight: 850 }}>All operational</span>} />
-          <StatusRow name="WP3 Orchestrator" detail="Connected" />
-          <StatusRow name="Catalogue API" detail="Healthy" />
-          <StatusRow name="Trust validation" detail="Healthy" />
+        <div className="card dashboard-panel-card">
+          <CardHeader
+            title="Connection model"
+            subtitle="What the portal verifies automatically"
+            action={
+              <span className={data.apiAvailable ? "dashboard-api-online" : "dashboard-api-offline"}>
+                {data.apiAvailable ? "API available" : "API unavailable"}
+              </span>
+            }
+          />
+          <StatusRow name="Catalogue API" detail={data.apiAvailable ? "Responding locally" : "Not reachable"} active={data.apiAvailable} />
+          <StatusRow name="Service runtimes" detail="Checked during deployment preparation" />
+          <StatusRow name="WP3 submission" detail="Confirmed immediately before every run" />
         </div>
       </section>
     </div>
   );
 }
 
-function SectionHeading({ eyebrow, title, trailing }: { eyebrow: string; title: string; trailing?: React.ReactNode }) {
-  return <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", margin: "28px 2px 14px" }}><div><span style={{ color: "#6949e6", fontSize: 9, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase" }}>{eyebrow}</span><h2 style={{ margin: "5px 0 0", fontSize: 20, letterSpacing: "-0.02em" }}>{title}</h2></div>{trailing}</div>;
+function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return <div className="dashboard-section-heading"><div><span>{eyebrow}</span><h2>{title}</h2></div></div>;
 }
 
 function CardHeader({ title, subtitle, action }: { title: string; subtitle: string; action: React.ReactNode }) {
-  return <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", paddingBottom: 15, borderBottom: "1px solid #efedf5" }}><div><h2 style={{ margin: 0, fontSize: 16 }}>{title}</h2><p style={{ margin: "4px 0 0", color: "#73788d", fontSize: 10 }}>{subtitle}</p></div>{action}</div>;
+  return <div className="dashboard-card-header"><div><h2>{title}</h2><p>{subtitle}</p></div>{action}</div>;
 }
 
-function StatusRow({ name, detail }: { name: string; detail: string }) {
-  return <div style={{ display: "grid", gridTemplateColumns: "8px 1fr auto", alignItems: "center", gap: 10, padding: "16px 3px", borderBottom: "1px solid #efedf5" }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#2abe7d", boxShadow: "0 0 0 4px #e8f8f0" }} /><div style={{ display: "grid", gap: 2 }}><strong style={{ fontSize: 11 }}>{name}</strong><span style={{ color: "#74798e", fontSize: 9 }}>{detail}</span></div><span style={{ color: "#198456", fontSize: 9, fontWeight: 800 }}><CheckCircle2 size={14} /></span></div>;
+function StatusRow({ name, detail, active = true }: { name: string; detail: string; active?: boolean }) {
+  return <div className="dashboard-status-row"><span className={active ? "is-active" : "is-inactive"} /><div><strong>{name}</strong><small>{detail}</small></div><CheckCircle2 size={15} aria-hidden="true" /></div>;
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("en-IE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }

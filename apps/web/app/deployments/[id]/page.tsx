@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type DeploymentRecord = {
   id: string;
@@ -11,6 +11,16 @@ type DeploymentRecord = {
   status: string;
   created_at: string;
   updated_at: string;
+};
+
+type DrawingReference = {
+  uri: string;
+  network_index?: number | string;
+};
+
+type DrawingPreviewOptions = {
+  drawings: DrawingReference[];
+  selectedIndex: number;
 };
 
 export default function DeploymentDetailPage({
@@ -26,8 +36,23 @@ export default function DeploymentDetailPage({
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<any>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewDrawings, setPreviewDrawings] = useState<DrawingReference[]>([]);
+  const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
+  const previewSectionRef = useRef<HTMLElement | null>(null);
 
-  async function previewReference(ref: any) {
+  useEffect(() => {
+    if (!previewLoading && !preview) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      previewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [previewLoading, preview]);
+
+  async function previewReference(ref: any, drawingOptions?: DrawingPreviewOptions) {
+    setPreviewDrawings(drawingOptions?.drawings || []);
+    setSelectedDrawingIndex(drawingOptions?.selectedIndex ?? null);
     setPreviewLoading(true);
     setPreview(null);
 
@@ -100,8 +125,12 @@ export default function DeploymentDetailPage({
   }
 
   useEffect(() => {
+    let cancelled = false;
+    let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+
     async function load() {
       const { id } = await params;
+      if (cancelled) return;
       setWorkflowId(id);
 
       try {
@@ -114,7 +143,9 @@ export default function DeploymentDetailPage({
         }
 
         const workflowData = await workflowRes.json();
+        if (cancelled) return;
         setWorkflow(workflowData);
+        setError("");
 
         if (workflowData.status) {
           await syncDeploymentStatus(id, workflowData.status);
@@ -129,13 +160,21 @@ export default function DeploymentDetailPage({
         }
 
         const tasksData = await tasksRes.json();
+        if (cancelled) return;
         setTasks(tasksData.tasks || []);
+        if (!["completed", "failed"].includes(workflowData.status)) {
+          refreshTimer = setTimeout(load, 5000);
+        }
       } catch {
-        setError("Failed to load deployment details.");
+        if (!cancelled) setError("Failed to load deployment details. Refresh the page to retry.");
       }
     }
 
     load();
+    return () => {
+      cancelled = true;
+      if (refreshTimer) clearTimeout(refreshTimer);
+    };
   }, [params]);
 
   return (
@@ -315,8 +354,20 @@ export default function DeploymentDetailPage({
       </section>
 
       {(previewLoading || preview) && (
-        <section className="card" style={{ padding: 30, marginTop: 20 }}>
-          <h2>Artifact / DataReference Preview</h2>
+        <section
+          ref={previewSectionRef}
+          className="card deployment-preview-card"
+          aria-live="polite"
+        >
+          <div className="deployment-preview-heading">
+            <div>
+              <span className="badge">Result preview</span>
+              <h2>Artifact / DataReference Preview</h2>
+            </div>
+            {!previewLoading && preview?.kind && (
+              <span className="deployment-preview-kind">{preview.kind}</span>
+            )}
+          </div>
 
           {previewLoading && (
             <div
@@ -331,14 +382,57 @@ export default function DeploymentDetailPage({
             </div>
           )}
 
-          {!previewLoading && preview && <PreviewPanel preview={preview} />}
+          {!previewLoading && preview && (
+            <PreviewPanel
+              preview={preview}
+              drawings={previewDrawings}
+              selectedDrawingIndex={selectedDrawingIndex}
+              onPreview={previewReference}
+            />
+          )}
         </section>
       )}
     </div>
   );
 }
 
-function PreviewPanel({ preview }: { preview: any }) {
+function PreviewPanel({
+  preview,
+  drawings,
+  selectedDrawingIndex,
+  onPreview,
+}: {
+  preview: any;
+  drawings: DrawingReference[];
+  selectedDrawingIndex: number | null;
+  onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
+}) {
+  if (preview.kind === "svg" && preview.available && preview.image_data_url) {
+    return (
+      <div className="deployment-svg-preview">
+        <PreviewHeader preview={preview} />
+        {drawings.length > 0 && (
+          <div className="deployment-drawing-gallery-nav">
+            <div className="deployment-drawing-gallery-heading">
+              <div>
+                <strong>Topology drawings</strong>
+                <span>Select another drawing without returning to the output reference.</span>
+              </div>
+              <span>
+                Drawing {(selectedDrawingIndex ?? 0) + 1} of {drawings.length}
+              </span>
+            </div>
+            <DrawingButtons
+              drawings={drawings}
+              selectedIndex={selectedDrawingIndex}
+              onPreview={onPreview}
+            />
+          </div>
+        )}
+        <img src={preview.image_data_url} alt="Workflow SVG output" style={{ display: "block", maxWidth: "100%", maxHeight: 700, margin: "auto" }} />
+      </div>
+    );
+  }
   if (preview.kind === "csv" && preview.rows && preview.columns) {
     return (
       <div
@@ -415,20 +509,32 @@ function PreviewPanel({ preview }: { preview: any }) {
   }
 
   if (preview.kind === "json" && preview.content) {
+    const drawings = Array.isArray(preview.content?.drawings) ? preview.content.drawings : [];
+    const report = preview.content?.report;
     return (
-      <div
-        style={{
-          padding: 16,
-          borderRadius: 14,
-          background: "#f8fafc",
-          color: "#344054",
-          overflowX: "auto",
-        }}
-      >
+      <div className="deployment-json-preview">
         <PreviewHeader preview={preview} />
-        <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-          {JSON.stringify(preview.content, null, 2)}
-        </pre>
+        {report && typeof report === "object" && (
+          <div className="deployment-report-summary">
+            <div>
+              <span>Result summary</span>
+              <strong>{String(report.summary || report.title || "Report generated successfully")}</strong>
+            </div>
+            {report.recommended_network != null && (
+              <div>
+                <span>Recommended network</span>
+                <strong>{String(report.recommended_network)}</strong>
+              </div>
+            )}
+          </div>
+        )}
+        {drawings.length > 0 && (
+          <DrawingButtons drawings={drawings} selectedIndex={null} onPreview={onPreview} />
+        )}
+        <details className="deployment-raw-output">
+          <summary>View raw JSON output</summary>
+          <pre>{JSON.stringify(preview.content, null, 2)}</pre>
+        </details>
       </div>
     );
   }
@@ -504,6 +610,45 @@ function PreviewPanel({ preview }: { preview: any }) {
       {typeof preview.content === "string"
         ? preview.content
         : JSON.stringify(preview, null, 2)}
+    </div>
+  );
+}
+
+function DrawingButtons({
+  drawings,
+  selectedIndex,
+  onPreview,
+}: {
+  drawings: DrawingReference[];
+  selectedIndex: number | null;
+  onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
+}) {
+  const previewableDrawings = drawings.filter(
+    (drawing) =>
+      typeof drawing?.uri === "string" && drawing.uri.toLowerCase().endsWith(".svg")
+  );
+
+  return (
+    <div className="deployment-drawing-actions" aria-label="Available topology drawings">
+      {previewableDrawings.map((drawing, index) => {
+        const isSelected = selectedIndex === index;
+        return (
+          <button
+            className={isSelected ? "is-selected" : undefined}
+            key={`${drawing.uri}-${index}`}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() =>
+              onPreview(
+                { protocol: "file", uri: drawing.uri, format: "svg" },
+                { drawings: previewableDrawings, selectedIndex: index }
+              )
+            }
+          >
+            {isSelected ? "Viewing" : "View"} drawing {drawing.network_index ?? index + 1}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -618,6 +763,7 @@ function ReferenceList({
             </div>
 
             <button
+              type="button"
               onClick={() => onPreview(ref)}
               style={{
                 marginTop: 10,

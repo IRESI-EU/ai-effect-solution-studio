@@ -119,6 +119,7 @@ export default function BuilderPage() {
 function BuilderContent() {
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
+  const catalogueServiceId = searchParams.get("serviceId");
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -133,6 +134,9 @@ function BuilderContent() {
   const [submittingToOrchestrator, setSubmittingToOrchestrator] = useState(false);
   const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
   const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
+  const [runInputMode, setRunInputMode] = useState<"prompt" | "json">("prompt");
+  const [runInput, setRunInput] = useState("");
+  const [runInputError, setRunInputError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
   const [roleMode, setRoleMode] = useState<RoleMode>("solution_designer");
   const workflowRevisionRef = useRef(0);
@@ -140,6 +144,7 @@ function BuilderContent() {
   const saveDraftInFlightRef = useRef(false);
   const prepareInFlightRef = useRef(false);
   const confirmInFlightRef = useRef(false);
+  const catalogueServiceHandledRef = useRef<string | null>(null);
   const preparedSolutionIdRef = useRef<string | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
@@ -225,6 +230,20 @@ function BuilderContent() {
 
     loadSolution();
   }, [solutionId, setNodes, setEdges]);
+
+  useEffect(() => {
+    if (!catalogueServiceId || solutionId || services.length === 0) return;
+    if (catalogueServiceHandledRef.current === catalogueServiceId) return;
+
+    const requestedService = services.find(
+      (service) => service.id === catalogueServiceId
+    );
+    if (!requestedService) return;
+
+    catalogueServiceHandledRef.current = catalogueServiceId;
+    addServiceToCanvas(requestedService);
+    setSelectedService(requestedService);
+  }, [catalogueServiceId, services, solutionId]);
 
   function handleNodesChange(changes: NodeChange<Node>[]) {
     onNodesChange(changes);
@@ -313,6 +332,22 @@ function BuilderContent() {
       nodes: workflowNodes,
       edges: workflowEdges,
     };
+  }
+
+  function buildRunInput(): Record<string, unknown> | undefined {
+    const text = runInput.trim();
+    if (!text) return undefined;
+    if (runInputMode === "prompt") return { prompt: text };
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw new Error("Run input must be valid JSON.");
+    }
+    if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+      throw new Error("Run input must be a JSON object.");
+    }
+    return parsed as Record<string, unknown>;
   }
 
   async function runRuntimePreflight(payload: ReturnType<typeof buildWorkflowPayload>) {
@@ -540,12 +575,24 @@ function BuilderContent() {
       return;
     }
 
+    let input: Record<string, unknown> | undefined;
+    try {
+      input = buildRunInput();
+      if (input && new TextEncoder().encode(JSON.stringify(input)).length > 65536) {
+        throw new Error("Run input must be at most 64 KiB of JSON.");
+      }
+      setRunInputError("");
+    } catch (error) {
+      setRunInputError(error instanceof Error ? error.message : "Invalid run input.");
+      return;
+    }
+
     confirmInFlightRef.current = true;
     setSubmittingToOrchestrator(true);
     setDeploymentResult(null);
 
     try {
-      const workflowPayload = buildWorkflowPayload(preparedSolutionId);
+      const workflowPayload = { ...buildWorkflowPayload(preparedSolutionId), ...(input === undefined ? {} : { run_input: input }) };
       const res = await fetch(`${API_BASE_URL}/workflows/submit-to-orchestrator`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -916,6 +963,15 @@ function BuilderContent() {
           <div style={{ marginTop: 30 }}>
             <h3>Deployment</h3>
 
+            <label htmlFor="run-input-mode" style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Run input (optional)</label>
+            <select id="run-input-mode" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} style={{ width: "100%", padding: 10, marginBottom: 10 }}>
+              <option value="prompt">Prompt</option>
+              <option value="json">JSON object</option>
+            </select>
+            <textarea aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={5} placeholder={runInputMode === "prompt" ? "Describe what this workflow should do..." : '{"prompt":"...", "option":true}'} style={{ width: "100%", padding: 10, boxSizing: "border-box" }} />
+            <p style={{ color: "#667085", fontSize: 13, marginTop: 5 }}>Sent as JSON to the first service when you confirm deployment. Leave empty to use the service default.</p>
+            {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
+
             {!deploymentResult && (
               <p style={{ color: "#667085" }}>
                 Validate the design, prepare the deployment, then confirm when all services are ready.
@@ -957,6 +1013,7 @@ function BuilderContent() {
         confirmationReady={deploymentConfirmationReady}
         onConfirm={confirmDeployment}
         confirming={submittingToOrchestrator}
+        runInputError={runInputError}
       />
     </div>
   );
@@ -970,6 +1027,7 @@ function RuntimeReadinessPanel({
   confirmationReady,
   onConfirm,
   confirming,
+  runInputError,
 }: {
   preflight: RuntimePreflightResult | null;
   onPrepare: () => void;
@@ -978,6 +1036,7 @@ function RuntimeReadinessPanel({
   confirmationReady: boolean;
   onConfirm: () => void;
   confirming: boolean;
+  runInputError: string;
 }) {
   const blockedChecks = preflight?.checks.filter((check) => check.blocking) || [];
 
@@ -1045,6 +1104,7 @@ function RuntimeReadinessPanel({
         <div className="runtime-readiness-actions">
           <h3>Confirm deployment</h3>
           <p>Readiness has passed. Confirm to submit the deployment through the platform execution layer.</p>
+          {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
           <button onClick={onConfirm} disabled={confirming} style={primaryButton}>
             {confirming ? "Submitting deployment..." : "Confirm deployment"}
           </button>
