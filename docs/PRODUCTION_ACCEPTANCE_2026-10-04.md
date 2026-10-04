@@ -60,3 +60,22 @@ python3 validate_release_candidate.py
 The importer is idempotent for these deterministic service IDs. The validator
 creates fresh workflows and fails if preflight, workflow status, task status,
 or output-reference checks fail.
+
+## Public cutover
+
+The public cutover completed on 2026-10-04 using Solution Studio commit
+`4bbae05`.
+
+- `https://portal.renewenergy.io/` and `https://platform.ai-effect.eu/` return
+  HTTP 200 with valid TLS and serve the new Solution Studio frontend.
+- `/api/health` and the read-only service catalogue are public. Management UI
+  and API paths require HTTP Basic Authentication; unauthenticated checks
+  return HTTP 401 and authenticated checks return HTTP 200.
+- The production catalogue contains sixteen services, including the twelve
+  accepted services from the German, Portuguese, Danish, and Dutch nodes.
+- The legacy `ai-effect-nginx` frontend is stopped. Its backend and database
+  remain in place as a short-term rollback option.
+- The new web, API, and PostgreSQL containers were healthy after cutover, and
+  Traefik reported no new routing errors.
+- Independent HTTPS requests from the deployment workstation returned HTTP 200
+  for both public homepages and the public health endpoint.
