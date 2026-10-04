@@ -35,4 +35,6 @@ The Dutch workflow consists of two independently composed services. Start both
 the synthesizer and benchmark stacks with their matching overlays. Their
 production Docker aliases are `grid_synth_service` and `benchmark-runner`; the
 aliases replace the Windows-only `host.docker.internal` addresses in the sample
-metadata.
+metadata. Apply `dutch-dependency-pins.patch` before building so the four Git
+dependencies resolve to the exact revisions exercised by production acceptance
+instead of moving branches.

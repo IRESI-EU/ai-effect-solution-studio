@@ -1,0 +1,25 @@
+diff --git a/use-cases/dutch_node/benchmarking/requirements.txt b/use-cases/dutch_node/benchmarking/requirements.txt
+--- a/use-cases/dutch_node/benchmarking/requirements.txt
++++ b/use-cases/dutch_node/benchmarking/requirements.txt
+@@ -5,9 +5,9 @@
+ grpcio==1.66.1
+ grpcio-tools==1.66.1
+ protobuf==5.27.2
+-grid2evaluate @ git+https://github.com/AI4REALNET/grid2evaluate.git
+-grid2benchmark @ git+https://github.com/paulban/grid2benchmark.git@main
+-grid2op @ git+https://github.com/Grid2op/grid2op.git@env_recorder
++grid2evaluate @ git+https://github.com/AI4REALNET/grid2evaluate.git@5b696493d3391052d471f1e6ea6ab25775985e6a
++grid2benchmark @ git+https://github.com/paulban/grid2benchmark.git@b90860bfd06c68378592573ca89e77e9a05693b4
++grid2op @ git+https://github.com/Grid2op/grid2op.git@b8376c4e1c13980b50505a21ff0b4a5c22927bfa
+ pandapower>=2.14.11
+ numpy>=1.26.4
+ pytest>=8.3.4
+diff --git a/use-cases/dutch_node/data_synthesizer/requirements.txt b/use-cases/dutch_node/data_synthesizer/requirements.txt
+--- a/use-cases/dutch_node/data_synthesizer/requirements.txt
++++ b/use-cases/dutch_node/data_synthesizer/requirements.txt
+@@ -12,4 +12,4 @@
+ matplotlib
+ pandapower
+ # Install the synthesizer package directly from GitHub
+-git+https://github.com/TU-Delft-AI-Energy-Lab/grid-synthesizer.git
++git+https://github.com/TU-Delft-AI-Energy-Lab/grid-synthesizer.git@b36740438a95db60d30f3681daa72a26e1d2dd73
