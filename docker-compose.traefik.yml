@@ -13,9 +13,11 @@ services:
       traefik.http.routers.ai-effect-studio.middlewares: ai-effect-studio-retry
       traefik.http.routers.ai-effect-studio.tls.certresolver: letsencrypt
       traefik.http.routers.ai-effect-studio.service: ai-effect-studio
-      traefik.http.routers.ai-effect-studio.priority: "10"
+      # Stay above the legacy portal's implicit Host-rule priority while
+      # remaining below the management and public API routers.
+      traefik.http.routers.ai-effect-studio.priority: "90"
 
-      traefik.http.routers.ai-effect-studio-public-api.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && Method(`GET`, `HEAD`) && (Path(`/api/health`) || PathPrefix(`/api/services`))
+      traefik.http.routers.ai-effect-studio-public-api.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && (Method(`GET`) || Method(`HEAD`)) && (Path(`/api/health`) || PathPrefix(`/api/services`))
       traefik.http.routers.ai-effect-studio-public-api.entrypoints: websecure
       traefik.http.routers.ai-effect-studio-public-api.middlewares: ai-effect-studio-retry
       traefik.http.routers.ai-effect-studio-public-api.tls.certresolver: letsencrypt
