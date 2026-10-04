@@ -17,6 +17,20 @@ services:
       tef-network:
         aliases:
           - pt-data-provision
+    volumes:
+      - ./data/real_data.csv:/app/real_data.csv:ro
+    tmpfs:
+      - /app/data_raw:uid=1000,gid=1000,mode=0750
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:600/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   knowledge-store:
     ports: !reset []
@@ -27,6 +41,16 @@ services:
       tef-network:
         aliases:
           - pt-knowledge-store
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   synthetic-data:
     container_name: pt-synthetic-data
@@ -41,6 +65,16 @@ services:
           - pt-synthetic-data
     volumes:
       - portugal_synthetic_models:/app/models
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:600/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   portugal_synthetic_models:

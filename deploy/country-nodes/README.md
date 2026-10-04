@@ -18,9 +18,18 @@ The German stack's historical registry tag has been removed upstream. Build
 `packaging/docker/Dockerfile.debian`; the overlay deliberately uses that local,
 pinned image instead of an unversioned registry tag.
 
-The Portuguese stack also requires `data/real_data.csv` and a server-only
-`PORTUGAL_CLICKHOUSE_PASSWORD` value. Never commit either a production password
-or restricted input data to this repository.
+The Portuguese WP3 package contains integration wrappers but not the original
+TEF service implementation. Before building it, copy the runtime source from
+the project-owned `Portugal_Node/tef-services/tef-services` tree, retain the
+WP3 versions of the three Dockerfiles and integration `main.py` files, and
+exclude local `.env` files, certificates, cached datasets, binaries, and model
+artifacts. Apply `portugal-health.patch` after combining the source trees.
+
+The Portuguese stack also requires a reviewed `data/real_data.csv` and a
+server-only `PORTUGAL_CLICKHOUSE_PASSWORD` value. Never commit either a
+production password or restricted input data to this repository. The
+production overlay uses a non-persistent, non-root-writable tmpfs for raw data
+downloaded during execution.
 
 The Dutch workflow consists of two independently composed services. Start both
 the synthesizer and benchmark stacks with their matching overlays. Their
