@@ -7,3 +7,8 @@ node_modules/
 apps/web/node_modules/
 apps/web/.next/
 apps/web/tsconfig.tsbuildinfo
+.venv/
+__pycache__/
+.pytest_cache/
+local-backups/
+local-secrets/

@@ -33,6 +33,11 @@ services:
       ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY:-}
       ARTIFACT_BASE_PATH: /wp3-artifacts
       ARTIFACT_BASE_PATHS: /denmark-artifacts
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Platform Administrator}
+      SECURE_COOKIES: "true"
+      SESSION_HOURS: ${SESSION_HOURS:-12}
     volumes:
       - wp3_artifacts:/wp3-artifacts:ro
       - wp3_artifacts:/app/data:ro
@@ -61,6 +66,8 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_ENVIRONMENT_LABEL: ${NEXT_PUBLIC_ENVIRONMENT_LABEL:-Production}
     restart: unless-stopped
     environment:
       NODE_ENV: production

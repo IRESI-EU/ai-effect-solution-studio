@@ -23,6 +23,7 @@ class DeploymentRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     is_archived: bool = False
+    created_by_user_id: str | None = None
 
     class Config:
         from_attributes = True

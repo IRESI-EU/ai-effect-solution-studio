@@ -17,13 +17,7 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  getStoredRoleMode,
-  ROLE_MODE_CHANGE_EVENT,
-  ROLE_MODE_STORAGE_KEY,
-  roleModeLabels,
-  type RoleMode,
-} from "../../components/role-mode";
+import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
 
 type Service = {
   id: string;
@@ -117,6 +111,7 @@ export default function BuilderPage() {
 }
 
 function BuilderContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
   const catalogueServiceId = searchParams.get("serviceId");
@@ -138,7 +133,7 @@ function BuilderContent() {
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
-  const [roleMode, setRoleMode] = useState<RoleMode>("solution_designer");
+  const roleMode: UserRole = user?.role || "solution_designer";
   const workflowRevisionRef = useRef(0);
   const solutionSavePromiseRef = useRef<Promise<SavedSolution> | null>(null);
   const saveDraftInFlightRef = useRef(false);
@@ -149,22 +144,6 @@ function BuilderContent() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-
-  useEffect(() => {
-    const syncRoleMode = () => setRoleMode(getStoredRoleMode());
-    const syncStoredRoleMode = (event: StorageEvent) => {
-      if (event.key === ROLE_MODE_STORAGE_KEY) syncRoleMode();
-    };
-
-    syncRoleMode();
-    window.addEventListener(ROLE_MODE_CHANGE_EVENT, syncRoleMode);
-    window.addEventListener("storage", syncStoredRoleMode);
-
-    return () => {
-      window.removeEventListener(ROLE_MODE_CHANGE_EVENT, syncRoleMode);
-      window.removeEventListener("storage", syncStoredRoleMode);
-    };
-  }, []);
 
   const invalidateWorkflowResults = useCallback(() => {
     workflowRevisionRef.current += 1;
@@ -1032,7 +1011,7 @@ function RuntimeReadinessPanel({
   preflight: RuntimePreflightResult | null;
   onPrepare: () => void;
   preparing: boolean;
-  roleMode: RoleMode;
+  roleMode: UserRole;
   confirmationReady: boolean;
   onConfirm: () => void;
   confirming: boolean;
@@ -1056,7 +1035,7 @@ function RuntimeReadinessPanel({
         </button>
       </div>
 
-      <div className="runtime-role-note">Previewing guidance as: <strong>{roleModeLabels[roleMode]}</strong></div>
+      <div className="runtime-role-note">Signed in as: <strong>{roleLabels[roleMode]}</strong></div>
 
       {!preflight && (
         <div className="runtime-readiness-summary runtime-readiness-summary--neutral">

@@ -24,6 +24,16 @@ services:
       traefik.http.routers.ai-effect-studio-public-api.service: ai-effect-studio
       traefik.http.routers.ai-effect-studio-public-api.priority: "200"
 
+      # Authentication endpoints must reach the portal session system without
+      # the temporary legacy Basic Auth gate. Protected endpoints such as /me
+      # and /change-password still require the HttpOnly application session.
+      traefik.http.routers.ai-effect-studio-auth-api.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && PathPrefix(`/api/auth`)
+      traefik.http.routers.ai-effect-studio-auth-api.entrypoints: websecure
+      traefik.http.routers.ai-effect-studio-auth-api.middlewares: ai-effect-studio-retry
+      traefik.http.routers.ai-effect-studio-auth-api.tls.certresolver: letsencrypt
+      traefik.http.routers.ai-effect-studio-auth-api.service: ai-effect-studio
+      traefik.http.routers.ai-effect-studio-auth-api.priority: "210"
+
       traefik.http.routers.ai-effect-studio-management.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && (PathPrefix(`/admin`) || PathPrefix(`/builder`) || PathPrefix(`/publish`) || PathPrefix(`/deployments`) || PathPrefix(`/solutions`) || PathPrefix(`/api`))
       traefik.http.routers.ai-effect-studio-management.entrypoints: websecure
       traefik.http.routers.ai-effect-studio-management.middlewares: ai-effect-studio-admin-auth,ai-effect-studio-retry

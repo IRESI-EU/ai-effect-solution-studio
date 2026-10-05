@@ -29,6 +29,7 @@ class SolutionRead(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime
+    created_by_user_id: str | None = None
 
     class Config:
         from_attributes = True

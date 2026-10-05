@@ -1,5 +1,8 @@
 # AI-EFFECT Solution Studio
 
+Authentication, account approval and role permissions are documented in
+[`docs/AUTHENTICATION_AND_RBAC.md`](docs/AUTHENTICATION_AND_RBAC.md).
+
 AI-EFFECT Solution Studio is the consortium-facing MVP for discovering, governing, composing, deploying, and monitoring Dockerized AI services. It provides a product layer over the AI-EFFECT WP3 Orchestrator: users work with catalogue services and visual solutions, while WP3 remains the execution mechanism.
 
 The MVP is intended for local consortium testing. It is not a production certification authority, identity provider, or replacement for the WP3 runtime.

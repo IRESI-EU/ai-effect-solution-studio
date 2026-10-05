@@ -66,6 +66,28 @@ curl --fail http://127.0.0.1:13000/api/health
 The staging port is bound to server loopback and is therefore available only on
 the server or through an SSH tunnel. It does not replace the live portal.
 
+## Authentication rollout
+
+Before starting an authentication-enabled API against an existing database:
+
+1. Create and verify a fresh PostgreSQL custom-format backup.
+2. Apply `deploy/migrations/001_auth_rbac.sql` with `ON_ERROR_STOP` enabled.
+3. Set temporary `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD` and
+   `BOOTSTRAP_ADMIN_NAME` values in the server-only environment file.
+4. Build and restart the API and web services. The additive migration preserves
+   all existing solutions, deployments, services and operation contracts.
+5. Verify `/login`, administrator login, `/api/auth/me`, record counts and the
+   Admin data-preservation screen.
+6. Remove the bootstrap values and recreate the API container. Confirm through
+   `docker inspect` that the bootstrap email and password are empty.
+
+The Traefik authentication router intentionally allows `/api/auth/*` to bypass
+the temporary legacy Basic Authentication middleware. Login, registration and
+logout must reach the application directly; authenticated endpoints still
+enforce the portal's HttpOnly session cookie. Keep the Basic Authentication
+gate on management pages during acceptance testing and remove it in a separate
+approved release after role testing passes.
+
 ## Country-node acceptance test
 
 For every country, record the exact source revision and image digest, then:

@@ -7,6 +7,8 @@ COPY apps/web/package.json ./apps/web/package.json
 RUN pnpm install --frozen-lockfile --filter @ai-effect/web...
 
 FROM dependencies AS builder
+ARG NEXT_PUBLIC_ENVIRONMENT_LABEL="Local environment"
+ENV NEXT_PUBLIC_ENVIRONMENT_LABEL=$NEXT_PUBLIC_ENVIRONMENT_LABEL
 COPY apps/web ./apps/web
 RUN pnpm --filter @ai-effect/web build
 

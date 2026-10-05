@@ -5,11 +5,22 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from app.db import Base, engine, get_db
+from app.db import Base, SessionLocal, engine, get_db
 from app.models.deployment import Deployment
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.models.solution import Solution
+from app.models.user import User
+from app.dependencies.auth import (
+    can_manage_owned_record,
+    can_manage_service,
+    get_current_user,
+    get_optional_user,
+    require_admin,
+    require_service_publisher,
+)
+from app.routers.auth import bootstrap_admin, router as auth_router
+from app.routers.admin_users import router as admin_users_router
 from app.routers.operation_contracts import router as operation_contracts_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
@@ -42,12 +53,18 @@ from app.schemas.service_import import (
     ServiceImportPreviewResponse,
 )
 from app.services.service_manifest_importer import normalize_manifest, preview_service_manifest
+from app.services.audit import record_audit_event
 
 
 Base.metadata.create_all(bind=engine)
 
+with SessionLocal() as bootstrap_db:
+    bootstrap_admin(bootstrap_db)
+
 app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
 app.include_router(operation_contracts_router)
+app.include_router(auth_router)
+app.include_router(admin_users_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -75,12 +92,16 @@ def health():
 def admin_import_wp3_package(
     payload: WP3ImportRequest,
     db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
 ):
     return import_wp3_package(payload, db)
 
 
 @app.post("/data-references/preview")
-def preview_data_reference_endpoint(payload: DataReferencePreviewRequest):
+def preview_data_reference_endpoint(
+    payload: DataReferencePreviewRequest,
+    _: User = Depends(get_current_user),
+):
     return preview_data_reference(payload.protocol, payload.uri)
 
 
@@ -93,13 +114,20 @@ def list_services(
     include_archived: bool = False,
     archived_only: bool = False,
     db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
 ):
+    if include_archived or archived_only:
+        if not user or user.role not in {"platform_admin", "node_manager"}:
+            raise HTTPException(status_code=403, detail="Service management access is required")
     services_exist = db.query(Service).first()
 
     if not services_exist:
         seed_services(db)
 
     query = db.query(Service)
+
+    if user and user.role == "node_manager" and (include_archived or archived_only):
+        query = query.filter(Service.owner_node == user.node)
 
     if archived_only:
         query = query.filter(Service.lifecycle_status == "archived")
@@ -110,7 +138,11 @@ def list_services(
 
 
 @app.post("/services", response_model=ServiceRead)
-def create_service(payload: ServiceCreate, db: Session = Depends(get_db)):
+def create_service(
+    payload: ServiceCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
     service = Service(
         id=str(uuid4()),
         name=payload.name,
@@ -132,15 +164,21 @@ def create_service(payload: ServiceCreate, db: Session = Depends(get_db)):
         output_message_name=payload.output_message_name,
         internal_host=payload.internal_host or payload.container_name,
         internal_port=payload.internal_port,
+        owner_node=user.node,
+        created_by_user_id=user.id,
     )
 
     db.add(service)
+    record_audit_event(db, user, "service.created", "service", service.id, {"node": service.owner_node})
     db.commit()
     db.refresh(service)
 
     return service
 @app.post("/services/import/preview", response_model=ServiceImportPreviewResponse)
-def preview_service_import(request: ServiceImportPreviewRequest):
+def preview_service_import(
+    request: ServiceImportPreviewRequest,
+    _: User = Depends(require_service_publisher),
+):
     return preview_service_manifest(
         repo_url=request.repo_url,
         branch=request.branch,
@@ -148,7 +186,10 @@ def preview_service_import(request: ServiceImportPreviewRequest):
     )
 
 @app.post("/services/import/preview-manual", response_model=ServiceImportPreviewResponse)
-def preview_manual_service_import(request: ServiceImportManualPreviewRequest):
+def preview_manual_service_import(
+    request: ServiceImportManualPreviewRequest,
+    _: User = Depends(require_service_publisher),
+):
     validation = []
     service = normalize_manifest(
         manifest=request.manifest,
@@ -179,6 +220,7 @@ def preview_manual_service_import(request: ServiceImportManualPreviewRequest):
 def confirm_manual_service_import(
     request: ServiceImportManualConfirmRequest,
     db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
 ):
     validation = []
     imported = normalize_manifest(
@@ -237,9 +279,12 @@ def confirm_manual_service_import(
      output_type=imported.output_type,
      internal_host=imported.container_name,
      internal_port=imported.internal_port,
+     owner_node=user.node,
+     created_by_user_id=user.id,
  )
 
     db.add(service)
+    record_audit_event(db, user, "service.imported", "service", service.id, {"node": service.owner_node})
     db.commit()
     db.refresh(service)
 
@@ -251,6 +296,7 @@ def update_service_review(
     status: str,
     trust_badge: str,
     db: Session,
+    actor: User,
 ):
     service = db.query(Service).filter(Service.id == service_id).first()
 
@@ -264,6 +310,14 @@ def update_service_review(
         service.lifecycle_status = "active"
 
     touch_updated_at(service)
+    record_audit_event(
+        db,
+        actor,
+        f"service.review_{status}",
+        "service",
+        service.id,
+        {"status": status},
+    )
     db.commit()
     db.refresh(service)
 
@@ -271,40 +325,71 @@ def update_service_review(
 
 
 @app.post("/services/{service_id}/review/approve", response_model=ServiceRead)
-def approve_service_review(service_id: str, db: Session = Depends(get_db)):
-    return update_service_review(service_id, "approved", "validated", db)
+def approve_service_review(
+    service_id: str,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    return update_service_review(service_id, "approved", "validated", db, admin)
 
 
 @app.post("/services/{service_id}/review/reject", response_model=ServiceRead)
-def reject_service_review(service_id: str, db: Session = Depends(get_db)):
-    return update_service_review(service_id, "rejected", "rejected", db)
+def reject_service_review(
+    service_id: str,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    return update_service_review(service_id, "rejected", "rejected", db, admin)
 
 
 @app.post("/services/{service_id}/review/reopen", response_model=ServiceRead)
-def reopen_service_review(service_id: str, db: Session = Depends(get_db)):
-    return update_service_review(service_id, "pending_review", "pending_review", db)
+def reopen_service_review(
+    service_id: str,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    return update_service_review(service_id, "pending_review", "pending_review", db, admin)
 
 
 @app.get("/services/{service_id}", response_model=ServiceRead)
-def get_service(service_id: str, db: Session = Depends(get_db)):
+def get_service(
+    service_id: str,
+    db: Session = Depends(get_db),
+    user: User | None = Depends(get_optional_user),
+):
     service = db.query(Service).filter(Service.id == service_id).first()
 
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
+    if service.lifecycle_status == "archived" and (
+        not user or not can_manage_service(user, service.owner_node)
+    ):
+        raise HTTPException(status_code=404, detail="Service not found")
+    return service
+
+
+def get_manageable_service(service_id: str, db: Session, user: User) -> Service:
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    if not can_manage_service(user, service.owner_node):
+        raise HTTPException(status_code=403, detail="You can only manage services owned by your node")
     return service
 
 
 @app.put("/services/{service_id}/activate", response_model=ServiceRead)
-def activate_service(service_id: str, db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
-
-    if not service:
-        raise HTTPException(status_code=404, detail="Service not found")
+def activate_service(
+    service_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    service = get_manageable_service(service_id, db, user)
 
     service.lifecycle_status = "active"
     touch_updated_at(service)
 
+    record_audit_event(db, user, "service.activated", "service", service.id)
     db.commit()
     db.refresh(service)
 
@@ -312,15 +397,17 @@ def activate_service(service_id: str, db: Session = Depends(get_db)):
 
 
 @app.put("/services/{service_id}/deprecate", response_model=ServiceRead)
-def deprecate_service(service_id: str, db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
-
-    if not service:
-        raise HTTPException(status_code=404, detail="Service not found")
+def deprecate_service(
+    service_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    service = get_manageable_service(service_id, db, user)
 
     service.lifecycle_status = "deprecated"
     touch_updated_at(service)
 
+    record_audit_event(db, user, "service.deprecated", "service", service.id)
     db.commit()
     db.refresh(service)
 
@@ -328,15 +415,17 @@ def deprecate_service(service_id: str, db: Session = Depends(get_db)):
 
 
 @app.put("/services/{service_id}/archive", response_model=ServiceRead)
-def archive_service(service_id: str, db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
-
-    if not service:
-        raise HTTPException(status_code=404, detail="Service not found")
+def archive_service(
+    service_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    service = get_manageable_service(service_id, db, user)
 
     service.lifecycle_status = "archived"
     touch_updated_at(service)
 
+    record_audit_event(db, user, "service.archived", "service", service.id)
     db.commit()
     db.refresh(service)
 
@@ -344,15 +433,17 @@ def archive_service(service_id: str, db: Session = Depends(get_db)):
 
 
 @app.put("/services/{service_id}/restore", response_model=ServiceRead)
-def restore_service(service_id: str, db: Session = Depends(get_db)):
-    service = db.query(Service).filter(Service.id == service_id).first()
-
-    if not service:
-        raise HTTPException(status_code=404, detail="Service not found")
+def restore_service(
+    service_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    service = get_manageable_service(service_id, db, user)
 
     service.lifecycle_status = "active"
     touch_updated_at(service)
 
+    record_audit_event(db, user, "service.restored", "service", service.id)
     db.commit()
     db.refresh(service)
 
@@ -367,6 +458,7 @@ def restore_service(service_id: str, db: Session = Depends(get_db)):
 def compile_workflow(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
 ):
     return compile_to_wp3_payload(workflow, db)
 
@@ -375,6 +467,7 @@ def compile_workflow(
 def runtime_preflight_endpoint(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
 ):
     return run_runtime_preflight(workflow.nodes, db)
 
@@ -383,12 +476,16 @@ def runtime_preflight_endpoint(
 def submit_workflow_to_orchestrator_endpoint(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     if workflow.solution_id:
         solution = db.query(Solution).filter(Solution.id == workflow.solution_id).first()
 
         if not solution:
             raise HTTPException(status_code=404, detail="Solution not found")
+
+        if not can_manage_owned_record(user, solution.created_by_user_id):
+            raise HTTPException(status_code=403, detail="You can only deploy your own solutions")
 
         if solution.status == "archived":
             raise HTTPException(
@@ -433,7 +530,7 @@ def submit_workflow_to_orchestrator_endpoint(
 
 
 @app.post("/workflows/validate")
-def validate_workflow():
+def validate_workflow(_: User = Depends(get_current_user)):
     return {
         "valid": True,
         "message": "Workflow validation placeholder. Compatibility rules will be added in the next milestone.",
@@ -441,7 +538,7 @@ def validate_workflow():
 
 
 @app.post("/workflows/submit")
-def submit_workflow():
+def submit_workflow(_: User = Depends(get_current_user)):
     return {
         "workflow_id": "demo-workflow-001",
         "status": "submitted",
@@ -450,12 +547,12 @@ def submit_workflow():
 
 
 @app.get("/workflows/{workflow_id}")
-def get_workflow(workflow_id: str):
+def get_workflow(workflow_id: str, _: User = Depends(get_current_user)):
     return {"workflow_id": workflow_id, "status": "running"}
 
 
 @app.get("/workflows/{workflow_id}/tasks")
-def get_tasks(workflow_id: str):
+def get_tasks(workflow_id: str, _: User = Depends(get_current_user)):
     return {
         "workflow_id": workflow_id,
         "tasks": [
@@ -466,12 +563,18 @@ def get_tasks(workflow_id: str):
 
 
 @app.get("/orchestrator/workflows/{workflow_id}")
-def orchestrator_workflow_status(workflow_id: str):
+def orchestrator_workflow_status(
+    workflow_id: str,
+    _: User = Depends(get_current_user),
+):
     return get_workflow_status(workflow_id)
 
 
 @app.get("/orchestrator/workflows/{workflow_id}/tasks")
-def orchestrator_workflow_tasks(workflow_id: str):
+def orchestrator_workflow_tasks(
+    workflow_id: str,
+    _: User = Depends(get_current_user),
+):
     return get_workflow_tasks(workflow_id)
 
 
@@ -480,7 +583,11 @@ def orchestrator_workflow_tasks(workflow_id: str):
 # ---------------------------------------------------------------------
 
 @app.post("/solutions", response_model=SolutionRead)
-def create_solution(payload: SolutionCreate, db: Session = Depends(get_db)):
+def create_solution(
+    payload: SolutionCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     solution = Solution(
         id=str(uuid4()),
         name=payload.name,
@@ -488,9 +595,11 @@ def create_solution(payload: SolutionCreate, db: Session = Depends(get_db)):
         nodes=payload.nodes,
         edges=payload.edges,
         status=payload.status,
+        created_by_user_id=user.id,
     )
 
     db.add(solution)
+    record_audit_event(db, user, "solution.created", "solution", solution.id)
     db.commit()
     db.refresh(solution)
 
@@ -502,8 +611,11 @@ def list_solutions(
     include_archived: bool = False,
     archived_only: bool = False,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     query = db.query(Solution)
+    if user.role != "platform_admin":
+        query = query.filter(Solution.created_by_user_id == user.id)
 
     if archived_only:
         query = query.filter(Solution.status == "archived")
@@ -518,8 +630,11 @@ def list_solution_summaries(
     include_archived: bool = False,
     archived_only: bool = False,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     query = db.query(Solution)
+    if user.role != "platform_admin":
+        query = query.filter(Solution.created_by_user_id == user.id)
 
     if archived_only:
         query = query.filter(Solution.status == "archived")
@@ -584,6 +699,7 @@ def list_solution_summaries(
                 else None,
                 "created_at": solution.created_at,
                 "updated_at": solution.updated_at,
+                "created_by_user_id": solution.created_by_user_id,
             }
         )
 
@@ -591,11 +707,17 @@ def list_solution_summaries(
 
 
 @app.get("/solutions/{solution_id}/workspace", response_model=SolutionWithDeploymentsRead)
-def get_solution_workspace(solution_id: str, db: Session = Depends(get_db)):
+def get_solution_workspace(
+    solution_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     solution = db.query(Solution).filter(Solution.id == solution_id).first()
 
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
+    if not can_manage_owned_record(user, solution.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only access your own solutions")
 
     deployments = (
         db.query(Deployment)
@@ -616,16 +738,23 @@ def get_solution_workspace(solution_id: str, db: Session = Depends(get_db)):
         "status": solution.status,
         "created_at": solution.created_at,
         "updated_at": solution.updated_at,
+        "created_by_user_id": solution.created_by_user_id,
         "deployments": deployments,
     }
 
 
 @app.get("/solutions/{solution_id}", response_model=SolutionRead)
-def get_solution(solution_id: str, db: Session = Depends(get_db)):
+def get_solution(
+    solution_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     solution = db.query(Solution).filter(Solution.id == solution_id).first()
 
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
+    if not can_manage_owned_record(user, solution.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only access your own solutions")
 
     return solution
 
@@ -635,11 +764,14 @@ def update_solution(
     solution_id: str,
     payload: SolutionUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     solution = db.query(Solution).filter(Solution.id == solution_id).first()
 
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
+    if not can_manage_owned_record(user, solution.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only modify your own solutions")
 
     if solution.status == "archived":
         raise HTTPException(
@@ -660,6 +792,7 @@ def update_solution(
 
     solution.updated_at = datetime.utcnow()
 
+    record_audit_event(db, user, "solution.updated", "solution", solution.id)
     db.commit()
     db.refresh(solution)
 
@@ -667,15 +800,22 @@ def update_solution(
 
 
 @app.put("/solutions/{solution_id}/archive", response_model=SolutionRead)
-def archive_solution(solution_id: str, db: Session = Depends(get_db)):
+def archive_solution(
+    solution_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     solution = db.query(Solution).filter(Solution.id == solution_id).first()
 
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
+    if not can_manage_owned_record(user, solution.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only archive your own solutions")
 
     solution.status = "archived"
     solution.updated_at = datetime.utcnow()
 
+    record_audit_event(db, user, "solution.archived", "solution", solution.id)
     db.commit()
     db.refresh(solution)
 
@@ -683,15 +823,22 @@ def archive_solution(solution_id: str, db: Session = Depends(get_db)):
 
 
 @app.put("/solutions/{solution_id}/restore", response_model=SolutionRead)
-def restore_solution(solution_id: str, db: Session = Depends(get_db)):
+def restore_solution(
+    solution_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     solution = db.query(Solution).filter(Solution.id == solution_id).first()
 
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
+    if not can_manage_owned_record(user, solution.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only restore your own solutions")
 
     solution.status = "draft"
     solution.updated_at = datetime.utcnow()
 
+    record_audit_event(db, user, "solution.restored", "solution", solution.id)
     db.commit()
     db.refresh(solution)
 
@@ -708,8 +855,11 @@ def list_deployments(
     archived_only: bool = False,
     solution_id: str | None = None,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     query = db.query(Deployment)
+    if user.role != "platform_admin":
+        query = query.filter(Deployment.created_by_user_id == user.id)
 
     if solution_id:
         query = query.filter(Deployment.solution_id == solution_id)
@@ -723,8 +873,14 @@ def list_deployments(
 
 
 @app.post("/deployments/sync-statuses")
-def sync_deployment_statuses(db: Session = Depends(get_db)):
-    deployments = db.query(Deployment).order_by(Deployment.created_at.desc()).all()
+def sync_deployment_statuses(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    query = db.query(Deployment)
+    if user.role != "platform_admin":
+        query = query.filter(Deployment.created_by_user_id == user.id)
+    deployments = query.order_by(Deployment.created_at.desc()).all()
 
     summary = {
         "total": len(deployments),
@@ -796,15 +952,22 @@ def sync_deployment_statuses(db: Session = Depends(get_db)):
 
 
 @app.put("/deployments/{deployment_id}/archive", response_model=DeploymentRead)
-def archive_deployment(deployment_id: str, db: Session = Depends(get_db)):
+def archive_deployment(
+    deployment_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     deployment = db.query(Deployment).filter(Deployment.id == deployment_id).first()
 
     if not deployment:
         raise HTTPException(status_code=404, detail="Deployment not found")
+    if not can_manage_owned_record(user, deployment.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only archive your own deployments")
 
     deployment.is_archived = True
     deployment.updated_at = datetime.utcnow()
 
+    record_audit_event(db, user, "deployment.archived", "deployment", deployment.id)
     db.commit()
     db.refresh(deployment)
 
@@ -812,15 +975,22 @@ def archive_deployment(deployment_id: str, db: Session = Depends(get_db)):
 
 
 @app.put("/deployments/{deployment_id}/restore", response_model=DeploymentRead)
-def restore_deployment(deployment_id: str, db: Session = Depends(get_db)):
+def restore_deployment(
+    deployment_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     deployment = db.query(Deployment).filter(Deployment.id == deployment_id).first()
 
     if not deployment:
         raise HTTPException(status_code=404, detail="Deployment not found")
+    if not can_manage_owned_record(user, deployment.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only restore your own deployments")
 
     deployment.is_archived = False
     deployment.updated_at = datetime.utcnow()
 
+    record_audit_event(db, user, "deployment.restored", "deployment", deployment.id)
     db.commit()
     db.refresh(deployment)
 
@@ -831,6 +1001,7 @@ def restore_deployment(deployment_id: str, db: Session = Depends(get_db)):
 def get_deployment_by_workflow_id(
     workflow_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     deployment = (
         db.query(Deployment)
@@ -840,16 +1011,24 @@ def get_deployment_by_workflow_id(
 
     if not deployment:
         raise HTTPException(status_code=404, detail="Deployment not found")
+    if not can_manage_owned_record(user, deployment.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only access your own deployments")
 
     return deployment
 
 
 @app.get("/deployments/{deployment_id}", response_model=DeploymentRead)
-def get_deployment(deployment_id: str, db: Session = Depends(get_db)):
+def get_deployment(
+    deployment_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
     deployment = db.query(Deployment).filter(Deployment.id == deployment_id).first()
 
     if not deployment:
         raise HTTPException(status_code=404, detail="Deployment not found")
+    if not can_manage_owned_record(user, deployment.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only access your own deployments")
 
     return deployment
 
@@ -858,12 +1037,15 @@ def get_deployment(deployment_id: str, db: Session = Depends(get_db)):
 def create_deployment(
     deployment: DeploymentCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     if deployment.solution_id:
         solution = db.query(Solution).filter(Solution.id == deployment.solution_id).first()
 
         if not solution:
             raise HTTPException(status_code=404, detail="Solution not found")
+        if not can_manage_owned_record(user, solution.created_by_user_id):
+            raise HTTPException(status_code=403, detail="You can only deploy your own solutions")
 
         if solution.status == "archived":
             raise HTTPException(
@@ -878,6 +1060,8 @@ def create_deployment(
     )
 
     if existing:
+        if not can_manage_owned_record(user, existing.created_by_user_id):
+            raise HTTPException(status_code=403, detail="Deployment belongs to another user")
         return existing
 
     db_deployment = Deployment(
@@ -887,9 +1071,11 @@ def create_deployment(
         name=deployment.name,
         status=deployment.status,
         is_archived=False,
+        created_by_user_id=user.id,
     )
 
     db.add(db_deployment)
+    record_audit_event(db, user, "deployment.created", "deployment", db_deployment.id)
     db.commit()
     db.refresh(db_deployment)
 
@@ -901,17 +1087,21 @@ def update_deployment(
     deployment_id: str,
     payload: DeploymentUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
     deployment = db.query(Deployment).filter(Deployment.id == deployment_id).first()
 
     if not deployment:
         raise HTTPException(status_code=404, detail="Deployment not found")
+    if not can_manage_owned_record(user, deployment.created_by_user_id):
+        raise HTTPException(status_code=403, detail="You can only update your own deployments")
 
     if payload.status is not None:
         deployment.status = payload.status
 
     deployment.updated_at = datetime.utcnow()
 
+    record_audit_event(db, user, "deployment.updated", "deployment", deployment.id)
     db.commit()
     db.refresh(deployment)
 

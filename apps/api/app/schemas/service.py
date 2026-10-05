@@ -49,3 +49,5 @@ class ServiceRead(ServiceCreate):
 
     health_path: str | None = "/health"
     contract_uri: str | None = None
+    owner_node: str | None = None
+    created_by_user_id: str | None = None

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Boxes,
@@ -11,8 +14,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-
-export const dynamic = "force-dynamic";
+import { useAuth } from "../components/auth-context";
 
 type Service = { provider?: string | null; lifecycle_status?: string | null };
 type Solution = { id: string; name: string; updated_at: string };
@@ -30,28 +32,20 @@ type DashboardData = {
   apiAvailable: boolean;
 };
 
-async function loadDashboardData(): Promise<DashboardData> {
-  const apiBaseUrl =
-    process.env.INTERNAL_API_URL ||
-    "http://api:8080";
-
+async function loadDashboardData(authenticated: boolean): Promise<DashboardData> {
   try {
-    const [servicesResponse, solutionsResponse, deploymentsResponse, healthResponse] =
-      await Promise.all([
-        fetch(`${apiBaseUrl}/services`, { cache: "no-store" }),
-        fetch(`${apiBaseUrl}/solutions`, { cache: "no-store" }),
-        fetch(`${apiBaseUrl}/deployments`, { cache: "no-store" }),
-        fetch(`${apiBaseUrl}/health`, { cache: "no-store" }),
-      ]);
-
-    if (!servicesResponse.ok || !solutionsResponse.ok || !deploymentsResponse.ok) {
-      throw new Error("Dashboard data is unavailable");
-    }
+    const [servicesResponse, healthResponse, solutionsResponse, deploymentsResponse] = await Promise.all([
+      fetch("/api/services", { cache: "no-store" }),
+      fetch("/api/health", { cache: "no-store" }),
+      authenticated ? fetch("/api/solutions", { cache: "no-store" }) : Promise.resolve(null),
+      authenticated ? fetch("/api/deployments", { cache: "no-store" }) : Promise.resolve(null),
+    ]);
+    if (!servicesResponse.ok) throw new Error("Dashboard data is unavailable");
 
     return {
       services: await servicesResponse.json(),
-      solutions: await solutionsResponse.json(),
-      deployments: await deploymentsResponse.json(),
+      solutions: solutionsResponse?.ok ? await solutionsResponse.json() : [],
+      deployments: deploymentsResponse?.ok ? await deploymentsResponse.json() : [],
       apiAvailable: healthResponse.ok,
     };
   } catch {
@@ -86,8 +80,13 @@ const journeys = [
   },
 ];
 
-export default async function Page() {
-  const data = await loadDashboardData();
+export default function Page() {
+  const { user } = useAuth();
+  const [data, setData] = useState<DashboardData>({ services: [], solutions: [], deployments: [], apiAvailable: true });
+
+  useEffect(() => {
+    void loadDashboardData(!!user).then(setData);
+  }, [user]);
   const activeServices = data.services.filter(
     (service) => (service.lifecycle_status || "active") === "active"
   ).length;
@@ -121,15 +120,15 @@ export default async function Page() {
     },
     {
       label: "Saved solutions",
-      value: String(data.solutions.length),
-      text: "Draft and submitted workflow designs",
+      value: user ? String(data.solutions.length) : "—",
+      text: user ? "Your draft and submitted workflow designs" : "Sign in to view your saved solutions",
       icon: Network,
       colors: ["#e8f8fb", "#1489a4"],
     },
     {
       label: "Completed runs",
-      value: String(completedRuns),
-      text: `${data.deployments.length} deployment records in total`,
+      value: user ? String(completedRuns) : "—",
+      text: user ? `${data.deployments.length} deployment records in your workspace` : "Sign in to view deployment activity",
       icon: ShieldCheck,
       colors: ["#e9f8f1", "#20895e"],
     },

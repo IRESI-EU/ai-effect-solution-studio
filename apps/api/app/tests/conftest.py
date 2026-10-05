@@ -62,6 +62,9 @@ from app.models.deployment import Deployment  # noqa: E402,F401
 from app.models.operation_contract import OperationContract  # noqa: E402,F401
 from app.models.service import Service  # noqa: E402,F401
 from app.models.solution import Solution  # noqa: E402,F401
+from app.models.user import AuditEvent, User, UserSession  # noqa: E402,F401
+from app.core.security import hash_password  # noqa: E402
+from uuid import uuid4  # noqa: E402
 
 
 test_engine = create_engine(test_database_url)
@@ -99,9 +102,32 @@ def isolated_database_schema():
 @pytest.fixture(scope="session")
 def client(isolated_database_schema):
     app.dependency_overrides[get_db] = override_get_db
+    with TestingSessionLocal() as db:
+        admin = User(
+            id=str(uuid4()),
+            email="test-admin@ai-effect.eu",
+            display_name="Test Administrator",
+            password_hash=hash_password("TestAdministrator123"),
+            role="platform_admin",
+            status="active",
+        )
+        db.add(admin)
+        db.commit()
     with TestClient(app) as test_client:
+        response = test_client.post(
+            "/auth/login",
+            json={"email": "test-admin@ai-effect.eu", "password": "TestAdministrator123"},
+        )
+        assert response.status_code == 200
         yield test_client
     app.dependency_overrides.pop(get_db, None)
+
+
+@pytest.fixture
+def anonymous_client(isolated_database_schema):
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 @pytest.fixture(scope="session")
