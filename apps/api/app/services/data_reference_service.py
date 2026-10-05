@@ -3,7 +3,7 @@ import csv
 import json
 import os
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import requests
 
@@ -12,6 +12,11 @@ MAX_TEXT_PREVIEW_CHARS = 5000
 MAX_CSV_ROWS = 20
 HTTP_TIMEOUT_SECONDS = 10
 MAX_SVG_BYTES = 2 * 1024 * 1024
+MAX_REMOTE_PREVIEW_BYTES = 5 * 1024 * 1024
+GRPC_PREVIEW_TARGETS = {
+    "grid_synth_service:50051": "http://grid_synth_service:8080",
+    "benchmark-runner:50051": "http://benchmark-runner:8080",
+}
 
 
 def artifact_roots() -> list[Path]:
@@ -165,6 +170,53 @@ def preview_http_reference(uri: str):
     )
 
 
+def preview_grpc_reference(uri: str, task_id: str | None):
+    """Bridge approved Dutch gRPC references to their private control-data API."""
+    base_url = GRPC_PREVIEW_TARGETS.get(uri)
+    if not base_url:
+        return {
+            "kind": "grpc",
+            "available": False,
+            "uri": uri,
+            "message": "This gRPC output does not have an approved portal preview bridge.",
+        }
+    if not task_id:
+        return {
+            "kind": "grpc",
+            "available": False,
+            "uri": uri,
+            "message": "The workflow task identifier is required to preview this gRPC result.",
+        }
+
+    preview_url = f"{base_url}/control/data/{quote(task_id, safe='')}"
+    try:
+        response = requests.get(preview_url, timeout=HTTP_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        if len(response.content) > MAX_REMOTE_PREVIEW_BYTES:
+            return {
+                "kind": "grpc",
+                "available": False,
+                "uri": uri,
+                "message": "The Dutch node result exceeds the 5 MiB portal preview limit.",
+            }
+    except Exception as exc:
+        return {
+            "kind": "grpc",
+            "available": False,
+            "uri": uri,
+            "message": f"Could not fetch the Dutch node result: {exc}",
+        }
+
+    content_type = response.headers.get("content-type", "application/json")
+    return parse_content_preview(
+        content=response.text,
+        format_hint=infer_format_from_uri_or_content_type(preview_url, content_type) or "json",
+        source_uri=f"grpc://{uri}/{task_id}",
+        kind="grpc",
+        content_type=content_type,
+    )
+
+
 def parse_content_preview(
     content: str,
     format_hint: str | None,
@@ -301,7 +353,7 @@ def looks_like_csv(content: str):
     return "," in first_line and "," in second_line
 
 
-def preview_data_reference(protocol: str, uri: str):
+def preview_data_reference(protocol: str, uri: str, task_id: str | None = None):
     protocol = (protocol or "").lower().strip()
 
     if protocol == "inline":
@@ -337,15 +389,7 @@ def preview_data_reference(protocol: str, uri: str):
         }
 
     if protocol == "grpc":
-        return {
-            "kind": "grpc",
-            "available": False,
-            "uri": uri,
-            "message": (
-                "gRPC DataReference preview is not directly supported in the portal. "
-                "Expose previewable outputs through inline, HTTP, S3, or artifact references."
-            ),
-        }
+        return preview_grpc_reference(uri, task_id)
 
     return {
         "kind": protocol or "unknown",

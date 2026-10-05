@@ -102,7 +102,7 @@ def preview_data_reference_endpoint(
     payload: DataReferencePreviewRequest,
     _: User = Depends(get_current_user),
 ):
-    return preview_data_reference(payload.protocol, payload.uri)
+    return preview_data_reference(payload.protocol, payload.uri, payload.task_id)
 
 
 # ---------------------------------------------------------------------

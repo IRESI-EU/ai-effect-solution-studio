@@ -50,7 +50,11 @@ export default function DeploymentDetailPage({
     return () => window.cancelAnimationFrame(frame);
   }, [previewLoading, preview]);
 
-  async function previewReference(ref: any, drawingOptions?: DrawingPreviewOptions) {
+  async function previewReference(
+    ref: any,
+    drawingOptions?: DrawingPreviewOptions,
+    taskId?: string,
+  ) {
     setPreviewDrawings(drawingOptions?.drawings || []);
     setSelectedDrawingIndex(drawingOptions?.selectedIndex ?? null);
     setPreviewLoading(true);
@@ -66,6 +70,7 @@ export default function DeploymentDetailPage({
           protocol: ref.protocol,
           uri: ref.uri,
           format: ref.format,
+          task_id: taskId,
         }),
       });
 
@@ -339,13 +344,17 @@ export default function DeploymentDetailPage({
                 <ReferenceList
                   title="Input References"
                   refs={task.input_refs || []}
-                  onPreview={previewReference}
+                  onPreview={(ref) =>
+                    previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
+                  }
                 />
 
                 <ReferenceList
                   title="Output References"
                   refs={task.output_refs || []}
-                  onPreview={previewReference}
+                  onPreview={(ref) =>
+                    previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
+                  }
                 />
               </div>
             </div>
@@ -783,4 +792,16 @@ function ReferenceList({
       </div>
     </div>
   );
+}
+
+function findReferenceTaskId(ref: any, fallbackTaskId: string, tasks: any[]) {
+  const producer = tasks.find((task) =>
+    (task.output_refs || []).some(
+      (output: any) =>
+        output.protocol === ref.protocol &&
+        output.uri === ref.uri &&
+        output.format === ref.format,
+    ),
+  );
+  return producer?.task_id || fallbackTaskId;
 }
