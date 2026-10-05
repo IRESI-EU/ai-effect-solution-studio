@@ -32,6 +32,11 @@ services:
   api:
     environment:
       ARTIFACT_BASE_PATHS: /denmark-artifacts,/another-node-artifacts
+
+The production Compose profile mounts the German node's `germany-node_shared-data`
+volume read-only at `/shared`. German task references identify output directories;
+the preview first lists their files and then allows an operator to open an
+individual CSV or JSON artifact.
     volumes:
       - another-node-data:/another-node-artifacts:ro
     networks:

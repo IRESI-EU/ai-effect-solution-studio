@@ -416,6 +416,27 @@ function PreviewPanel({
   selectedDrawingIndex: number | null;
   onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
 }) {
+  if (preview.kind === "directory" && preview.available && Array.isArray(preview.files)) {
+    return (
+      <div className="deployment-json-preview">
+        <PreviewHeader preview={preview} />
+        <div className="deployment-drawing-buttons">
+          {preview.files.map((file: any) => (
+            <button
+              key={file.uri}
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => onPreview(file)}
+            >
+              {file.name} ({formatArtifactSize(file.size_bytes)})
+            </button>
+          ))}
+        </div>
+        {preview.files.length === 0 && <p>No previewable files were found in this output directory.</p>}
+      </div>
+    );
+  }
+
   if (preview.kind === "svg" && preview.available && preview.image_data_url) {
     return (
       <div className="deployment-svg-preview">
@@ -621,6 +642,12 @@ function PreviewPanel({
         : JSON.stringify(preview, null, 2)}
     </div>
   );
+}
+
+function formatArtifactSize(value: number | undefined) {
+  if (!value || value < 1024) return `${value || 0} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KiB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
 function DrawingButtons({

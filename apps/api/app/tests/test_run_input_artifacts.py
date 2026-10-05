@@ -140,3 +140,21 @@ def test_file_preview_rejects_paths_outside_artifact_roots(tmp_path, monkeypatch
 
     assert preview_data_reference("file", str(outside))["available"] is False
     assert preview_data_reference("file", "/data/../private.json")["available"] is False
+
+
+def test_directory_preview_lists_artifacts_as_previewable_references(tmp_path, monkeypatch):
+    root = tmp_path / "shared"
+    output = root / "wf-demo" / "final_output"
+    output.mkdir(parents=True)
+    (output / "load_p.csv").write_text("time,value\n0,1\n", encoding="utf-8")
+    (output / "summary.json").write_text('{"valid": true}', encoding="utf-8")
+    (output / "nested").mkdir()
+    monkeypatch.setenv("ARTIFACT_BASE_PATH", str(root))
+    monkeypatch.setenv("ARTIFACT_BASE_PATHS", "")
+
+    preview = preview_data_reference("file", str(output))
+
+    assert preview["available"] is True
+    assert preview["kind"] == "directory"
+    assert [file["name"] for file in preview["files"]] == ["load_p.csv", "summary.json"]
+    assert preview["files"][0]["uri"] == str(output / "load_p.csv")

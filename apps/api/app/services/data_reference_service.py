@@ -13,6 +13,7 @@ MAX_CSV_ROWS = 20
 HTTP_TIMEOUT_SECONDS = 10
 MAX_SVG_BYTES = 2 * 1024 * 1024
 MAX_REMOTE_PREVIEW_BYTES = 5 * 1024 * 1024
+MAX_DIRECTORY_PREVIEW_FILES = 50
 GRPC_PREVIEW_TARGETS = {
     "grid_synth_service:50051": "http://grid_synth_service:8080",
     "benchmark-runner:50051": "http://benchmark-runner:8080",
@@ -35,8 +36,8 @@ def artifact_roots() -> list[Path]:
     return roots
 
 
-def resolve_artifact_file(uri: str) -> Path | None:
-    """Resolve a file URI only when it belongs to a configured artifact root."""
+def resolve_artifact_path(uri: str) -> Path | None:
+    """Resolve an existing URI only when it belongs to a configured artifact root."""
     source = Path(uri)
     if not source.is_absolute():
         return None
@@ -46,14 +47,19 @@ def resolve_artifact_file(uri: str) -> Path | None:
         relative_parts = source.parts[2:]
         for root in roots:
             candidate = root.joinpath(*relative_parts).resolve()
-            if candidate.is_relative_to(root) and candidate.is_file():
+            if candidate.is_relative_to(root) and candidate.exists():
                 return candidate
         return None
 
     path = source.resolve()
-    if any(path.is_relative_to(root) for root in roots) and path.is_file():
+    if any(path.is_relative_to(root) for root in roots) and path.exists():
         return path
     return None
+
+
+def resolve_artifact_file(uri: str) -> Path | None:
+    path = resolve_artifact_path(uri)
+    return path if path is not None and path.is_file() else None
 
 
 def preview_svg_file(uri: str):
@@ -97,7 +103,7 @@ def decode_inline_reference(uri: str):
 def preview_file_reference(uri: str):
     if Path(uri).suffix.lower() == ".svg":
         return preview_svg_file(uri)
-    path = resolve_artifact_file(uri)
+    path = resolve_artifact_path(uri)
 
     if path is None:
         return {
@@ -114,6 +120,31 @@ def preview_file_reference(uri: str):
                 "local_demo": "Mount a shared artifact volume if local file preview is required.",
                 "platform_ready": "Prefer http, https, s3, or artifact protocol for future node submissions.",
             },
+        }
+
+    if path.is_dir():
+        files = []
+        for child in sorted(path.iterdir(), key=lambda item: item.name.lower()):
+            if not child.is_file():
+                continue
+            files.append(
+                {
+                    "name": child.name,
+                    "protocol": "file",
+                    "uri": str(Path(uri) / child.name),
+                    "format": child.suffix.lower().removeprefix(".") or "text",
+                    "size_bytes": child.stat().st_size,
+                }
+            )
+            if len(files) >= MAX_DIRECTORY_PREVIEW_FILES:
+                break
+        return {
+            "kind": "directory",
+            "available": True,
+            "format": "directory",
+            "uri": uri,
+            "files": files,
+            "truncated": len(files) >= MAX_DIRECTORY_PREVIEW_FILES,
         }
 
     try:

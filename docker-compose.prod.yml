@@ -32,7 +32,7 @@ services:
       ORCHESTRATOR_BASE_URL: http://orchestrator-api-1:8000
       ORCHESTRATOR_API_KEY: ${ORCHESTRATOR_API_KEY:-}
       ARTIFACT_BASE_PATH: /wp3-artifacts
-      ARTIFACT_BASE_PATHS: /denmark-artifacts
+      ARTIFACT_BASE_PATHS: /denmark-artifacts,/shared
       BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Platform Administrator}
@@ -42,6 +42,7 @@ services:
       - wp3_artifacts:/wp3-artifacts:ro
       - wp3_artifacts:/app/data:ro
       - denmark_node_data:/denmark-artifacts:ro
+      - germany_node_shared_data:/shared:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,6 +100,9 @@ volumes:
   denmark_node_data:
     external: true
     name: denmark-node-data
+  germany_node_shared_data:
+    external: true
+    name: germany-node_shared-data
 
 networks:
   internal:
