@@ -23,6 +23,13 @@ building `villas-chronics`. Together with the VILLASnode restart policy in the
 production overlay, it recovers transparently if the native process aborts
 while unloading a completed file workflow.
 
+The pinned source contains a header-only generated copy of `SGen1.csv`. Before
+starting the German stack, regenerate it with
+`python3 data/convert_csv.py --inputs data/sgens/SGen1.csv`, then apply
+`germany-output-integrity.patch`. The patch makes the provider and output
+formatter reject header-only CSV artifacts instead of reporting an incomplete
+German result as successfully completed.
+
 The Portuguese WP3 package contains integration wrappers but not the original
 TEF service implementation. Before building it, copy the runtime source from
 the project-owned `Portugal_Node/tef-services/tef-services` tree, retain the

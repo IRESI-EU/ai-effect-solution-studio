@@ -35,6 +35,7 @@ export default function DeploymentDetailPage({
   const [tasks, setTasks] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<any>(null);
+  const [previewDirectory, setPreviewDirectory] = useState<any>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewDrawings, setPreviewDrawings] = useState<DrawingReference[]>([]);
   const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
@@ -54,9 +55,15 @@ export default function DeploymentDetailPage({
     ref: any,
     drawingOptions?: DrawingPreviewOptions,
     taskId?: string,
+    directoryContext?: any,
   ) {
     setPreviewDrawings(drawingOptions?.drawings || []);
     setSelectedDrawingIndex(drawingOptions?.selectedIndex ?? null);
+    if (directoryContext) {
+      setPreviewDirectory(directoryContext);
+    } else {
+      setPreviewDirectory(null);
+    }
     setPreviewLoading(true);
     setPreview(null);
 
@@ -79,6 +86,9 @@ export default function DeploymentDetailPage({
       }
 
       const data = await res.json();
+      if (data.kind === "directory" && data.available) {
+        setPreviewDirectory(data);
+      }
       setPreview(data);
     } catch {
       setPreview({
@@ -378,6 +388,14 @@ export default function DeploymentDetailPage({
             )}
           </div>
 
+          {(previewDirectory || preview?.kind === "directory") && (
+            <ArtifactFileTabs
+              directory={preview?.kind === "directory" ? preview : previewDirectory}
+              activeUri={preview?.kind === "directory" ? null : preview?.uri}
+              onPreview={previewReference}
+            />
+          )}
+
           {previewLoading && (
             <div
               style={{
@@ -414,25 +432,19 @@ function PreviewPanel({
   preview: any;
   drawings: DrawingReference[];
   selectedDrawingIndex: number | null;
-  onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
+  onPreview: (
+    ref: any,
+    drawingOptions?: DrawingPreviewOptions,
+    taskId?: string,
+    directoryContext?: any,
+  ) => void;
 }) {
   if (preview.kind === "directory" && preview.available && Array.isArray(preview.files)) {
     return (
       <div className="deployment-json-preview">
         <PreviewHeader preview={preview} />
-        <div className="deployment-drawing-buttons">
-          {preview.files.map((file: any) => (
-            <button
-              key={file.uri}
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => onPreview(file)}
-            >
-              {file.name} ({formatArtifactSize(file.size_bytes)})
-            </button>
-          ))}
-        </div>
         {preview.files.length === 0 && <p>No previewable files were found in this output directory.</p>}
+        {preview.files.length > 0 && <p>Select a file tab above to inspect its contents.</p>}
       </div>
     );
   }
@@ -640,6 +652,44 @@ function PreviewPanel({
       {typeof preview.content === "string"
         ? preview.content
         : JSON.stringify(preview, null, 2)}
+    </div>
+  );
+}
+
+function ArtifactFileTabs({
+  directory,
+  activeUri,
+  onPreview,
+}: {
+  directory: any;
+  activeUri?: string | null;
+  onPreview: (
+    ref: any,
+    drawingOptions?: DrawingPreviewOptions,
+    taskId?: string,
+    directoryContext?: any,
+  ) => void;
+}) {
+  if (!directory?.available || !Array.isArray(directory.files) || directory.files.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="deployment-drawing-buttons" aria-label="Output files">
+      {directory.files.map((file: any) => {
+        const isSelected = activeUri === file.uri;
+        return (
+          <button
+            key={file.uri}
+            type="button"
+            className={isSelected ? "btn btn-primary" : "btn btn-secondary"}
+            aria-pressed={isSelected}
+            onClick={() => onPreview(file, undefined, undefined, directory)}
+          >
+            {file.name} ({formatArtifactSize(file.size_bytes)})
+          </button>
+        );
+      })}
     </div>
   );
 }

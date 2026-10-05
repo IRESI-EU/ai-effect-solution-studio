@@ -1,0 +1,68 @@
+diff --git a/use-cases/germany-node/services/data_provider/service.py b/use-cases/germany-node/services/data_provider/service.py
+index 79b385c..e3e7961 100644
+--- a/use-cases/germany-node/services/data_provider/service.py
++++ b/use-cases/germany-node/services/data_provider/service.py
+@@ -20,4 +20,14 @@ GRID_FILE = os.environ.get(
+ )
+ 
+ 
++def _files_with_data_rows(paths):
++    """Return CSV paths containing a header and at least one data row."""
++    usable = []
++    for path in paths:
++        with open(path, encoding="utf-8", errors="replace") as source:
++            if sum(1 for line in source if line.strip()) > 1:
++                usable.append(path)
++    return usable
++
++
+ def execute_ProvideData(request) -> ExecuteResponse:
+@@ -32,5 +42,10 @@ def execute_ProvideData(request) -> ExecuteResponse:
+ 
+     # Copy converted load files (sorted for deterministic ordering)
+     load_files = sorted(glob.glob(os.path.join(DATA_DIR, "loads", "*_converted.csv")))
++    usable_load_files = _files_with_data_rows(load_files)
++    if len(usable_load_files) != len(load_files) or not usable_load_files:
++        return ExecuteResponse(
++            status="failed", error="One or more converted load CSV files contain no data rows"
++        )
+     for f in load_files:
+         shutil.copy2(f, loads_dir)
+@@ -38,5 +53,10 @@ def execute_ProvideData(request) -> ExecuteResponse:
+ 
+     # Copy converted sgen files (sorted for deterministic ordering)
+     sgen_files = sorted(glob.glob(os.path.join(DATA_DIR, "sgens", "*_converted.csv")))
++    usable_sgen_files = _files_with_data_rows(sgen_files)
++    if len(usable_sgen_files) != len(sgen_files) or not usable_sgen_files:
++        return ExecuteResponse(
++            status="failed", error="One or more converted sgen CSV files contain no data rows"
++        )
+     for f in sgen_files:
+         shutil.copy2(f, sgens_dir)
+diff --git a/use-cases/germany-node/services/output_formatter/service.py b/use-cases/germany-node/services/output_formatter/service.py
+index a289753..3955aca 100644
+--- a/use-cases/germany-node/services/output_formatter/service.py
++++ b/use-cases/germany-node/services/output_formatter/service.py
+@@ -54,5 +54,9 @@ def _validate_csv(filepath: str) -> dict:
+         result["columns"] = len(header.split(";"))
+ 
+     result["rows"] = len(lines) - 1  # exclude header
++    if result["rows"] == 0:
++        result["error"] = "CSV contains a header but no data rows"
++        return result
++
+     result["valid"] = True
+     return result
+@@ -108,10 +112,10 @@ def execute_FormatOutput(request) -> ExecuteResponse:
+         json.dump(summary, f, indent=2)
+     logger.info(f"Wrote summary to {summary_path}")
+ 
+-    if files_validated == 0:
++    if files_validated != len(EXPECTED_FILES):
+         return ExecuteResponse(
+             status="failed",
+-            error="No valid chronics files found",
++            error=f"Only {files_validated} of {len(EXPECTED_FILES)} chronics files are valid",
+         )
+ 
+     return ExecuteResponse(
