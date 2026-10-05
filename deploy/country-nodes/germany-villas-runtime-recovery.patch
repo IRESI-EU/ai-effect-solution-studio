@@ -1,0 +1,61 @@
+diff --git a/use-cases/germany-node/services/villas_chronics/service.py b/use-cases/germany-node/services/villas_chronics/service.py
+index 08220e4..1259d61 100644
+--- a/use-cases/germany-node/services/villas_chronics/service.py
++++ b/use-cases/germany-node/services/villas_chronics/service.py
+@@ -25,5 +25,7 @@ CONFIG_TEMPLATE = os.environ.get("CONFIG_TEMPLATE", "/app/chronics.conf.template
+ POLL_INTERVAL = float(os.environ.get("POLL_INTERVAL", "2.0"))
+ POLL_TIMEOUT = float(os.environ.get("POLL_TIMEOUT", "120.0"))
++RESTART_RETRIES = int(os.environ.get("VILLAS_RESTART_RETRIES", "20"))
++RESTART_RETRY_INTERVAL = float(os.environ.get("VILLAS_RESTART_RETRY_INTERVAL", "1.0"))
+ 
+ EXPECTED_OUTPUT_FILES = [
+     "load_p.csv",
+@@ -46,6 +48,33 @@ def execute_GenerateChronics(request) -> ExecuteResponse:
+     return ExecuteResponse(status="running", task_id=request.task_id)
+ 
+ 
++def _restart_villasnode(config_path: str):
++    """Load a config, tolerating a native restart crash after an earlier run."""
++    restart_url = f"{VILLAS_NODE_URL}/api/v2/restart"
++    last_error = None
++
++    for attempt in range(1, RESTART_RETRIES + 1):
++        try:
++            response = requests.post(
++                restart_url,
++                json={"config": config_path},
++                timeout=30,
++            )
++            response.raise_for_status()
++            return response
++        except requests.ConnectionError as error:
++            last_error = error
++            if attempt == RESTART_RETRIES:
++                break
++            logger.warning(
++                "VILLASnode connection reset during restart; retrying "
++                f"({attempt}/{RESTART_RETRIES})"
++            )
++            time.sleep(RESTART_RETRY_INTERVAL)
++
++    raise last_error
++
++
+ def _generate_chronics(
+     task_id: str,
+     request,
+@@ -114,13 +141,7 @@ def _generate_chronics(
+         manager.update_progress(task_id, 10)
+ 
+         # Push config file path to VILLASnode via REST API
+-        restart_url = f"{VILLAS_NODE_URL}/api/v2/restart"
+-        resp = requests.post(
+-            restart_url,
+-            json={"config": config_path},
+-            timeout=30,
+-        )
+-        resp.raise_for_status()
++        resp = _restart_villasnode(config_path)
+         logger.info(f"VILLASnode restart response: {resp.status_code} {resp.text}")
+         manager.update_progress(task_id, 20)
+ 

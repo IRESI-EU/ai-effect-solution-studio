@@ -18,6 +18,11 @@ The German stack's historical registry tag has been removed upstream. Build
 `packaging/docker/Dockerfile.debian`; the overlay deliberately uses that local,
 pinned image instead of an unversioned registry tag.
 
+Apply `germany-villas-runtime-recovery.patch` to the pinned WP3 checkout before
+building `villas-chronics`. Together with the VILLASnode restart policy in the
+production overlay, it recovers transparently if the native process aborts
+while unloading a completed file workflow.
+
 The Portuguese WP3 package contains integration wrappers but not the original
 TEF service implementation. Before building it, copy the runtime source from
 the project-owned `Portugal_Node/tef-services/tef-services` tree, retain the

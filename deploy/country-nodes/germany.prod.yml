@@ -7,6 +7,10 @@ services:
 
   villas-node:
     image: ai-effect-villas-node:f2fbc82b
+    # A completed file workflow can leave native hooks in a state that aborts
+    # the process when the next configuration is loaded. Restart automatically;
+    # the patched adapter retries while recovery takes place.
+    restart: unless-stopped
 
   output-formatter:
     ports: !reset []
