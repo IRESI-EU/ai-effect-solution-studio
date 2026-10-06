@@ -222,6 +222,12 @@ def confirm_manual_service_import(
     db: Session = Depends(get_db),
     user: User = Depends(require_service_publisher),
 ):
+    if request.onboarding and not request.onboarding.registration_only_acknowledged:
+        raise HTTPException(
+            status_code=422,
+            detail="Confirm that catalogue registration does not deploy or activate the service.",
+        )
+
     validation = []
     imported = normalize_manifest(
         manifest=request.manifest,
@@ -247,6 +253,10 @@ def confirm_manual_service_import(
             detail=f"Service with id '{service_id}' already exists.",
         )
 
+    interface_contract = dict(imported.interface_contract or {})
+    if request.onboarding:
+        interface_contract["onboarding"] = request.onboarding.model_dump()
+
     service = Service(
      id=service_id,
      name=imported.name,
@@ -262,7 +272,7 @@ def confirm_manual_service_import(
      repository_branch=imported.repository_branch,
      manifest_path=imported.manifest_path,
      interface_type=imported.interface_type,
-     interface_contract=imported.interface_contract,
+     interface_contract=interface_contract,
      orchestration_mode=imported.orchestration_mode,
      adapter_type=imported.adapter_type,
      health_path=imported.health_path,

@@ -61,6 +61,15 @@ type ConfirmedService = {
   proto_uri: string;
 };
 
+type RuntimeStatus = "needs_deployment" | "already_running";
+
+type RuntimeEvidence = {
+  revisionPinned: boolean;
+  imageReviewed: boolean;
+  secretsExternal: boolean;
+  healthVerified: boolean;
+};
+
 const exampleManifest = `{
   "schema_version": "1.0",
   "service": {
@@ -99,7 +108,7 @@ const exampleManifest = `{
 }`;
 
 export default function PublishServicePage() {
-  const [mode, setMode] = useState<"git" | "manual">("manual");
+  const [mode, setMode] = useState<"git" | "manual">("git");
 
   const [repoUrl, setRepoUrl] = useState("https://github.com/IRESI-EU/ai-effect-solution-studio");
   const [branch, setBranch] = useState("main");
@@ -111,22 +120,38 @@ export default function PublishServicePage() {
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>("needs_deployment");
+  const [runtimeEvidence, setRuntimeEvidence] = useState<RuntimeEvidence>({
+    revisionPinned: false,
+    imageReviewed: false,
+    secretsExternal: false,
+    healthVerified: false,
+  });
+  const [registrationAcknowledged, setRegistrationAcknowledged] = useState(false);
 
   const canConfirm = useMemo(() => {
-    return Boolean(preview?.service && preview.raw_manifest && preview.status !== "invalid");
-  }, [preview]);
+    return Boolean(
+      preview?.service &&
+      preview.raw_manifest &&
+      preview.status !== "invalid" &&
+      registrationAcknowledged,
+    );
+  }, [preview, registrationAcknowledged]);
 
   const activeStep = confirmed
-    ? 4
+    ? 5
     : preview?.status === "invalid"
       ? 2
       : preview?.status === "valid" || preview?.status === "warning"
-        ? 3
+        ? registrationAcknowledged
+          ? 4
+          : 3
         : 1;
 
   async function previewFromGit() {
     setLoading(true);
     setConfirmed(null);
+    setRegistrationAcknowledged(false);
     setError(null);
     setPreview(null);
 
@@ -158,6 +183,7 @@ export default function PublishServicePage() {
   async function previewManual() {
     setLoading(true);
     setConfirmed(null);
+    setRegistrationAcknowledged(false);
     setError(null);
     setPreview(null);
 
@@ -208,6 +234,16 @@ export default function PublishServicePage() {
           branch: branch || "main",
           manifest_path: manifestPath || "ai-effect.service.json",
           manifest: preview.raw_manifest,
+          onboarding: {
+            source_type: mode === "git" ? "public_git" : "manual_manifest",
+            source_revision: branch || null,
+            runtime_status: runtimeStatus,
+            revision_pinned: runtimeEvidence.revisionPinned,
+            image_reviewed: runtimeEvidence.imageReviewed,
+            secrets_external: runtimeEvidence.secretsExternal,
+            health_verified: runtimeEvidence.healthVerified,
+            registration_only_acknowledged: registrationAcknowledged,
+          },
         }),
       });
 
@@ -237,16 +273,35 @@ export default function PublishServicePage() {
     setPreview(null);
     setConfirmed(null);
     setError(null);
+    setRuntimeStatus("needs_deployment");
+    setRuntimeEvidence({
+      revisionPinned: false,
+      imageReviewed: false,
+      secretsExternal: false,
+      healthVerified: false,
+    });
+    setRegistrationAcknowledged(false);
+  }
+
+  function updateRuntimeEvidence(field: keyof RuntimeEvidence, checked: boolean) {
+    setRuntimeEvidence((current) => ({ ...current, [field]: checked }));
+  }
+
+  function invalidateSourcePreview() {
+    setPreview(null);
+    setConfirmed(null);
+    setRegistrationAcknowledged(false);
+    setError(null);
   }
 
   return (
     <main className="page publish-page" style={pageStyle}>
       <section style={heroStyle}>
         <p style={eyebrowStyle}>Node Provider Onboarding</p>
-        <h1 style={titleStyle}>Publish my service</h1>
+        <h1 style={titleStyle}>Onboard a service</h1>
         <p style={subtitleStyle}>
-          Add a Dockerized AI service to the AI-EFFECT marketplace through a guided workflow. The
-          service will be submitted for review before becoming fully validated.
+          Register a Dockerized AI service, record its production readiness, and submit it for
+          administrator verification. Registration does not start containers on the server.
         </p>
 
         <div style={heroActionsStyle}>
@@ -259,14 +314,28 @@ export default function PublishServicePage() {
         </div>
       </section>
 
+      <section className="onboarding-boundary-grid" aria-label="Onboarding responsibilities">
+        <div className="onboarding-boundary-card onboarding-boundary-portal">
+          <span>Portal registration</span>
+          <strong>What this page does</strong>
+          <p>Validates one service manifest, creates a pending catalogue record, and sends it to Admin Governance.</p>
+        </div>
+        <div className="onboarding-boundary-card onboarding-boundary-runtime">
+          <span>Production runtime</span>
+          <strong>What an operator must do</strong>
+          <p>Review the source, build or pull the image, configure secrets and storage, start the container, and verify health.</p>
+        </div>
+      </section>
+
       <div className="publish-workbench">
         <aside className="card publish-step-card">
           <p style={{ ...eyebrowStyle, marginBottom: 16 }}>Onboarding progress</p>
           {[
-            ["1", "Service profile", "Provider and service identity"],
-            ["2", "Interface contract", "Inputs, outputs and protocol"],
-            ["3", "Deployment details", "Container and runtime settings"],
-            ["4", "Review & submit", "Validate and publish for review"],
+            ["1", "Source", "Repository and exact manifest"],
+            ["2", "Contract", "Interface and DataReference types"],
+            ["3", "Runtime evidence", "Deployment responsibility and checks"],
+            ["4", "Submit request", "Register as pending review"],
+            ["5", "Admin activation", "Verify runtime, approve, and activate"],
           ].map(([number, title, description], index) => (
             <div className={`publish-step${index + 1 === activeStep ? " publish-step-active" : ""}`} key={number}>
               <span className="publish-step-number">{number}</span>
@@ -274,57 +343,62 @@ export default function PublishServicePage() {
             </div>
           ))}
           <div className="publish-step-note">
-            <strong>Manifest-powered</strong>
-            <span>The guided steps map directly to your existing AI-EFFECT service manifest.</span>
+            <strong>One service at a time</strong>
+            <span>A use case with four containers requires four service manifests and four onboarding records.</span>
           </div>
         </aside>
 
         <div className="publish-main-column">
       <section style={cardStyle}>
         <div style={{ marginBottom: 17 }}>
-          <p style={eyebrowStyle}>Import manifest</p>
-          <h2 style={{ ...sectionTitleStyle, marginTop: 6 }}>Service declaration</h2>
-          <p style={{ ...helpTextStyle, marginTop: 7 }}>Choose how to load the manifest that describes your service.</p>
+          <p style={eyebrowStyle}>1 · Source declaration</p>
+          <h2 style={{ ...sectionTitleStyle, marginTop: 6 }}>Where is this service defined?</h2>
+          <p style={{ ...helpTextStyle, marginTop: 7 }}>Load one exact manifest. The repository is recorded for traceability; it is not cloned or executed by the portal.</p>
         </div>
         <div style={tabRowStyle}>
           <button
             type="button"
-            onClick={() => setMode("manual")}
+            onClick={() => { setMode("manual"); invalidateSourcePreview(); }}
             style={mode === "manual" ? activeTabStyle : tabStyle}
           >
             Paste manifest JSON
           </button>
           <button
             type="button"
-            onClick={() => setMode("git")}
+            onClick={() => { setMode("git"); invalidateSourcePreview(); }}
             style={mode === "git" ? activeTabStyle : tabStyle}
           >
-            Import from Git repository
+            Public Git manifest
           </button>
         </div>
 
         <div style={noticeStyle}>
-          <strong>Required:</strong> every service must be Dockerized and must declare an
-          AI-EFFECT service manifest. A <code>.proto</code> file is required only for
-          <code> grpc</code> services.
+          <strong>Important:</strong> importing a manifest registers metadata only. It does not
+          build an image, run Docker Compose, configure secrets, or deploy the service.
+        </div>
+
+        <div className="onboarding-source-options" aria-label="Supported source methods">
+          <div><strong>Available now</strong><span>Public Git manifest or pasted JSON</span></div>
+          <div><strong>Admin-assisted</strong><span>WP3 blueprint + dockerinfo package</span></div>
+          <div><strong>Planned</strong><span>Private Git and scanned local ZIP upload</span></div>
         </div>
 
         <div style={gridStyle}>
           <label style={labelStyle}>
-            Repository URL
+            Repository URL or source reference
             <input
               value={repoUrl}
-              onChange={(event) => setRepoUrl(event.target.value)}
+              onChange={(event) => { setRepoUrl(event.target.value); invalidateSourcePreview(); }}
               placeholder="https://github.com/OWNER/REPO"
               style={inputStyle}
             />
           </label>
 
           <label style={labelStyle}>
-            Branch or tag
+            Commit SHA, tag, or branch
             <input
               value={branch}
-              onChange={(event) => setBranch(event.target.value)}
+              onChange={(event) => { setBranch(event.target.value); invalidateSourcePreview(); }}
               placeholder="main"
               style={inputStyle}
             />
@@ -334,7 +408,7 @@ export default function PublishServicePage() {
             Manifest path
             <input
               value={manifestPath}
-              onChange={(event) => setManifestPath(event.target.value)}
+              onChange={(event) => { setManifestPath(event.target.value); invalidateSourcePreview(); }}
               placeholder="ai-effect.service.json"
               style={inputStyle}
             />
@@ -352,7 +426,7 @@ export default function PublishServicePage() {
 
             <textarea
               value={manifestText}
-              onChange={(event) => setManifestText(event.target.value)}
+              onChange={(event) => { setManifestText(event.target.value); invalidateSourcePreview(); }}
               spellCheck={false}
               style={textareaStyle}
             />
@@ -369,8 +443,9 @@ export default function PublishServicePage() {
         ) : (
           <div style={{ marginTop: 18 }}>
             <p style={helpTextStyle}>
-              Git import currently works for public repositories. For private repositories,
-              use pasted manifest JSON until authenticated GitHub import is added.
+              Git import currently fetches only the exact JSON path below from a public GitHub
+              repository. It does not discover Dockerfiles, Compose services, blueprints, or
+              multiple services automatically. Prefer a commit SHA or immutable tag over main.
             </p>
             <button
               type="button"
@@ -390,8 +465,8 @@ export default function PublishServicePage() {
         <section style={cardStyle}>
           <div style={rowBetweenStyle}>
             <div>
-              <p style={eyebrowStyle}>Manifest preview</p>
-              <h2 style={sectionTitleStyle}>Validation result</h2>
+              <p style={eyebrowStyle}>2 · Contract validation</p>
+              <h2 style={sectionTitleStyle}>Manifest result</h2>
             </div>
             <span style={statusBadgeStyle(preview.status)}>{preview.status.toUpperCase()}</span>
           </div>
@@ -407,6 +482,73 @@ export default function PublishServicePage() {
 
           {preview.service && <ServicePreview service={preview.service} />}
 
+          {preview.service && (
+            <div className="onboarding-runtime-panel">
+              <div>
+                <p style={eyebrowStyle}>3 · Runtime evidence</p>
+                <h3>How will this container become reachable?</h3>
+                <p>The provider and administrator record evidence here; Admin Governance independently verifies it before approval.</p>
+              </div>
+
+              <div className="onboarding-runtime-choice">
+                <label>
+                  <input
+                    type="radio"
+                    name="runtime-status"
+                    checked={runtimeStatus === "needs_deployment"}
+                    onChange={() => setRuntimeStatus("needs_deployment")}
+                  />
+                  <span><strong>Needs operator deployment</strong><small>Submit the metadata now; the IT or node operator must deploy it.</small></span>
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="runtime-status"
+                    checked={runtimeStatus === "already_running"}
+                    onChange={() => setRuntimeStatus("already_running")}
+                  />
+                  <span><strong>Already running</strong><small>The provider claims it is reachable; an administrator still verifies it.</small></span>
+                </label>
+              </div>
+
+              <div className="onboarding-evidence-grid">
+                {([
+                  ["revisionPinned", "Exact source revision recorded"],
+                  ["imageReviewed", "Docker image built or reviewed"],
+                  ["secretsExternal", "Secrets kept outside source and manifest"],
+                  ["healthVerified", "Health endpoint tested from the target network"],
+                ] as Array<[keyof RuntimeEvidence, string]>).map(([field, label]) => (
+                  <label key={field}>
+                    <input
+                      type="checkbox"
+                      checked={runtimeEvidence[field]}
+                      onChange={(event) => updateRuntimeEvidence(field, event.target.checked)}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className={runtimeStatus === "already_running" ? "onboarding-runtime-state is-running" : "onboarding-runtime-state"}>
+                <strong>{runtimeStatus === "already_running" ? "Provider claim: runtime deployed" : "Runtime deployment still required"}</strong>
+                <span>
+                  {runtimeStatus === "already_running"
+                    ? `Admin must reach ${preview.service.container_name}:${preview.service.internal_port}${preview.service.health_path} before approval.`
+                    : "The catalogue request may be submitted, but it cannot be deployed in Builder until an operator starts and verifies the runtime."}
+                </span>
+              </div>
+
+              <label className="onboarding-acknowledgement">
+                <input
+                  type="checkbox"
+                  checked={registrationAcknowledged}
+                  onChange={(event) => setRegistrationAcknowledged(event.target.checked)}
+                />
+                <span>I understand that this action registers an onboarding request and does not deploy or activate the service.</span>
+              </label>
+            </div>
+          )}
+
           <div style={confirmRowStyle}>
             <button
               type="button"
@@ -418,20 +560,32 @@ export default function PublishServicePage() {
                 cursor: !canConfirm || confirming ? "not-allowed" : "pointer",
               }}
             >
-              {confirming ? "Importing..." : "Confirm import to Catalogue"}
+              {confirming ? "Submitting..." : "Submit onboarding request"}
             </button>
+            {!registrationAcknowledged && preview.service && (
+              <p style={{ ...helpTextStyle, marginTop: 10 }}>Confirm the registration boundary above before submitting.</p>
+            )}
           </div>
         </section>
       )}
 
       {confirmed && (
         <section style={successCardStyle}>
-          <p style={eyebrowStyle}>Service imported</p>
+          <p style={eyebrowStyle}>4 · Onboarding request submitted</p>
           <h2 style={sectionTitleStyle}>{confirmed.name}</h2>
           <p style={successTextStyle}>
-            The service was added to the registry as <strong>{confirmed.trust_badge}</strong> and
-            lifecycle status <strong>{confirmed.lifecycle_status}</strong>.
+            The service is registered as <strong>{confirmed.trust_badge}</strong>. It is not yet
+            approved, active for deployment, or proof that its container is running.
           </p>
+
+          <div className="onboarding-next-steps">
+            <strong>What happens next</strong>
+            <ol>
+              <li>The provider or IT operator deploys the pinned container runtime if required.</li>
+              <li>An administrator verifies ownership, image, secrets, network reachability, health, and operation contract.</li>
+              <li>Admin Governance approves the service; only then can Builder deploy it.</li>
+            </ol>
+          </div>
 
           <div style={detailsGridStyle}>
             <Detail label="Service ID" value={confirmed.id} />
@@ -446,18 +600,15 @@ export default function PublishServicePage() {
             <Link href="/catalogue" style={primaryLinkStyle}>
               Open Catalogue
             </Link>
-            <Link href="/builder" style={secondaryButtonStyle}>
-              Open Builder
-            </Link>
             <Link href="/admin" style={secondaryButtonStyle}>
-              Review in Admin
+              Continue to Admin verification
             </Link>
           </div>
         </section>
       )}
         <aside className="publish-review-callout">
           <span aria-hidden="true">i</span>
-          <div><strong>Review before publication</strong><p>Your service will be reviewed by the AI-EFFECT team before it is available in the catalogue.</p></div>
+          <div><strong>Registration is not deployment</strong><p>A service becomes usable only after its container is running, health is verified from production, and an administrator approves it.</p></div>
         </aside>
         </div>
       </div>

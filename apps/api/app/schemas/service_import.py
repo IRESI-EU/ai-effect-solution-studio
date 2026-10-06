@@ -7,6 +7,17 @@ InterfaceType = Literal["control", "grpc", "http", "container_job", "legacy_side
 OrchestrationMode = Literal["native", "sidecar", "external", "manual_review"]
 
 
+class RuntimeOnboardingEvidence(BaseModel):
+    source_type: Literal["public_git", "manual_manifest"]
+    source_revision: str | None = None
+    runtime_status: Literal["needs_deployment", "already_running"]
+    revision_pinned: bool = False
+    image_reviewed: bool = False
+    secrets_external: bool = False
+    health_verified: bool = False
+    registration_only_acknowledged: bool = False
+
+
 class ServiceImportPreviewRequest(BaseModel):
     repo_url: str
     branch: str = "main"
@@ -23,6 +34,7 @@ class ServiceImportManualConfirmRequest(BaseModel):
     branch: str = "main"
     manifest_path: str = "ai-effect.service.json"
     manifest: dict[str, Any]
+    onboarding: RuntimeOnboardingEvidence | None = None
 
 class ValidationMessage(BaseModel):
     level: Literal["success", "warning", "error"]

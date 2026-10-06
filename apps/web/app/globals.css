@@ -869,6 +869,36 @@ tbody tr:hover {
 @media (max-width: 600px) { .auth-form-grid { grid-template-columns: 1fr; }.auth-form-full { grid-column: auto; }.auth-form-card { padding: 28px 22px; } }
 
 /* Publish service workbench */
+.onboarding-boundary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.onboarding-boundary-card {
+  display: grid;
+  gap: 5px;
+  padding: 18px;
+  border: 1px solid #ded9f3;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(30, 24, 70, 0.05);
+}
+
+.onboarding-boundary-card > span {
+  color: #6744df;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.onboarding-boundary-card strong { color: #20233f; font-size: 16px; }
+.onboarding-boundary-card p { margin: 2px 0 0; color: #666b82; font-size: 13px; line-height: 1.55; }
+.onboarding-boundary-runtime { border-color: #f2d49c; background: #fffbf2; }
+.onboarding-boundary-runtime > span { color: #a45a08; }
+
 .publish-workbench {
   display: grid;
   grid-template-columns: 245px minmax(0, 1fr);
@@ -963,6 +993,98 @@ tbody tr:hover {
 .publish-main-column {
   min-width: 0;
 }
+
+.onboarding-source-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: -3px 0 18px;
+}
+
+.onboarding-source-options > div {
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 1px solid #e4e1f1;
+  border-radius: 11px;
+  background: #fbfaff;
+}
+
+.onboarding-source-options strong { color: #4e35b4; font-size: 11px; text-transform: uppercase; }
+.onboarding-source-options span { color: #73778d; font-size: 12px; line-height: 1.4; }
+
+.onboarding-runtime-panel {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border: 1px solid #dcd6f6;
+  border-radius: 16px;
+  background: #faf9ff;
+}
+
+.onboarding-runtime-panel h3 { margin: 5px 0; color: #20233f; font-size: 20px; }
+.onboarding-runtime-panel p { margin: 0; color: #6c7085; font-size: 13px; line-height: 1.55; }
+
+.onboarding-runtime-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.onboarding-runtime-choice label {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid #ded9f1;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.onboarding-runtime-choice input { margin-top: 3px; accent-color: #5b36d6; }
+.onboarding-runtime-choice span,.onboarding-runtime-choice strong,.onboarding-runtime-choice small { display: block; }
+.onboarding-runtime-choice strong { color: #2d304d; font-size: 13px; }
+.onboarding-runtime-choice small { margin-top: 3px; color: #7b7f93; font-size: 11px; line-height: 1.4; }
+
+.onboarding-evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.onboarding-evidence-grid label,.onboarding-acknowledgement {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #444860;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.onboarding-evidence-grid input,.onboarding-acknowledgement input { margin-top: 2px; accent-color: #5b36d6; }
+
+.onboarding-runtime-state {
+  display: grid;
+  gap: 4px;
+  padding: 12px 13px;
+  border: 1px solid #f2d49c;
+  border-radius: 11px;
+  color: #7a4707;
+  background: #fff9ec;
+}
+.onboarding-runtime-state.is-running { border-color: #b7e5c9; color: #17643a; background: #effcf4; }
+.onboarding-runtime-state strong { font-size: 12px; }
+.onboarding-runtime-state span { font-size: 12px; line-height: 1.5; }
+
+.onboarding-acknowledgement {
+  padding: 13px;
+  border: 1px solid #cfc5f4;
+  border-radius: 11px;
+  color: #3e2a88;
+  background: #f3efff;
+}
+
+.onboarding-next-steps {
+  margin-top: 17px;
+  padding: 15px 17px;
+  border: 1px solid #b7e5c9;
+  border-radius: 13px;
+  color: #24543b;
+  background: #ffffff;
+}
+.onboarding-next-steps ol { margin: 8px 0 0; padding-left: 20px; }
+.onboarding-next-steps li { margin-top: 5px; line-height: 1.45; }
 
 .publish-review-callout {
   display: flex;
@@ -1559,6 +1681,16 @@ tbody tr:hover {
 }
 
 @media (max-width: 900px) {
+  .onboarding-boundary-grid,
+  .onboarding-runtime-choice,
+  .onboarding-evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-source-options {
+    grid-template-columns: 1fr;
+  }
+
   .publish-workbench,
   .builder-workbench {
     grid-template-columns: 1fr;

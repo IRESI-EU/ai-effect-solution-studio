@@ -19,6 +19,18 @@ type Service = {
   operation_name?: string | null;
   internal_host?: string | null;
   internal_port?: string | null;
+  interface_contract?: {
+    onboarding?: {
+      source_type?: string;
+      source_revision?: string | null;
+      runtime_status?: "needs_deployment" | "already_running";
+      revision_pinned?: boolean;
+      image_reviewed?: boolean;
+      secrets_external?: boolean;
+      health_verified?: boolean;
+      registration_only_acknowledged?: boolean;
+    };
+  } | null;
 };
 
 type UserRole = "solution_designer" | "node_manager" | "platform_admin";
@@ -558,6 +570,26 @@ export default function AdminPage() {
                         <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
                           {service.operation_name || "No operation"}
                         </div>
+                        {service.interface_contract?.onboarding && (
+                          <div style={{ marginTop: 9, fontSize: 12, color: "#667085", lineHeight: 1.45 }}>
+                            <strong style={{ display: "block", color: service.interface_contract.onboarding.runtime_status === "already_running" ? "#027a48" : "#b54708" }}>
+                              {service.interface_contract.onboarding.runtime_status === "already_running"
+                                ? "Provider claims runtime is running"
+                                : "Operator deployment required"}
+                            </strong>
+                            Source: {service.interface_contract.onboarding.source_type || "not recorded"}
+                            {service.interface_contract.onboarding.source_revision
+                              ? ` · ${service.interface_contract.onboarding.source_revision}`
+                              : ""}
+                            <br />
+                            Evidence: {[
+                              service.interface_contract.onboarding.revision_pinned,
+                              service.interface_contract.onboarding.image_reviewed,
+                              service.interface_contract.onboarding.secrets_external,
+                              service.interface_contract.onboarding.health_verified,
+                            ].filter(Boolean).length}/4 provider checks
+                          </div>
+                        )}
                       </Td>
 
                       <Td>
