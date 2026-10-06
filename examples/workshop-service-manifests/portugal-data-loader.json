@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "service": {
+    "id": "workshop-pt-data-loader",
+    "name": "[Workshop] Portuguese Data Loader",
+    "provider": "AI-EFFECT Portuguese Node",
+    "category": "Portugal Use Case Workshop",
+    "version": "2.0",
+    "description": "Workshop-only onboarding copy derived from the WP3 Portugal Node data_loader1 service. Do not approve it as a second production service.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "data_loader1",
+    "image": "portugal-node-integrated-data-provision:latest",
+    "dockerfile": "use-cases/portugal-node-integrated/data_provision/Dockerfile",
+    "internal_port": "600",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "control",
+    "operation_name": "ExecuteQuery",
+    "input_type": "Workflow Start",
+    "output_type": "feature_engineer1 Input",
+    "input_message_name": "ExecuteQueryRequest",
+    "output_message_name": "ExecuteQueryResponse",
+    "contract_uri": "use-cases/portugal-node-integrated/services/data_loader/proto/data_loader.proto",
+    "proto_uri": "microservice/data_loader1.proto"
+  },
+  "orchestration": {
+    "mode": "native"
+  }
+}

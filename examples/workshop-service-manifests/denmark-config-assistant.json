@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "service": {
+    "id": "workshop-dk-config-assistant",
+    "name": "[Workshop] Danish Configuration Assistant",
+    "provider": "AI-EFFECT Danish Node",
+    "category": "Denmark Use Case Workshop",
+    "version": "2.0",
+    "description": "Workshop-only onboarding copy derived from the WP3 Denmark Node config_assistant1 service. Do not approve it as a second production service.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "config_assistant1",
+    "image": "denmark-node-config-assistant:latest",
+    "dockerfile": "use-cases/denmark-node/services/config_assistant/Dockerfile",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "control",
+    "operation_name": "BuildRunConfig",
+    "input_type": "Workflow Start",
+    "output_type": "topology_generator1 Input",
+    "input_message_name": "BuildRunConfigRequest",
+    "output_message_name": "BuildRunConfigResponse",
+    "contract_uri": "use-cases/denmark-node/services/config_assistant/proto/config_assistant.proto",
+    "proto_uri": "microservice/config_assistant1.proto"
+  },
+  "orchestration": {
+    "mode": "native"
+  }
+}

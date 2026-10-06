@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "service": {
+    "id": "workshop-de-data-provider",
+    "name": "[Workshop] German Data Provider",
+    "provider": "AI-EFFECT German Node",
+    "category": "Germany Use Case Workshop",
+    "version": "2.0",
+    "description": "Workshop-only onboarding copy derived from the WP3 Germany Node data_provider1 service. Do not approve it as a second production service.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "data_provider1",
+    "image": "germany-node-data-provider:latest",
+    "dockerfile": "use-cases/germany-node/services/data_provider/Dockerfile",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "control",
+    "operation_name": "ProvideData",
+    "input_type": "Workflow Start",
+    "output_type": "villas_chronics1 Input",
+    "input_message_name": "ProvideDataRequest",
+    "output_message_name": "ProvideDataResponse",
+    "contract_uri": "use-cases/germany-node/services/data_provider/proto/data_provider.proto",
+    "proto_uri": "microservice/data_provider1.proto"
+  },
+  "orchestration": {
+    "mode": "native"
+  }
+}

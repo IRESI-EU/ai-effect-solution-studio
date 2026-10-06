@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "service": {
+    "id": "workshop-nl-grid-synth",
+    "name": "[Workshop] Dutch Grid Synthesizer",
+    "provider": "AI-EFFECT Dutch Node",
+    "category": "Netherlands Use Case Workshop",
+    "version": "1.0",
+    "description": "Workshop-only onboarding copy derived from the Dutch Node grid_synth_service. Do not approve it as a second production service.",
+    "trust_badge": "pending_review"
+  },
+  "runtime": {
+    "type": "docker",
+    "container_name": "grid_synth_service",
+    "image": "paulban/aieffect-dutchnode-datasynth:latest",
+    "dockerfile": "use-cases/dutch_node/data_synthesizer/Dockerfile",
+    "internal_port": "8080",
+    "health_path": "/health"
+  },
+  "interface": {
+    "type": "control",
+    "operation_name": "ConfigureAndSynthesize",
+    "input_type": "Workflow Start",
+    "output_type": "benchmark-runner Input",
+    "input_message_name": "Request",
+    "output_message_name": "GetGridDataResponse",
+    "contract_uri": "use-cases/dutch_node/data_synthesizer/microservice/data_synthesizer.proto",
+    "proto_uri": "microservice/data_synthesizer.proto"
+  },
+  "orchestration": {
+    "mode": "native"
+  }
+}

@@ -1013,6 +1013,58 @@ tbody tr:hover {
 .onboarding-source-options strong { color: #4e35b4; font-size: 11px; text-transform: uppercase; }
 .onboarding-source-options span { color: #73778d; font-size: 12px; line-height: 1.4; }
 
+.workshop-example-panel {
+  margin: 16px 0 18px;
+  padding: 16px;
+  border: 1px solid #d9d4ff;
+  border-radius: 14px;
+  background: #faf9ff;
+}
+
+.workshop-example-panel > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #5f6678;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.workshop-example-panel > div:first-child strong {
+  color: #20105f;
+  font-size: 14px;
+}
+
+.workshop-example-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.workshop-example-buttons button {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 1px solid #cfc6ff;
+  border-radius: 10px;
+  background: #fff;
+  color: #3b238e;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workshop-example-buttons button:hover {
+  border-color: #6747ec;
+  box-shadow: 0 5px 14px rgba(83, 54, 198, 0.12);
+}
+
+.workshop-example-buttons button span {
+  color: #6e7283;
+  font-size: 11px;
+}
+
 .onboarding-runtime-panel {
   display: grid;
   gap: 16px;
@@ -1689,6 +1741,10 @@ tbody tr:hover {
 
   .onboarding-source-options {
     grid-template-columns: 1fr;
+  }
+
+  .workshop-example-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .publish-workbench,

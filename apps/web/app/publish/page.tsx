@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { workshopExamples, type WorkshopExample } from "./workshop-examples";
 
 const API_BASE_URL = "/api";
 
@@ -283,6 +284,25 @@ export default function PublishServicePage() {
     setRegistrationAcknowledged(false);
   }
 
+  function loadWorkshopExample(example: WorkshopExample) {
+    setMode("manual");
+    setRepoUrl(example.sourceUrl);
+    setBranch(example.revision);
+    setManifestPath(example.manifestPath);
+    setManifestText(JSON.stringify(example.manifest, null, 2));
+    setPreview(null);
+    setConfirmed(null);
+    setError(null);
+    setRuntimeStatus("needs_deployment");
+    setRuntimeEvidence({
+      revisionPinned: true,
+      imageReviewed: false,
+      secretsExternal: false,
+      healthVerified: false,
+    });
+    setRegistrationAcknowledged(false);
+  }
+
   function updateRuntimeEvidence(field: keyof RuntimeEvidence, checked: boolean) {
     setRuntimeEvidence((current) => ({ ...current, [field]: checked }));
   }
@@ -381,6 +401,25 @@ export default function PublishServicePage() {
           <div><strong>Available now</strong><span>Public Git manifest or pasted JSON</span></div>
           <div><strong>Admin-assisted</strong><span>WP3 blueprint + dockerinfo package</span></div>
           <div><strong>Planned</strong><span>Private Git and scanned local ZIP upload</span></div>
+        </div>
+
+        <div className="workshop-example-panel">
+          <div>
+            <strong>Workshop examples</strong>
+            <span>Load one traceable, preview-safe service from each node. These copies are labelled for demonstration and must not be approved as duplicate production services.</span>
+          </div>
+          <div className="workshop-example-buttons">
+            {workshopExamples.map((example) => (
+              <button
+                type="button"
+                key={example.key}
+                onClick={() => loadWorkshopExample(example)}
+              >
+                <strong>{example.country}</strong>
+                <span>{example.service}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div style={gridStyle}>
