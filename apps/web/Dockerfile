@@ -10,6 +10,7 @@ FROM dependencies AS builder
 ARG NEXT_PUBLIC_ENVIRONMENT_LABEL="Local environment"
 ENV NEXT_PUBLIC_ENVIRONMENT_LABEL=$NEXT_PUBLIC_ENVIRONMENT_LABEL
 COPY apps/web ./apps/web
+COPY examples ./examples
 RUN pnpm --filter @ai-effect/web build
 
 FROM node:22-alpine AS runner
