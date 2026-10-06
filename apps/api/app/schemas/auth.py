@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 UserRole = Literal["solution_designer", "node_manager", "platform_admin"]
 RegistrationRole = Literal["solution_designer", "node_manager"]
 UserStatus = Literal["pending", "active", "rejected", "suspended"]
-NodeCode = Literal["germany", "portugal", "denmark", "netherlands"]
+NodeCode = Literal["germany", "portugal", "denmark", "dutch"]
 
 
 def normalize_email(value: str) -> str:

@@ -4,7 +4,7 @@
     "id": "workshop-nl-grid-synth",
     "name": "[Workshop] Dutch Grid Synthesizer",
     "provider": "AI-EFFECT Dutch Node",
-    "category": "Netherlands Use Case Workshop",
+    "category": "Dutch Use Case Workshop",
     "version": "1.0",
     "description": "Workshop-only onboarding copy derived from the Dutch Node grid_synth_service. Do not approve it as a second production service.",
     "trust_badge": "pending_review"

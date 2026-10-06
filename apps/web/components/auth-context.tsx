@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 export type UserRole = "solution_designer" | "node_manager" | "platform_admin";
-export type NodeCode = "germany" | "portugal" | "denmark" | "netherlands";
+export type NodeCode = "germany" | "portugal" | "denmark" | "dutch";
 
 export type PortalUser = {
   id: string;
@@ -73,5 +73,5 @@ export const nodeLabels: Record<NodeCode, string> = {
   germany: "German Node",
   portugal: "Portuguese Node",
   denmark: "Danish Node",
-  netherlands: "Dutch Node",
+  dutch: "Dutch Node",
 };

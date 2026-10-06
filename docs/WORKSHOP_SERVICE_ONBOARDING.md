@@ -12,7 +12,7 @@ copies must remain `pending_review` and should be archived after the workshop.
 | Germany | German Data Provider | `ProvideData` | Shows a workflow entry service that publishes input data for chronic generation. |
 | Portugal | Portuguese Data Loader | `ExecuteQuery` | Shows a data-source operation at the start of the integrated synthetic-data pipeline. |
 | Denmark | Danish Configuration Assistant | `BuildRunConfig` | Shows prompt/configuration normalization before topology generation. |
-| Netherlands | Dutch Grid Synthesizer | `ConfigureAndSynthesize` | Shows grid-data synthesis feeding the benchmarking service. |
+| Dutch | Dutch Grid Synthesizer | `ConfigureAndSynthesize` | Shows grid-data synthesis feeding the benchmarking service. |
 
 The German, Portuguese and Danish examples are derived from commit
 `e8914565e966a2d78879c314f980574769d31b87` of
@@ -39,7 +39,7 @@ The German, Portuguese and Danish examples are derived from commit
 ## Recommended workshop narrative
 
 Use Germany to demonstrate the complete registration form. Use the country
-buttons for Portugal, Denmark and the Netherlands to show that the same contract
+buttons for Portugal, Denmark and the Dutch node to show that the same contract
 applies across different node implementations. Then open **Catalogue** and
 **Build solution** to show the already-approved production services. This keeps
 the distinction clear:

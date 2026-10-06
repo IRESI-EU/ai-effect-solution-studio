@@ -34,7 +34,7 @@ type Service = {
 };
 
 type UserRole = "solution_designer" | "node_manager" | "platform_admin";
-type NodeCode = "germany" | "portugal" | "denmark" | "netherlands";
+type NodeCode = "germany" | "portugal" | "denmark" | "dutch";
 type PortalUser = {
   id: string;
   email: string;
@@ -328,7 +328,7 @@ export default function AdminPage() {
                   return <tr key={user.id} style={{ borderTop: "1px solid #e4e9f2" }}>
                     <Td><strong style={{ display: "block" }}>{user.display_name}</strong><span style={{ color: "#667085" }}>{user.email}</span></Td>
                     <Td><select value={user.role} disabled={busy || user.status === "active"} onChange={(event) => editUser(user.id, { role: event.target.value as UserRole, node: event.target.value === "platform_admin" ? null : user.node })} style={{ padding: "8px 10px" }}><option value="solution_designer">Solution Designer</option><option value="node_manager">Node Manager</option><option value="platform_admin">Platform Admin</option></select></Td>
-                    <Td><select value={user.node || ""} disabled={busy || user.status === "active" || user.role === "platform_admin"} onChange={(event) => editUser(user.id, { node: (event.target.value || null) as NodeCode | null })} style={{ padding: "8px 10px" }}><option value="">No node</option><option value="germany">German</option><option value="portugal">Portuguese</option><option value="denmark">Danish</option><option value="netherlands">Dutch</option></select></Td>
+                    <Td><select value={user.node || ""} disabled={busy || user.status === "active" || user.role === "platform_admin"} onChange={(event) => editUser(user.id, { node: (event.target.value || null) as NodeCode | null })} style={{ padding: "8px 10px" }}><option value="">No node</option><option value="germany">German</option><option value="portugal">Portuguese</option><option value="denmark">Danish</option><option value="dutch">Dutch</option></select></Td>
                     <Td><span className="badge" style={userStatusStyle(user.status)}>{user.status}</span></Td>
                     <Td><span style={{ display: "block", color: "#667085" }}>Joined {formatAdminDate(user.created_at)}</span><small style={{ color: "#98a2b3" }}>{user.last_login_at ? `Last login ${formatAdminDate(user.last_login_at)}` : "Never signed in"}</small></Td>
                     <Td><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -356,7 +356,7 @@ export default function AdminPage() {
             <div style={{ padding: 20, display: "grid", gap: 24 }}>
               <LegacyTable title="Solutions" empty="No unassigned solutions." rows={legacy.solutions.map((item) => ({ id: item.id, primary: item.name, secondary: `${item.status} · updated ${formatAdminDate(item.updated_at)}` }))} choices={ownershipChoices} setChoice={(id, value) => setOwnershipChoices((current) => ({ ...current, [id]: value }))} options={users.filter((user) => user.status === "active").map((user) => ({ value: user.id, label: `${user.display_name} (${user.email})` }))} busyId={actionOwnershipId} onAssign={(id) => assignLegacyRecord("solutions", id)} />
               <LegacyTable title="Deployments not yet assigned" empty="No unassigned deployments." rows={legacy.deployments.map((item) => ({ id: item.id, primary: item.name, secondary: `${item.status} · ${item.workflow_id}` }))} choices={ownershipChoices} setChoice={(id, value) => setOwnershipChoices((current) => ({ ...current, [id]: value }))} options={users.filter((user) => user.status === "active").map((user) => ({ value: user.id, label: `${user.display_name} (${user.email})` }))} busyId={actionOwnershipId} onAssign={(id) => assignLegacyRecord("deployments", id)} />
-              <LegacyTable title="Services without a node owner" empty="No unassigned services." rows={legacy.services.map((item) => ({ id: item.id, primary: item.name, secondary: item.provider }))} choices={ownershipChoices} setChoice={(id, value) => setOwnershipChoices((current) => ({ ...current, [id]: value }))} options={[{ value: "germany", label: "German Node" }, { value: "portugal", label: "Portuguese Node" }, { value: "denmark", label: "Danish Node" }, { value: "netherlands", label: "Dutch Node" }]} busyId={actionOwnershipId} onAssign={(id) => assignLegacyRecord("services", id)} />
+              <LegacyTable title="Services without a node owner" empty="No unassigned services." rows={legacy.services.map((item) => ({ id: item.id, primary: item.name, secondary: item.provider }))} choices={ownershipChoices} setChoice={(id, value) => setOwnershipChoices((current) => ({ ...current, [id]: value }))} options={[{ value: "germany", label: "German Node" }, { value: "portugal", label: "Portuguese Node" }, { value: "denmark", label: "Danish Node" }, { value: "dutch", label: "Dutch Node" }]} busyId={actionOwnershipId} onAssign={(id) => assignLegacyRecord("services", id)} />
             </div>
           )}
         </section>

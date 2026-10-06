@@ -477,7 +477,7 @@ def build_document():
             ["Germany", "data-provider, villas-chronics, villas-node, output-formatter", "germany-node_shared-data", "PASS: ProvideData, GenerateChronics and FormatOutput"],
             ["Portugal", "tef-data-provision, tef-knowledge-store, pt-synthetic-data, tef-clickhouse", "ClickHouse data and synthetic models", "PASS: ExecuteQuery, ApplyFunction, TrainModel and GenerateData"],
             ["Denmark", "dk-config-assistant, dk-topology-generator, dk-draw-topology, dk-ollama", "Denmark data and Ollama model volumes", "PASS: BuildRunConfig, GenerateTopology and RenderTopologies"],
-            ["Netherlands", "nl-grid-synth-service, nl-benchmark-runner", "Dutch synthetic-model volume", "PASS: ConfigureAndSynthesize and RunBenchmark"],
+            ["Dutch", "nl-grid-synth-service, nl-benchmark-runner", "Dutch synthetic-model volume", "PASS: ConfigureAndSynthesize and RunBenchmark"],
         ],
         widths=[Cm(2.1), Cm(5.6), Cm(4.0), Cm(5.3)],
         font_size=8.1,

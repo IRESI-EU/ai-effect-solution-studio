@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Boxes, ChevronRight, CircleUserRound, CloudCog, Database, LayoutDashboard,
@@ -80,7 +81,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {navigationOpen && <button className="sidebar-backdrop" type="button" aria-label="Close navigation" onClick={() => setNavigationOpen(false)} />}
 
       <aside className={`sidebar${navigationOpen ? " sidebar-open" : ""}`}>
-        <div className="brand"><div className="brand-mark" aria-hidden="true">AI</div><div className="brand-copy"><strong>AI-EFFECT</strong><span>Web portal</span></div></div>
+        <Link className="brand" href="/" aria-label="AI-EFFECT home">
+          <Image className="brand-logo" src="/ai-effect-logo.png" alt="AI-EFFECT" width={184} height={48} priority />
+        </Link>
         <div className="sidebar-section-label">Workspace</div>
         <nav className="sidebar-nav" aria-label="Primary navigation">
           {navItems.map(({ label, href, icon: Icon }) => {

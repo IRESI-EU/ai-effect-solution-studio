@@ -47,7 +47,7 @@ PACKAGES = (
         },
     },
     {
-        "name": "Netherlands",
+        "name": "Dutch",
         "provider": "AI-EFFECT Dutch Node",
         "blueprint": SERVER_ROOT / "ai-effect-wp3-dutch/use-cases/dutch_node/ai4eu_pipeline_package/blueprint.json",
         "dockerinfo": SERVER_ROOT / "ai-effect-wp3-dutch/use-cases/dutch_node/ai4eu_pipeline_package/dockerinfo.json",

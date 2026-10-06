@@ -1,6 +1,6 @@
 import denmarkConfigAssistant from "../../../../examples/workshop-service-manifests/denmark-config-assistant.json";
 import germanyDataProvider from "../../../../examples/workshop-service-manifests/germany-data-provider.json";
-import netherlandsGridSynth from "../../../../examples/workshop-service-manifests/netherlands-grid-synth.json";
+import dutchGridSynth from "../../../../examples/workshop-service-manifests/dutch-grid-synth.json";
 import portugalDataLoader from "../../../../examples/workshop-service-manifests/portugal-data-loader.json";
 
 export type WorkshopExample = {
@@ -44,12 +44,12 @@ export const workshopExamples: WorkshopExample[] = [
     manifest: denmarkConfigAssistant,
   },
   {
-    key: "netherlands",
-    country: "Netherlands",
+    key: "dutch",
+    country: "Dutch",
     service: "ConfigureAndSynthesize",
     sourceUrl: "https://github.com/paulban/ai-effect-wp3",
     revision: "ba598b2459f9986dac4e37dcc5d7d3298f25dc3a",
     manifestPath: "use-cases/dutch_node/data_synthesizer/docker-compose-all.yml#synthetic-data",
-    manifest: netherlandsGridSynth,
+    manifest: dutchGridSynth,
   },
 ];

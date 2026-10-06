@@ -52,7 +52,7 @@ def run_input(case_name: str) -> dict | None:
             "max_extra_pipes": 1,
             "load_topology": "any",
         }
-    if case_name == "Netherlands":
+    if case_name == "Dutch":
         algorithm_path = (
             PACKAGES[-1]["blueprint"].parent.parent
             / "benchmarking/algorithms/algorithm_template.py"

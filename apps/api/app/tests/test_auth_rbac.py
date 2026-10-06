@@ -51,6 +51,26 @@ def test_registration_requires_admin_approval(client, anonymous_client):
     assert login.json()["node"] == "portugal"
 
 
+def test_dutch_node_code_is_accepted(client, anonymous_client):
+    email = f"dutch-{uuid4().hex[:8]}@example.org"
+    registration = register_user(
+        anonymous_client,
+        email=email,
+        role="node_manager",
+        node="dutch",
+    )
+
+    assert registration.status_code == 201
+    assert registration.json()["node"] == "dutch"
+    assert approve_user(client, registration.json()).status_code == 200
+
+    login = anonymous_client.post(
+        "/auth/login", json={"email": email, "password": "ResearchPassword123"}
+    )
+    assert login.status_code == 200
+    assert login.json()["node"] == "dutch"
+
+
 def test_node_manager_cannot_manage_another_nodes_service(client, anonymous_client):
     users = []
     for node in ("portugal", "germany"):

@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_login_at TIMESTAMP,
     CONSTRAINT ck_users_role CHECK (role IN ('solution_designer', 'node_manager', 'platform_admin')),
     CONSTRAINT ck_users_status CHECK (status IN ('pending', 'active', 'rejected', 'suspended')),
-    CONSTRAINT ck_users_node CHECK (node IS NULL OR node IN ('germany', 'portugal', 'denmark', 'netherlands')),
+    CONSTRAINT ck_users_node CHECK (node IS NULL OR node IN ('germany', 'portugal', 'denmark', 'dutch')),
     CONSTRAINT ck_node_manager_assignment CHECK (role <> 'node_manager' OR node IS NOT NULL)
 );
 

@@ -30,7 +30,7 @@ worker execution, and output-reference verification.
 | Germany | `wf-1dbaa6bdf5b8` | PASS | ProvideData, GenerateChronics, FormatOutput |
 | Portugal | `wf-ff7e0346d90e` | PASS | ExecuteQuery, ApplyFunction, TrainModel, GenerateData |
 | Denmark | `wf-075a4fcef6fe` | PASS | BuildRunConfig, GenerateTopology, RenderTopologies |
-| Netherlands | `wf-ba5ff8c723fc` | PASS | ConfigureAndSynthesize, RunBenchmark |
+| Dutch | `wf-ba5ff8c723fc` | PASS | ConfigureAndSynthesize, RunBenchmark |
 
 All twelve tasks completed without an error and returned one output reference.
 

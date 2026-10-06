@@ -28,7 +28,7 @@ Email verification is an administrator-controlled manual process in this version
 | Approve, reject, suspend and reactivate users | Yes | No | No |
 | View the audit log API | Yes | No | No |
 
-Supported node assignments are `germany`, `portugal`, `denmark` and `netherlands`.
+Supported node assignments are `germany`, `portugal`, `denmark` and `dutch`.
 
 ## Enforcement model
 

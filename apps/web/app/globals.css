@@ -120,40 +120,18 @@ textarea:focus-visible {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 10px 28px;
-}
-
-.brand-mark {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  place-items: center;
+  margin: 0 8px 28px;
+  padding: 8px 10px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #8a69ff, var(--primary));
-  box-shadow: 0 8px 22px rgba(91, 44, 242, 0.38);
-  font-size: 12px;
-  font-weight: 900;
-  transform: rotate(-5deg);
+  color: inherit;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 24px rgba(4, 2, 24, 0.2);
 }
 
-.brand-copy {
-  display: grid;
-  gap: 1px;
-}
-
-.brand-copy strong {
-  font-size: 17px;
-  font-weight: 850;
-  letter-spacing: 0.02em;
-}
-
-.brand-copy span {
-  color: #a9a7c7;
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+.brand-logo {
+  display: block;
+  width: min(184px, 100%);
+  height: auto;
 }
 
 .sidebar-section-label {
