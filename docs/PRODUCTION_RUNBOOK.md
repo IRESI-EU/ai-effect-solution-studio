@@ -81,12 +81,12 @@ Before starting an authentication-enabled API against an existing database:
 6. Remove the bootstrap values and recreate the API container. Confirm through
    `docker inspect` that the bootstrap email and password are empty.
 
-The Traefik authentication router intentionally allows `/api/auth/*` to bypass
-the temporary legacy Basic Authentication middleware. Login, registration and
-logout must reach the application directly; authenticated endpoints still
-enforce the portal's HttpOnly session cookie. Keep the Basic Authentication
-gate on management pages during acceptance testing and remove it in a separate
-approved release after role testing passes.
+Traefik sends `/api/auth/*` and management routes directly to the application.
+Login, registration and logout are handled by the portal; protected pages and
+API endpoints enforce the portal's HttpOnly session cookie and role checks. Do
+not add proxy Basic Authentication to these routes because it creates a second,
+browser-native login prompt and prevents the application session from being
+used normally.
 
 ## Country-node acceptance test
 
@@ -107,9 +107,9 @@ exercise portal -> API -> orchestrator -> worker -> country service -> artifact.
 
 ## Public cutover
 
-Generate an `htpasswd` entry and store it in `STUDIO_BASIC_AUTH_USERS` in the
-server-only environment file. The Traefik override keeps the public catalogue
-read-only while protecting management pages and the API with Basic Auth.
+The Traefik override keeps the catalogue routes public and sends management
+pages and APIs to the portal's application-level authentication and RBAC. No
+shared proxy username or `STUDIO_BASIC_AUTH_USERS` value is required.
 
 During the agreed maintenance window:
 

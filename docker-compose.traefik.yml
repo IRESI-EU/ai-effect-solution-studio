@@ -24,9 +24,9 @@ services:
       traefik.http.routers.ai-effect-studio-public-api.service: ai-effect-studio
       traefik.http.routers.ai-effect-studio-public-api.priority: "200"
 
-      # Authentication endpoints must reach the portal session system without
-      # the temporary legacy Basic Auth gate. Protected endpoints such as /me
-      # and /change-password still require the HttpOnly application session.
+      # Authentication endpoints reach the portal session system directly.
+      # Protected endpoints such as /me and /change-password require the
+      # HttpOnly application session.
       traefik.http.routers.ai-effect-studio-auth-api.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && PathPrefix(`/api/auth`)
       traefik.http.routers.ai-effect-studio-auth-api.entrypoints: websecure
       traefik.http.routers.ai-effect-studio-auth-api.middlewares: ai-effect-studio-retry
@@ -36,13 +36,14 @@ services:
 
       traefik.http.routers.ai-effect-studio-management.rule: (Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && (PathPrefix(`/admin`) || PathPrefix(`/builder`) || PathPrefix(`/publish`) || PathPrefix(`/deployments`) || PathPrefix(`/solutions`) || PathPrefix(`/api`))
       traefik.http.routers.ai-effect-studio-management.entrypoints: websecure
-      traefik.http.routers.ai-effect-studio-management.middlewares: ai-effect-studio-admin-auth,ai-effect-studio-retry
+      # Application authentication and role checks protect management pages
+      # and APIs. Do not add a proxy Basic Auth gate here: it conflicts with
+      # the portal login and causes browsers to show a second sign-in prompt.
+      traefik.http.routers.ai-effect-studio-management.middlewares: ai-effect-studio-retry
       traefik.http.routers.ai-effect-studio-management.tls.certresolver: letsencrypt
       traefik.http.routers.ai-effect-studio-management.service: ai-effect-studio
       traefik.http.routers.ai-effect-studio-management.priority: "100"
 
-      traefik.http.middlewares.ai-effect-studio-admin-auth.basicauth.users: ${STUDIO_BASIC_AUTH_USERS:?Set STUDIO_BASIC_AUTH_USERS in the production environment file}
-      traefik.http.middlewares.ai-effect-studio-admin-auth.basicauth.removeheader: "true"
       traefik.http.middlewares.ai-effect-studio-retry.retry.attempts: "3"
       traefik.http.middlewares.ai-effect-studio-retry.retry.initialinterval: 100ms
 

@@ -100,7 +100,9 @@ Complete this ownership step before asking researchers to verify their personal 
 - Only Platform Administrators can approve services and users.
 - Suspending a user immediately invalidates their sessions.
 - HTTPS is active and the session cookie is marked `Secure`.
-- The legacy shared Basic Authentication gate remains enabled until role testing is complete, then is removed in a separate approved change.
+- The legacy shared proxy Basic Authentication gate is disabled. Management
+  pages and APIs rely on the portal session and role-based authorization, so
+  users see only the portal login.
 
 ## Deferred enhancements
 
