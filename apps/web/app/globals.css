@@ -847,9 +847,40 @@ tbody tr:hover {
 @media (max-width: 600px) { .auth-form-grid { grid-template-columns: 1fr; }.auth-form-full { grid-column: auto; }.auth-form-card { padding: 28px 22px; } }
 
 /* Publish service workbench */
+.publish-hero {
+  margin-bottom: 22px;
+}
+
+.publish-hero h1 {
+  margin: 8px 0;
+  color: #0f172a;
+  font-size: clamp(34px, 5vw, 46px);
+  line-height: 1.05;
+}
+
+.publish-hero > p:not(:first-child) {
+  max-width: 850px;
+  margin: 0 0 8px;
+  color: #566074;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.registration-boundary {
+  max-width: 850px;
+  margin: 12px 0 4px;
+  padding: 11px 13px;
+  border: 1px solid #ded9f3;
+  border-radius: 11px;
+  color: #4f4770;
+  background: #f8f6ff;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .onboarding-boundary-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 20px;
 }
@@ -972,6 +1003,92 @@ tbody tr:hover {
   min-width: 0;
 }
 
+.guided-form {
+  display: grid;
+  gap: 18px;
+}
+
+.guided-section {
+  padding-top: 4px;
+}
+
+.guided-section + .guided-section {
+  padding-top: 20px;
+  border-top: 1px solid #eceaf4;
+}
+
+.guided-section h3 {
+  margin: 0 0 13px;
+  color: #232641;
+  font-size: 17px;
+}
+
+.guided-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.required-label {
+  align-self: flex-start;
+  margin-top: -4px;
+  color: #6a48dd;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.generated-json,
+.technical-details,
+.publish-help-details,
+.validation-summary details {
+  border: 1px solid #dfdced;
+  border-radius: 12px;
+  background: #fbfaff;
+}
+
+.generated-json summary,
+.technical-details summary,
+.publish-help-details > summary,
+.validation-summary summary {
+  padding: 12px 14px;
+  color: #3f2d88;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.generated-json > div {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 10px;
+}
+
+.generated-json pre {
+  max-height: 420px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border-top: 1px solid #e6e2f3;
+  color: #31354c;
+  background: #f7f8fb;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.publish-help-details {
+  margin-top: 20px;
+}
+
+.publish-help-details > p {
+  margin: 0;
+  padding: 0 14px 14px;
+  color: #686d80;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .onboarding-source-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -992,11 +1109,24 @@ tbody tr:hover {
 .onboarding-source-options span { color: #73778d; font-size: 12px; line-height: 1.4; }
 
 .workshop-example-panel {
-  margin: 16px 0 18px;
+  margin: 0 14px 14px;
   padding: 16px;
   border: 1px solid #d9d4ff;
   border-radius: 14px;
   background: #faf9ff;
+}
+
+.workshop-example-panel > summary {
+  color: #20105f;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.workshop-example-panel > p {
+  color: #6e7283;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .workshop-example-panel > div:first-child {
@@ -1056,7 +1186,7 @@ tbody tr:hover {
 .onboarding-runtime-panel h3 { margin: 5px 0; color: #20233f; font-size: 20px; }
 .onboarding-runtime-panel p { margin: 0; color: #6c7085; font-size: 13px; line-height: 1.55; }
 
-.onboarding-runtime-choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.onboarding-runtime-choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .onboarding-runtime-choice label {
   display: flex;
   align-items: flex-start;
@@ -1115,6 +1245,57 @@ tbody tr:hover {
 }
 .onboarding-next-steps ol { margin: 8px 0 0; padding-left: 20px; }
 .onboarding-next-steps li { margin-top: 5px; line-height: 1.45; }
+
+.technical-details {
+  margin-top: 14px;
+}
+
+.technical-details > div {
+  padding: 0 14px 14px;
+}
+
+.validation-summary {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.validation-summary > div strong,
+.validation-summary > div span {
+  display: block;
+}
+
+.validation-summary > div strong {
+  color: #3b3e55;
+  font-size: 12px;
+}
+
+.validation-summary > div span,
+.validation-summary details p {
+  color: #656a7d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.validation-summary details p {
+  margin: 0;
+  padding: 0 14px 10px;
+}
+
+.example-preview-lock {
+  margin-top: 18px;
+  padding: 15px;
+  border: 1px solid #f0ca80;
+  border-radius: 13px;
+  color: #704409;
+  background: #fff9ec;
+}
+
+.example-preview-lock p {
+  margin: 5px 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
 
 .publish-review-callout {
   display: flex;
@@ -1713,7 +1894,8 @@ tbody tr:hover {
 @media (max-width: 900px) {
   .onboarding-boundary-grid,
   .onboarding-runtime-choice,
-  .onboarding-evidence-grid {
+  .onboarding-evidence-grid,
+  .guided-grid {
     grid-template-columns: 1fr;
   }
 

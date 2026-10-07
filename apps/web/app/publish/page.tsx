@@ -1,16 +1,28 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { useMemo, useState, type CSSProperties } from "react";
+import { useAuth } from "../../components/auth-context";
+import {
+  buildGuidedManifest,
+  emptyGuidedForm,
+  formFromExample,
+  type GuidedServiceForm,
+  type InterfaceChoice,
+} from "./guided-manifest";
 import { workshopExamples, type WorkshopExample } from "./workshop-examples";
 
 const API_BASE_URL = "/api";
 
-type ValidationMessage = {
-  level: "success" | "warning" | "error";
-  message: string;
+type EntryMode = "guided" | "git" | "manual";
+type RuntimeChoice = "needs_deployment" | "already_running" | "unsure";
+type RuntimeEvidence = {
+  revisionPinned: boolean;
+  imageReviewed: boolean;
+  secretsExternal: boolean;
+  healthVerified: boolean;
 };
-
+type ValidationMessage = { level: "success" | "warning" | "error"; message: string };
 type ImportedService = {
   id: string | null;
   name: string;
@@ -18,8 +30,6 @@ type ImportedService = {
   category: string;
   version: string;
   description?: string | null;
-  trust_badge: string;
-  lifecycle_status: string;
   repository_url: string;
   repository_branch: string;
   manifest_path: string;
@@ -38,207 +48,171 @@ type ImportedService = {
   output_message_name?: string | null;
   proto_uri?: string | null;
   contract_uri?: string | null;
-  interface_contract?: Record<string, unknown>;
 };
-
 type PreviewResponse = {
   status: "valid" | "warning" | "invalid";
   raw_manifest: Record<string, unknown>;
   service: ImportedService | null;
   validation: ValidationMessage[];
 };
-
 type ConfirmedService = {
   id: string;
   name: string;
   provider: string;
   category: string;
-  version: string;
-  status: string;
   trust_badge: string;
-  lifecycle_status: string;
   container_name: string;
   operation_name: string;
-  proto_uri: string;
 };
 
-type RuntimeStatus = "needs_deployment" | "already_running";
-
-type RuntimeEvidence = {
-  revisionPinned: boolean;
-  imageReviewed: boolean;
-  secretsExternal: boolean;
-  healthVerified: boolean;
+const initialEvidence: RuntimeEvidence = {
+  revisionPinned: false,
+  imageReviewed: false,
+  secretsExternal: false,
+  healthVerified: false,
 };
-
-const exampleManifest = `{
-  "schema_version": "1.0",
-  "service": {
-    "id": "example-http-service-ui",
-    "name": "Example HTTP AI Service from UI",
-    "provider": "Example Node",
-    "category": "Example Inference",
-    "version": "1.0.0",
-    "description": "A Dockerized REST/FastAPI-style AI service onboarded through an AI-EFFECT sidecar adapter.",
-    "trust_badge": "pending_review"
-  },
-  "runtime": {
-    "type": "docker",
-    "container_name": "example-http-service-ui-adapter",
-    "image": "ghcr.io/iresi-eu/example-http-service-adapter:1.0.0",
-    "internal_port": "8080",
-    "health_path": "/health"
-  },
-  "interface": {
-    "type": "http",
-    "operation_name": "Predict",
-    "input_type": "JSON DataReference",
-    "output_type": "Prediction Result DataReference",
-    "contract_uri": "openapi.json",
-    "http": {
-      "method": "POST",
-      "path": "/predict",
-      "input_content_type": "application/json",
-      "output_content_type": "application/json"
-    }
-  },
-  "orchestration": {
-    "mode": "sidecar",
-    "adapter": "http-json"
-  }
-}`;
 
 export default function PublishServicePage() {
-  const [mode, setMode] = useState<"git" | "manual">("git");
-
-  const [repoUrl, setRepoUrl] = useState("https://github.com/IRESI-EU/ai-effect-solution-studio");
-  const [branch, setBranch] = useState("main");
-  const [manifestPath, setManifestPath] = useState("examples/service-manifest/ai-effect.http.example.json");
-  const [manifestText, setManifestText] = useState(exampleManifest);
-
+  const { user } = useAuth();
+  const [mode, setMode] = useState<EntryMode>("guided");
+  const [form, setForm] = useState<GuidedServiceForm>(emptyGuidedForm);
+  const [repoUrl, setRepoUrl] = useState("");
+  const [branch, setBranch] = useState("");
+  const [manifestPath, setManifestPath] = useState("");
+  const [manifestText, setManifestText] = useState("");
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [confirmed, setConfirmed] = useState<ConfirmedService | null>(null);
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [runtimeStatus, setRuntimeStatus] = useState<RuntimeStatus>("needs_deployment");
-  const [runtimeEvidence, setRuntimeEvidence] = useState<RuntimeEvidence>({
-    revisionPinned: false,
-    imageReviewed: false,
-    secretsExternal: false,
-    healthVerified: false,
-  });
+  const [runtimeChoice, setRuntimeChoice] = useState<RuntimeChoice>("unsure");
+  const [runtimeEvidence, setRuntimeEvidence] = useState<RuntimeEvidence>(initialEvidence);
   const [registrationAcknowledged, setRegistrationAcknowledged] = useState(false);
+  const [examplePreviewOnly, setExamplePreviewOnly] = useState<WorkshopExample | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
 
-  const canConfirm = useMemo(() => {
-    return Boolean(
-      preview?.service &&
-      preview.raw_manifest &&
+  const generatedManifest = useMemo(() => buildGuidedManifest(form), [form]);
+  const generatedJson = useMemo(() => JSON.stringify(generatedManifest, null, 2), [generatedManifest]);
+  const canConfirm = Boolean(
+    preview?.service &&
       preview.status !== "invalid" &&
-      registrationAcknowledged,
-    );
-  }, [preview, registrationAcknowledged]);
+      registrationAcknowledged &&
+      !examplePreviewOnly,
+  );
+  const activeStep = confirmed ? 5 : preview ? (registrationAcknowledged ? 4 : 3) : 1;
 
-  const activeStep = confirmed
-    ? 5
-    : preview?.status === "invalid"
-      ? 2
-      : preview?.status === "valid" || preview?.status === "warning"
-        ? registrationAcknowledged
-          ? 4
-          : 3
-        : 1;
-
-  async function previewFromGit() {
-    setLoading(true);
-    setConfirmed(null);
-    setRegistrationAcknowledged(false);
-    setError(null);
+  function resetReviewState() {
     setPreview(null);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/services/import/preview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          repo_url: repoUrl,
-          branch,
-          manifest_path: manifestPath,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.detail || "Git manifest preview failed.");
-      }
-
-      setPreview(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Git manifest preview failed.");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmed(null);
+    setError(null);
+    setRegistrationAcknowledged(false);
+    setRuntimeChoice("unsure");
+    setRuntimeEvidence(initialEvidence);
   }
 
-  async function previewManual() {
+  function changeMode(nextMode: EntryMode) {
+    setMode(nextMode);
+    setExamplePreviewOnly(null);
+    resetReviewState();
+  }
+
+  function updateForm<K extends keyof GuidedServiceForm>(key: K, value: GuidedServiceForm[K]) {
+    setForm((current) => ({ ...current, [key]: value }));
+    setExamplePreviewOnly(null);
+    resetReviewState();
+  }
+
+  async function checkManualManifest(manifest: Record<string, unknown>, source: string, revision: string, path: string) {
     setLoading(true);
-    setConfirmed(null);
-    setRegistrationAcknowledged(false);
-    setError(null);
-    setPreview(null);
-
+    resetReviewState();
     try {
-      const manifest = JSON.parse(manifestText);
-
       const response = await fetch(`${API_BASE_URL}/services/import/preview-manual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          repo_url: repoUrl || "manual-upload",
-          branch: branch || "main",
-          manifest_path: manifestPath || "ai-effect.service.json",
+          repo_url: source || "provider-supplied",
+          branch: revision || "unversioned",
+          manifest_path: path || "ai-effect.service.json",
           manifest,
         }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data?.detail || "Manual manifest preview failed.");
-      }
-
+      if (!response.ok) throw new Error(formatApiError(data?.detail) || "Service check failed.");
       setPreview(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Manual manifest preview failed.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Service check failed.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function confirmImport() {
-    if (!preview?.raw_manifest) {
-      setError("Preview a valid manifest before confirming import.");
+  async function checkGuidedDetails() {
+    if (!form.serviceId.trim()) {
+      setError("Enter a distinct service ID before checking this service.");
+      setPreview(null);
       return;
     }
+    await checkManualManifest(
+      generatedManifest,
+      form.sourceReference,
+      form.sourceRevision,
+      "guided/ai-effect.service.json",
+    );
+  }
 
-    setConfirming(true);
-    setError(null);
-    setConfirmed(null);
-
+  async function checkPastedManifest() {
     try {
+      await checkManualManifest(
+        JSON.parse(manifestText) as Record<string, unknown>,
+        repoUrl,
+        branch,
+        manifestPath,
+      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Manifest JSON is invalid.");
+    }
+  }
+
+  async function checkGitManifest() {
+    setLoading(true);
+    resetReviewState();
+    try {
+      const response = await fetch(`${API_BASE_URL}/services/import/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repo_url: repoUrl, branch, manifest_path: manifestPath }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(formatApiError(data?.detail) || "Git manifest check failed.");
+      setPreview(data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Git manifest check failed.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function submitRequest() {
+    if (!preview?.raw_manifest || !canConfirm) return;
+    setConfirming(true);
+    setConfirmed(null);
+    setError(null);
+    try {
+      const source = mode === "guided" ? form.sourceReference : repoUrl;
+      const revision = mode === "guided" ? form.sourceRevision : branch;
+      const path = mode === "guided" ? "guided/ai-effect.service.json" : manifestPath;
       const response = await fetch(`${API_BASE_URL}/services/import/confirm-manual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          repo_url: repoUrl || "manual-upload",
-          branch: branch || "main",
-          manifest_path: manifestPath || "ai-effect.service.json",
+          repo_url: source || "provider-supplied",
+          branch: revision || "unversioned",
+          manifest_path: path || "ai-effect.service.json",
           manifest: preview.raw_manifest,
           onboarding: {
             source_type: mode === "git" ? "public_git" : "manual_manifest",
-            source_revision: branch || null,
-            runtime_status: runtimeStatus,
+            source_revision: revision || null,
+            runtime_status: runtimeChoice === "already_running" ? "already_running" : "needs_deployment",
             revision_pinned: runtimeEvidence.revisionPinned,
             image_reviewed: runtimeEvidence.imageReviewed,
             secrets_external: runtimeEvidence.secretsExternal,
@@ -247,799 +221,464 @@ export default function PublishServicePage() {
           },
         }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 409) {
-          throw new Error(data?.detail || "This service already exists in the registry.");
-        }
-        throw new Error(formatApiError(data?.detail) || "Service import failed.");
-      }
-
+      if (!response.ok) throw new Error(formatApiError(data?.detail) || "Submission failed.");
       setConfirmed(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Service import failed.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Submission failed.");
     } finally {
       setConfirming(false);
     }
   }
 
-  function loadExample() {
-    setMode("manual");
-    setRepoUrl("https://github.com/IRESI-EU/ai-effect-solution-studio");
-    setBranch("main");
-    setManifestPath("examples/service-manifest/ai-effect.http.example.json");
-    setManifestText(exampleManifest);
-    setPreview(null);
-    setConfirmed(null);
-    setError(null);
-    setRuntimeStatus("needs_deployment");
-    setRuntimeEvidence({
-      revisionPinned: false,
-      imageReviewed: false,
-      secretsExternal: false,
-      healthVerified: false,
-    });
-    setRegistrationAcknowledged(false);
-  }
-
   function loadWorkshopExample(example: WorkshopExample) {
     setMode("manual");
-    setRepoUrl(example.sourceUrl);
+    setRepoUrl(`${example.sourceUrl} @ ${example.revision} · ${example.manifestPath}`);
     setBranch(example.revision);
-    setManifestPath(example.manifestPath);
+    setManifestPath("reference-example.json");
     setManifestText(JSON.stringify(example.manifest, null, 2));
-    setPreview(null);
-    setConfirmed(null);
-    setError(null);
-    setRuntimeStatus("needs_deployment");
-    setRuntimeEvidence({
-      revisionPinned: true,
-      imageReviewed: false,
-      secretsExternal: false,
-      healthVerified: false,
+    setExamplePreviewOnly(example);
+    resetReviewState();
+  }
+
+  function useExampleAsStartingPoint() {
+    if (!examplePreviewOnly) return;
+    const example = examplePreviewOnly;
+    setForm({
+      ...formFromExample(example.manifest),
+      sourceReference: `${example.sourceUrl} @ ${example.revision} · ${example.manifestPath}`,
+      sourceRevision: example.revision,
     });
-    setRegistrationAcknowledged(false);
+    setMode("guided");
+    setExamplePreviewOnly(null);
+    resetReviewState();
   }
 
-  function updateRuntimeEvidence(field: keyof RuntimeEvidence, checked: boolean) {
-    setRuntimeEvidence((current) => ({ ...current, [field]: checked }));
+  async function copyGeneratedJson() {
+    await navigator.clipboard.writeText(generatedJson);
+    setCopyNotice("Copied");
+    window.setTimeout(() => setCopyNotice(null), 1600);
   }
 
-  function invalidateSourcePreview() {
-    setPreview(null);
-    setConfirmed(null);
-    setRegistrationAcknowledged(false);
-    setError(null);
+  function downloadGeneratedJson() {
+    const blob = new Blob([generatedJson], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${form.serviceId.trim() || "ai-effect-service"}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
-    <main className="page publish-page" style={pageStyle}>
-      <section style={heroStyle}>
-        <p style={eyebrowStyle}>Node Provider Onboarding</p>
-        <h1 style={titleStyle}>Onboard a service</h1>
-        <p style={subtitleStyle}>
-          Register a Dockerized AI service, record its production readiness, and submit it for
-          administrator verification. Registration does not start containers on the server.
+    <main className="page publish-page" style={{ maxWidth: 1380 }}>
+      <header className="publish-hero">
+        <p style={eyebrowStyle}>Service onboarding</p>
+        <h1>Publish a service</h1>
+        <p>
+          Describe your service, add its technical connection details, and submit it for platform review.
         </p>
+        <div className="registration-boundary">Registration records service metadata. It does not deploy, approve, or activate a service.</div>
+        <Link href="/catalogue" style={secondaryButtonStyle}>View catalogue</Link>
+        {user?.role === "platform_admin" && <Link href="/admin" style={secondaryButtonStyle}>Admin governance</Link>}
+      </header>
 
-        <div style={heroActionsStyle}>
-          <Link href="/catalogue" style={secondaryButtonStyle}>
-            View Catalogue
-          </Link>
-          <Link href="/admin" style={secondaryButtonStyle}>
-            Admin Governance
-          </Link>
-        </div>
-      </section>
-
-      <section className="onboarding-boundary-grid" aria-label="Onboarding responsibilities">
-        <div className="onboarding-boundary-card onboarding-boundary-portal">
-          <span>Portal registration</span>
-          <strong>What this page does</strong>
-          <p>Validates one service manifest, creates a pending catalogue record, and sends it to Admin Governance.</p>
-        </div>
-        <div className="onboarding-boundary-card onboarding-boundary-runtime">
-          <span>Production runtime</span>
-          <strong>What an operator must do</strong>
-          <p>Review the source, build or pull the image, configure secrets and storage, start the container, and verify health.</p>
-        </div>
+      <section className="onboarding-boundary-grid" aria-label="Who does what">
+        <Boundary title="Node owner" text="Supplies the service purpose, description, inputs, and outputs." />
+        <Boundary title="Technical colleague" text="Supplies the container and execution-interface details." />
+        <Boundary title="Platform team" text="Verifies runtime and integration evidence, then decides whether to approve the service." />
       </section>
 
       <div className="publish-workbench">
         <aside className="card publish-step-card">
-          <p style={{ ...eyebrowStyle, marginBottom: 16 }}>Onboarding progress</p>
+          <p style={{ ...eyebrowStyle, marginBottom: 16 }}>Progress</p>
           {[
-            ["1", "Source", "Repository and exact manifest"],
-            ["2", "Contract", "Interface and DataReference types"],
-            ["3", "Runtime evidence", "Deployment responsibility and checks"],
-            ["4", "Submit request", "Register as pending review"],
-            ["5", "Admin activation", "Verify runtime, approve, and activate"],
-          ].map(([number, title, description], index) => (
+            ["1", "Enter details", "Service, interface, and source"],
+            ["2", "Check details", "Readable summary and validation"],
+            ["3", "Runtime", "Provider claims and evidence"],
+            ["4", "Submit", "Await administrator review"],
+            ["5", "Admin decision", "Approve and activate"],
+          ].map(([number, title, detail], index) => (
             <div className={`publish-step${index + 1 === activeStep ? " publish-step-active" : ""}`} key={number}>
               <span className="publish-step-number">{number}</span>
-              <div><strong>{title}</strong><small>{description}</small></div>
+              <div><strong>{title}</strong><small>{detail}</small></div>
             </div>
           ))}
           <div className="publish-step-note">
-            <strong>One service at a time</strong>
-            <span>A use case with four containers requires four service manifests and four onboarding records.</span>
+            <strong>Count services, not use cases</strong>
+            <span>Register each independently callable service separately. A solution can combine several services.</span>
           </div>
         </aside>
 
         <div className="publish-main-column">
-      <section style={cardStyle}>
-        <div style={{ marginBottom: 17 }}>
-          <p style={eyebrowStyle}>1 · Source declaration</p>
-          <h2 style={{ ...sectionTitleStyle, marginTop: 6 }}>Where is this service defined?</h2>
-          <p style={{ ...helpTextStyle, marginTop: 7 }}>Load one exact manifest. The repository is recorded for traceability; it is not cloned or executed by the portal.</p>
-        </div>
-        <div style={tabRowStyle}>
-          <button
-            type="button"
-            onClick={() => { setMode("manual"); invalidateSourcePreview(); }}
-            style={mode === "manual" ? activeTabStyle : tabStyle}
-          >
-            Paste manifest JSON
-          </button>
-          <button
-            type="button"
-            onClick={() => { setMode("git"); invalidateSourcePreview(); }}
-            style={mode === "git" ? activeTabStyle : tabStyle}
-          >
-            Public Git manifest
-          </button>
-        </div>
+          <section style={cardStyle}>
+            <p style={eyebrowStyle}>1 · Enter service details</p>
+            <h2 style={sectionTitleStyle}>How would you like to provide the details?</h2>
+            <div style={tabRowStyle}>
+              <ModeButton active={mode === "guided"} onClick={() => changeMode("guided")}>Guided form</ModeButton>
+              <ModeButton active={mode === "git"} onClick={() => changeMode("git")}>Public Git manifest</ModeButton>
+              <ModeButton active={mode === "manual"} onClick={() => changeMode("manual")}>Paste JSON</ModeButton>
+            </div>
 
-        <div style={noticeStyle}>
-          <strong>Important:</strong> importing a manifest registers metadata only. It does not
-          build an image, run Docker Compose, configure secrets, or deploy the service.
-        </div>
+            {mode === "guided" && (
+              <GuidedForm
+                form={form}
+                onChange={updateForm}
+                generatedJson={generatedJson}
+                onCopy={copyGeneratedJson}
+                onDownload={downloadGeneratedJson}
+                copyNotice={copyNotice}
+                onCheck={checkGuidedDetails}
+                loading={loading}
+              />
+            )}
 
-        <div className="onboarding-source-options" aria-label="Supported source methods">
-          <div><strong>Available now</strong><span>Public Git manifest or pasted JSON</span></div>
-          <div><strong>Admin-assisted</strong><span>WP3 blueprint + dockerinfo package</span></div>
-          <div><strong>Planned</strong><span>Private Git and scanned local ZIP upload</span></div>
-        </div>
-
-        <div className="workshop-example-panel">
-          <div>
-            <strong>Workshop examples</strong>
-            <span>Load one traceable, preview-safe service from each node. These copies are labelled for demonstration and must not be approved as duplicate production services.</span>
-          </div>
-          <div className="workshop-example-buttons">
-            {workshopExamples.map((example) => (
-              <button
-                type="button"
-                key={example.key}
-                onClick={() => loadWorkshopExample(example)}
+            {mode === "git" && (
+              <ImportFields
+                repoUrl={repoUrl} branch={branch} manifestPath={manifestPath}
+                onRepo={(value) => { setRepoUrl(value); resetReviewState(); }}
+                onBranch={(value) => { setBranch(value); resetReviewState(); }}
+                onPath={(value) => { setManifestPath(value); resetReviewState(); }}
+                git
               >
-                <strong>{example.country}</strong>
-                <span>{example.service}</span>
-              </button>
-            ))}
-          </div>
-        </div>
+                <button style={primaryButtonStyle} type="button" onClick={checkGitManifest} disabled={loading}>
+                  {loading ? "Checking…" : "Check service details"}
+                </button>
+              </ImportFields>
+            )}
 
-        <div style={gridStyle}>
-          <label style={labelStyle}>
-            Repository URL or source reference
-            <input
-              value={repoUrl}
-              onChange={(event) => { setRepoUrl(event.target.value); invalidateSourcePreview(); }}
-              placeholder="https://github.com/OWNER/REPO"
-              style={inputStyle}
-            />
-          </label>
-
-          <label style={labelStyle}>
-            Commit SHA, tag, or branch
-            <input
-              value={branch}
-              onChange={(event) => { setBranch(event.target.value); invalidateSourcePreview(); }}
-              placeholder="main"
-              style={inputStyle}
-            />
-          </label>
-
-          <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>
-            Manifest path
-            <input
-              value={manifestPath}
-              onChange={(event) => { setManifestPath(event.target.value); invalidateSourcePreview(); }}
-              placeholder="ai-effect.service.json"
-              style={inputStyle}
-            />
-          </label>
-        </div>
-
-        {mode === "manual" ? (
-          <div style={{ marginTop: 18 }}>
-            <div style={rowBetweenStyle}>
-              <label style={sectionLabelStyle}>Manifest JSON</label>
-              <button type="button" onClick={loadExample} style={smallButtonStyle}>
-                Load example HTTP manifest
-              </button>
-            </div>
-
-            <textarea
-              value={manifestText}
-              onChange={(event) => { setManifestText(event.target.value); invalidateSourcePreview(); }}
-              spellCheck={false}
-              style={textareaStyle}
-            />
-
-            <button
-              type="button"
-              onClick={previewManual}
-              disabled={loading}
-              style={primaryButtonStyle}
-            >
-              {loading ? "Previewing..." : "Preview pasted manifest"}
-            </button>
-          </div>
-        ) : (
-          <div style={{ marginTop: 18 }}>
-            <p style={helpTextStyle}>
-              Git import currently fetches only the exact JSON path below from a public GitHub
-              repository. It does not discover Dockerfiles, Compose services, blueprints, or
-              multiple services automatically. Prefer a commit SHA or immutable tag over main.
-            </p>
-            <button
-              type="button"
-              onClick={previewFromGit}
-              disabled={loading}
-              style={primaryButtonStyle}
-            >
-              {loading ? "Previewing..." : "Preview from Git"}
-            </button>
-          </div>
-        )}
-
-        {error && <div style={errorBoxStyle}>{error}</div>}
-      </section>
-
-      {preview && (
-        <section style={cardStyle}>
-          <div style={rowBetweenStyle}>
-            <div>
-              <p style={eyebrowStyle}>2 · Contract validation</p>
-              <h2 style={sectionTitleStyle}>Manifest result</h2>
-            </div>
-            <span style={statusBadgeStyle(preview.status)}>{preview.status.toUpperCase()}</span>
-          </div>
-
-          <div style={validationListStyle}>
-            {preview.validation.map((item, index) => (
-              <div key={`${item.level}-${index}`} style={validationItemStyle(item.level)}>
-                <strong>{item.level.toUpperCase()}</strong>
-                <span>{item.message}</span>
-              </div>
-            ))}
-          </div>
-
-          {preview.service && <ServicePreview service={preview.service} />}
-
-          {preview.service && (
-            <div className="onboarding-runtime-panel">
-              <div>
-                <p style={eyebrowStyle}>3 · Runtime evidence</p>
-                <h3>How will this container become reachable?</h3>
-                <p>The provider and administrator record evidence here; Admin Governance independently verifies it before approval.</p>
-              </div>
-
-              <div className="onboarding-runtime-choice">
-                <label>
-                  <input
-                    type="radio"
-                    name="runtime-status"
-                    checked={runtimeStatus === "needs_deployment"}
-                    onChange={() => setRuntimeStatus("needs_deployment")}
+            {mode === "manual" && (
+              <ImportFields
+                repoUrl={repoUrl} branch={branch} manifestPath={manifestPath}
+                onRepo={(value) => { setRepoUrl(value); resetReviewState(); }}
+                onBranch={(value) => { setBranch(value); resetReviewState(); }}
+                onPath={(value) => { setManifestPath(value); resetReviewState(); }}
+              >
+                <label style={labelStyle}>Manifest JSON
+                  <textarea
+                    value={manifestText}
+                    onChange={(event) => { setManifestText(event.target.value); resetReviewState(); }}
+                    spellCheck={false}
+                    style={textareaStyle}
                   />
-                  <span><strong>Needs operator deployment</strong><small>Submit the metadata now; the IT or node operator must deploy it.</small></span>
                 </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="runtime-status"
-                    checked={runtimeStatus === "already_running"}
-                    onChange={() => setRuntimeStatus("already_running")}
-                  />
-                  <span><strong>Already running</strong><small>The provider claims it is reachable; an administrator still verifies it.</small></span>
-                </label>
+                <p style={helpTextStyle}>The original JSON is submitted unchanged, including fields the guided form does not know about.</p>
+                <button style={primaryButtonStyle} type="button" onClick={checkPastedManifest} disabled={loading}>
+                  {loading ? "Checking…" : "Check service details"}
+                </button>
+              </ImportFields>
+            )}
+
+            <details className="publish-help-details">
+              <summary>Examples, supported sources, and current limitations</summary>
+              <p>Public Git reads one exact JSON file. Paste JSON preserves the complete object. Private repositories, ZIP upload, automatic Dockerfile discovery, Compose execution, and container deployment are not performed here.</p>
+              <details className="workshop-example-panel">
+                <summary>View reference examples</summary>
+                <p>These four node examples are preview-only. They cannot be submitted until you explicitly use one as a starting point and give the new service a distinct name and ID.</p>
+                <div className="workshop-example-buttons">
+                  {workshopExamples.map((example) => (
+                    <button type="button" key={example.key} onClick={() => loadWorkshopExample(example)}>
+                      <strong>{example.country}</strong><span>{example.service}</span>
+                    </button>
+                  ))}
+                </div>
+              </details>
+            </details>
+            {error && <div style={errorBoxStyle}>{error}</div>}
+          </section>
+
+          {preview && (
+            <section style={cardStyle}>
+              <div style={rowBetweenStyle}>
+                <div><p style={eyebrowStyle}>2 · Check service details</p><h2 style={sectionTitleStyle}>Review before submitting</h2></div>
+                <span style={statusBadgeStyle(preview.status)}>{preview.status.toUpperCase()}</span>
               </div>
 
-              <div className="onboarding-evidence-grid">
-                {([
-                  ["revisionPinned", "Exact source revision recorded"],
-                  ["imageReviewed", "Docker image built or reviewed"],
-                  ["secretsExternal", "Secrets kept outside source and manifest"],
-                  ["healthVerified", "Health endpoint tested from the target network"],
-                ] as Array<[keyof RuntimeEvidence, string]>).map(([field, label]) => (
-                  <label key={field}>
-                    <input
-                      type="checkbox"
-                      checked={runtimeEvidence[field]}
-                      onChange={(event) => updateRuntimeEvidence(field, event.target.checked)}
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
-              </div>
+              {preview.service && <ServicePreview service={preview.service} />}
+              <ValidationSummary validation={preview.validation} />
 
-              <div className={runtimeStatus === "already_running" ? "onboarding-runtime-state is-running" : "onboarding-runtime-state"}>
-                <strong>{runtimeStatus === "already_running" ? "Provider claim: runtime deployed" : "Runtime deployment still required"}</strong>
-                <span>
-                  {runtimeStatus === "already_running"
-                    ? `Admin must reach ${preview.service.container_name}:${preview.service.internal_port}${preview.service.health_path} before approval.`
-                    : "The catalogue request may be submitted, but it cannot be deployed in Builder until an operator starts and verifies the runtime."}
-                </span>
-              </div>
+              {examplePreviewOnly && (
+                <div className="example-preview-lock">
+                  <strong>Preview only</strong>
+                  <p>This pinned example cannot be submitted as another production service. Create a distinct record and review the provider details first.</p>
+                  <button type="button" style={smallButtonStyle} onClick={useExampleAsStartingPoint}>Use as starting point</button>
+                </div>
+              )}
 
-              <label className="onboarding-acknowledgement">
-                <input
-                  type="checkbox"
-                  checked={registrationAcknowledged}
-                  onChange={(event) => setRegistrationAcknowledged(event.target.checked)}
+              {preview.service && !examplePreviewOnly && (
+                <RuntimeSection
+                  choice={runtimeChoice}
+                  onChoice={(value) => { setRuntimeChoice(value); setRegistrationAcknowledged(false); }}
+                  evidence={runtimeEvidence}
+                  onEvidence={(field, checked) => setRuntimeEvidence((current) => ({ ...current, [field]: checked }))}
+                  service={preview.service}
+                  acknowledged={registrationAcknowledged}
+                  onAcknowledge={setRegistrationAcknowledged}
                 />
-                <span>I understand that this action registers an onboarding request and does not deploy or activate the service.</span>
-              </label>
-            </div>
+              )}
+
+              {!examplePreviewOnly && preview.service && (
+                <button
+                  type="button" onClick={submitRequest} disabled={!canConfirm || confirming}
+                  style={{ ...primaryButtonStyle, opacity: !canConfirm || confirming ? 0.55 : 1 }}
+                >
+                  {confirming ? "Submitting…" : "Submit for administrator review"}
+                </button>
+              )}
+            </section>
           )}
 
-          <div style={confirmRowStyle}>
-            <button
-              type="button"
-              onClick={confirmImport}
-              disabled={!canConfirm || confirming}
-              style={{
-                ...primaryButtonStyle,
-                opacity: !canConfirm || confirming ? 0.6 : 1,
-                cursor: !canConfirm || confirming ? "not-allowed" : "pointer",
-              }}
-            >
-              {confirming ? "Submitting..." : "Submit onboarding request"}
-            </button>
-            {!registrationAcknowledged && preview.service && (
-              <p style={{ ...helpTextStyle, marginTop: 10 }}>Confirm the registration boundary above before submitting.</p>
-            )}
-          </div>
-        </section>
-      )}
-
-      {confirmed && (
-        <section style={successCardStyle}>
-          <p style={eyebrowStyle}>4 · Onboarding request submitted</p>
-          <h2 style={sectionTitleStyle}>{confirmed.name}</h2>
-          <p style={successTextStyle}>
-            The service is registered as <strong>{confirmed.trust_badge}</strong>. It is not yet
-            approved, active for deployment, or proof that its container is running.
-          </p>
-
-          <div className="onboarding-next-steps">
-            <strong>What happens next</strong>
-            <ol>
-              <li>The provider or IT operator deploys the pinned container runtime if required.</li>
-              <li>An administrator verifies ownership, image, secrets, network reachability, health, and operation contract.</li>
-              <li>Admin Governance approves the service; only then can Builder deploy it.</li>
-            </ol>
-          </div>
-
-          <div style={detailsGridStyle}>
-            <Detail label="Service ID" value={confirmed.id} />
-            <Detail label="Provider" value={confirmed.provider} />
-            <Detail label="Category" value={confirmed.category} />
-            <Detail label="Operation" value={confirmed.operation_name} />
-            <Detail label="Container" value={confirmed.container_name} />
-            <Detail label="Contract / proto_uri" value={confirmed.proto_uri} />
-          </div>
-
-          <div style={heroActionsStyle}>
-            <Link href="/catalogue" style={primaryLinkStyle}>
-              Open Catalogue
-            </Link>
-            <Link href="/admin" style={secondaryButtonStyle}>
-              Continue to Admin verification
-            </Link>
-          </div>
-        </section>
-      )}
-        <aside className="publish-review-callout">
-          <span aria-hidden="true">i</span>
-          <div><strong>Registration is not deployment</strong><p>A service becomes usable only after its container is running, health is verified from production, and an administrator approves it.</p></div>
-        </aside>
+          {confirmed && (
+            <section style={successCardStyle}>
+              <p style={eyebrowStyle}>Submitted</p>
+              <h2 style={sectionTitleStyle}>Submitted — awaiting administrator review</h2>
+              <p>{confirmed.name} is registered as <strong>{confirmed.trust_badge}</strong>. Submission did not deploy or activate its container.</p>
+              <div className="onboarding-next-steps">
+                <strong>Next steps</strong>
+                <ol>
+                  <li>The provider or platform operator supplies any missing runtime evidence.</li>
+                  <li>An administrator verifies ownership, source, image, secrets, health, and contract.</li>
+                  <li>Only an administrator can approve and activate the service.</li>
+                </ol>
+              </div>
+              <Link href="/catalogue" style={secondaryButtonStyle}>Open catalogue</Link>
+              {user?.role === "platform_admin" && <Link href="/admin" style={primaryLinkStyle}>Review in Admin</Link>}
+            </section>
+          )}
         </div>
       </div>
     </main>
   );
 }
 
-function ServicePreview({ service }: { service: ImportedService }) {
-  return (
-    <div style={previewBoxStyle}>
-      <h3 style={previewTitleStyle}>{service.name}</h3>
-      <p style={previewDescriptionStyle}>{service.description || "No description provided."}</p>
+function Boundary({ title, text }: { title: string; text: string }) {
+  return <div className="onboarding-boundary-card"><span>{title}</span><p>{text}</p></div>;
+}
 
-      <div style={detailsGridStyle}>
-        <Detail label="Service ID" value={service.id || "generated on import"} />
-        <Detail label="Provider" value={service.provider} />
-        <Detail label="Category" value={service.category} />
-        <Detail label="Version" value={service.version} />
-        <Detail label="Interface type" value={service.interface_type} />
-        <Detail label="Orchestration mode" value={service.orchestration_mode} />
-        <Detail label="Adapter type" value={service.adapter_type || "none"} />
-        <Detail label="Docker image" value={service.image || service.dockerfile || "missing"} />
-        <Detail label="Container" value={service.container_name} />
-        <Detail label="Internal port" value={service.internal_port} />
-        <Detail label="Health path" value={service.health_path} />
-        <Detail label="Operation" value={service.operation_name} />
-        <Detail label="Input type" value={service.input_type || "not declared"} />
-        <Detail label="Output type" value={service.output_type || "not declared"} />
-        <Detail label="Contract URI" value={service.contract_uri || "not declared"} />
-        <Detail label="Compatibility proto_uri" value={service.proto_uri || "not declared"} />
+function ModeButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return <button type="button" onClick={onClick} style={active ? activeTabStyle : tabStyle}>{children}</button>;
+}
+
+function GuidedForm({
+  form, onChange, generatedJson, onCopy, onDownload, copyNotice, onCheck, loading,
+}: {
+  form: GuidedServiceForm;
+  onChange: <K extends keyof GuidedServiceForm>(key: K, value: GuidedServiceForm[K]) => void;
+  generatedJson: string;
+  onCopy: () => void;
+  onDownload: () => void;
+  copyNotice: string | null;
+  onCheck: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div className="guided-form">
+      <div className="guided-section">
+        <h3>Service description</h3>
+        <div className="guided-grid">
+          <Field label="Service name" value={form.name} onChange={(v) => onChange("name", v)} required />
+          <Field label="Provider display name" value={form.provider} onChange={(v) => onChange("provider", v)} required help="Descriptive only. Your signed-in account and assigned node control ownership and permissions." />
+          <Field label="Category" value={form.category} onChange={(v) => onChange("category", v)} required />
+          <Field label="Version" value={form.version} onChange={(v) => onChange("version", v)} required />
+          <Field label="Input data / DataReference type" value={form.inputType} onChange={(v) => onChange("inputType", v)} required />
+          <Field label="Output data / DataReference type" value={form.outputType} onChange={(v) => onChange("outputType", v)} required />
+          <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>Description
+            <textarea value={form.description} onChange={(e) => onChange("description", e.target.value)} style={{ ...textareaStyle, minHeight: 100 }} />
+          </label>
+        </div>
       </div>
+
+      <div className="guided-section">
+        <h3>Technical details</h3>
+        <div className="guided-grid">
+          <Field label="Unique service ID" value={form.serviceId} onChange={(v) => onChange("serviceId", v)} required help="Use a stable, lowercase identifier. It cannot duplicate an existing catalogue service." />
+          <Field label="Container name" value={form.containerName} onChange={(v) => onChange("containerName", v)} required />
+          <Field label="Docker image" value={form.image} onChange={(v) => onChange("image", v)} help="Provide an image or a Dockerfile path. A pre-built, pinned image is preferred." />
+          <Field label="Dockerfile path" value={form.dockerfile} onChange={(v) => onChange("dockerfile", v)} />
+          <Field label="Internal port" value={form.internalPort} onChange={(v) => onChange("internalPort", v)} required />
+          <Field label="Health path" value={form.healthPath} onChange={(v) => onChange("healthPath", v)} required />
+          <Field label="Operation name" value={form.operationName} onChange={(v) => onChange("operationName", v)} required />
+          <label style={labelStyle}>Interface type
+            <select value={form.interfaceType} onChange={(e) => onChange("interfaceType", e.target.value as InterfaceChoice)} style={inputStyle}>
+              <option value="control">AI-EFFECT Control</option>
+              <option value="http">REST / HTTP</option>
+              <option value="grpc">gRPC</option>
+              <option value="container_job">Script / batch container</option>
+              <option value="legacy_sidecar">Legacy adapter</option>
+            </select>
+            <small style={fieldHelpStyle}>{interfaceHelp(form.interfaceType)}</small>
+          </label>
+          <Field label={form.interfaceType === "grpc" ? "Proto contract path or URL" : "Contract reference"} value={form.contractUri} onChange={(v) => onChange("contractUri", v)} required={form.interfaceType === "grpc"} help="A declaration for review—not proof that the endpoint is reachable or compatible." />
+          {form.interfaceType === "grpc" && <>
+            <Field label="gRPC input message" value={form.grpcInputMessage} onChange={(v) => onChange("grpcInputMessage", v)} />
+            <Field label="gRPC output message" value={form.grpcOutputMessage} onChange={(v) => onChange("grpcOutputMessage", v)} />
+          </>}
+          {form.interfaceType === "http" && <>
+            <Field label="HTTP method" value={form.httpMethod} onChange={(v) => onChange("httpMethod", v)} required />
+            <Field label="HTTP operation path" value={form.httpPath} onChange={(v) => onChange("httpPath", v)} required />
+          </>}
+          {form.interfaceType === "container_job" && <Field label="Container command" value={form.jobCommand} onChange={(v) => onChange("jobCommand", v)} required />}
+          {form.interfaceType === "legacy_sidecar" && <Field label="Adapter type" value={form.legacyAdapter} onChange={(v) => onChange("legacyAdapter", v)} help="Recommended so operators know which adapter must be deployed." />}
+          <Field label="Source reference" value={form.sourceReference} onChange={(v) => onChange("sourceReference", v)} required help="Repository URL, package location, or another traceable provider reference." />
+          <Field label="Source revision" value={form.sourceRevision} onChange={(v) => onChange("sourceRevision", v)} help="Prefer an immutable commit SHA or release tag." />
+        </div>
+      </div>
+
+      <details className="generated-json">
+        <summary>View generated manifest JSON</summary>
+        <div><button type="button" onClick={onCopy} style={smallButtonStyle}>{copyNotice || "Copy JSON"}</button><button type="button" onClick={onDownload} style={smallButtonStyle}>Download JSON</button></div>
+        <pre>{generatedJson}</pre>
+      </details>
+      <button type="button" onClick={onCheck} disabled={loading} style={primaryButtonStyle}>{loading ? "Checking…" : "Check service details"}</button>
     </div>
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={detailStyle}>
-      <span style={detailLabelStyle}>{label}</span>
-      <span style={detailValueStyle}>{value}</span>
+function Field({ label, value, onChange, required, help }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; help?: string }) {
+  return <label style={labelStyle}>{label}{required && <span className="required-label">Required</span>}<input value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle} />{help && <small style={fieldHelpStyle}>{help}</small>}</label>;
+}
+
+function ImportFields({ repoUrl, branch, manifestPath, onRepo, onBranch, onPath, git, children }: {
+  repoUrl: string; branch: string; manifestPath: string; onRepo: (v: string) => void; onBranch: (v: string) => void; onPath: (v: string) => void; git?: boolean; children: React.ReactNode;
+}) {
+  return <div className="guided-form">
+    <div className="guided-grid">
+      <Field label={git ? "Public repository URL" : "Source reference"} value={repoUrl} onChange={onRepo} required />
+      <Field label="Commit SHA, tag, or revision" value={branch} onChange={onBranch} required={git} />
+      <div style={{ gridColumn: "1 / -1" }}><Field label={git ? "Exact JSON manifest path" : "Manifest name or path"} value={manifestPath} onChange={onPath} required={git} /></div>
     </div>
-  );
+    {git && <p style={helpTextStyle}>Git import fetches only the exact JSON path. Use a commit SHA or immutable tag when possible.</p>}
+    {children}
+  </div>;
+}
+
+function ServicePreview({ service }: { service: ImportedService }) {
+  return <div style={previewBoxStyle}>
+    <h3 style={previewTitleStyle}>{service.name}</h3>
+    <p style={previewDescriptionStyle}>{service.description || "No description provided."}</p>
+    <div style={detailsGridStyle}>
+      <Detail label="Provider" value={service.provider} />
+      <Detail label="Operation" value={service.operation_name} />
+      <Detail label="Input" value={service.input_type || "Not declared"} />
+      <Detail label="Output" value={service.output_type || "Not declared"} />
+      <Detail label="Next action" value="Review runtime claims and submit for admin review" />
+    </div>
+    <details className="technical-details"><summary>Technical details</summary>
+      <div style={detailsGridStyle}>
+        <Detail label="Service ID" value={service.id || "Generated on submission"} />
+        <Detail label="Category / version" value={`${service.category} · ${service.version}`} />
+        <Detail label="Interface" value={service.interface_type} />
+        <Detail label="Orchestration" value={service.orchestration_mode} />
+        <Detail label="Adapter" value={service.adapter_type || "Not declared"} />
+        <Detail label="Image / Dockerfile" value={service.image || service.dockerfile || "Missing"} />
+        <Detail label="Container" value={`${service.container_name}:${service.internal_port}`} />
+        <Detail label="Health path" value={service.health_path} />
+        <Detail label="Contract reference" value={service.contract_uri || service.proto_uri || "Not declared"} />
+        <Detail label="Compatibility proto_uri" value={service.proto_uri || "Not declared"} />
+        <Detail label="Input message" value={service.input_message_name || "Not declared"} />
+        <Detail label="Output message" value={service.output_message_name || "Not declared"} />
+        <Detail label="Recorded source" value={`${service.repository_url} @ ${service.repository_branch}`} />
+      </div>
+    </details>
+  </div>;
+}
+
+function ValidationSummary({ validation }: { validation: ValidationMessage[] }) {
+  const errors = validation.filter((item) => item.level === "error");
+  const actionableWarnings = validation.filter((item) => item.level === "warning" && !isCompilerInfo(item.message));
+  const compilerInfo = validation.filter((item) => item.level === "warning" && isCompilerInfo(item.message));
+  const successes = validation.filter((item) => item.level === "success");
+  return <div className="validation-summary">
+    {errors.map((item, i) => <ValidationItem key={`e-${i}`} level="error" title="Fix required" message={item.message} />)}
+    {actionableWarnings.map((item, i) => <ValidationItem key={`w-${i}`} level="warning" title="Review recommended" message={item.message} />)}
+    {compilerInfo.length > 0 && <details><summary>Compiler compatibility information</summary>{compilerInfo.map((item, i) => <p key={i}>{item.message}</p>)}</details>}
+    <details><summary>All validation details ({validation.length})</summary>{successes.map((item, i) => <p key={i}>✓ {item.message}</p>)}</details>
+  </div>;
+}
+
+function ValidationItem({ level, title, message }: { level: ValidationMessage["level"]; title: string; message: string }) {
+  return <div style={validationItemStyle(level)}><strong>{title}</strong><span>{message}</span></div>;
+}
+
+function RuntimeSection({ choice, onChoice, evidence, onEvidence, service, acknowledged, onAcknowledge }: {
+  choice: RuntimeChoice; onChoice: (value: RuntimeChoice) => void; evidence: RuntimeEvidence; onEvidence: (field: keyof RuntimeEvidence, checked: boolean) => void; service: ImportedService; acknowledged: boolean; onAcknowledge: (value: boolean) => void;
+}) {
+  return <div className="onboarding-runtime-panel">
+    <div><p style={eyebrowStyle}>3 · Runtime readiness</p><h3>What happens after registration?</h3><p>These are provider claims for administrator review. None are automatically checked.</p></div>
+    <div className="onboarding-runtime-choice">
+      {([
+        ["needs_deployment", "Needs deployment", "An operator must build or pull and start it."],
+        ["already_running", "Provider reports running", "An administrator must still verify it from production."],
+        ["unsure", "Not sure", "Recorded conservatively as needing deployment until verified."],
+      ] as Array<[RuntimeChoice, string, string]>).map(([value, title, text]) => <label key={value}><input type="radio" name="runtime" checked={choice === value} onChange={() => onChoice(value)} /><span><strong>{title}</strong><small>{text}</small></span></label>)}
+    </div>
+    <div className="onboarding-evidence-grid">
+      {([
+        ["revisionPinned", "Exact source revision recorded"],
+        ["imageReviewed", "Docker image built or reviewed"],
+        ["secretsExternal", "Secrets kept outside source and manifest"],
+        ["healthVerified", `Health endpoint tested at ${service.container_name}:${service.internal_port}${service.health_path}`],
+      ] as Array<[keyof RuntimeEvidence, string]>).map(([field, label]) => <label key={field}><input type="checkbox" checked={evidence[field]} onChange={(e) => onEvidence(field, e.target.checked)} /><span>{label}</span></label>)}
+    </div>
+    <label className="onboarding-acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(e) => onAcknowledge(e.target.checked)} /><span>I understand this submits metadata for review and does not deploy or activate the service.</span></label>
+  </div>;
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return <div style={detailStyle}><span style={detailLabelStyle}>{label}</span><span style={detailValueStyle}>{value}</span></div>;
+}
+
+function isCompilerInfo(message: string) {
+  return message.includes("Short-term compiler compatibility") || message.includes("will use AI-EFFECT Control Interface");
+}
+
+function interfaceHelp(type: InterfaceChoice) {
+  if (type === "grpc") return "gRPC requires a .proto reference and operation information. Message names should be supplied when the contract defines them.";
+  if (type === "http") return "REST services require an HTTP method and path and may need a deployed Control Interface adapter. Selecting REST does not create that adapter.";
+  if (type === "container_job") return "Batch services require a container command and may need a deployed Control Interface adapter. Selecting batch does not create that adapter.";
+  if (type === "legacy_sidecar") return "Declare the existing adapter type. This page records it but does not generate or deploy an adapter.";
+  return "Use this only when the service already implements the AI-EFFECT Control Interface; this page does not add the interface to a container.";
 }
 
 function formatApiError(detail: unknown): string | null {
   if (!detail) return null;
   if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) {
-    return detail
-      .map((item) => {
-        if (typeof item === "string") return item;
-        if (item && typeof item === "object" && "message" in item) {
-          return String((item as { message: unknown }).message);
-        }
-        return JSON.stringify(item);
-      })
-      .join(" ");
-  }
+  if (Array.isArray(detail)) return detail.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" ");
   return JSON.stringify(detail);
 }
 
 function statusBadgeStyle(status: PreviewResponse["status"]): CSSProperties {
-  if (status === "valid") {
-    return {
-      ...badgeStyle,
-      background: "#ecfdf5",
-      color: "#047857",
-      borderColor: "#a7f3d0",
-    };
-  }
-
-  if (status === "warning") {
-    return {
-      ...badgeStyle,
-      background: "#fffbeb",
-      color: "#92400e",
-      borderColor: "#fde68a",
-    };
-  }
-
-  return {
-    ...badgeStyle,
-    background: "#fef2f2",
-    color: "#b91c1c",
-    borderColor: "#fecaca",
-  };
+  return { ...badgeStyle, ...(status === "valid" ? { background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" } : status === "warning" ? { background: "#fffbeb", color: "#92400e", borderColor: "#fde68a" } : { background: "#fef2f2", color: "#b91c1c", borderColor: "#fecaca" }) };
 }
 
 function validationItemStyle(level: ValidationMessage["level"]): CSSProperties {
-  if (level === "success") {
-    return {
-      ...validationItemBaseStyle,
-      borderColor: "#bbf7d0",
-      background: "#f0fdf4",
-    };
-  }
-
-  if (level === "warning") {
-    return {
-      ...validationItemBaseStyle,
-      borderColor: "#fde68a",
-      background: "#fffbeb",
-    };
-  }
-
-  return {
-    ...validationItemBaseStyle,
-    borderColor: "#fecaca",
-    background: "#fef2f2",
-  };
+  const colors = level === "error" ? { borderColor: "#fecaca", background: "#fef2f2" } : { borderColor: "#fde68a", background: "#fffbeb" };
+  return { display: "grid", gap: 4, padding: 13, border: "1px solid", borderRadius: 12, ...colors };
 }
 
-const pageStyle: CSSProperties = {
-  maxWidth: 1380,
-};
-
-const heroStyle: CSSProperties = {
-  marginBottom: 24,
-};
-
-const eyebrowStyle: CSSProperties = {
-  margin: 0,
-  fontSize: 12,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "#6543df",
-};
-
-const titleStyle: CSSProperties = {
-  margin: "8px 0",
-  fontSize: 42,
-  lineHeight: 1.1,
-  color: "#0f172a",
-};
-
-const subtitleStyle: CSSProperties = {
-  maxWidth: 820,
-  margin: "0 0 18px",
-  fontSize: 16,
-  lineHeight: 1.6,
-  color: "#475569",
-};
-
-const heroActionsStyle: CSSProperties = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 10,
-  marginTop: 18,
-};
-
-const cardStyle: CSSProperties = {
-  background: "#ffffff",
-  border: "1px solid #e5e4f1",
-  borderRadius: 18,
-  padding: 22,
-  boxShadow: "0 12px 32px rgba(30, 24, 70, 0.07)",
-  marginBottom: 22,
-};
-
-const successCardStyle: CSSProperties = {
-  ...cardStyle,
-  borderColor: "#bbf7d0",
-  background: "#f0fdf4",
-};
-
-const tabRowStyle: CSSProperties = {
-  display: "flex",
-  gap: 8,
-  marginBottom: 16,
-  flexWrap: "wrap",
-};
-
-const tabStyle: CSSProperties = {
-  border: "1px solid #cbd5e1",
-  background: "#f8fafc",
-  color: "#334155",
-  borderRadius: 999,
-  padding: "9px 14px",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const activeTabStyle: CSSProperties = {
-  ...tabStyle,
-  background: "#f0ecff",
-  color: "#4f2bc9",
-  borderColor: "#c9bcfa",
-};
-
-const noticeStyle: CSSProperties = {
-  padding: 14,
-  borderRadius: 14,
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  color: "#475569",
-  fontSize: 14,
-  lineHeight: 1.5,
-  marginBottom: 18,
-};
-
-const gridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 14,
-};
-
-const labelStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 7,
-  fontSize: 13,
-  fontWeight: 700,
-  color: "#334155",
-};
-
-const sectionLabelStyle: CSSProperties = {
-  fontSize: 13,
-  fontWeight: 800,
-  color: "#334155",
-};
-
-const inputStyle: CSSProperties = {
-  width: "100%",
-  border: "1px solid #cbd5e1",
-  borderRadius: 12,
-  padding: "11px 12px",
-  fontSize: 14,
-};
-
-const textareaStyle: CSSProperties = {
-  width: "100%",
-  minHeight: 360,
-  border: "1px solid #cbd5e1",
-  borderRadius: 14,
-  padding: 14,
-  marginTop: 8,
-  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-  fontSize: 13,
-  lineHeight: 1.45,
-  resize: "vertical",
-};
-
-const primaryButtonStyle: CSSProperties = {
-  marginTop: 14,
-  border: "none",
-  background: "linear-gradient(135deg, #5b2cf2, #4320ca)",
-  color: "#ffffff",
-  borderRadius: 12,
-  padding: "11px 16px",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const smallButtonStyle: CSSProperties = {
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#334155",
-  borderRadius: 10,
-  padding: "7px 10px",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const secondaryButtonStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#334155",
-  borderRadius: 12,
-  padding: "10px 14px",
-  fontWeight: 800,
-  textDecoration: "none",
-};
-
-const primaryLinkStyle: CSSProperties = {
-  ...secondaryButtonStyle,
-  borderColor: "#5b2cf2",
-  background: "#5b2cf2",
-  color: "#ffffff",
-};
-
-const helpTextStyle: CSSProperties = {
-  margin: "0 0 12px",
-  color: "#64748b",
-  fontSize: 14,
-  lineHeight: 1.5,
-};
-
-const errorBoxStyle: CSSProperties = {
-  marginTop: 16,
-  padding: 14,
-  borderRadius: 14,
-  border: "1px solid #fecaca",
-  background: "#fef2f2",
-  color: "#991b1b",
-  fontWeight: 700,
-};
-
-const rowBetweenStyle: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 12,
-};
-
-const sectionTitleStyle: CSSProperties = {
-  margin: "4px 0 0",
-  fontSize: 24,
-  color: "#0f172a",
-};
-
-const badgeStyle: CSSProperties = {
-  border: "1px solid",
-  borderRadius: 999,
-  padding: "7px 11px",
-  fontSize: 12,
-  fontWeight: 900,
-};
-
-const validationListStyle: CSSProperties = {
-  display: "grid",
-  gap: 10,
-  marginTop: 16,
-};
-
-const validationItemBaseStyle: CSSProperties = {
-  border: "1px solid",
-  borderRadius: 14,
-  padding: 12,
-  display: "grid",
-  gap: 4,
-  color: "#334155",
-  fontSize: 14,
-};
-
-const previewBoxStyle: CSSProperties = {
-  marginTop: 18,
-  border: "1px solid #e2e8f0",
-  borderRadius: 16,
-  padding: 18,
-  background: "#f8fafc",
-};
-
-const previewTitleStyle: CSSProperties = {
-  margin: 0,
-  color: "#0f172a",
-  fontSize: 22,
-};
-
-const previewDescriptionStyle: CSSProperties = {
-  margin: "8px 0 16px",
-  color: "#475569",
-  lineHeight: 1.5,
-};
-
-const detailsGridStyle: CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-  gap: 10,
-};
-
-const detailStyle: CSSProperties = {
-  border: "1px solid #e2e8f0",
-  background: "#ffffff",
-  borderRadius: 12,
-  padding: 11,
-  display: "grid",
-  gap: 4,
-};
-
-const detailLabelStyle: CSSProperties = {
-  fontSize: 11,
-  color: "#64748b",
-  textTransform: "uppercase",
-  fontWeight: 800,
-  letterSpacing: "0.04em",
-};
-
-const detailValueStyle: CSSProperties = {
-  color: "#0f172a",
-  fontSize: 13,
-  wordBreak: "break-word",
-};
-
-const confirmRowStyle: CSSProperties = {
-  marginTop: 18,
-};
-
-const successTextStyle: CSSProperties = {
-  color: "#166534",
-  lineHeight: 1.5,
-};
+const eyebrowStyle: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "#6543df" };
+const cardStyle: CSSProperties = { background: "#fff", border: "1px solid #e5e4f1", borderRadius: 18, padding: 22, boxShadow: "0 12px 32px rgba(30,24,70,.07)", marginBottom: 22 };
+const successCardStyle: CSSProperties = { ...cardStyle, borderColor: "#bbf7d0", background: "#f0fdf4" };
+const sectionTitleStyle: CSSProperties = { margin: "6px 0 16px", fontSize: 24, color: "#0f172a" };
+const tabRowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 };
+const tabStyle: CSSProperties = { border: "1px solid #cbd5e1", background: "#f8fafc", color: "#334155", borderRadius: 999, padding: "9px 14px", fontWeight: 750, cursor: "pointer" };
+const activeTabStyle: CSSProperties = { ...tabStyle, background: "#f0ecff", color: "#4f2bc9", borderColor: "#c9bcfa" };
+const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 7, fontSize: 13, fontWeight: 750, color: "#334155" };
+const inputStyle: CSSProperties = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 11, padding: "10px 11px", fontSize: 14, background: "#fff" };
+const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 280, fontFamily: "ui-monospace, monospace", resize: "vertical" };
+const fieldHelpStyle: CSSProperties = { color: "#73778d", fontWeight: 500, lineHeight: 1.4 };
+const helpTextStyle: CSSProperties = { margin: "8px 0", color: "#64748b", fontSize: 13, lineHeight: 1.5 };
+const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 11, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 800, cursor: "pointer" };
+const smallButtonStyle: CSSProperties = { border: "1px solid #cbd5e1", borderRadius: 9, padding: "7px 10px", background: "#fff", color: "#334155", fontWeight: 750, cursor: "pointer" };
+const secondaryButtonStyle: CSSProperties = { display: "inline-flex", margin: "8px 8px 0 0", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: 11, padding: "9px 13px", background: "#fff", color: "#334155", textDecoration: "none", fontWeight: 800 };
+const primaryLinkStyle: CSSProperties = { ...secondaryButtonStyle, background: "#5b2cf2", borderColor: "#5b2cf2", color: "#fff" };
+const errorBoxStyle: CSSProperties = { marginTop: 16, padding: 14, border: "1px solid #fecaca", borderRadius: 13, background: "#fef2f2", color: "#991b1b", fontWeight: 700 };
+const rowBetweenStyle: CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 };
+const badgeStyle: CSSProperties = { border: "1px solid", borderRadius: 999, padding: "7px 11px", fontSize: 12, fontWeight: 900 };
+const previewBoxStyle: CSSProperties = { marginTop: 18, padding: 18, border: "1px solid #ddd8f4", borderRadius: 14, background: "#faf9ff" };
+const previewTitleStyle: CSSProperties = { margin: 0, color: "#171a38", fontSize: 22 };
+const previewDescriptionStyle: CSSProperties = { color: "#666b82", lineHeight: 1.5 };
+const detailsGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10 };
+const detailStyle: CSSProperties = { display: "grid", gap: 3, padding: 10, borderRadius: 9, background: "#fff", overflowWrap: "anywhere" };
+const detailLabelStyle: CSSProperties = { color: "#777d92", fontSize: 11, fontWeight: 800, textTransform: "uppercase" };
+const detailValueStyle: CSSProperties = { color: "#252842", fontSize: 13, fontWeight: 700 };
