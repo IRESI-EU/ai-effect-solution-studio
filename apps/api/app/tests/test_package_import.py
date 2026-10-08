@@ -8,6 +8,9 @@ import pytest
 from app.core.config import settings
 from app.models.service import Service
 from app.models.solution import Solution
+from app.models.user import AuditEvent
+from app.services.package_solution_repair import repair_legacy_package_solution
+from app.services.solution_design import count_service_nodes
 
 
 @pytest.fixture(autouse=True)
@@ -106,7 +109,27 @@ def test_package_preview_and_atomic_confirmation_preserve_runtime_contracts(clie
         assert provider_record.status == "pending_review"
         assert Path(provider_record.proto_uri).read_text().startswith('syntax = "proto3"')
         solution = db.query(Solution).filter(Solution.name == "Imported German draft").one()
-        assert len(solution.edges) == 1
+        assert count_service_nodes(solution.nodes) == 2
+        assert all(node.get("position") for node in solution.nodes)
+        service_nodes = [node for node in solution.nodes if (node.get("data") or {}).get("node_kind") == "service"]
+        assert [node["data"]["service"]["id"] for node in service_nodes] == [
+            provider["proposed_id"], preview["services"][1]["proposed_id"]
+        ]
+        assert len({edge["id"] for edge in solution.edges}) == 3
+        assert sum((edge.get("data") or {}).get("connection_kind") == "service_connection" for edge in solution.edges) == 1
+        assert sum((edge.get("data") or {}).get("connection_kind") == "workflow_boundary" for edge in solution.edges) == 2
+
+        provider_record.name = "Current provider name"
+        db.commit()
+
+    reopened = client.get(f"/solutions/{result['solution']['id']}")
+    assert reopened.status_code == 200
+    saved = reopened.json()
+    assert count_service_nodes(saved["nodes"]) == 2
+    assert next(node for node in saved["nodes"] if (node.get("data") or {}).get("node_kind") == "service")["data"]["service"]["name"] == "Current provider name"
+    saved_again = client.put(f"/solutions/{result['solution']['id']}", json={"nodes": saved["nodes"], "edges": saved["edges"]})
+    assert saved_again.status_code == 200
+    assert client.get(f"/solutions/{result['solution']['id']}").json()["nodes"] == saved["nodes"]
 
 
 def test_repeat_upload_reports_conflicts_and_never_overwrites(client, session_factory, tmp_path, monkeypatch):
@@ -155,3 +178,56 @@ def test_unsafe_archive_is_rejected_without_writes(client, session_factory, tmp_
     assert "Unsafe archive path" in response.text
     with session_factory() as db:
         assert db.query(Service).filter(Service.id.like("pkg-%")).count() == 0
+
+
+def test_missing_service_reference_returns_actionable_load_error(client, session_factory):
+    created = client.post("/solutions", json={
+        "name": "Missing package service", "status": "draft", "edges": [],
+        "nodes": [{"id": "arbitrary", "position": {"x": 1, "y": 2}, "data": {
+            "node_kind": "service", "service": {"id": "missing-service"}, "label": "Missing"
+        }}],
+    })
+    assert created.status_code == 200
+    response = client.get(f"/solutions/{created.json()['id']}")
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "solution_service_missing"
+    assert response.json()["detail"]["service_ids"] == ["missing-service"]
+
+
+def test_legacy_package_repair_snapshots_original_and_preserves_services(client, session_factory):
+    preview = upload(client, package_bytes()).json()
+    confirmed = client.post("/services/import/package/confirm", json={
+        "upload_token": preview["upload_token"], "services": selections(preview),
+        "registration_only_acknowledged": True,
+    }).json()
+    service_ids = [item["id"] for item in confirmed["services"]]
+    with session_factory() as db:
+        owner_id = db.get(Service, service_ids[0]).created_by_user_id
+        legacy = Solution(
+            id="legacy-package-repair", name="Legacy package draft", status="draft",
+            created_by_user_id=owner_id,
+            nodes=[
+                {"id": "data_provider1", "service_id": service_ids[0]},
+                {"id": "formatter1", "service_id": service_ids[1]},
+            ],
+            edges=[{"source": "data_provider1", "target": "formatter1"}],
+        )
+        db.add(legacy)
+        db.add(AuditEvent(
+            id="legacy-import-audit", actor_user_id=owner_id, action="solution.package_imported",
+            target_type="solution", target_id=legacy.id,
+        ))
+        db.commit()
+        before = {service.id: (service.status, service.internal_host) for service in db.query(Service).filter(Service.id.in_(service_ids))}
+        dry_run = repair_legacy_package_solution(db, legacy.id)
+        assert dry_run == {
+            "status": "repair_ready", "solution_id": legacy.id, "name": legacy.name,
+            "services": 2, "internal_connections": 1, "boundary_connections": 2,
+        }
+        repaired = repair_legacy_package_solution(db, legacy.id, apply=True)
+        assert repaired["status"] == "repaired"
+        db.refresh(legacy)
+        assert count_service_nodes(legacy.nodes) == 2
+        assert {service.id: (service.status, service.internal_host) for service in db.query(Service).filter(Service.id.in_(service_ids))} == before
+        snapshot = db.query(AuditEvent).filter(AuditEvent.target_id == legacy.id, AuditEvent.action == "solution.package_repair_snapshot").one()
+        assert "data_provider1" in snapshot.details

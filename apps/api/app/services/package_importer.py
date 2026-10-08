@@ -26,6 +26,7 @@ from app.schemas.service_import import (
 )
 from app.services.audit import record_audit_event
 from app.services.runtime_preflight import build_runtime_health_url
+from app.services.solution_design import build_linear_builder_design
 
 
 MAX_ARCHIVE_BYTES = 25 * 1024 * 1024
@@ -189,11 +190,19 @@ def confirm_package(request: PackageImportConfirmRequest, db: Session, user: Use
 
         solution = None
         if request.create_solution:
+            db.flush()
+            try:
+                builder_nodes, builder_edges = build_linear_builder_design(
+                    {key: next(service for service in created_services if service.id == choice.service_id) for key, choice in selected.items()},
+                    selected_edges,
+                )
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
             solution = Solution(
                 id=str(uuid4()), name=(request.solution_name or parsed.name).strip(),
                 description=f"Draft imported from {metadata['archive_name']}", status="draft",
-                nodes=[{"id": key, "service_id": choice.service_id, "container_name": key, "operation_name": choice.operation_name, "node_type": parsed_by_key[key]["node_type"]} for key, choice in selected.items()],
-                edges=[{"source": edge["source_service"], "target": edge["target_service"]} for edge in selected_edges],
+                nodes=builder_nodes,
+                edges=builder_edges,
                 created_by_user_id=user.id,
             )
             db.add(solution)

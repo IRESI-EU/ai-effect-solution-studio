@@ -71,6 +71,11 @@ from app.services.package_importer import (
     confirm_package,
     preview_package,
 )
+from app.services.solution_design import (
+    count_service_connections,
+    count_service_nodes,
+    hydrate_solution_service_references,
+)
 from app.services.audit import record_audit_event
 
 
@@ -856,13 +861,7 @@ def list_solution_summaries(
             [deployment for deployment in deployments if deployment.status == "running"]
         )
 
-        service_count = len(
-            [
-                node
-                for node in (solution.nodes or [])
-                if str(node.get("id", "")).startswith("service-")
-            ]
-        )
+        service_count = count_service_nodes(solution.nodes)
 
         summaries.append(
             {
@@ -871,7 +870,7 @@ def list_solution_summaries(
                 "description": solution.description,
                 "status": solution.status,
                 "services_count": service_count,
-                "connections_count": len(solution.edges or []),
+                "connections_count": count_service_connections(solution.nodes, solution.edges),
                 "deployments_count": len(deployments),
                 "completed_deployments_count": completed_count,
                 "failed_deployments_count": failed_count,
@@ -907,6 +906,8 @@ def get_solution_workspace(
     if not can_manage_owned_record(user, solution.created_by_user_id):
         raise HTTPException(status_code=403, detail="You can only access your own solutions")
 
+    hydrated_nodes = hydrate_solution_service_references(db, solution.nodes, user)
+
     deployments = (
         db.query(Deployment)
         .filter(
@@ -921,7 +922,7 @@ def get_solution_workspace(
         "id": solution.id,
         "name": solution.name,
         "description": solution.description,
-        "nodes": solution.nodes,
+        "nodes": hydrated_nodes,
         "edges": solution.edges,
         "status": solution.status,
         "created_at": solution.created_at,
@@ -944,7 +945,18 @@ def get_solution(
     if not can_manage_owned_record(user, solution.created_by_user_id):
         raise HTTPException(status_code=403, detail="You can only access your own solutions")
 
-    return solution
+    hydrated_nodes = hydrate_solution_service_references(db, solution.nodes, user)
+    return {
+        "id": solution.id,
+        "name": solution.name,
+        "description": solution.description,
+        "nodes": hydrated_nodes,
+        "edges": solution.edges,
+        "status": solution.status,
+        "created_at": solution.created_at,
+        "updated_at": solution.updated_at,
+        "created_by_user_id": solution.created_by_user_id,
+    }
 
 
 @app.put("/solutions/{solution_id}", response_model=SolutionRead)
