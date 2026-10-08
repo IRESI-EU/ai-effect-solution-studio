@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "grid_synth_service",
+    "internal_host": "grid_synth_service",
     "image": "paulban/aieffect-dutchnode-datasynth:latest",
     "dockerfile": "use-cases/dutch_node/data_synthesizer/Dockerfile",
     "internal_port": "8080",

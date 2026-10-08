@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "example-control-service",
+    "internal_host": "example-control-service",
     "image": "ghcr.io/iresi-eu/example-control-service:1.0.0",
     "internal_port": "8080",
     "health_path": "/health"

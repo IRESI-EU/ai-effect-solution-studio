@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "data_loader1",
+    "internal_host": "pt-data-provision",
     "image": "portugal-node-integrated-data-provision:latest",
     "dockerfile": "use-cases/portugal-node-integrated/data_provision/Dockerfile",
     "internal_port": "600",

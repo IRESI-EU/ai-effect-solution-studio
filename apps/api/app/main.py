@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -28,7 +28,12 @@ from app.schemas.deployment import (
     DeploymentRead,
     DeploymentUpdate,
 )
-from app.schemas.service import ServiceCreate, ServiceRead
+from app.schemas.service import (
+    RuntimeVerificationRead,
+    ServiceCreate,
+    ServiceRead,
+    ServiceTechnicalMetadataUpdate,
+)
 from app.schemas.solution import (
     SolutionCreate,
     SolutionRead,
@@ -43,7 +48,11 @@ from app.services.orchestrator_adapter import (
     get_workflow_tasks,
     submit_to_orchestrator,
 )
-from app.services.runtime_preflight import run_runtime_preflight
+from app.services.runtime_preflight import (
+    build_runtime_health_url,
+    check_service_runtime,
+    run_runtime_preflight,
+)
 from app.services.workflow_compiler import compile_to_wp3_payload
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.service_import import (
@@ -81,6 +90,41 @@ app.add_middleware(
 def touch_updated_at(record):
     if hasattr(record, "updated_at"):
         record.updated_at = datetime.utcnow()
+
+
+def store_runtime_verification(service: Service, result: dict) -> dict:
+    evidence = {
+        "status": "verified" if result["status"] == "ready" else "failed",
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "runtime_url": result.get("runtime_url"),
+        "http_status": result.get("http_status"),
+        "failure_reason": result.get("failure_reason"),
+        "message": result["message"],
+        "address": {
+            "internal_host": service.internal_host,
+            "internal_port": service.internal_port,
+            "health_path": service.health_path,
+        },
+    }
+    contract = dict(service.interface_contract or {})
+    contract["runtime_verification"] = evidence
+    service.interface_contract = contract
+    return evidence
+
+
+def invalidate_runtime_verification(service: Service, reason: str) -> dict:
+    evidence = {
+        "status": "not_verified",
+        "invalidated_at": datetime.now(timezone.utc).isoformat(),
+        "runtime_url": None,
+        "http_status": None,
+        "failure_reason": "metadata_changed",
+        "message": reason,
+    }
+    contract = dict(service.interface_contract or {})
+    contract["runtime_verification"] = evidence
+    service.interface_contract = contract
+    return evidence
 
 
 @app.get("/health")
@@ -287,7 +331,7 @@ def confirm_manual_service_import(
      output_message_name=imported.output_message_name,
      input_type=imported.input_type,
      output_type=imported.output_type,
-     internal_host=imported.container_name,
+     internal_host=imported.internal_host,
      internal_port=imported.internal_port,
      owner_node=user.node,
      created_by_user_id=user.id,
@@ -316,6 +360,11 @@ def update_service_review(
     service.status = status
     service.trust_badge = trust_badge
 
+    runtime_result = None
+    if status == "approved":
+        runtime_result = check_service_runtime(service)
+        store_runtime_verification(service, runtime_result)
+
     if service.lifecycle_status != "archived":
         service.lifecycle_status = "active"
 
@@ -326,7 +375,11 @@ def update_service_review(
         f"service.review_{status}",
         "service",
         service.id,
-        {"status": status},
+        {
+            "status": status,
+            "runtime_verification": runtime_result["status"] if runtime_result else None,
+            "runtime_failure_reason": runtime_result.get("failure_reason") if runtime_result else None,
+        },
     )
     db.commit()
     db.refresh(service)
@@ -386,6 +439,98 @@ def get_manageable_service(service_id: str, db: Session, user: User) -> Service:
     if not can_manage_service(user, service.owner_node):
         raise HTTPException(status_code=403, detail="You can only manage services owned by your node")
     return service
+
+
+@app.put("/services/{service_id}/technical-metadata", response_model=ServiceRead)
+def update_service_technical_metadata(
+    service_id: str,
+    payload: ServiceTechnicalMetadataUpdate,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    service = get_manageable_service(service_id, db, user)
+    values = payload.model_dump()
+    required_fields = (
+        "internal_host",
+        "internal_port",
+        "health_path",
+        "operation_name",
+        "input_message_name",
+        "output_message_name",
+        "proto_uri",
+    )
+    for field in required_fields:
+        values[field] = (values.get(field) or "").strip()
+        if not values[field]:
+            raise HTTPException(status_code=422, detail=f"{field} is required")
+    if values.get("contract_uri") is not None:
+        values["contract_uri"] = values["contract_uri"].strip() or None
+
+    runtime_probe = type(
+        "RuntimeAddress",
+        (),
+        {
+            "internal_host": values["internal_host"],
+            "internal_port": values["internal_port"],
+            "health_path": values["health_path"],
+        },
+    )()
+    _, address_error = build_runtime_health_url(runtime_probe)
+    if address_error:
+        raise HTTPException(status_code=422, detail=address_error)
+
+    changes = {}
+    for field, value in values.items():
+        old_value = getattr(service, field)
+        if old_value != value:
+            changes[field] = {"before": old_value, "after": value}
+            setattr(service, field, value)
+
+    if changes:
+        invalidate_runtime_verification(
+            service,
+            "Runtime or interface metadata changed; run verification again before execution.",
+        )
+        touch_updated_at(service)
+        record_audit_event(
+            db,
+            user,
+            "service.technical_metadata_updated",
+            "service",
+            service.id,
+            {"changes": changes, "verification_invalidated": True},
+        )
+        db.commit()
+        db.refresh(service)
+    return service
+
+
+@app.post(
+    "/services/{service_id}/runtime/verify",
+    response_model=RuntimeVerificationRead,
+)
+def verify_service_runtime(
+    service_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    service = get_manageable_service(service_id, db, user)
+    result = check_service_runtime(service)
+    evidence = store_runtime_verification(service, result)
+    record_audit_event(
+        db,
+        user,
+        "service.runtime_verified" if result["status"] == "ready" else "service.runtime_verification_failed",
+        "service",
+        service.id,
+        {
+            "runtime_url": result.get("runtime_url"),
+            "http_status": result.get("http_status"),
+            "failure_reason": result.get("failure_reason"),
+        },
+    )
+    db.commit()
+    return evidence
 
 
 @app.put("/services/{service_id}/activate", response_model=ServiceRead)

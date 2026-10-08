@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import socket
 from urllib.parse import urlsplit, urlunsplit
 
 import requests
@@ -74,6 +75,7 @@ def run_runtime_preflight(workflow_nodes, db: Session):
                     service_name=service.name,
                     responsible_party=service.provider or "Service provider",
                     status="misconfigured",
+                    failure_reason="invalid_address",
                     message=url_error,
                     recommended_action="Ask the service provider to correct the runtime host, port, and health path metadata.",
                 )
@@ -190,16 +192,37 @@ def _governance_blocker(service: Service):
     return None
 
 
-def _check_runtime(node, service: Service, runtime_url: str):
-    base_check = {
-        "node_id": getattr(node, "node_id", ""),
+def check_service_runtime(service: Service, node_id: str = ""):
+    """Validate and check one service from the API container/network."""
+    runtime_url, url_error = build_runtime_health_url(service)
+    if url_error:
+        return {
+            **_runtime_base(node_id, service, None),
+            "status": "misconfigured",
+            "blocking": True,
+            "failure_reason": "invalid_address",
+            "message": url_error,
+            "recommended_action": "Correct the runtime host, port, and health path metadata, then verify again.",
+        }
+    return _check_runtime(node_id, service, runtime_url)
+
+
+def _runtime_base(node_id: str, service: Service, runtime_url: str | None):
+    return {
+        "node_id": node_id,
         "service_id": service.id,
         "service_name": service.name,
         "runtime_url": runtime_url,
         "runtime_management_mode": LEGACY_RUNTIME_MANAGEMENT_MODE,
         "responsible_party": service.provider or "Service provider",
         "http_status": None,
+        "failure_reason": None,
     }
+
+
+def _check_runtime(node, service: Service, runtime_url: str):
+    node_id = getattr(node, "node_id", "") if not isinstance(node, str) else node
+    base_check = _runtime_base(node_id, service, runtime_url)
 
     try:
         response = requests.get(
@@ -212,7 +235,22 @@ def _check_runtime(node, service: Service, runtime_url: str):
             **base_check,
             "status": "unavailable",
             "blocking": True,
+            "failure_reason": "timeout",
             "message": f"The runtime health check did not respond within {RUNTIME_HEALTH_TIMEOUT_SECONDS} seconds.",
+            "recommended_action": "Ask the service provider to start or restore the runtime, then prepare the deployment again.",
+        }
+    except requests.ConnectionError as exc:
+        failure_reason = "dns_failure" if _contains_dns_error(exc) else "connection_failure"
+        return {
+            **base_check,
+            "status": "unavailable",
+            "blocking": True,
+            "failure_reason": failure_reason,
+            "message": (
+                "The runtime hostname could not be resolved from the platform network."
+                if failure_reason == "dns_failure"
+                else "The runtime health endpoint refused or could not establish a connection."
+            ),
             "recommended_action": "Ask the service provider to start or restore the runtime, then prepare the deployment again.",
         }
     except requests.RequestException:
@@ -220,8 +258,9 @@ def _check_runtime(node, service: Service, runtime_url: str):
             **base_check,
             "status": "unavailable",
             "blocking": True,
+            "failure_reason": "connection_failure",
             "message": "The runtime health endpoint could not be reached.",
-            "recommended_action": "Ask the service provider to start or restore the runtime, then prepare the deployment again.",
+            "recommended_action": "Check the platform network address and restore the runtime, then verify again.",
         }
 
     is_ready = 200 <= response.status_code < 300
@@ -229,6 +268,7 @@ def _check_runtime(node, service: Service, runtime_url: str):
         **base_check,
         "status": "ready" if is_ready else "unavailable",
         "blocking": not is_ready,
+        "failure_reason": None if is_ready else "http_error",
         "message": (
             "The runtime health endpoint is ready."
             if is_ready
@@ -243,6 +283,18 @@ def _check_runtime(node, service: Service, runtime_url: str):
     }
 
 
+def _contains_dns_error(exc: BaseException) -> bool:
+    current: BaseException | None = exc
+    visited: set[int] = set()
+    while current is not None and id(current) not in visited:
+        visited.add(id(current))
+        if isinstance(current, socket.gaierror) or "NameResolution" in type(current).__name__:
+            return True
+        current = current.__cause__ or current.__context__
+    text = str(exc).lower()
+    return "name resolution" in text or "failed to resolve" in text
+
+
 def _result_check(
     *,
     node_id,
@@ -250,6 +302,7 @@ def _result_check(
     service_name,
     responsible_party,
     status,
+    failure_reason=None,
     message,
     recommended_action,
 ):
@@ -265,4 +318,5 @@ def _result_check(
         "message": message,
         "recommended_action": recommended_action,
         "http_status": None,
+        "failure_reason": failure_reason,
     }

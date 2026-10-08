@@ -12,11 +12,15 @@ export type GuidedServiceForm = {
   image: string;
   dockerfile: string;
   containerName: string;
+  internalHost: string;
   internalPort: string;
   healthPath: string;
   operationName: string;
+  inputMessageName: string;
+  outputMessageName: string;
   interfaceType: InterfaceChoice;
   contractUri: string;
+  protoUri: string;
   grpcInputMessage: string;
   grpcOutputMessage: string;
   httpMethod: string;
@@ -39,11 +43,15 @@ export const emptyGuidedForm: GuidedServiceForm = {
   image: "",
   dockerfile: "",
   containerName: "",
+  internalHost: "",
   internalPort: "8080",
   healthPath: "/health",
   operationName: "",
+  inputMessageName: "",
+  outputMessageName: "",
   interfaceType: "control",
   contractUri: "ai-effect.service.json",
+  protoUri: "",
   grpcInputMessage: "",
   grpcOutputMessage: "",
   httpMethod: "POST",
@@ -58,6 +66,7 @@ export function buildGuidedManifest(form: GuidedServiceForm): Record<string, unk
   const runtime: Record<string, unknown> = {
     type: "docker",
     container_name: form.containerName.trim(),
+    internal_host: form.internalHost.trim() || form.containerName.trim(),
     internal_port: form.internalPort.trim() || "8080",
     health_path: form.healthPath.trim() || "/health",
   };
@@ -72,12 +81,15 @@ export function buildGuidedManifest(form: GuidedServiceForm): Record<string, unk
   };
 
   if (form.contractUri.trim()) interfaceBlock.contract_uri = form.contractUri.trim();
+  if (form.protoUri.trim()) interfaceBlock.proto_uri = form.protoUri.trim();
+  if (form.inputMessageName.trim()) interfaceBlock.input_message_name = form.inputMessageName.trim();
+  if (form.outputMessageName.trim()) interfaceBlock.output_message_name = form.outputMessageName.trim();
   if (form.interfaceType === "grpc") {
     interfaceBlock.grpc = {
-      proto_uri: form.contractUri.trim(),
+      proto_uri: form.protoUri.trim() || form.contractUri.trim(),
       operation_name: form.operationName.trim(),
-      input_message_name: form.grpcInputMessage.trim(),
-      output_message_name: form.grpcOutputMessage.trim(),
+      input_message_name: form.grpcInputMessage.trim() || form.inputMessageName.trim(),
+      output_message_name: form.grpcOutputMessage.trim() || form.outputMessageName.trim(),
     };
   } else if (form.interfaceType === "http") {
     interfaceBlock.http = {
@@ -139,11 +151,15 @@ export function formFromExample(manifest: Record<string, unknown>): GuidedServic
     image: textValue(runtime.image),
     dockerfile: textValue(runtime.dockerfile),
     containerName: textValue(runtime.container_name),
+    internalHost: textValue(runtime.internal_host) || textValue(runtime.container_name),
     internalPort: textValue(runtime.internal_port) || "8080",
     healthPath: textValue(runtime.health_path) || "/health",
     operationName: textValue(interfaceBlock.operation_name) || textValue(grpc.operation_name),
+    inputMessageName: textValue(interfaceBlock.input_message_name),
+    outputMessageName: textValue(interfaceBlock.output_message_name),
     interfaceType,
-    contractUri: textValue(grpc.proto_uri) || textValue(interfaceBlock.contract_uri),
+    contractUri: textValue(interfaceBlock.contract_uri),
+    protoUri: textValue(interfaceBlock.proto_uri) || textValue(grpc.proto_uri),
     grpcInputMessage: textValue(grpc.input_message_name),
     grpcOutputMessage: textValue(grpc.output_message_name),
     httpMethod: textValue(http.method) || "POST",

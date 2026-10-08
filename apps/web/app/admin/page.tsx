@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ServiceRuntimeManager } from "../../components/service-runtime-manager";
 
 
 type Service = {
@@ -29,6 +30,13 @@ type Service = {
       secrets_external?: boolean;
       health_verified?: boolean;
       registration_only_acknowledged?: boolean;
+    };
+    runtime_verification?: {
+      status?: "verified" | "failed" | "not_verified";
+      runtime_url?: string | null;
+      http_status?: number | null;
+      failure_reason?: string | null;
+      message?: string;
     };
   } | null;
 };
@@ -344,6 +352,15 @@ export default function AdminPage() {
           </div>
         </section>
 
+        <section className="card" style={{ marginTop: 24, padding: 20 }}>
+          <span className="badge">Runtime verification</span>
+          <h2 style={{ margin: "10px 0 5px" }}>Service connection and WP3 metadata</h2>
+          <p style={{ margin: "0 0 16px", color: "#667085" }}>Edit the platform-network address separately from the logical WP3 container name, then verify connectivity from the portal API network. Connectivity does not certify operation correctness.</p>
+          <div style={{ display: "grid", gap: 10 }}>
+            {services.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadServices} />)}
+          </div>
+        </section>
+
         <section className="card" style={{ marginTop: 24, overflow: "hidden" }}>
           <div style={{ padding: 20, borderBottom: "1px solid #e4e9f2" }}>
             <span className="badge">Data preservation</span>
@@ -569,6 +586,13 @@ export default function AdminPage() {
                         </div>
                         <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
                           {service.operation_name || "No operation"}
+                        </div>
+                        <div style={{ marginTop: 7, fontSize: 12, fontWeight: 800, color: service.interface_contract?.runtime_verification?.status === "verified" ? "#027a48" : "#b54708" }}>
+                          {service.interface_contract?.runtime_verification?.status === "verified"
+                            ? `Runtime verified${service.interface_contract.runtime_verification.http_status ? ` · HTTP ${service.interface_contract.runtime_verification.http_status}` : ""}`
+                            : service.status === "approved"
+                              ? "Governance approved · awaiting runtime verification"
+                              : "Runtime not verified"}
                         </div>
                         {service.interface_contract?.onboarding && (
                           <div style={{ marginTop: 9, fontSize: 12, color: "#667085", lineHeight: 1.45 }}>

@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "example-container-job-adapter",
+    "internal_host": "example-container-job-adapter",
     "image": "ghcr.io/iresi-eu/example-container-job-adapter:1.0.0",
     "internal_port": "8080",
     "health_path": "/health"

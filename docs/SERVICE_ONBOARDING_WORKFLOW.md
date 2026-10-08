@@ -89,6 +89,17 @@ Source declared
 The provider evidence checklist is a declaration, not proof. Admin Governance
 must independently verify it.
 
+### Logical identity versus runtime address
+
+`runtime.container_name` is the logical WP3 blueprint identity. It must remain
+stable when workflows refer to the service. `runtime.internal_host` is the DNS
+name or host reachable from the Solution Studio API and orchestrator networks;
+for example, `data_provider1` can map to `data-provider`. The portal accepts and
+persists both values independently. Older manifests without `internal_host`
+fall back to `container_name` and display a warning that the address must be
+verified. Runtime verification proves connectivity only, not operation-contract
+correctness.
+
 ## Operator deployment checklist
 
 1. Record repository URL, use-case path, and exact commit.

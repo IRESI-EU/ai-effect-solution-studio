@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "data_provider1",
+    "internal_host": "data-provider",
     "image": "germany-node-data-provider:latest",
     "dockerfile": "use-cases/germany-node/services/data_provider/Dockerfile",
     "internal_port": "8080",

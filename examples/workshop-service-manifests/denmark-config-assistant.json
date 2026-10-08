@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "config_assistant1",
+    "internal_host": "config-assistant",
     "image": "denmark-node-config-assistant:latest",
     "dockerfile": "use-cases/denmark-node/services/config_assistant/Dockerfile",
     "internal_port": "8080",

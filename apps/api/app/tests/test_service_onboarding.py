@@ -12,6 +12,7 @@ def test_onboarding_request_preserves_runtime_evidence(client):
         "runtime": {
             "type": "docker",
             "container_name": "onboarding-evidence-test",
+            "internal_host": "onboarding-evidence-runtime",
             "image": "example.invalid/onboarding-evidence-test:1.0.0",
             "internal_port": "8080",
             "health_path": "/health",
@@ -22,6 +23,9 @@ def test_onboarding_request_preserves_runtime_evidence(client):
             "input_type": "Test Input",
             "output_type": "Test Output",
             "contract_uri": "ai-effect.service.json",
+            "proto_uri": "microservice/onboarding.proto",
+            "input_message_name": "RunTestRequest",
+            "output_message_name": "RunTestResponse",
         },
         "orchestration": {"mode": "native"},
     }
@@ -51,6 +55,30 @@ def test_onboarding_request_preserves_runtime_evidence(client):
     payload = response.json()
     assert payload["status"] == "pending_review"
     assert payload["interface_contract"]["onboarding"] == onboarding
+    assert payload["container_name"] == "onboarding-evidence-test"
+    assert payload["internal_host"] == "onboarding-evidence-runtime"
+    assert payload["input_message_name"] == "RunTestRequest"
+    assert payload["output_message_name"] == "RunTestResponse"
+    assert payload["proto_uri"] == "microservice/onboarding.proto"
+
+
+def test_preview_keeps_separate_runtime_host_and_legacy_fallback(client):
+    base_manifest = {
+        "schema_version": "1.0",
+        "service": {"id": "runtime-host-preview", "name": "Runtime host", "provider": "German Node", "category": "Test"},
+        "runtime": {"container_name": "logical-name", "internal_host": "network-alias", "image": "example/runtime:1"},
+        "interface": {"type": "control", "operation_name": "Run", "input_type": "Input", "output_type": "Output"},
+    }
+    response = client.post("/services/import/preview-manual", json={"manifest": base_manifest})
+    assert response.status_code == 200
+    assert response.json()["service"]["internal_host"] == "network-alias"
+
+    legacy = {**base_manifest, "runtime": {"container_name": "logical-name", "image": "example/runtime:1"}}
+    legacy_response = client.post("/services/import/preview-manual", json={"manifest": legacy})
+    assert legacy_response.status_code == 200
+    payload = legacy_response.json()
+    assert payload["service"]["internal_host"] == "logical-name"
+    assert any("backward-compatible fallback" in item["message"] for item in payload["validation"])
 
 
 def test_manual_preview_preserves_unknown_fields_and_interface_errors(client):

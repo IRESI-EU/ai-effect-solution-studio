@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "example-grpc-service",
+    "internal_host": "example-grpc-service",
     "image": "ghcr.io/iresi-eu/example-grpc-service:1.0.0",
     "internal_port": "8080",
     "health_path": "/health"

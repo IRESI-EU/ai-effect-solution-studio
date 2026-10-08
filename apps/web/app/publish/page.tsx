@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useAuth } from "../../components/auth-context";
+import { ServiceRuntimeManager, type ManagedRuntimeService } from "../../components/service-runtime-manager";
 import {
   buildGuidedManifest,
   emptyGuidedForm,
@@ -37,6 +38,7 @@ type ImportedService = {
   orchestration_mode: string;
   adapter_type?: string | null;
   container_name: string;
+  internal_host: string;
   image?: string | null;
   dockerfile?: string | null;
   internal_port: string;
@@ -90,6 +92,7 @@ export default function PublishServicePage() {
   const [registrationAcknowledged, setRegistrationAcknowledged] = useState(false);
   const [examplePreviewOnly, setExamplePreviewOnly] = useState<WorkshopExample | null>(null);
   const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const [managedServices, setManagedServices] = useState<ManagedRuntimeService[]>([]);
 
   const generatedManifest = useMemo(() => buildGuidedManifest(form), [form]);
   const generatedJson = useMemo(() => JSON.stringify(generatedManifest, null, 2), [generatedManifest]);
@@ -100,6 +103,18 @@ export default function PublishServicePage() {
       !examplePreviewOnly,
   );
   const activeStep = confirmed ? 5 : preview ? (registrationAcknowledged ? 4 : 3) : 1;
+
+  async function loadManagedServices() {
+    if (!user || !["node_manager", "platform_admin"].includes(user.role)) return;
+    const response = await fetch("/api/services?include_archived=true", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    setManagedServices(Array.isArray(data) ? data : []);
+  }
+
+  useEffect(() => {
+    void loadManagedServices();
+  }, [user?.id]);
 
   function resetReviewState() {
     setPreview(null);
@@ -288,6 +303,17 @@ export default function PublishServicePage() {
         <Boundary title="Technical colleague" text="Supplies the container and execution-interface details." />
         <Boundary title="Platform team" text="Verifies runtime and integration evidence, then decides whether to approve the service." />
       </section>
+
+      {managedServices.length > 0 && (
+        <section style={{ ...cardStyle, marginTop: 20 }}>
+          <p style={eyebrowStyle}>Runtime management</p>
+          <h2 style={sectionTitleStyle}>Correct and verify onboarded services</h2>
+          <p style={helpTextStyle}>Node providers can manage services assigned to their node; platform administrators can manage all services. Saving runtime or interface metadata invalidates earlier verification.</p>
+          <div style={{ display: "grid", gap: 10 }}>
+            {managedServices.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadManagedServices} />)}
+          </div>
+        </section>
+      )}
 
       <div className="publish-workbench">
         <aside className="card publish-step-card">
@@ -493,6 +519,13 @@ function GuidedForm({
         <div className="guided-grid">
           <Field label="Unique service ID" value={form.serviceId} onChange={(v) => onChange("serviceId", v)} required help="Use a stable, lowercase identifier. It cannot duplicate an existing catalogue service." />
           <Field label="Container name" value={form.containerName} onChange={(v) => onChange("containerName", v)} required />
+          <Field
+            label="Runtime network host"
+            value={form.internalHost}
+            onChange={(v) => onChange("internalHost", v)}
+            required
+            help="The hostname reachable from the platform network. It may differ from the logical service name."
+          />
           <Field label="Docker image" value={form.image} onChange={(v) => onChange("image", v)} help="Provide an image or a Dockerfile path. A pre-built, pinned image is preferred." />
           <Field label="Dockerfile path" value={form.dockerfile} onChange={(v) => onChange("dockerfile", v)} />
           <Field label="Internal port" value={form.internalPort} onChange={(v) => onChange("internalPort", v)} required />
@@ -509,6 +542,14 @@ function GuidedForm({
             <small style={fieldHelpStyle}>{interfaceHelp(form.interfaceType)}</small>
           </label>
           <Field label={form.interfaceType === "grpc" ? "Proto contract path or URL" : "Contract reference"} value={form.contractUri} onChange={(v) => onChange("contractUri", v)} required={form.interfaceType === "grpc"} help="A declaration for review—not proof that the endpoint is reachable or compatible." />
+          <details style={{ gridColumn: "1 / -1" }} className="technical-details">
+            <summary>Advanced WP3 operation fields</summary>
+            <div className="guided-grid" style={{ marginTop: 12 }}>
+              <Field label="Input message name" value={form.inputMessageName} onChange={(v) => onChange("inputMessageName", v)} help="For example ProvideDataRequest. Supplied values are preserved exactly." />
+              <Field label="Output message name" value={form.outputMessageName} onChange={(v) => onChange("outputMessageName", v)} help="For example ProvideDataResponse. Supplied values are preserved exactly." />
+              <Field label="WP3 proto reference" value={form.protoUri} onChange={(v) => onChange("protoUri", v)} help="Separate compiler-facing proto_uri; it may differ from the review contract reference." />
+            </div>
+          </details>
           {form.interfaceType === "grpc" && <>
             <Field label="gRPC input message" value={form.grpcInputMessage} onChange={(v) => onChange("grpcInputMessage", v)} />
             <Field label="gRPC output message" value={form.grpcOutputMessage} onChange={(v) => onChange("grpcOutputMessage", v)} />
@@ -571,8 +612,9 @@ function ServicePreview({ service }: { service: ImportedService }) {
         <Detail label="Orchestration" value={service.orchestration_mode} />
         <Detail label="Adapter" value={service.adapter_type || "Not declared"} />
         <Detail label="Image / Dockerfile" value={service.image || service.dockerfile || "Missing"} />
-        <Detail label="Container" value={`${service.container_name}:${service.internal_port}`} />
-        <Detail label="Health path" value={service.health_path} />
+        <Detail label="Logical container" value={service.container_name} />
+        <Detail label="Runtime network host" value={service.internal_host} />
+        <Detail label="Configured health URL" value={`http://${service.internal_host}:${service.internal_port}${service.health_path}`} />
         <Detail label="Contract reference" value={service.contract_uri || service.proto_uri || "Not declared"} />
         <Detail label="Compatibility proto_uri" value={service.proto_uri || "Not declared"} />
         <Detail label="Input message" value={service.input_message_name || "Not declared"} />
@@ -617,7 +659,7 @@ function RuntimeSection({ choice, onChoice, evidence, onEvidence, service, ackno
         ["revisionPinned", "Exact source revision recorded"],
         ["imageReviewed", "Docker image built or reviewed"],
         ["secretsExternal", "Secrets kept outside source and manifest"],
-        ["healthVerified", `Health endpoint tested at ${service.container_name}:${service.internal_port}${service.health_path}`],
+        ["healthVerified", `Provider reports testing ${service.internal_host}:${service.internal_port}${service.health_path}`],
       ] as Array<[keyof RuntimeEvidence, string]>).map(([field, label]) => <label key={field}><input type="checkbox" checked={evidence[field]} onChange={(e) => onEvidence(field, e.target.checked)} /><span>{label}</span></label>)}
     </div>
     <label className="onboarding-acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(e) => onAcknowledge(e.target.checked)} /><span>I understand this submits metadata for review and does not deploy or activate the service.</span></label>

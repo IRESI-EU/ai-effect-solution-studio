@@ -60,6 +60,7 @@ class NormalizedImportedService(BaseModel):
     adapter_type: str | None = None
 
     container_name: str
+    internal_host: str
     image: str | None = None
     dockerfile: str | None = None
     internal_port: str = "8080"

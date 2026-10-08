@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "example-legacy-sidecar-adapter",
+    "internal_host": "example-legacy-sidecar-adapter",
     "image": "ghcr.io/iresi-eu/example-legacy-sidecar-adapter:1.0.0",
     "internal_port": "8080",
     "health_path": "/health"
