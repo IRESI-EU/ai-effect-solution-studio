@@ -83,3 +83,77 @@ class ServiceImportPreviewResponse(BaseModel):
     raw_manifest: dict[str, Any]
     service: NormalizedImportedService | None = None
     validation: list[ValidationMessage]
+
+
+class PackageOperation(BaseModel):
+    operation_name: str
+    input_message_name: str
+    output_message_name: str
+    compatible_with_proto: bool
+    compatibility_message: str
+
+
+class PackageServicePreview(BaseModel):
+    key: str
+    proposed_id: str
+    name: str
+    description: str
+    category: str
+    version: str
+    container_name: str
+    image: str
+    internal_host: str | None = None
+    internal_port: str | None = None
+    node_type: str
+    proto_path: str
+    operations: list[PackageOperation]
+    selected_operation: str | None = None
+    duplicate_conflicts: list[str] = Field(default_factory=list)
+    blockers: list[str] = Field(default_factory=list)
+
+
+class PackageConnection(BaseModel):
+    source_service: str
+    source_operation: str
+    target_service: str
+    target_operation: str
+
+
+class PackageImportPreviewResponse(BaseModel):
+    upload_token: str
+    package_name: str
+    archive_name: str
+    services: list[PackageServicePreview]
+    connections: list[PackageConnection]
+    warnings: list[str] = Field(default_factory=list)
+    registration_status: Literal["preview", "blocked"] = "preview"
+    runtime_status: Literal["unverified"] = "unverified"
+    operation_compatibility: Literal["verified", "needs_selection", "blocked"]
+
+
+class PackageServiceSelection(BaseModel):
+    key: str
+    selected: bool = True
+    service_id: str
+    name: str
+    description: str
+    category: str
+    operation_name: str
+    internal_host: str | None = None
+    internal_port: str | None = None
+    health_path: str = "/health"
+    register_incomplete_draft: bool = False
+
+
+class PackageImportConfirmRequest(BaseModel):
+    upload_token: str
+    services: list[PackageServiceSelection]
+    create_solution: bool = False
+    solution_name: str | None = None
+    registration_only_acknowledged: bool = False
+
+
+class PackageImportConfirmResponse(BaseModel):
+    services: list[dict[str, Any]]
+    solution: dict[str, Any] | None = None
+    message: str

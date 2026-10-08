@@ -12,10 +12,11 @@ import {
   type InterfaceChoice,
 } from "./guided-manifest";
 import { workshopExamples, type WorkshopExample } from "./workshop-examples";
+import { PackageImportPanel } from "./package-import";
 
 const API_BASE_URL = "/api";
 
-type EntryMode = "guided" | "git" | "manual";
+type EntryMode = "package" | "guided" | "git" | "manual";
 type RuntimeChoice = "needs_deployment" | "already_running" | "unsure";
 type RuntimeEvidence = {
   revisionPinned: boolean;
@@ -76,7 +77,7 @@ const initialEvidence: RuntimeEvidence = {
 
 export default function PublishServicePage() {
   const { user } = useAuth();
-  const [mode, setMode] = useState<EntryMode>("guided");
+  const [mode, setMode] = useState<EntryMode>("package");
   const [form, setForm] = useState<GuidedServiceForm>(emptyGuidedForm);
   const [repoUrl, setRepoUrl] = useState("");
   const [branch, setBranch] = useState("");
@@ -304,22 +305,11 @@ export default function PublishServicePage() {
         <Boundary title="Platform team" text="Verifies runtime and integration evidence, then decides whether to approve the service." />
       </section>
 
-      {managedServices.length > 0 && (
-        <section style={{ ...cardStyle, marginTop: 20 }}>
-          <p style={eyebrowStyle}>Runtime management</p>
-          <h2 style={sectionTitleStyle}>Correct and verify onboarded services</h2>
-          <p style={helpTextStyle}>Node providers can manage services assigned to their node; platform administrators can manage all services. Saving runtime or interface metadata invalidates earlier verification.</p>
-          <div style={{ display: "grid", gap: 10 }}>
-            {managedServices.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadManagedServices} />)}
-          </div>
-        </section>
-      )}
-
       <div className="publish-workbench">
         <aside className="card publish-step-card">
           <p style={{ ...eyebrowStyle, marginBottom: 16 }}>Progress</p>
           {[
-            ["1", "Enter details", "Service, interface, and source"],
+            ["1", "Provide details", "Package upload, guided form, or advanced import"],
             ["2", "Check details", "Readable summary and validation"],
             ["3", "Runtime", "Provider claims and evidence"],
             ["4", "Submit", "Await administrator review"],
@@ -338,13 +328,15 @@ export default function PublishServicePage() {
 
         <div className="publish-main-column">
           <section style={cardStyle}>
-            <p style={eyebrowStyle}>1 · Enter service details</p>
-            <h2 style={sectionTitleStyle}>How would you like to provide the details?</h2>
+            <p style={eyebrowStyle}>1 · Provide service details</p>
+            <h2 style={sectionTitleStyle}>Choose an onboarding method</h2>
             <div style={tabRowStyle}>
-              <ModeButton active={mode === "guided"} onClick={() => changeMode("guided")}>Guided form</ModeButton>
-              <ModeButton active={mode === "git"} onClick={() => changeMode("git")}>Public Git manifest</ModeButton>
-              <ModeButton active={mode === "manual"} onClick={() => changeMode("manual")}>Paste JSON</ModeButton>
+              <ModeButton active={mode === "package"} onClick={() => changeMode("package")}>Upload service package · Recommended</ModeButton>
+              <ModeButton active={mode === "guided"} onClick={() => changeMode("guided")}>Enter service details</ModeButton>
+              <ModeButton active={mode === "git" || mode === "manual"} onClick={() => changeMode("git")}>Advanced import</ModeButton>
             </div>
+
+            {mode === "package" && <PackageImportPanel />}
 
             {mode === "guided" && (
               <GuidedForm
@@ -360,7 +352,7 @@ export default function PublishServicePage() {
             )}
 
             {mode === "git" && (
-              <ImportFields
+              <><div style={tabRowStyle}><ModeButton active onClick={() => changeMode("git")}>Public Git manifest</ModeButton><ModeButton active={false} onClick={() => changeMode("manual")}>Paste JSON</ModeButton></div><ImportFields
                 repoUrl={repoUrl} branch={branch} manifestPath={manifestPath}
                 onRepo={(value) => { setRepoUrl(value); resetReviewState(); }}
                 onBranch={(value) => { setBranch(value); resetReviewState(); }}
@@ -370,11 +362,11 @@ export default function PublishServicePage() {
                 <button style={primaryButtonStyle} type="button" onClick={checkGitManifest} disabled={loading}>
                   {loading ? "Checking…" : "Check service details"}
                 </button>
-              </ImportFields>
+              </ImportFields></>
             )}
 
             {mode === "manual" && (
-              <ImportFields
+              <><div style={tabRowStyle}><ModeButton active={false} onClick={() => changeMode("git")}>Public Git manifest</ModeButton><ModeButton active onClick={() => changeMode("manual")}>Paste JSON</ModeButton></div><ImportFields
                 repoUrl={repoUrl} branch={branch} manifestPath={manifestPath}
                 onRepo={(value) => { setRepoUrl(value); resetReviewState(); }}
                 onBranch={(value) => { setBranch(value); resetReviewState(); }}
@@ -392,15 +384,15 @@ export default function PublishServicePage() {
                 <button style={primaryButtonStyle} type="button" onClick={checkPastedManifest} disabled={loading}>
                   {loading ? "Checking…" : "Check service details"}
                 </button>
-              </ImportFields>
+              </ImportFields></>
             )}
 
             <details className="publish-help-details">
               <summary>Examples, supported sources, and current limitations</summary>
-              <p>Public Git reads one exact JSON file. Paste JSON preserves the complete object. Private repositories, ZIP upload, automatic Dockerfile discovery, Compose execution, and container deployment are not performed here.</p>
+              <p>Public Git reads one exact JSON manifest. Paste JSON preserves the complete object. Package upload accepts the documented AI4EU/WP3 structure only. No onboarding method builds images, executes Compose, or starts containers.</p>
               <details className="workshop-example-panel">
-                <summary>View reference examples</summary>
-                <p>These four node examples are preview-only. They cannot be submitted until you explicitly use one as a starting point and give the new service a distinct name and ID.</p>
+                <summary>View reference manifests</summary>
+                <p>These node manifests are preview-only references. They cannot be submitted until you explicitly use one as a starting point and give the new service a distinct name and ID.</p>
                 <div className="workshop-example-buttons">
                   {workshopExamples.map((example) => (
                     <button type="button" key={example.key} onClick={() => loadWorkshopExample(example)}>
@@ -473,6 +465,15 @@ export default function PublishServicePage() {
           )}
         </div>
       </div>
+      {managedServices.length > 0 && (
+        <details style={{ ...cardStyle, marginTop: 24 }}>
+          <summary style={{ cursor: "pointer", fontWeight: 850, fontSize: 18 }}>Manage and verify existing service runtimes</summary>
+          <p style={helpTextStyle}>This section is separate from registration. Authorized node providers can correct services assigned to their node; platform administrators can manage all services. Saving runtime or interface metadata invalidates earlier verification.</p>
+          <div style={{ display: "grid", gap: 10 }}>
+            {managedServices.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadManagedServices} />)}
+          </div>
+        </details>
+      )}
     </main>
   );
 }

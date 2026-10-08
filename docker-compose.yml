@@ -27,12 +27,14 @@ services:
       BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Platform Administrator}
       SECURE_COOKIES: ${SECURE_COOKIES:-false}
       SESSION_HOURS: ${SESSION_HOURS:-12}
+      SERVICE_CONTRACT_PATH: /service-contracts
     ports:
       - "${API_PORT:-18080}:8080"
     volumes:
       - wp3_artifacts:/wp3-artifacts:ro
       - wp3_artifacts:/app/data:ro
       - denmark_node_data:/denmark-artifacts:ro
+      - service_contracts:/service-contracts
     depends_on:
       postgres:
         condition: service_healthy
@@ -55,6 +57,7 @@ services:
 
 volumes:
   postgres_data:
+  service_contracts:
   wp3_artifacts:
     external: true
   denmark_node_data:

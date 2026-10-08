@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -60,8 +60,17 @@ from app.schemas.service_import import (
     ServiceImportManualPreviewRequest,
     ServiceImportPreviewRequest,
     ServiceImportPreviewResponse,
+    PackageImportConfirmRequest,
+    PackageImportConfirmResponse,
+    PackageImportPreviewResponse,
 )
 from app.services.service_manifest_importer import normalize_manifest, preview_service_manifest
+from app.services.package_importer import (
+    MAX_ARCHIVE_BYTES,
+    PackageImportError,
+    confirm_package,
+    preview_package,
+)
 from app.services.audit import record_audit_event
 
 
@@ -343,6 +352,30 @@ def confirm_manual_service_import(
     db.refresh(service)
 
     return service
+
+
+@app.post("/services/import/package/preview", response_model=PackageImportPreviewResponse)
+async def preview_service_package(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    if not (file.filename or "").lower().endswith(".zip"):
+        raise HTTPException(status_code=422, detail="Upload a .zip WP3 service package.")
+    archive = await file.read(MAX_ARCHIVE_BYTES + 1)
+    try:
+        return preview_package(file.filename or "service-package.zip", archive, db, user)
+    except PackageImportError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.post("/services/import/package/confirm", response_model=PackageImportConfirmResponse)
+def confirm_service_package(
+    request: PackageImportConfirmRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    return confirm_package(request, db, user)
 
 
 def update_service_review(

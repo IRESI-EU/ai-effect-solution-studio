@@ -135,3 +135,21 @@ container. The old portal database and uploads are separate from the new
 Solution Studio volumes, so this rollback does not require a database restore.
 Keep the old stack and the pre-cutover backup until the new release has been
 stable for an agreed observation period.
+
+## Package-import release recovery
+
+Before deploying a release that changes service-package onboarding:
+
+1. Record the currently running web/API image tag and Compose working directory.
+2. Create a PostgreSQL custom-format backup with `pg_dump -Fc`.
+3. Back up the `ai-effect-solution-studio_service_contracts` volume to a dated
+   compressed archive. This volume contains durable protobuf contracts uploaded
+   through Publish Service; staging ZIPs are not execution artifacts.
+4. Keep the previous release directory and images until the new release passes
+   login, Publish preview, catalogue, Builder, and preflight smoke checks.
+
+Rollback recreates only the portal web and API containers with the previous
+image tag and Compose release directory. Country-node containers, orchestrator,
+secrets, and shared data volumes must not be recreated. Restore the database and
+service-contract archive only if the failed release wrote incompatible data;
+the package-import change is additive and normally needs no restore.

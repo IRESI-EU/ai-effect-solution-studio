@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     bootstrap_admin_email: str = ""
     bootstrap_admin_password: str = ""
     bootstrap_admin_name: str = "Platform Administrator"
+    service_contract_path: str = "/service-contracts"
 
 
 settings = Settings()
