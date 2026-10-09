@@ -375,44 +375,35 @@ export default async function CataloguePage({
               key={service.id}
               style={{
                 display: "flex",
-                minHeight: 400,
                 padding: 22,
                 flexDirection: "column",
                 border: isDeprecated ? "1px solid #fde68a" : undefined,
                 background: isDeprecated ? "#fffdf7" : undefined,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <div className="catalogue-card-trust-row">
                 <span className="badge">{service.trust_badge || "Trusted"}</span>
                 <span style={{ color: "#777c90", fontSize: 11, fontWeight: 700 }}>
                   v{service.version || "1.0.0"}
                 </span>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  alignItems: "flex-start",
-                  marginTop: 16,
-                }}
-              >
-                <div>
+              <div className="catalogue-card-title-row">
+                <div className="catalogue-card-title-copy">
                   <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-0.02em" }}>{presentation.displayName}</h2>
                   {presentation.displayName !== service.name && (
                     <div className="catalogue-technical-name">{service.name}</div>
                   )}
                 </div>
-                <span style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
+                <span className="catalogue-card-lifecycle" style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 9, color: "#646b82", fontSize: 11 }}>
+              <div className="catalogue-card-provider-row">
                 <span><strong style={{ color: "#343955" }}>Provider:</strong> {service.provider || "Unknown"}</span>
                 <span><strong style={{ color: "#343955" }}>Category:</strong> {service.category || "Uncategorised"}</span>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+              <div className="catalogue-card-badge-row">
                 <span style={interfaceBadgeStyle(service.interface_type)}>
                   {formatInterfaceType(service.interface_type)}
                 </span>
@@ -426,7 +417,13 @@ export default async function CataloguePage({
                 )}
 
                 {service.contract_uri && (
-                  <span style={metadataBadgeStyle}>contract: {service.contract_uri}</span>
+                  <span
+                    className="catalogue-contract-badge"
+                    title={service.contract_uri}
+                    aria-label={`Contract: ${service.contract_uri}`}
+                  >
+                    <span className="catalogue-contract-text">contract: {service.contract_uri}</span>
+                  </span>
                 )}
               </div>
 
@@ -454,12 +451,12 @@ export default async function CataloguePage({
 
               <div className="catalogue-workflow-stage">{presentation.stage}</div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4, padding: 13, borderRadius: 12, background: "#f9f8fd", fontSize: 11 }}>
-                <div><span style={{ display: "block", color: "#85899a", fontSize: 9 }}>INPUT</span><strong style={{ wordBreak: "break-word" }}>{service.input_type || "Not specified"}</strong></div>
-                <div><span style={{ display: "block", color: "#85899a", fontSize: 9 }}>OUTPUT</span><strong style={{ wordBreak: "break-word" }}>{service.output_type || "Not specified"}</strong></div>
+              <div className="catalogue-card-io-grid">
+                <div><span>INPUT</span><strong>{service.input_type || "Not specified"}</strong></div>
+                <div><span>OUTPUT</span><strong>{service.output_type || "Not specified"}</strong></div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, marginTop: "auto", paddingTop: 20 }}>
+              <div className="catalogue-card-actions">
                 <Link
                   href={`/catalogue/${service.id}`}
                   style={{

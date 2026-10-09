@@ -2295,6 +2295,137 @@ tbody tr:hover {
 
 .catalogue-service-card {
   overflow: visible;
+  min-width: 0;
+  height: 100%;
+}
+
+.catalogue-card-trust-row,
+.catalogue-card-title-row,
+.catalogue-card-provider-row,
+.catalogue-card-badge-row,
+.catalogue-card-actions {
+  min-width: 0;
+}
+
+.catalogue-card-trust-row,
+.catalogue-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catalogue-card-title-row {
+  align-items: flex-start;
+  margin-top: 16px;
+}
+
+.catalogue-card-title-copy {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.catalogue-card-title-copy h2 {
+  overflow-wrap: anywhere;
+}
+
+.catalogue-card-lifecycle,
+.catalogue-card-trust-row > .badge {
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.catalogue-card-provider-row,
+.catalogue-card-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.catalogue-card-provider-row {
+  gap: 6px 12px;
+  margin-top: 9px;
+  color: #646b82;
+  font-size: 11px;
+}
+
+.catalogue-card-provider-row > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.catalogue-card-badge-row {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.catalogue-card-badge-row > span {
+  min-width: 0;
+}
+
+.catalogue-contract-badge {
+  display: inline-flex;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid currentColor;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.catalogue-contract-text {
+  display: -webkit-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.catalogue-card-io-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+  margin-top: 4px;
+  padding: 13px;
+  border-radius: 12px;
+  background: #f9f8fd;
+  font-size: 11px;
+}
+
+.catalogue-card-io-grid > div,
+.catalogue-card-io-grid strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.catalogue-card-io-grid span {
+  display: block;
+  color: #85899a;
+  font-size: 9px;
+}
+
+.catalogue-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.catalogue-card-actions > a {
+  min-width: 0;
 }
 
 .catalogue-technical-name {
