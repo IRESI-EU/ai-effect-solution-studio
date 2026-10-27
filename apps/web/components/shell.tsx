@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Boxes, ChevronRight, CircleUserRound, CloudCog, Database, LayoutDashboard,
-  LogIn, LogOut, Menu, Network, PackagePlus, ShieldCheck, UserPlus, X,
+  LogIn, LogOut, Menu, Network, PackagePlus, ShieldCheck, Sparkles, UserPlus, X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { nodeLabels, roleLabels, useAuth, type UserRole } from "./auth-context";
@@ -15,6 +15,7 @@ const allNavItems = [
   { label: "Catalogue", href: "/catalogue", icon: Boxes, roles: null },
   { label: "Publish service", href: "/publish", icon: PackagePlus, roles: ["node_manager", "platform_admin"] as UserRole[] },
   { label: "Build solution", href: "/builder", icon: Network, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
+  { label: "Design with AI", href: "/design-ai", icon: Sparkles, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
   { label: "Solutions", href: "/solutions", icon: Database, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
   { label: "Deployments", href: "/deployments", icon: CloudCog, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
   { label: "My account", href: "/account", icon: CircleUserRound, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
@@ -33,10 +34,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
   const environmentLabel = process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL || "Local environment";
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [designAIEnabled, setDesignAIEnabled] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/design-ai/config", { cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((value) => setDesignAIEnabled(value?.enabled === true))
+      .catch(() => setDesignAIEnabled(false));
+  }, []);
 
   const navItems = useMemo(
-    () => allNavItems.filter((item) => !item.roles || (user && item.roles.includes(user.role))),
-    [user],
+    () => allNavItems.filter((item) => (item.href !== "/design-ai" || designAIEnabled) && (!item.roles || (user && item.roles.includes(user.role)))),
+    [user, designAIEnabled],
   );
   const deniedByRole = !!user && (
     (pathname.startsWith("/admin") && user.role !== "platform_admin") ||

@@ -130,6 +130,7 @@ function BuilderContent() {
   const [submittingToOrchestrator, setSubmittingToOrchestrator] = useState(false);
   const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
   const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
+  const [designMetadata, setDesignMetadata] = useState<Record<string, unknown> | null>(null);
   const [runInputMode, setRunInputMode] = useState<"prompt" | "json">("prompt");
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
@@ -208,6 +209,11 @@ function BuilderContent() {
         setSolutionName(body.name);
         setNodes(body.nodes || initialNodes);
         setEdges(body.edges || []);
+        setDesignMetadata(body.design_metadata || null);
+        if (body.design_metadata?.run_input != null) {
+          setRunInputMode("json");
+          setRunInput(JSON.stringify(body.design_metadata.run_input, null, 2));
+        }
       } catch (error) {
         setSolutionLoadError(error instanceof Error ? error.message : "Could not load this solution.");
       }
@@ -501,6 +507,7 @@ function BuilderContent() {
       nodes,
       edges,
       status: "draft",
+      design_metadata: designMetadata ? { ...designMetadata, run_input: buildRunInput() ?? null } : null,
     };
 
     const url = currentSolutionId

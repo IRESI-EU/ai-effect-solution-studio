@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 
 class SolutionCreate(BaseModel):
+    design_metadata: dict[str, Any] | None = None
     name: str
     description: str | None = None
     nodes: list[dict[str, Any]]
@@ -13,6 +14,7 @@ class SolutionCreate(BaseModel):
 
 
 class SolutionUpdate(BaseModel):
+    design_metadata: dict[str, Any] | None = None
     name: str | None = None
     description: str | None = None
     nodes: list[dict[str, Any]] | None = None
@@ -21,6 +23,7 @@ class SolutionUpdate(BaseModel):
 
 
 class SolutionRead(BaseModel):
+    design_metadata: dict[str, Any] | None = None
     id: str
     name: str
     description: str | None

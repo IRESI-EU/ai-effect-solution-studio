@@ -2,7 +2,7 @@ import base64
 import csv
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.parse import quote, urlparse
 
 import requests
@@ -38,13 +38,16 @@ def artifact_roots() -> list[Path]:
 
 def resolve_artifact_path(uri: str) -> Path | None:
     """Resolve an existing URI only when it belongs to a configured artifact root."""
+    # Node references use POSIX /data paths even when Studio runs on Windows.
+    node_path = PurePosixPath(uri)
+    node_data = node_path.parts[:2] == ("/", "data")
     source = Path(uri)
-    if not source.is_absolute():
+    if not source.is_absolute() and not node_data:
         return None
 
     roots = artifact_roots()
-    if source.parts[:2] == ("/", "data"):
-        relative_parts = source.parts[2:]
+    if node_data:
+        relative_parts = node_path.parts[2:]
         for root in roots:
             candidate = root.joinpath(*relative_parts).resolve()
             if candidate.is_relative_to(root) and candidate.exists():
@@ -64,7 +67,7 @@ def resolve_artifact_file(uri: str) -> Path | None:
 
 def preview_svg_file(uri: str):
     source = Path(uri)
-    if not source.is_absolute() or source.suffix.lower() != ".svg":
+    if (not source.is_absolute() and PurePosixPath(uri).parts[:2] != ("/", "data")) or source.suffix.lower() != ".svg":
         return {"kind": "svg", "available": False, "message": "Invalid SVG artifact path."}
     path = resolve_artifact_file(uri)
     if path is None:

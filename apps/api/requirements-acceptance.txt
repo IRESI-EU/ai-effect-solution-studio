@@ -1,0 +1,3 @@
+-r requirements-test.txt
+# Optional historical operator-export reader; never installed in the API image.
+pgdumplib==4.0.0
