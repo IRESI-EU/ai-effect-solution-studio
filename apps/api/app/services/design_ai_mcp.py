@@ -60,6 +60,13 @@ def create_server(db, user: User, *, draft_id: str | None = None, explicit_save:
     async def inspect_supported_configuration(template_key: str) -> dict:
         """Inspect active operation contracts and explicitly verified wrapper inputs."""
         actor = authorize()
+        if draft_id:
+            row = service.load_draft(draft_id, db, actor)
+            if row.state["template_key"] != template_key:
+                raise HTTPException(422, "Configuration must belong to the current draft")
+            if service.policy_scope(row.state["design"]):
+                from app.services.instance_proposals import settings_context
+                return settings_context(row, db)
         value = service.template(template_key, db, actor)
         contracts = service.contracts(value["nodes"], db)
         parameters_supported = any(c.get("definition", {}).get("execution_parameters") for c in contracts if c.get("definition"))

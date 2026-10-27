@@ -25,6 +25,8 @@ import { deploymentResultsUrl, executionLabel, isDutchExperiment } from "../../l
 import { designReturnUrl } from "../design-ai/session";
 import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
 import { copyInstance } from "../../lib/copy-instance";
+import BuilderViewport from "../../components/builder-viewport";
+import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
 
 type Service = {
   id: string;
@@ -137,6 +139,7 @@ function BuilderContent() {
   const [solutionNeedsRevalidation, setSolutionNeedsRevalidation] = useState(false);
   const [deploymentResult, setDeploymentResult] = useState<any>(null);
   const [submittingToOrchestrator, setSubmittingToOrchestrator] = useState(false);
+  const [loadedSolutionScope, setLoadedSolutionScope] = useState<string | null>(null);
   const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
   const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
   const [designMetadata, setDesignMetadata] = useState<Record<string, unknown> | null>(null);
@@ -213,15 +216,18 @@ function BuilderContent() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     async function loadSolution() {
-      if (!solutionId) return;
+      if (!solutionId || !user?.id) return;
       setSolutionLoadError("");
       try {
-        const res = await fetch(`${API_BASE_URL}/solutions/${solutionId}`);
+        const res = await fetch(`${API_BASE_URL}/solutions/${solutionId}`, { signal: controller.signal });
         const body = await res.json().catch(() => null);
         if (!res.ok) {
           throw new Error(apiErrorMessage(body, `Could not load this solution (HTTP ${res.status}).`));
         }
+        if (controller.signal.aborted) return;
+        setLoadedSolutionScope(JSON.stringify([user.id, solutionId]));
         setCurrentSolutionId(body.id);
         savedUpdatedAtRef.current = body.updated_at;
         setSelectedInstanceId(null);
@@ -235,12 +241,14 @@ function BuilderContent() {
           setRunInput(JSON.stringify(body.design_metadata.run_input, null, 2));
         }
       } catch (error) {
+        if (controller.signal.aborted) return;
         setSolutionLoadError(error instanceof Error ? error.message : "Could not load this solution.");
       }
     }
 
-    loadSolution();
-  }, [solutionId, setNodes, setEdges]);
+    void loadSolution();
+    return () => controller.abort();
+  }, [solutionId, user?.id, setNodes, setEdges]);
 
   useEffect(() => {
     if (!catalogueServiceId || solutionId || services.length === 0) return;
@@ -845,8 +853,8 @@ function BuilderContent() {
           </div>
 
           <div className="builder-canvas-area">
-            <ReactFlow
-              key={`${currentSolutionId}:${guidedDutch}`}
+            {user && (!solutionId || loadedSolutionScope === JSON.stringify([user.id, solutionId])) ? <ReactFlow
+              key={JSON.stringify([user.id, solutionId || currentSolutionId, guidedDutch])}
               nodes={displayedNodes}
               nodesDraggable={!guidedDutch}
               nodesConnectable={!guidedDutch}
@@ -862,13 +870,15 @@ function BuilderContent() {
                 setSelectedService(service || null);
                 setSelectedInstanceId(service ? node.id : null);
               }}
-              fitView
-              fitViewOptions={{padding:0.18}}
+              minZoom={MIN_ZOOM}
+              maxZoom={MAX_ZOOM}
+              ariaLabelConfig={{ "controls.fitView.ariaLabel": "Fit workflow" }}
             >
               <Background />
-              <Controls showInteractive={!guidedDutch} />
-              <MiniMap />
-            </ReactFlow>
+              <BuilderViewport userId={user.id} solutionId={solutionId || currentSolutionId} />
+              <Controls showInteractive={!guidedDutch} fitViewOptions={{ padding: 0.12, minZoom: MIN_ZOOM, maxZoom: 1 }} />
+              <MiniMap pannable zoomable />
+            </ReactFlow> : <p role="status" style={{ padding: 20 }}>{solutionLoadError || "Loading workflow canvas..."}</p>}
           </div>
         </main>
 

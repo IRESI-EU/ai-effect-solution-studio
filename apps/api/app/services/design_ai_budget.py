@@ -105,6 +105,11 @@ class Budget:
             state["task_allowance"] = task
             if not task["can_request"]:
                 state.update(can_request=False, blocked_reason="task_limit", message="AI testing is paused: this task's provider-call or reservation limit has been reached. No automatic retry is permitted.")
+        if state["can_request"]:
+            from app.services.design_ai_allowance_operator import scope_allowed
+            if not scope_allowed(db, self.path, self.task_limit_file):
+                state.update(can_request=False, blocked_reason="amendment_scope",
+                    message="The added calls are reserved for the operator-authorized verification checkpoint.")
         return state
 
     def availability(self):

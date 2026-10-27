@@ -132,3 +132,8 @@
 @media(min-width:1600px) { .ai-canvas { height:650px; } }
 @media(max-width:1250px) { .ai-page { padding:20px; } .ai-workspace { grid-template-columns:190px minmax(260px,1fr); } .ai-conversation { grid-column:1/-1; min-height:480px; } .ai-chat-history { max-height:400px; min-height:200px; } .ai-chat-welcome { max-width:500px; } .ai-examples { display:flex; flex-wrap:wrap; } }
 @media(max-width:760px) { .ai-page { padding:16px; } .ai-heading { align-items:start; } .ai-heading>a { font-size:11px; margin-top:6px; } .ai-workspace { display:flex; flex-direction:column; } .ai-panel { width:100%; } .ai-templates { grid-template-columns:1fr 1fr; } .ai-service { padding:12px 17px; } .ai-service p { margin:4px 0; } .ai-service-status { margin-top:6px; } .ai-library-footnote { padding-bottom:3px; } .ai-canvas { height:520px; } .ai-empty-workflow { min-height:330px; } .ai-heading h1 { font-size:25px; } .ai-heading p { font-size:12px; } }
+
+.ai-instance-settings { margin: 12px 0; padding: 14px; background: #faf9fe; border: 1px solid #e7e1f7; border-radius: 12px; font-size: 13px; }
+.ai-instance-settings > div { padding: 8px 0; border-top: 1px solid #e7e1f7; }
+.ai-instance-settings p { margin: 6px 0; line-height: 1.5; }
+.ai-instance-settings code, .ai-proposal code { overflow-wrap: anywhere; }

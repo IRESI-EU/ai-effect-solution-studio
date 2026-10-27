@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  distDir: process.env.NEXT_BUILD_DIR || ".next",
   async rewrites() {
     const apiBaseUrl = process.env.INTERNAL_API_URL || "http://api:8080";
 

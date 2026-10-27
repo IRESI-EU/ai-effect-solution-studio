@@ -102,3 +102,39 @@ def test_manual_three_call_checkpoint_reserves_lifetime_cost_and_blocks_fourth(t
     with pytest.raises(HTTPException) as blocked: budget.reserve(16000,2000)
     assert blocked.value.status_code==429
     assert Budget(path).report()['max_calls']==10
+
+
+@pytest.mark.parametrize('pause', ['call_limit', 'closed'])
+def test_fresh_task_checkpoint_cannot_bypass_shared_pause_or_construct_sdk(environment, monkeypatch, tmp_path, pause):
+    """Disposable unit ledgers only: a new task ceiling never replenishes shared calls."""
+    import asyncio
+    from app.core.config import settings
+    from app.services import design_ai_provider as provider
+    path, config = tmp_path/'unit-only.sqlite3', tmp_path/'new-task.json'
+    initialize(path, limit_usd='.10', max_calls=2)
+    for _ in range(2):
+        row = Budget(path).reserve(16000, 2000)
+        Budget(path).settle(row, {'status':'completed', 'usage':{'input_tokens':1, 'output_tokens':1}})
+    if pause == 'closed':
+        Budget(path).close()
+    checkpoint(path, config)
+    before = path.read_bytes()
+    budget = Budget(path, task_limit_file=config)
+    state = budget.availability()
+    assert state['task_allowance']['can_request'] and state['task_allowance']['remaining_calls'] == 2
+    assert state['remaining_usd'] > .01 and state['remaining_calls'] == 0
+    assert not state['can_request'] and state['blocked_reason'] == pause
+    monkeypatch.setattr(settings, 'openai_api_key', 'offline-test-never-sent')
+    monkeypatch.setattr(settings, 'design_ai_model', 'gpt-6-luna')
+    monkeypatch.setattr(settings, 'design_ai_reasoning_effort', 'low')
+    monkeypatch.setattr(settings, 'design_ai_max_output_tokens', 2000)
+    monkeypatch.setattr(settings, 'database_url', 'postgresql+psycopg://local@127.0.0.1/design_ai_acceptance_test')
+    monkeypatch.setattr(settings, 'design_ai_acceptance_budget_file', str(path))
+    monkeypatch.setattr(settings, 'design_ai_acceptance_task_limit_file', str(config))
+    def forbidden(**kwargs):
+        raise AssertionError('Shared pause must reject before SDK construction')
+    monkeypatch.setattr(provider, 'AsyncOpenAI', forbidden)
+    with pytest.raises(HTTPException) as blocked:
+        asyncio.run(provider.OpenAIProvider().respond({'request':'offline guard test'}))
+    assert blocked.value.status_code == 429
+    assert path.read_bytes() == before

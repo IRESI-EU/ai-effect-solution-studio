@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 from typing import Protocol
 
@@ -43,6 +44,14 @@ Use null node_id for edits other than set_node_label or set_node_parameters.
 Only propose set_node_parameters when supported_edits advertises it and an active contract
 declares execution_parameters. Its value is JSON containing contract_id, contract_version
 and parameters; use the current logical node_id. Backend registry validation is authoritative.
+For editing_scope=instance_settings, only existing instance parameter edits are supported.
+Use configuration.instances for their stable labels, logical IDs, pinned contract/version,
+current values and registry definitions. Target a logical ID, never an array position or
+operation name alone. If the user's intended instance is ambiguous, ask them to choose
+a displayed label/ID and return edits=[]. Never guess a target or apply a change.
+Parameters are a partial patch: propose only requested keys, keeping other settings.
+Describe a maximum as 'up to' that number, not a promise of that many generated results.
+No run occurs by proposing, applying, undoing or saving settings.
 Use no edits when explaining or declining.
 Without a draft do not propose edits. Never reveal secrets or internal network addresses.
 """
@@ -110,7 +119,18 @@ class OpenAIProvider:
                         # Record usage even for refusals, incomplete output or a
                         # parser failure, before running the strict SDK parser.
                         raw = await client.responses.with_raw_response.parse(**kwargs)
-                        budget.settle(reservation, raw.http_response.json())
+                        payload = raw.http_response.json()
+                        budget.settle(reservation, payload)
+                        # Disabled by default. An isolated acceptance process may
+                        # retain safe visible output even if strict parsing fails.
+                        audit = logging.getLogger("design_ai.provider.audit")
+                        if audit.isEnabledFor(logging.DEBUG):
+                            texts = [content.get("text", content.get("refusal", ""))
+                                for item in (payload.get("output") or []) if item.get("type") == "message"
+                                for content in (item.get("content") or []) if content.get("type") in {"output_text", "refusal"}]
+                            audit.debug(json.dumps({"id": payload.get("id"), "model": payload.get("model"),
+                                "status": payload.get("status"), "service_tier": payload.get("service_tier"),
+                                "usage": payload.get("usage"), "visible_output": redact_context(texts)}))
                         response = raw.parse()
                     else:
                         response = await client.responses.parse(**kwargs)

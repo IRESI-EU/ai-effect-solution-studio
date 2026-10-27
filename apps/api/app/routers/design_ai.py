@@ -13,7 +13,7 @@ from app.models.user import User
 from app.schemas.design_ai import ApplyRequest, AssistantTurn, ChatRequest, GuidedSettingsRequest, RevisionRequest, StartRequest
 from app.services import design_ai as service
 from app.services.design_ai_mcp import connection
-from app.services.design_ai_provider import Provider, configured, get_provider
+from app.services.design_ai_provider import Provider, configured, get_provider, redact_context
 
 
 router = APIRouter(prefix="/design-ai", tags=["design-ai"])
@@ -70,6 +70,9 @@ def read(draft_id: str, db: Session = Depends(get_db), user: User = Depends(pilo
     row = service.load_draft(draft_id, db, user)
     result = service.view(row)
     result["validation"] = service.validate(row.state["design"], db, user)
+    if service.policy_scope(row.state["design"]):
+        from app.services.instance_proposals import settings_context
+        result["instance_settings"] = settings_context(row, db)["instances"]
     return result
 
 
@@ -102,7 +105,10 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
         raise HTTPException(422, "Conversation history is too large. Start a new conversation.")
     async with connection(db, user, draft_id=payload.draft_id) as tools:
         await tools.discover()
-        context["templates"] = (await tools.call("list_pilot_templates", {}))["templates"]
+        current = service.load_draft(payload.draft_id, db, user) if payload.draft_id else None
+        focused = current is not None and service.policy_scope(current.state["design"])
+        if not focused:
+            context["templates"] = (await tools.call("list_pilot_templates", {}))["templates"]
         discovery = None
         if not payload.draft_id:
             # Discovery is scoped by authenticated MCP catalogue reads, not model choice.
@@ -121,7 +127,8 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             # proposals to the exact draft supplied as provider context.
             base_revision = row.revision
             key = row.state["template_key"]
-            context["template"] = await tools.call("read_template", {"template_key": key})
+            if not focused:
+                context["template"] = await tools.call("read_template", {"template_key": key})
             context["configuration"] = await tools.call("inspect_supported_configuration", {"template_key": key})
             design = row.state["design"]
             guided = service.guided_context(row)
@@ -130,6 +137,12 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             context["draft"] = {"revision": row.revision, "name": design["name"], "description": design["description"],
                 "run_input": design["run_input"], "labels": [{"node_id": n["id"], "label": n.get("data", {}).get("label")} for n in design["nodes"]],
                 "validation": service.validate(design, db, user)}
+            if focused:
+                # No template payload, workflow input, artifacts, runtime endpoints
+                # or unrelated catalogue data enter this focused provider context.
+                context["draft"] = {"revision": row.revision, "editing_scope": "instance_settings"}
+                context["history"] = []  # Each edit is grounded in the current authorized instance projection.
+        context = redact_context(context)
         try:
             async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
                 turn = AssistantTurn.model_validate(await provider.respond(context))
@@ -155,6 +168,8 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             row = service.load_draft(payload.draft_id, db, user)
             if turn.edits:
                 service.check_revision(row, base_revision)
+                if focused and turn.expected_revision != base_revision:
+                    raise HTTPException(409, "The proposal revision does not match the reviewed instance settings. Request a new proposal.")
                 turn = turn.model_copy(update={"expected_revision": base_revision})
                 await tools.call("validate_draft", {"proposal": turn.model_dump()})
                 # propose takes a refreshed SELECT FOR UPDATE and checks the
