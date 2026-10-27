@@ -1,0 +1,6 @@
+{
+  "denmark": { "solution_name": "<exact name of the existing Danish saved solution>" },
+  "dutch": { "solution_name": "<exact name of the existing Dutch saved solution>" },
+  "portugal": { "solution_name": "<exact name of the existing four-service Portuguese saved solution>" },
+  "germany": { "solution_name": "<exact name of the existing German saved solution>" }
+}

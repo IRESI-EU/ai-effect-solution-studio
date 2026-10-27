@@ -17,3 +17,4 @@ class Solution(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
     created_by_user_id = Column(String, nullable=True, index=True)
+    design_metadata = Column(JSONB, nullable=True)

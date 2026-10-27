@@ -11,6 +11,7 @@ from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.models.solution import Solution
 from app.models.user import User
+from app.models.design_ai import DesignDraft
 from app.dependencies.auth import (
     can_manage_owned_record,
     can_manage_service,
@@ -21,6 +22,7 @@ from app.dependencies.auth import (
 )
 from app.routers.auth import bootstrap_admin, router as auth_router
 from app.routers.admin_users import router as admin_users_router
+from app.routers.design_ai import router as design_ai_router
 from app.routers.operation_contracts import router as operation_contracts_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
@@ -88,6 +90,7 @@ app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
 app.include_router(operation_contracts_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
+app.include_router(design_ai_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -788,6 +791,7 @@ def create_solution(
         nodes=payload.nodes,
         edges=payload.edges,
         status=payload.status,
+        design_metadata=payload.design_metadata,
         created_by_user_id=user.id,
     )
 
@@ -929,6 +933,7 @@ def get_solution_workspace(
         "updated_at": solution.updated_at,
         "created_by_user_id": solution.created_by_user_id,
         "deployments": deployments,
+        "design_metadata": solution.design_metadata,
     }
 
 
@@ -956,6 +961,7 @@ def get_solution(
         "created_at": solution.created_at,
         "updated_at": solution.updated_at,
         "created_by_user_id": solution.created_by_user_id,
+        "design_metadata": solution.design_metadata,
     }
 
 
@@ -989,6 +995,8 @@ def update_solution(
         solution.edges = payload.edges
     if payload.status is not None:
         solution.status = payload.status
+    if payload.design_metadata is not None:
+        solution.design_metadata = payload.design_metadata
 
     solution.updated_at = datetime.utcnow()
 

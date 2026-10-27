@@ -1,0 +1,12 @@
+# Opt-in override for private development/staging only. Not a production profile.
+# docker compose -f docker-compose.yml -f docker-compose.design-ai.yml up --build
+services:
+  api:
+    environment:
+      DESIGN_AI_ENABLED: ${DESIGN_AI_ENABLED:-false}
+      DESIGN_AI_TEMPLATES: ${DESIGN_AI_TEMPLATES:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DESIGN_AI_MODEL: ${DESIGN_AI_MODEL:-}
+      DESIGN_AI_TIMEOUT_SECONDS: ${DESIGN_AI_TIMEOUT_SECONDS:-40}
+      DESIGN_AI_CONTEXT_CHARS: ${DESIGN_AI_CONTEXT_CHARS:-48000}
+      DESIGN_AI_TOOL_LIMIT: ${DESIGN_AI_TOOL_LIMIT:-8}

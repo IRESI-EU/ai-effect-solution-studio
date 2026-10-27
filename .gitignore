@@ -1,6 +1,8 @@
 .env.local
 .env.dev
 .env.staging
+.env.design-ai
+pytest-cache-files-*/
 .env.prod
 # Local frontend build artifacts
 node_modules/
