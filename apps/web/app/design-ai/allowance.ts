@@ -5,6 +5,7 @@ export type TestAllowance = {
   remaining_usd?: number;
   remaining_calls?: number;
   next_reservation_usd?: number;
+  task_allowance?: { remaining_calls: number; limit_usd: number; reserved_usd: number };
 };
 
 export function allowanceFromError(body: unknown): TestAllowance | null {

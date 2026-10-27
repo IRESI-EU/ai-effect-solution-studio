@@ -231,7 +231,7 @@ def _write_values(
     payload: OperationContractCreate | OperationContractUpdate,
 ) -> dict:
     values = payload.model_dump()
-    values["definition"] = payload.definition.model_dump(mode="json")
+    values["definition"] = payload.definition.model_dump(mode="json", exclude_none=True)
     return values
 
 

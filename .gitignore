@@ -8,6 +8,7 @@ pytest-cache-files-*/
 node_modules/
 apps/web/node_modules/
 apps/web/.next/
+apps/web/.next-instance-edit/
 apps/web/tsconfig.tsbuildinfo
 .venv/
 __pycache__/

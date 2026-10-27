@@ -1,14 +1,24 @@
 import base64
 import json
+import hashlib
+from collections import Counter
 
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.models.service import Service
 from app.schemas.workflow_submit import WorkflowSubmitRequest
+from app.services.instance_configuration import validate_configuration
+from app.models.operation_contract import OperationContract
+from app.services.parameter_values import parameter_contract_digest
 
 
 def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None = None):
+    ids = [node.node_id for node in workflow.nodes]
+    if len(ids) != len(set(ids)) or any(not value for value in ids):
+        raise HTTPException(422, "Node instance IDs must be non-empty and unique")
+    if any(edge.source not in ids or edge.target not in ids for edge in workflow.edges):
+        raise HTTPException(422, "An edge references a missing instance")
     connected_by_source = {}
 
     for edge in workflow.edges:
@@ -18,6 +28,27 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
 
     for node in workflow.nodes:
         resolved_nodes[node.node_id] = resolve_node_runtime_metadata(node, db)
+
+    counts = Counter((n["container_name"], n["operation_name"]) for n in resolved_nodes.values())
+    configurations = {}
+    for node in workflow.nodes:
+        resolved = resolved_nodes[node.node_id]
+        if counts[(resolved["container_name"], resolved["operation_name"])] > 1:
+            # Logical aliases affect graph/task identity, never the real endpoint.
+            resolved["internal_host"] = resolved["internal_host"] or resolved["container_name"]
+            resolved["container_name"] = "instance-" + hashlib.sha256(node.node_id.encode()).hexdigest()[:24]
+        key = resolved["container_name"] + ":" + resolved["operation_name"]
+        resolved["node_key"] = key
+        resolved["task_id"] = "task_" + hashlib.sha256(key.encode()).hexdigest()[:8]
+        if "configuration" in node.model_fields_set:
+            if db is None:
+                raise HTTPException(422, "Configuration validation requires the operation registry")
+            validated = validate_configuration(db, resolved["service_id"], resolved["operation_name"], node.configuration)
+            configurations[key] = {**validated, "instance_id": node.node_id}
+            contract = db.get(OperationContract, validated["contract_id"])
+            resolved["parameter_contract_sha256"] = parameter_contract_digest(contract.definition["execution_parameters"])
+    if len({n["task_id"] for n in resolved_nodes.values()}) != len(resolved_nodes):
+        raise HTTPException(422, "Task identity collision; change the instance identifier")
 
     blueprint_nodes = []
 
@@ -71,6 +102,8 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
     onboarding_nodes = [
         {
             "node_id": resolved_node["node_id"],
+            "node_key": resolved_node["node_key"],
+            "task_id": resolved_node["task_id"],
             "service_id": resolved_node["service_id"],
             "service_name": resolved_node["service_name"],
             "container_name": resolved_node["container_name"],
@@ -112,6 +145,16 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
             "warnings": warnings,
         },
     }
+    if configurations:
+        result["task_configurations"] = configurations
+    result["solution_studio_metadata"]["execution_instances"] = [
+        {"instance_id": n["node_id"], "service_id": n["service_id"], "operation_name": n["operation_name"],
+         "node_key": n["node_key"], "task_id": n["task_id"],
+         "configuration": configurations.get(n["node_key"]),
+         **({"parameter_contract_sha256": n["parameter_contract_sha256"]} if "parameter_contract_sha256" in n else {}),
+         "input_bindings": [e.source for e in workflow.edges if e.target == n["node_id"]]}
+        for n in resolved_nodes.values()
+    ]
     if workflow.run_input is not None:
         encoded = json.dumps(workflow.run_input, ensure_ascii=False, allow_nan=False).encode("utf-8")
         if len(encoded) > 65536:

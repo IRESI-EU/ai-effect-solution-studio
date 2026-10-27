@@ -1,5 +1,7 @@
 "use client";
 
+import { deploymentResultsUrl } from "../../../lib/experiment-journey";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -521,7 +523,7 @@ export default function SolutionDetailsPage({
 
   {latestDeployment && (
     <Link
-      href={`/deployments/${latestDeployment.workflow_id}`}
+      href={deploymentResultsUrl(latestDeployment.workflow_id)}
       style={{
         color: "#075985",
         fontWeight: 800,
@@ -529,7 +531,7 @@ export default function SolutionDetailsPage({
         textDecoration: "none",
       }}
     >
-      Open latest deployment →
+      Open latest results →
     </Link>
   )}
 </div>
@@ -604,14 +606,14 @@ export default function SolutionDetailsPage({
                             }}
                           >
                             <Link
-                              href={`/deployments/${deployment.workflow_id}`}
+                              href={deploymentResultsUrl(deployment.workflow_id)}
                               style={{
                                 color: "#075985",
                                 fontWeight: 800,
                                 textDecoration: "none",
                               }}
                             >
-                              View →
+                              Results →
                             </Link>
 
                             <button

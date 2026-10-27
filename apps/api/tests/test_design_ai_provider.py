@@ -105,7 +105,9 @@ def test_actual_openai_sdk_serialization_and_parsing_with_offline_http(environme
     assert len(calls) == 1
 
 
-def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp_path):
+def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp_path, caplog):
+    import logging
+    caplog.set_level(logging.DEBUG, logger="design_ai.provider.audit")
     from app.services.design_ai_budget import Budget, initialize
     ledger=tmp_path/'batch.sqlite3'
     initialize(ledger)
@@ -136,3 +138,7 @@ def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp
     report=Budget(ledger).report()
     assert report['estimated_usage_cost_usd']==.000151
     assert report['token_usage']['reasoning_tokens']==10  # Included in output, not added twice.
+    audit = json.loads(next(record.message for record in caplog.records if record.name == "design_ai.provider.audit"))
+    assert audit['visible_output'] == ['invalid structured JSON']
+    assert audit['id'] == 'resp_budget_test' and audit['usage']['total_tokens'] == 1100
+    assert 'input' not in audit  # No prompt/context or hidden reasoning is logged.

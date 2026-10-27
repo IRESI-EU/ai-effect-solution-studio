@@ -348,3 +348,12 @@ The MVP uses SQLAlchemy `Base.metadata.create_all(...)` rather than a migration 
 - [Known limitations](docs/KNOWN_LIMITATIONS.md)
 - [MVP release notes](docs/MVP_RELEASE_NOTES.md)
 - [Service onboarding](docs/service-onboarding.md)
+
+## Module parameterisation review
+
+See [the gated AI foundation](docs/DESIGN_WITH_AI_PILOT.md),
+[instance contracts and compilation](docs/MODULE_PARAMETERISATION_REVIEW.md),
+[targeted conversation and viewport behavior](docs/CONVERSATIONAL_INSTANCE_EDITING.md),
+[publication checks](docs/PARAMETERISATION_PUBLICATION_CHECKS.md), and
+[the portable five-minute demo](docs/MODULE_PARAMETERISATION_DEMO.md).
+AIE-18 remains In Review; production compatibility is unverified.

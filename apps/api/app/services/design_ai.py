@@ -23,6 +23,7 @@ from app.models.user import User
 from app.schemas.design_ai import AssistantTurn
 from app.services.audit import record_audit_event
 from app.services.solution_design import hydrate_solution_service_references, service_id_from_builder_node
+from app.services.instance_configuration import validate_builder_configurations, validate_configuration
 
 
 PILOTS = {
@@ -46,6 +47,7 @@ class TemplatePolicy(BaseModel):
     solution_id: str | None = None
     solution_name: str | None = None
     run_input: InputPolicy | None = None
+    instance_settings_only: bool = False
 
     @model_validator(mode="after")
     def selector(self):
@@ -104,7 +106,7 @@ def service_nodes(nodes: list[dict]) -> list[dict]:
     return [node for node in nodes if service_id_from_builder_node(node)]
 
 
-def ordered_services(nodes: list[dict], edges: list[dict]) -> list[dict]:
+def ordered_services(nodes: list[dict], edges: list[dict], *, instance_settings_only: bool = False) -> list[dict]:
     """Accept only a single connected chain, with optional Builder boundaries."""
     if not isinstance(nodes, list) or not isinstance(edges, list) or not nodes or len(nodes) > 30 or len(edges) > 40 or any(not isinstance(node, dict) for node in nodes):
         raise HTTPException(422, "This pilot supports small linear saved workflows")
@@ -149,17 +151,25 @@ def ordered_services(nodes: list[dict], edges: list[dict]) -> list[dict]:
         raise HTTPException(422, "Workflow boundaries must be at the beginning and end of the service chain")
     if not result:
         raise HTTPException(422, "The workflow has no services")
-    if len({service_id_from_builder_node(node) for node in result}) != len(result):
+    if not instance_settings_only and len({service_id_from_builder_node(node) for node in result}) != len(result):
         raise HTTPException(422, "Repeated instances of one wrapper are not supported by this pilot")
     return result
 
 
 def template(key: str, db: Session, user: User) -> dict:
     source = source_solution(key, db)
+    policy = policies()[key]
     raw = deepcopy(source.nodes)
-    ordered_services(raw, source.edges)
+    ordered_services(raw, source.edges, instance_settings_only=policy.instance_settings_only)
     nodes = hydrate_solution_service_references(db, raw, user)
-    chain = ordered_services(nodes, source.edges)
+    chain = ordered_services(nodes, source.edges, instance_settings_only=policy.instance_settings_only)
+    if policy.instance_settings_only:
+        validate_builder_configurations(db, nodes, source.edges, user)
+        for node in chain:
+            data = node["data"]
+            if "configuration" not in data:
+                raise HTTPException(409, "Settings-only copies require a pinned parameter contract on every service instance")
+            validate_configuration(db, data["service"]["id"], data["service"]["operation_name"], data["configuration"])
     # A saved operation must still refer to the current wrapper, not silently change on hydration.
     old_services = {n["id"]: n.get("data", {}).get("service", {}) for n in service_nodes(raw)}
     for node in chain:
@@ -173,9 +183,8 @@ def template(key: str, db: Session, user: User) -> dict:
             raise HTTPException(409, "A template operation differs from the current catalogue. Operator review is required.")
     actual = [n["data"]["service"]["operation_name"] for n in chain]
     expected = PILOTS[key][1]
-    if (expected and actual != expected) or (key == "portugal" and len(chain) != 4):
+    if not policy.instance_settings_only and ((expected and actual != expected) or (key == "portugal" and len(chain) != 4)):
         raise HTTPException(409, "The saved operations or connections do not match this pilot candidate")
-    policy = policies()[key]
     if policy.run_input:
         first = chain[0]["data"]["service"]
         if (policy.run_input.service_id, policy.run_input.operation_name) != (first["id"], first["operation_name"]):
@@ -185,7 +194,10 @@ def template(key: str, db: Session, user: User) -> dict:
             "reference_kind": "mutable_saved_design", "execution_snapshot": None},
             "name": source.name, "description": source.description or "", "nodes": nodes,
             "edges": deepcopy(source.edges), "input_policy": policy.run_input.model_dump() if policy.run_input else None,
-            "reference_note": "Copied saved design. No immutable deployment snapshot is stored by this platform; previous execution equivalence is unverified."}
+            "editing_scope": "instance_settings" if policy.instance_settings_only else None,
+            "run_input": deepcopy((source.design_metadata or {}).get("run_input")),
+            "reference_note": ("Separate settings copy of the selected saved design. Historical execution snapshots remain separate; no experiment has run."
+                if policy.instance_settings_only else "Copied saved design. No immutable deployment snapshot is stored by this platform; previous execution equivalence is unverified.")}
 
 
 def list_templates(db: Session, user: User) -> list[dict]:
@@ -193,12 +205,15 @@ def list_templates(db: Session, user: User) -> list[dict]:
     result = []
     for key, (label, _) in PILOTS.items():
         item = {"key": key, "label": label, "available": False}
+        if key in configured and configured[key].instance_settings_only:
+            item["editing_scope"] = "instance_settings"
         if key not in configured:
             item["reason"] = "Not configured by the operator"
         else:
             try:
                 value = template(key, db, user)
-                item.update(available=True, description=value["description"], operations=[n["data"]["service"]["operation_name"] for n in ordered_services(value["nodes"], value["edges"])])
+                item.update(available=True, description=value["description"], operations=[n["data"]["service"]["operation_name"] for n in ordered_services(value["nodes"], value["edges"], instance_settings_only=policy_scope(value))])
+                item["guided_available"] = guided_policy(key, value["input_policy"])
             except HTTPException as exc:
                 item["reason"] = exc.detail if isinstance(exc.detail, str) else "Referenced services are missing or inaccessible"
         result.append(item)
@@ -221,8 +236,9 @@ def contracts(nodes: list[dict], db: Session) -> list[dict]:
 def validate(design: dict, db: Session, user: User) -> dict:
     errors, unknown, required = [], [], []
     try:
+        validate_builder_configurations(db, design["nodes"], design["edges"], user)
         nodes = hydrate_solution_service_references(db, design["nodes"], user)
-        chain = ordered_services(nodes, design["edges"])
+        chain = ordered_services(nodes, design["edges"], instance_settings_only=policy_scope(design))
         for node in chain:
             saved = next(n for n in design["nodes"] if n["id"] == node["id"])["data"]["service"]
             current = node["data"]["service"]
@@ -269,7 +285,9 @@ def validate(design: dict, db: Session, user: User) -> dict:
     unknown.append("Named input/output bindings are not compiled; semantic compatibility and required-slot delivery remain unverified.")
     policy = design.get("input_policy")
     run_input = design.get("run_input")
-    if run_input is not None:
+    if policy_scope(design):
+        pass  # Existing workflow input is copied unchanged; this scope cannot edit it.
+    elif run_input is not None:
         if not policy:
             errors.append("This template has no verified editable run input")
         else:
@@ -295,30 +313,119 @@ def load_draft(draft_id: str, db: Session, user: User, lock: bool = False) -> De
         raise HTTPException(409, "This pilot template is no longer enabled")
     if source_solution(row.state["template_key"], db).id != row.state["source"]["solution_id"]:
         raise HTTPException(409, "The operator selected a different source. Start a new copy.")
+    if policies()[row.state["template_key"]].instance_settings_only != policy_scope(row.state["design"]):
+        raise HTTPException(409, "The supported editing scope changed. Start a new copy.")
     current_policy = policies()[row.state["template_key"]].run_input
     if digest(current_policy.model_dump() if current_policy else None) != digest(row.state["design"].get("input_policy")):
         raise HTTPException(409, "Supported input configuration changed. Start a new copy.")
     return row
 
 
-def view(row: DesignDraft) -> dict:
+def list_drafts(db: Session, user: User) -> list[dict]:
+    """Read-only, owner-scoped resume choices; opening still uses load_draft guards."""
+    enabled()
+    rows = db.query(DesignDraft).filter(DesignDraft.owner_id == user.id).order_by(DesignDraft.updated_at.desc(), DesignDraft.id).all()
+    return [{"id": row.id, "name": row.state["design"]["name"], "revision": row.revision,
+             "updated_at": row.updated_at, "dirty": row.state["dirty"],
+             "saved_solution_id": row.state.get("saved_solution_id"),
+             "pending_changes": bool(row.state.get("pending")),
+             "seed": (row.state["design"].get("run_input") or {}).get("seed")}
+            for row in rows]
+
+
+def view(row: DesignDraft, db: Session | None = None) -> dict:
     state = deepcopy(row.state)
     state.pop("history", None)
     state.pop("saved_fingerprint", None)
-    return {"id": row.id, "revision": row.revision, "can_undo": bool(row.state.get("history")), **state}
+    result = {"id": row.id, "revision": row.revision, "can_undo": bool(row.state.get("history")), **state}
+    if db is not None and policy_scope(state["design"]):
+        from app.services.instance_proposals import settings_context
+        result["instance_settings"] = settings_context(row, db)["instances"]
+    return result
 
 
-def start(key: str, db: Session, user: User) -> dict:
+def policy_scope(design: dict) -> bool:
+    return design.get("editing_scope") == "instance_settings"
+
+
+def guided_policy(key: str, policy: dict | None) -> bool:
+    schema = (policy or {}).get("json_schema", {})
+    return key == "dutch" and set(schema.get("properties", {})) == {"seed"} and not list(Draft202012Validator(schema).iter_errors({"seed": 42}))
+
+
+def guided_context(row: DesignDraft) -> dict | None:
+    facts = guided_capabilities(row.state["template_key"], row.state["design"],
+                                guided=row.state.get("guided_experiment") == "dutch_sample_grid")
+    if facts is not None:
+        facts["execution_status"] = "Not inspected for this draft; this conversation does not execute a workflow"
+    return facts
+
+
+def guided_capabilities(key: str, design: dict, *, guided: bool) -> dict | None:
+    """Same verified scope for a recommendation or draft; never creates a draft."""
+    from app.services import local_dutch_capture as capture
+    from app.services.dutch_capture_contract import NODE_KEYS
+    if (not guided or not capture.enabled()
+            or not guided_policy(key, design.get("input_policy"))):
+        return None
+    chain = ordered_services(design["nodes"], design["edges"])
+    keys = [node["data"]["service"].get("container_name", "") + ":" + node["data"]["service"]["operation_name"] for node in chain]
+    if keys != [NODE_KEYS["synth"], NODE_KEYS["benchmark"]]:
+        return None
+    return {"scope": "Verified local Dutch guided interface and automatic capture; not a resolved operation contract",
+            "steps": [{"title": "Generate sample grid", "operation": "ConfigureAndSynthesize"},
+                      {"title": "Benchmark grid", "operation": "RunBenchmark"}],
+            "connection": "The generated sample electricity grid is passed to the benchmark",
+            "expected_result_view": ["recorded seed settings", "task progress", "grid summary", "recorded benchmark values"],
+            "optional_downloads": list(capture.LABELS.values()),
+            "availability": "Results and downloads depend on explicit confirmed execution and successful capture; outputs may be unavailable",
+            "execution_status": "No execution evidence supplied; this conversation does not create or execute a workflow",
+            "limitations": ["No grid counts predicted before execution", "No supplied KPI units or physical safety/optimality evidence",
+                            "Missing operation contracts remain unresolved", "Production compatibility remains unverified"]}
+
+
+
+def discovery_capability(key: str, db: Session, user: User) -> dict:
+    value = template(key, db, user)  # Re-check source sharing, approval and governance.
+    facts = guided_capabilities(key, value, guided=key == "dutch")
+    if facts is None:
+        raise HTTPException(422, "This request is outside the supported local sample-grid experiment. No experiment was created.")
+    return {"key": key, "label": "Generate and benchmark a sample electricity grid.", **facts}
+
+
+def start(key: str, db: Session, user: User, *, guided: bool = False) -> dict:
     value = template(key, db, user)
     design = {"name": value["name"] + " — AI draft", "description": value["description"],
               "nodes": value["nodes"], "edges": value["edges"], "run_input": None, "input_policy": value["input_policy"]}
+    if policy_scope(value):
+        design.update(editing_scope="instance_settings", run_input=value["run_input"])
+    if guided:
+        if not guided_policy(key, value["input_policy"]):
+            raise HTTPException(422, "The guided Dutch experiment needs an approved seed input policy")
+        design.update(name="Sample electricity grid experiment", run_input={"seed": 42})
+        for node in service_nodes(design["nodes"]):
+            operation = node["data"]["service"]["operation_name"]
+            node["data"]["label"] = {"ConfigureAndSynthesize": "Generate sample grid.", "RunBenchmark": "Benchmark grid."}[operation]
+        validation = validate(design, db, user)
+        if not validation["valid"]:
+            raise HTTPException(422, "The guided experiment is unavailable: " + "; ".join(validation["errors"]))
     row = DesignDraft(id=str(uuid4()), owner_id=user.id, revision=0, state={"template_key": key, "source": value["source"],
           "reference_note": value["reference_note"], "design": design, "validation": validate(design, db, user),
-          "history": [], "edit_history": [], "pending": None, "saved_solution_id": None,
+          "history": [], "edit_history": [], "pending": None, "saved_solution_id": None, "guided_experiment": "dutch_sample_grid" if guided else None,
           "reserved_solution_id": str(uuid4()), "saved_revision": None, "dirty": True})
     db.add(row)
     db.commit()
-    return view(row)
+    return view(row, db)
+
+
+def guided_settings(draft_id: str, revision: int, seed: int, db: Session, user: User) -> dict:
+    row = load_draft(draft_id, db, user)
+    if not guided_policy(row.state["template_key"], row.state["design"].get("input_policy")):
+        raise HTTPException(422, "Guided settings are unavailable for this template")
+    turn = AssistantTurn(message="Review the seed change, then Apply changes.", template_key="dutch", expected_revision=revision,
+        edits=[{"kind": "set_run_input", "value": json.dumps({"seed": seed}), "node_id": None}])
+    # Reuses the locked revision check, schema validation and explicit Apply/Undo path.
+    return propose(draft_id, turn, db, user)
 
 
 def check_revision(row: DesignDraft, revision: int) -> None:
@@ -332,6 +439,8 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User) ->
         raise HTTPException(422, "Start a new copy to change templates")
     design = deepcopy(row.state["design"])
     for edit in turn.edits:
+        if policy_scope(design) and edit.kind != "set_node_parameters":
+            raise HTTPException(422, "This copy supports instance-setting changes only; its structure, labels and workflow input stay fixed")
         if edit.kind == "rename":
             if not edit.value.strip() or len(edit.value) > 160:
                 raise HTTPException(422, "Use a draft name between 1 and 160 characters")
@@ -352,6 +461,26 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User) ->
                 design["run_input"] = json.loads(edit.value, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
             except ValueError as exc:
                 raise HTTPException(422, "The proposed run input is not valid JSON") from exc
+        elif edit.kind == "set_node_parameters":
+            matches = [n for n in service_nodes(design["nodes"]) if n["id"] == edit.node_id]
+            if len(matches) != 1:
+                raise HTTPException(422, "Choose a current node instance")
+            try:
+                configuration = json.loads(edit.value)
+            except ValueError as exc:
+                raise HTTPException(422, "Instance configuration must be valid JSON") from exc
+            service = matches[0]["data"]["service"]
+            if policy_scope(design):
+                original = matches[0]["data"]["configuration"]
+                if not isinstance(configuration, dict) or set(configuration) != {"contract_id", "contract_version", "parameters"}:
+                    raise HTTPException(422, "Use the pinned contract and a parameter object")
+                if any(configuration[key] != original[key] for key in ("contract_id", "contract_version")):
+                    raise HTTPException(409, "The proposal must keep this instance's pinned contract identity and version")
+                if not isinstance(configuration["parameters"], dict):
+                    raise HTTPException(422, "Parameters must be an object")
+                configuration = {**configuration, "parameters": {**original["parameters"], **configuration["parameters"]}}
+            validate_configuration(db, service["id"], service["operation_name"], configuration)
+            matches[0]["data"]["configuration"] = configuration
     result = validate(design, db, user)
     return design, result
 
@@ -359,11 +488,14 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User) ->
 def propose(draft_id: str, turn: AssistantTurn, db: Session, user: User) -> dict:
     row = load_draft(draft_id, db, user, lock=True)
     design, validation = candidate(row, turn, db, user)
+    from app.services.instance_proposals import parameter_review
+    review = parameter_review(row.state["design"], design, db)
     state = deepcopy(row.state)
-    state["pending"] = {"id": str(uuid4()), "base_revision": row.revision, "turn": turn.model_dump(), "design": design, "validation": validation}
+    state["pending"] = {"id": str(uuid4()), "base_revision": row.revision, "turn": turn.model_dump(), "design": design, "validation": validation,
+                        "parameter_review": review}
     row.state = state
     db.commit()
-    return view(row)
+    return view(row, db)
 
 
 def apply(draft_id: str, revision: int, proposal_id: str, db: Session, user: User) -> dict:
@@ -373,6 +505,9 @@ def apply(draft_id: str, revision: int, proposal_id: str, db: Session, user: Use
     if not pending or pending["id"] != proposal_id:
         raise HTTPException(409, "This proposal is no longer current")
     design, validation = candidate(row, AssistantTurn.model_validate(pending["turn"]), db, user)
+    from app.services.instance_proposals import parameter_review
+    if parameter_review(row.state["design"], design, db) != pending.get("parameter_review", {"changes": [], "unchanged": [], "contract_pins": {}}):
+        raise HTTPException(409, "The parameter contract or review changed. Request a new proposal before Apply.")
     if not validation["valid"]:
         raise HTTPException(422, "The proposed change cannot be applied: " + "; ".join(validation["errors"]))
     state = deepcopy(row.state)
@@ -381,7 +516,7 @@ def apply(draft_id: str, revision: int, proposal_id: str, db: Session, user: Use
     state["edit_history"] = (state["edit_history"] + [{"revision": revision + 1, "edits": [e["kind"] for e in pending["turn"]["edits"]]}])[-100:]
     row.state, row.revision, row.updated_at = state, revision + 1, datetime.utcnow()
     db.commit()
-    return view(row)
+    return view(row, db)
 
 
 def undo(draft_id: str, revision: int, db: Session, user: User) -> dict:
@@ -396,7 +531,7 @@ def undo(draft_id: str, revision: int, db: Session, user: User) -> dict:
     state["edit_history"] = (state["edit_history"] + [{"revision": revision + 1, "edits": ["undo"]}])[-100:]
     row.state, row.revision = state, revision + 1
     db.commit()
-    return view(row)
+    return view(row, db)
 
 
 def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save: bool = False) -> dict:
@@ -416,14 +551,16 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
         if solution.created_by_user_id != user.id or digest(content(solution)) != state.get("saved_fingerprint") or solution.status != "draft":
             raise HTTPException(409, "The saved solution was changed in Builder. Start a new AI copy to avoid overwriting it.")
         if not state["dirty"]:
-            return view(row)
+            return view(row, db)
     else:
         solution = Solution(id=solution_id, created_by_user_id=user.id, status="draft")
         db.add(solution)
     design = state["design"]
+    validate_builder_configurations(db, design["nodes"], design["edges"], user)
     solution.name, solution.description = design["name"], design["description"]
     solution.nodes, solution.edges = deepcopy(design["nodes"]), deepcopy(design["edges"])
     solution.design_metadata = {"origin": "design_ai", "source": state["source"], "draft_id": row.id,
+        "guided_experiment": state.get("guided_experiment"),
         "draft_revision": row.revision, "run_input": design["run_input"], "validation": current_validation,
         "edit_history": state["edit_history"]}
     solution.updated_at = datetime.utcnow()
@@ -432,4 +569,4 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
     row.state = state
     record_audit_event(db, user, "solution.ai_draft_saved", "solution", solution.id, {"draft_revision": revision})
     db.commit()
-    return view(row)
+    return view(row, db)

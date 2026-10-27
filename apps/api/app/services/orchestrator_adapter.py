@@ -13,6 +13,34 @@ def _orchestrator_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {settings.orchestrator_api_key}"}
 
 
+def require_parameter_transport(compiled):
+    try:
+        response = requests.get(f"{settings.orchestrator_base_url}/capabilities", headers=_orchestrator_headers(), timeout=5)
+        capability = response.json() if response.status_code == 200 else None
+        if (not isinstance(capability, dict) or capability.get("capability_schema_version") != "1.0"
+                or not isinstance(capability.get("transports"), list)
+                or "http-parameters-v1" not in capability["transports"]
+                or capability.get("parameter_validation") != "wrapper-contract-v1"):
+            raise ValueError("Runtime cannot verify target-wrapper parameter contracts")
+        # This endpoint is read-only: it never initializes tasks or starts a workflow.
+        checked = requests.post(f"{settings.orchestrator_base_url}/workflows/check-compatibility",
+            json={key: compiled[key] for key in ("blueprint", "dockerinfo", "task_configurations", "services_api_key") if key in compiled},
+            headers=_orchestrator_headers(), timeout=20)
+        report = checked.json() if checked.status_code == 200 else None
+        expected = {node["node_key"]: node for node in compiled["solution_studio_metadata"]["execution_instances"] if node["configuration"]}
+        if not isinstance(report, dict) or report.get("status") != "ready" or set(report.get("checks", {})) != set(expected):
+            raise ValueError("Target wrapper compatibility is unavailable or rejected")
+        for key, node in expected.items():
+            check, configuration = report["checks"][key], node["configuration"]
+            if any(check.get(field) != configuration[field] for field in ("operation_identity", "contract_version", "schema_version")):
+                raise ValueError("Target wrapper operation/contract version differs from the saved instance")
+            if check.get("parameter_contract_sha256") != node["parameter_contract_sha256"]:
+                raise ValueError("Target wrapper parameter definition differs from the operation registry")
+        return report
+    except (requests.RequestException, ValueError, TypeError, KeyError, AttributeError):
+        raise HTTPException(409, "Parameter compatibility could not be confirmed for this runtime and its target wrappers. Check the declared operation/contract/protocol versions; no workflow was submitted.") from None
+
+
 def _read_response_detail(response: requests.Response) -> Any:
     try:
         return response.json()
