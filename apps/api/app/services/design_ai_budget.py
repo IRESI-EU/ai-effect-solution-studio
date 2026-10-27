@@ -6,6 +6,7 @@ Reserve at the highest input/cache-write rate; never assume a cache discount.
 No request bodies, credentials or generated text are stored here.
 """
 import json
+import hashlib
 from decimal import Decimal
 from pathlib import Path
 import sqlite3
@@ -64,10 +65,47 @@ def limits(db):
 
 
 class Budget:
-    def __init__(self, path):
+    def __init__(self, path, *, task_limit_file=""):
         self.path = Path(path)
+        self.task_limit_file = task_limit_file
         if not self.path.is_file():
             raise HTTPException(503, "Acceptance budget must be explicitly initialized")
+
+    def task_availability(self, db):
+        """An immutable checkpoint adds a ceiling; never changes ledger limits/rows.
+
+        Called inside the same snapshot/BEGIN IMMEDIATE as the shared allowance.
+        Lifetime reservations count even after settlement, failure or restart.
+        """
+        if not self.task_limit_file:
+            return None
+        try:
+            policy = json.loads(Path(self.task_limit_file).read_text())
+            if set(policy) != {"ledger", "baseline_count", "baseline_sha256", "max_calls", "max_reserved_nano"}: raise ValueError("Unexpected task policy fields")
+            if policy["ledger"] != self.path.name: raise ValueError("Ledger mismatch")
+            if not (type(policy["baseline_count"]) is int and policy["baseline_count"] >= 0): raise ValueError("Invalid task checkpoint")
+            if not (type(policy["max_calls"]) is int and 1 <= policy["max_calls"] <= 3): raise ValueError("Invalid task checkpoint")
+            if not (type(policy["max_reserved_nano"]) is int and 0 < policy["max_reserved_nano"] <= 15_000_000): raise ValueError("Invalid task checkpoint")
+            rows = [dict(zip(("id", "held", "reserved", "input_bound", "usage", "status", "response_id"), row))
+                    for row in db.execute("SELECT id,held,reserved,input_bound,usage,status,response_id FROM requests ORDER BY id")]
+            prior = rows[:policy["baseline_count"]]
+            if not (len(prior) == policy["baseline_count"]): raise ValueError("Invalid task checkpoint")
+            if not (hashlib.sha256(json.dumps(prior, sort_keys=True).encode()).hexdigest() == policy["baseline_sha256"]): raise ValueError("Invalid task checkpoint")
+            current = rows[policy["baseline_count"]:]
+            reserved = sum(row["reserved"] for row in current)
+            return {"can_request": len(current) < policy["max_calls"] and reserved + RESERVATION <= policy["max_reserved_nano"],
+                    "request_count": len(current), "remaining_calls": max(0, policy["max_calls"]-len(current)),
+                    "reserved_usd": reserved/1_000_000_000, "limit_usd": policy["max_reserved_nano"]/1_000_000_000}
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            raise HTTPException(503, "Task allowance checkpoint is missing or invalid; no provider request permitted") from exc
+
+    def constrained_state(self, db, state):
+        task = self.task_availability(db)
+        if task is not None:
+            state["task_allowance"] = task
+            if not task["can_request"]:
+                state.update(can_request=False, blocked_reason="task_limit", message="AI testing is paused: this task's provider-call or reservation limit has been reached. No automatic retry is permitted.")
+        return state
 
     def availability(self):
         """Read-only status; never reserve a call or alter/reopen a ledger."""
@@ -78,7 +116,7 @@ class Budget:
             count, held, unsettled, outstanding = db.execute("""SELECT COUNT(*), COALESCE(SUM(held),0),
                 COALESCE(SUM(CASE WHEN usage IS NULL THEN held ELSE 0 END),0),
                 COALESCE(SUM(CASE WHEN status='reserved' THEN 1 ELSE 0 END),0) FROM requests""").fetchone()
-        return allowance_state(closed, limit, max_calls, count, held, unsettled, outstanding)
+            return self.constrained_state(db, allowance_state(closed, limit, max_calls, count, held, unsettled, outstanding))
 
     def reserve(self, input_bound, output_limit):
         if input_bound > MAX_INPUT or not 1 <= output_limit <= MAX_OUTPUT:
@@ -88,7 +126,7 @@ class Budget:
             closed = db.execute("SELECT closed FROM batch WHERE id=1").fetchone()[0]
             limit, max_calls = limits(db)
             count, held = db.execute("SELECT COUNT(*), COALESCE(SUM(held),0) FROM requests").fetchone()
-            state = allowance_state(closed, limit, max_calls, count, held)
+            state = self.constrained_state(db, allowance_state(closed, limit, max_calls, count, held))
             if not state["can_request"]:
                 raise HTTPException(429, {"code": PAUSED_CODE, "message": state["message"], "allowance": state})
             cursor = db.execute("INSERT INTO requests(held,reserved,input_bound,status) VALUES (?,?,?,'reserved')",

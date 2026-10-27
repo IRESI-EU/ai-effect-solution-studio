@@ -2,11 +2,13 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
+  Position,
   addEdge,
   useEdgesState,
   useNodesState,
@@ -19,6 +21,10 @@ import {
 import "@xyflow/react/dist/style.css";
 import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
+import { deploymentResultsUrl, executionLabel, isDutchExperiment } from "../../lib/experiment-journey";
+import { designReturnUrl } from "../design-ai/session";
+import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
+import { copyInstance } from "../../lib/copy-instance";
 
 type Service = {
   id: string;
@@ -84,6 +90,7 @@ type RuntimePreflightResult = {
 type SavedSolution = {
   id: string;
   name: string;
+  updated_at: string;
 };
 
 const API_BASE_URL = "/api";
@@ -119,6 +126,8 @@ function BuilderContent() {
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const savedUpdatedAtRef = useRef<string | null>(null);
   const [validationResults, setValidationResults] = useState<string[]>([]);
   const [runtimePreflight, setRuntimePreflight] = useState<RuntimePreflightResult | null>(null);
   const [workflowDesignStatus, setWorkflowDesignStatus] = useState<"valid" | "invalid" | null>(null);
@@ -135,6 +144,7 @@ function BuilderContent() {
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
   const [solutionLoadError, setSolutionLoadError] = useState("");
+  const [solutionSaveError, setSolutionSaveError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
   const roleMode: UserRole = user?.role || "solution_designer";
   const workflowRevisionRef = useRef(0);
@@ -147,6 +157,13 @@ function BuilderContent() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const guidedDutch = isDutchExperiment(nodes, designMetadata);
+  const displayedNodes = useMemo(() => guidedDutch ? nodes.map(node => {
+    const operation = (node.data?.service as Service | undefined)?.operation_name;
+    const order = node.type === "input" ? 0 : node.type === "output" ? 3 : operation === "ConfigureAndSynthesize" ? 1 : 2;
+    return {...node, width:245, height:64, measured:{width:245,height:64}, position:{x:0,y:order*125}, sourcePosition:Position.Bottom,targetPosition:Position.Top,
+      style:{...node.style,width:245,height:64,boxSizing:"border-box" as const}};
+  }) : nodes, [nodes, guidedDutch]);
 
   const invalidateWorkflowResults = useCallback(() => {
     workflowRevisionRef.current += 1;
@@ -206,6 +223,9 @@ function BuilderContent() {
           throw new Error(apiErrorMessage(body, `Could not load this solution (HTTP ${res.status}).`));
         }
         setCurrentSolutionId(body.id);
+        savedUpdatedAtRef.current = body.updated_at;
+        setSelectedInstanceId(null);
+        setSelectedService(null);
         setSolutionName(body.name);
         setNodes(body.nodes || initialNodes);
         setEdges(body.edges || []);
@@ -266,7 +286,9 @@ function BuilderContent() {
   );
 
   function addServiceToCanvas(service: Service) {
-    const nodeId = `service-${service.id}-${Date.now()}`;
+    const nodeId = `service-${service.id}-${crypto.randomUUID()}`;
+    setSelectedInstanceId(nodeId);
+    setSelectedService(service);
     const lifecycleStatus = getLifecycleStatus(service);
     const interfaceType = getInterfaceType(service);
     const orchestrationMode = getOrchestrationMode(service);
@@ -301,6 +323,7 @@ function BuilderContent() {
 
       return {
         node_id: node.id,
+        ...("configuration" in node.data ? { configuration: node.data.configuration } : {}),
         service_id: service.id,
         container_name: service.container_name || service.id,
         image: service.image,
@@ -321,6 +344,7 @@ function BuilderContent() {
     return {
       name: solutionName || "Solution Studio Workflow",
       solution_id: solutionIdForPayload,
+      expected_updated_at: savedUpdatedAtRef.current,
       nodes: workflowNodes,
       edges: workflowEdges,
     };
@@ -350,7 +374,7 @@ function BuilderContent() {
     });
 
     if (!response.ok) {
-      throw new Error(`Deployment readiness check failed with HTTP ${response.status}.`);
+      throw new Error(apiErrorMessage(await response.json().catch(() => null), `Deployment readiness check failed with HTTP ${response.status}.`));
     }
 
     const result = (await response.json()) as RuntimePreflightResult;
@@ -462,13 +486,13 @@ function BuilderContent() {
       let savedSolution: SavedSolution;
       try {
         savedSolution = await persistSolution();
-      } catch {
+      } catch (error) {
         if (workflowRevision === workflowRevisionRef.current) {
           setRuntimePreflight(null);
           setDeploymentConfirmationReady(false);
           setDeploymentResult({
             status: "failed",
-            error: "The solution could not be saved. Deployment preparation was stopped.",
+            error: error instanceof Error ? error.message : "The solution could not be saved. Deployment preparation was stopped.",
           });
         }
         return;
@@ -502,6 +526,7 @@ function BuilderContent() {
     if (solutionSavePromiseRef.current) return solutionSavePromiseRef.current;
 
     const payload = {
+      ...(currentSolutionId ? { expected_updated_at: savedUpdatedAtRef.current } : {}),
       name: solutionName || "Untitled AI-EFFECT Solution",
       description: "Saved workflow design from Builder",
       nodes,
@@ -521,12 +546,13 @@ function BuilderContent() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error(`Solution save failed with HTTP ${res.status}.`);
+      if (!res.ok) throw new Error(apiErrorMessage(await res.json().catch(() => null), `Solution save failed with HTTP ${res.status}.`));
 
       const saved = (await res.json()) as SavedSolution;
       if (!saved.id) throw new Error("The saved solution response did not include an ID.");
 
       setCurrentSolutionId(saved.id);
+      savedUpdatedAtRef.current = saved.updated_at;
       setSolutionName(saved.name || payload.name);
       return saved;
     })();
@@ -545,12 +571,13 @@ function BuilderContent() {
     if (saveDraftInFlightRef.current) return;
     saveDraftInFlightRef.current = true;
     setSavingSolution(true);
+    setSolutionSaveError("");
 
     try {
       await persistSolution();
       alert("Solution saved successfully.");
-    } catch {
-      alert("Failed to save solution.");
+    } catch (error) {
+      setSolutionSaveError(error instanceof Error ? error.message : "Failed to save solution.");
     } finally {
       setSavingSolution(false);
       saveDraftInFlightRef.current = false;
@@ -648,6 +675,15 @@ function BuilderContent() {
 
   return (
     <div className="page builder-page">
+      {solutionSaveError && <section className="card" role="alert" style={{ padding: 18, marginBottom: 18, color: "#b42318" }}>
+        <strong>Could not save this solution.</strong> {solutionSaveError}
+      </section>}
+      {guidedDutch && <section className="card guided-builder-note" aria-label="Experiment review">
+        <strong>Review your sample grid experiment</strong>
+        <p>Generate sample grid → Benchmark grid. Saved seed: <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. These settings are carried into the run automatically.</p>
+        <p>{deploymentResult?.workflow_id ? "Your run has been submitted. Open its results below to follow progress." : deploymentConfirmationReady ? "Ready to run. Review Deployment readiness, then select Confirm deployment when you want to execute." : "Next: Validate design, then Prepare & deploy to check readiness. Execution requires Confirm deployment."}</p>
+        <Link href={designReturnUrl(designMetadata)}>Return to Design with AI</Link>
+      </section>}
       {solutionLoadError && (
         <section className="card" style={{ padding: 18, marginBottom: 18, borderColor: "#fda29b", color: "#b42318" }}>
           <strong>Unable to load solution design.</strong> {solutionLoadError}
@@ -714,7 +750,8 @@ function BuilderContent() {
       )}
 
       <div className="builder-workbench" style={{ marginTop: deprecatedCanvasServices.length > 0 ? 32 : 24 }}>
-        <aside className="card builder-palette-card builder-service-palette">
+        <aside className={`card builder-palette-card builder-service-palette ${guidedDutch ? "guided-service-review" : ""}`}>
+          {guidedDutch ? <><h2>Experiment services</h2><p>The generated grid is passed to the benchmark.</p>{canvasServices.map(service => <details key={service.id}><summary>{service.operation_name === "ConfigureAndSynthesize" ? "Generate sample grid." : "Benchmark grid."}</summary><p>{service.name}</p><code>{service.id}</code><br /><code>{service.operation_name}</code></details>)}</> : <>
           <div className="builder-panel-heading"><div><span>Service palette</span><h2>Available services</h2></div><strong>{filteredServices.length}</strong></div>
           <p style={{ color: "#697087", fontSize: 12, lineHeight: 1.55 }}>
             Click a service to add it to the workflow canvas. Archived services are hidden.
@@ -796,7 +833,7 @@ function BuilderContent() {
               );
             })}
             {filteredServices.length === 0 && <div className="builder-empty-palette">No services match your search.</div>}
-          </div>
+          </div></>}
         </aside>
 
         <main className="card builder-canvas-card">
@@ -809,21 +846,27 @@ function BuilderContent() {
 
           <div className="builder-canvas-area">
             <ReactFlow
-              nodes={nodes}
+              key={`${currentSolutionId}:${guidedDutch}`}
+              nodes={displayedNodes}
+              nodesDraggable={!guidedDutch}
+              nodesConnectable={!guidedDutch}
+              edgesReconnectable={!guidedDutch}
               edges={edges}
               onNodesChange={handleNodesChange}
               onEdgesChange={handleEdgesChange}
               onConnect={onConnect}
               onEdgesDelete={onEdgesDelete}
-              deleteKeyCode={["Backspace", "Delete"]}
+              deleteKeyCode={guidedDutch ? null : ["Backspace", "Delete"]}
               onNodeClick={(_, node) => {
                 const service = node.data?.service as Service | undefined;
                 setSelectedService(service || null);
+                setSelectedInstanceId(service ? node.id : null);
               }}
               fitView
+              fitViewOptions={{padding:0.18}}
             >
               <Background />
-              <Controls />
+              <Controls showInteractive={!guidedDutch} />
               <MiniMap />
             </ReactFlow>
           </div>
@@ -851,6 +894,28 @@ function BuilderContent() {
               <ServiceBadges service={selectedService} />
 
               <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
+              {!guidedDutch && selectedInstanceId && nodes.some(node => node.id === selectedInstanceId) && <InstanceParameters
+                key={selectedInstanceId} instanceId={selectedInstanceId} serviceId={selectedService.id}
+                configuration={nodes.find(node => node.id === selectedInstanceId)?.data.configuration as InstanceConfiguration | undefined}
+                onChange={configuration => {
+                  setNodes(existing => existing.map(node => {
+                    if (node.id !== selectedInstanceId) return node;
+                    const data = { ...node.data };
+                    if (configuration === undefined) delete data.configuration; else data.configuration = configuration;
+                    return { ...node, data };
+                  }));
+                  invalidateWorkflowResults();
+                }}
+                onCopy={() => {
+                  const original = nodes.find(node => node.id === selectedInstanceId);
+                  if (!original) return;
+                  const copied = copyInstance(original, edges, `service-${crypto.randomUUID()}`);
+                  setNodes(existing => [...existing, copied.node]);
+                  setEdges(existing => [...existing, ...copied.edges]);
+                  setSelectedInstanceId(copied.node.id);
+                  invalidateWorkflowResults();
+                }}
+              />}
 
               {getLifecycleStatus(selectedService) === "deprecated" && (
                 <div
@@ -961,13 +1026,13 @@ function BuilderContent() {
           <div style={{ marginTop: 30 }}>
             <h3>Deployment</h3>
 
-            <label htmlFor="run-input-mode" style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Run input (optional)</label>
+            {guidedDutch ? <p>Saved experiment settings: seed <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. Review settings in Design with AI before preparing a run.</p> : <><label htmlFor="run-input-mode" style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Run input (optional)</label>
             <select id="run-input-mode" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} style={{ width: "100%", padding: 10, marginBottom: 10 }}>
               <option value="prompt">Prompt</option>
               <option value="json">JSON object</option>
             </select>
             <textarea aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={5} placeholder={runInputMode === "prompt" ? "Describe what this workflow should do..." : '{"prompt":"...", "option":true}'} style={{ width: "100%", padding: 10, boxSizing: "border-box" }} />
-            <p style={{ color: "#667085", fontSize: 13, marginTop: 5 }}>Sent as JSON to the first service when you confirm deployment. Leave empty to use the service default.</p>
+            <p style={{ color: "#667085", fontSize: 13, marginTop: 5 }}>Sent as JSON to the first service when you confirm deployment. Leave empty to use the service default.</p></>}
             {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
 
             {!deploymentResult && (
@@ -988,10 +1053,11 @@ function BuilderContent() {
                 }}
               >
                 {deploymentResult.workflow_id
-                  ? `Deployment submitted\nID: ${deploymentResult.workflow_id}\nStatus: ${deploymentResult.status}`
+                  ? `${executionLabel(deploymentResult.status)}\nID: ${deploymentResult.workflow_id}`
                   : `${deploymentResult.status === "blocked" ? "Deployment blocked" : "Deployment failed"}\n${deploymentResult.error}`}
               </div>
             )}
+            {deploymentResult?.workflow_id && <p><Link className="btn btn-secondary" href={deploymentResultsUrl(deploymentResult.workflow_id)}>View this run’s results</Link><br /><small>Recorded settings, task progress and automatically captured results for this exact run.</small></p>}
           </div>
 
           <div className="builder-workflow-health">

@@ -132,7 +132,7 @@ def test_mcp_real_discovery_tools_and_no_privileged_capabilities(environment, db
         async with connection(db, db.get(User, "designer"), draft_id=draft["id"]) as tools:
             discovered = await tools.discover()
             names = {tool.name for tool in discovered.tools}
-            assert names == {"list_pilot_templates", "read_template", "inspect_supported_configuration", "validate_draft", "save_draft"}
+            assert names == {"list_pilot_templates", "read_template", "inspect_supported_configuration", "validate_draft", "save_draft", "discover_guided_capability"}
             assert (await tools.call("read_template", {"template_key": "dutch"}))["services"][0]["operation_name"] == "ConfigureAndSynthesize"
             denied = await tools.session.call_tool("save_draft", {"revision": 0})
             assert denied.isError

@@ -1,0 +1,24 @@
+{
+  "ConfigureAndSynthesize": {
+    "operation_identity": "urn:aieffect:nl:configure-and-synthesize:aie18",
+    "contract_version": "1.0.0",
+    "execution_parameters": {
+      "schema_version": "1.0", "transport": "http-parameters-v1",
+      "properties": {
+        "seed": {"type": "integer", "title": "Random seed", "description": "Seed passed to the pinned Dutch grid synthesis algorithm. Only the two supported pilot seeds are exposed.", "default": 42, "enum": [42, 43]}
+      }
+    }
+  },
+  "GenerateTopology": {
+    "operation_identity": "urn:aieffect:dk:generate-topology:aie18",
+    "contract_version": "1.0.0",
+    "execution_parameters": {
+      "schema_version": "1.0", "transport": "http-parameters-v1",
+      "properties": {
+        "allow_hx": {"type": "boolean", "title": "Allow heat exchangers", "description": "Pass allow_hx to the Danish software topology enumerator.", "default": true},
+        "allow_bypass": {"type": "boolean", "title": "Allow bypasses", "description": "Pass allow_bypass to the Danish software topology enumerator.", "default": true},
+        "how_many": {"type": "integer", "title": "Maximum topologies", "description": "Maximum number of results requested from the deterministic enumerator. The initial local proof is bounded to twenty.", "default": 20, "minimum": 1, "maximum": 20}
+      }
+    }
+  }
+}

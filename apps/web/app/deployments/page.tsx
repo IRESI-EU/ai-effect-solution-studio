@@ -1,5 +1,7 @@
 "use client";
 
+import { deploymentResultsUrl } from "../../lib/experiment-journey";
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -353,7 +355,7 @@ export default function DeploymentsPage() {
                   <Td>
                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                       <Link
-                        href={`/deployments/${deployment.workflow_id}`}
+                        href={deploymentResultsUrl(deployment.workflow_id)}
                         style={{
                           color: "white",
                           background: "#6d4aff",
@@ -364,7 +366,7 @@ export default function DeploymentsPage() {
                           fontSize: 13,
                         }}
                       >
-                        View run details
+                        View results
                       </Link>
 
                       <button

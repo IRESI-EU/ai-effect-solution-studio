@@ -52,12 +52,19 @@ def create_server(db, user: User, *, draft_id: str | None = None, explicit_save:
                 "connections": [{"source": e["source"], "target": e["target"]} for e in value["edges"]]}
 
     @design_tool
+    async def discover_guided_capability(template_key: str) -> dict:
+        """Retrieve verified supported local capabilities without creating a draft."""
+        return service.discovery_capability(template_key, db, authorize())
+
+    @design_tool
     async def inspect_supported_configuration(template_key: str) -> dict:
         """Inspect active operation contracts and explicitly verified wrapper inputs."""
         actor = authorize()
         value = service.template(template_key, db, actor)
-        return {"contracts": service.contracts(value["nodes"], db), "run_input": value["input_policy"],
-                "supported_edits": ["rename", "describe", "set_node_label"] + (["set_run_input"] if value["input_policy"] else []),
+        contracts = service.contracts(value["nodes"], db)
+        parameters_supported = any(c.get("definition", {}).get("execution_parameters") for c in contracts if c.get("definition"))
+        return {"contracts": contracts, "run_input": value["input_policy"],
+                "supported_edits": ["rename", "describe", "set_node_label"] + (["set_run_input"] if value["input_policy"] else []) + (["set_node_parameters"] if parameters_supported else []),
                 "named_bindings_preserved": False, "runtime_checked": False}
 
     @design_tool

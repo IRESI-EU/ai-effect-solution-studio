@@ -2887,3 +2887,8 @@ tbody tr:hover {
     width: fit-content;
   }
 }
+
+.guided-builder-note { padding:20px; margin-bottom:20px; line-height:1.6; }
+
+.guided-service-review { height:auto; min-height:0; padding:20px; overflow-wrap:anywhere; }
+.guided-service-review details { margin:18px 0; }

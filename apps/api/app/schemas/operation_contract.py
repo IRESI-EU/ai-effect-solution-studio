@@ -144,12 +144,55 @@ class OperationContractOutput(ContractSlotBase):
     pass
 
 
+class ParameterDefinition(StrictContractModel):
+    type: Literal["integer", "number", "boolean", "string"]
+    title: str = Field(min_length=1, max_length=120)
+    description: str = Field(min_length=1, max_length=1000)
+    required: bool = False
+    default: Any = None
+    minimum: float | None = None
+    maximum: float | None = None
+    enum: list[Any] | None = None
+
+    @model_validator(mode="after")
+    def supported_definition(self):
+        from app.services.parameter_values import effective_parameters
+        if self.minimum is not None and self.maximum is not None and self.minimum > self.maximum:
+            raise ValueError("minimum must not exceed maximum")
+        if self.type == "string" and not self.enum:
+            raise ValueError("String execution parameters must declare an enumeration")
+        spec = self.model_dump(exclude_none=True)
+        if "default" in self.model_fields_set:
+            spec["default"] = self.default
+            effective_parameters({"properties": {"value": spec}}, {})
+        if self.enum is not None:
+            if not self.enum:
+                raise ValueError("enum must not be empty")
+            for value in self.enum:
+                effective_parameters({"properties": {"value": spec}}, {"value": value})
+        return self
+
+
+class ExecutionParameterContract(StrictContractModel):
+    schema_version: Literal["1.0"] = "1.0"
+    transport: Literal["http-parameters-v1"] = "http-parameters-v1"
+    properties: dict[str, ParameterDefinition] = Field(default_factory=dict, max_length=30)
+
+    @field_validator("properties")
+    @classmethod
+    def safe_names(cls, value):
+        if any(not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", name) for name in value):
+            raise ValueError("Parameter names must be lowercase identifiers")
+        return value
+
+
 class OperationContractDefinition(StrictContractModel):
     operation_role: OperationRole
     inputs: list[OperationContractInput] = Field(default_factory=list)
     outputs: list[OperationContractOutput] = Field(default_factory=list)
     adapter_capabilities: list[dict[str, Any]] = Field(default_factory=list)
     compatibility_notes: list[str] = Field(default_factory=list)
+    execution_parameters: ExecutionParameterContract | None = None
 
     @model_validator(mode="after")
     def validate_unique_slot_names(self):

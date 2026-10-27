@@ -14,6 +14,7 @@ class SolutionCreate(BaseModel):
 
 
 class SolutionUpdate(BaseModel):
+    expected_updated_at: str | None = None
     design_metadata: dict[str, Any] | None = None
     name: str | None = None
     description: str | None = None

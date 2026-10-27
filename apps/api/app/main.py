@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,10 @@ from app.models.service import Service
 from app.models.solution import Solution
 from app.models.user import User
 from app.models.design_ai import DesignDraft
+from app.services import local_dutch_capture
+from app.services import execution_submission
+from app.models.execution_submission import ExecutionSubmission
+from app.services.instance_configuration import validate_builder_configurations, has_configuration
 from app.dependencies.auth import (
     can_manage_owned_record,
     can_manage_service,
@@ -23,6 +27,7 @@ from app.dependencies.auth import (
 from app.routers.auth import bootstrap_admin, router as auth_router
 from app.routers.admin_users import router as admin_users_router
 from app.routers.design_ai import router as design_ai_router
+from app.routers.deployment_results import router as deployment_results_router, authorized_deployment
 from app.routers.operation_contracts import router as operation_contracts_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
@@ -91,6 +96,7 @@ app.include_router(operation_contracts_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
 app.include_router(design_ai_router)
+app.include_router(deployment_results_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -665,7 +671,11 @@ def runtime_preflight_endpoint(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    return run_runtime_preflight(workflow.nodes, db)
+    result = run_runtime_preflight(workflow.nodes, db)
+    if result["status"] == "ready" and any("configuration" in n.model_fields_set for n in workflow.nodes):
+        from app.services.orchestrator_adapter import require_parameter_transport
+        result["parameter_compatibility"] = require_parameter_transport(compile_to_wp3_payload(workflow, db))
+    return result
 
 
 @app.post("/workflows/submit-to-orchestrator")
@@ -675,7 +685,10 @@ def submit_workflow_to_orchestrator_endpoint(
     user: User = Depends(get_current_user),
 ):
     if workflow.solution_id:
-        solution = db.query(Solution).filter(Solution.id == workflow.solution_id).first()
+        query = db.query(Solution).filter(Solution.id == workflow.solution_id)
+        if any("configuration" in n.model_fields_set for n in workflow.nodes):
+            query = query.with_for_update().populate_existing()
+        solution = query.first()
 
         if not solution:
             raise HTTPException(status_code=404, detail="Solution not found")
@@ -688,6 +701,21 @@ def submit_workflow_to_orchestrator_endpoint(
                 status_code=400,
                 detail="Archived solutions cannot be submitted to the orchestrator.",
             )
+        if any("configuration" in n.model_fields_set for n in workflow.nodes):
+            if workflow.expected_updated_at != solution.updated_at.isoformat():
+                raise HTTPException(409, "Saved solution changed; reload before preparing a run")
+            saved = {n["id"]: n.get("data", {}) for n in solution.nodes if n.get("data", {}).get("service")}
+            if set(saved) != {n.node_id for n in workflow.nodes} or any(
+                saved[n.node_id].get("configuration") != n.configuration
+                or saved[n.node_id]["service"]["id"] != n.service_id for n in workflow.nodes
+            ):
+                raise HTTPException(409, "Submitted instances must match the saved configuration")
+            saved_edges = {(e["source"], e["target"]) for e in solution.edges if e["source"] in saved and e["target"] in saved}
+            if saved_edges != {(e.source, e.target) for e in workflow.edges}:
+                raise HTTPException(409, "Submitted bindings must match the saved solution")
+
+    if any("configuration" in n.model_fields_set for n in workflow.nodes) and not workflow.solution_id:
+        raise HTTPException(422, "Configured execution requires an owned saved solution")
 
     preflight = run_runtime_preflight(workflow.nodes, db)
 
@@ -709,11 +737,26 @@ def submit_workflow_to_orchestrator_endpoint(
 
     if "inputs" in compiled_payload:
         orchestrator_payload["inputs"] = compiled_payload["inputs"]
+    if "task_configurations" in compiled_payload:
+        from app.services.orchestrator_adapter import require_parameter_transport
+        compiled_payload["solution_studio_metadata"]["parameter_compatibility"] = require_parameter_transport(compiled_payload)
+        orchestrator_payload["task_configurations"] = compiled_payload["task_configurations"]
 
     if "services_api_key" in compiled_payload:
         orchestrator_payload["services_api_key"] = compiled_payload["services_api_key"]
 
-    orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+    snapshot = local_dutch_capture.prepare_submission(db, user, workflow, compiled_payload)
+    submitted_record = execution_submission.prepare(db, user, workflow, compiled_payload)
+    try:
+        orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+    except Exception:
+        submitted_record.phase = "submission_failed"
+        db.commit()
+        raise
+    submitted_record.workflow_id = orchestrator_result.get("workflow_id")
+    submitted_record.phase = "submitted"
+    db.commit()
+    local_dutch_capture.attach_workflow(db, snapshot, orchestrator_result, user)
 
     if isinstance(orchestrator_result, dict):
         orchestrator_result["solution_studio_metadata"] = compiled_payload.get(
@@ -721,6 +764,30 @@ def submit_workflow_to_orchestrator_endpoint(
         )
 
     return orchestrator_result
+
+
+@app.get("/workflows/{workflow_id}/submitted-configuration")
+def submitted_configuration(workflow_id: str, response: Response, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    response.headers["Cache-Control"] = "private, no-store"
+    row = db.query(ExecutionSubmission).filter(ExecutionSubmission.workflow_id == workflow_id).first()
+    if not row:
+        raise HTTPException(404, "No immutable submission snapshot was recorded for this historical workflow")
+    if not can_manage_owned_record(user, row.owner_user_id):
+        raise HTTPException(403, "You can only inspect your own submissions")
+    return execution_submission.view(row)
+
+
+@app.get("/workflows/{workflow_id}/instance-evidence")
+def instance_evidence(workflow_id: str, response: Response, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    response.headers["Cache-Control"] = "private, no-store"
+    from app.services.instance_evidence import load
+    row = db.query(ExecutionSubmission).filter(ExecutionSubmission.workflow_id == workflow_id).first()
+    if not row:
+        raise HTTPException(404, "No submitted instance snapshot was recorded")
+    if not can_manage_owned_record(user, row.owner_user_id):
+        raise HTTPException(403, "You can only inspect your own execution evidence")
+    execution_submission.view(row)
+    return load(row, db)
 
 
 
@@ -761,16 +828,20 @@ def get_tasks(workflow_id: str, _: User = Depends(get_current_user)):
 @app.get("/orchestrator/workflows/{workflow_id}")
 def orchestrator_workflow_status(
     workflow_id: str,
-    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
+    authorized_deployment(db, user, workflow_id)
     return get_workflow_status(workflow_id)
 
 
 @app.get("/orchestrator/workflows/{workflow_id}/tasks")
 def orchestrator_workflow_tasks(
     workflow_id: str,
-    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
+    authorized_deployment(db, user, workflow_id)
     return get_workflow_tasks(workflow_id)
 
 
@@ -784,6 +855,7 @@ def create_solution(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    validate_builder_configurations(db, payload.nodes, payload.edges, user)
     solution = Solution(
         id=str(uuid4()),
         name=payload.name,
@@ -972,7 +1044,7 @@ def update_solution(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    solution = db.query(Solution).filter(Solution.id == solution_id).first()
+    solution = db.query(Solution).filter(Solution.id == solution_id).with_for_update().populate_existing().first()
 
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
@@ -985,6 +1057,11 @@ def update_solution(
             detail="Archived solutions cannot be edited. Restore the solution first.",
         )
 
+    configured = has_configuration(solution.nodes) or has_configuration(payload.nodes or [])
+    if (configured or payload.expected_updated_at is not None) and payload.expected_updated_at != solution.updated_at.isoformat():
+        raise HTTPException(409, "This solution changed since it was opened. Reload before saving.")
+    validate_builder_configurations(db, payload.nodes if payload.nodes is not None else solution.nodes,
+                                    payload.edges if payload.edges is not None else solution.edges, user)
     if payload.name is not None:
         solution.name = payload.name
     if payload.description is not None:
@@ -1102,6 +1179,8 @@ def sync_deployment_statuses(
         try:
             workflow = get_workflow_status(deployment.workflow_id)
             latest_status = workflow.get("status")
+            if local_dutch_capture.enabled():
+                local_dutch_capture.collect(db, deployment, workflow, get_workflow_tasks(deployment.workflow_id)["tasks"])
 
             if not latest_status:
                 summary["failed"] += 1

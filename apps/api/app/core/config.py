@@ -21,9 +21,18 @@ class Settings(BaseSettings):
     design_ai_max_output_tokens: int = 3000
     # Opt-in local acceptance ledger; never enabled in production by default.
     design_ai_acceptance_budget_file: str = ""
+    # Optional immutable task ceiling, accounted in the same existing ledger.
+    design_ai_acceptance_task_limit_file: str = ""
     design_ai_timeout_seconds: int = 40
     design_ai_context_chars: int = 48000
     design_ai_tool_limit: int = 8
+    # Opt-in read-only capture adapter for the isolated pinned Dutch experiment.
+    local_dutch_evidence_root: str = ""
+    local_dutch_evidence_scope: str = ""
+    local_dutch_auto_capture_root: str = ""
+    local_dutch_capture_runtime: str = ""
+    # Separate disposable AIE-18 proof only; never enabled by default.
+    aie18_evidence_root: str = ""
 
 
 settings = Settings()

@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import RecordedResults from "../recorded-results";
+import SubmittedConfiguration from "../../../components/submitted-configuration";
+import { referenceMessage } from "../results";
+import { executionLabel } from "../../../lib/experiment-journey";
 
 type DeploymentRecord = {
   id: string;
@@ -33,6 +37,9 @@ export default function DeploymentDetailPage({
   const [deploymentRecord, setDeploymentRecord] =
     useState<DeploymentRecord | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [evidence, setEvidence] = useState<any>(null);
+  const [configuredRun, setConfiguredRun] = useState(false);
+  const [statusSource, setStatusSource] = useState("");
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<any>(null);
   const [previewDirectory, setPreviewDirectory] = useState<any>(null);
@@ -40,6 +47,15 @@ export default function DeploymentDetailPage({
   const [previewDrawings, setPreviewDrawings] = useState<DrawingReference[]>([]);
   const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
+  const resultsScrolledRef = useRef(false);
+
+  useEffect(() => {
+    if (!evidence || resultsScrolledRef.current || !window.location.hash.startsWith("#results")) return;
+    if (window.location.hash !== "#results") window.history.replaceState(null, "", window.location.pathname + window.location.search + "#results");
+    resultsScrolledRef.current = true;
+    const frame = requestAnimationFrame(() => document.getElementById("results")?.scrollIntoView());
+    return () => cancelAnimationFrame(frame);
+  }, [evidence]);
 
   useEffect(() => {
     if (!previewLoading && !preview) return;
@@ -150,38 +166,32 @@ export default function DeploymentDetailPage({
 
       try {
         const workflowRes = await fetch(
-          `/api/orchestrator/workflows/${id}`
+          `/api/deployments/by-workflow/${id}/results`, { cache: "no-store" }
         );
 
         if (!workflowRes.ok) {
-          throw new Error("Failed to load workflow.");
+          throw new Error(workflowRes.status === 403 ? "You do not have access to this run's results." : workflowRes.status === 404 ? "This run could not be found." : workflowRes.status === 401 ? "Sign in to view this run's results." : "Results could not be loaded. Try again when the local service is available.");
         }
 
-        const workflowData = await workflowRes.json();
+        const result = await workflowRes.json();
+        const workflowData = result.workflow;
         if (cancelled) return;
         setWorkflow(workflowData);
+        setDeploymentRecord(result.deployment);
+        setEvidence(result.evidence);
+        setStatusSource(result.status_source);
+        setTasks(result.tasks || []);
         setError("");
 
-        if (workflowData.status) {
+        if (workflowData.status && result.status_source === "orchestrator") {
           await syncDeploymentStatus(id, workflowData.status);
         }
 
-        const tasksRes = await fetch(
-          `/api/orchestrator/workflows/${id}/tasks`
-        );
-
-        if (!tasksRes.ok) {
-          throw new Error("Failed to load workflow tasks.");
-        }
-
-        const tasksData = await tasksRes.json();
-        if (cancelled) return;
-        setTasks(tasksData.tasks || []);
-        if (!["completed", "failed"].includes(workflowData.status)) {
+        if (!["completed", "failed"].includes(workflowData.status) || ["pending", "delayed"].includes(result.evidence?.state)) {
           refreshTimer = setTimeout(load, 5000);
         }
-      } catch {
-        if (!cancelled) setError("Failed to load deployment details. Refresh the page to retry.");
+      } catch (failure) {
+        if (!cancelled) setError(failure instanceof Error ? failure.message : "Results could not be loaded. Try again when the local service is available.");
       }
     }
 
@@ -220,7 +230,7 @@ export default function DeploymentDetailPage({
         >
           <div>
             <h1 style={{ fontSize: 40, margin: 0 }}>Run details</h1>
-            <div
+            <details
               style={{
                 marginTop: 10,
                 color: "#667085",
@@ -228,8 +238,9 @@ export default function DeploymentDetailPage({
                 wordBreak: "break-all",
               }}
             >
+              <summary>Execution identifiers</summary>
               Workflow {workflowId}
-            </div>
+            </details>
           </div>
           {workflow?.status && (
             <span
@@ -239,25 +250,25 @@ export default function DeploymentDetailPage({
                 padding: "8px 12px",
               }}
             >
-              {workflow.status}
+              {executionLabel(workflow.status)}
             </span>
           )}
         </div>
 
-        {error && <p style={{ color: "#b42318" }}>{error}</p>}
+        {error && <div role="alert" style={{ color: "#b42318" }}><p>{error}</p><button onClick={() => window.location.reload()}>Retry loading results</button></div>}
 
         {workflow && (
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))",
               gap: 16,
             }}
           >
-            <Info label="Status" value={workflow.status} />
+            <Info label="Status" value={executionLabel(workflow.status)} />
             <Info label="Created" value={workflow.created_at || "-"} />
             <Info label="Updated" value={workflow.updated_at || "-"} />
-            <Info label="Error" value={workflow.error || "None"} />
+            <Info label="Error" value={workflow.error || "No error reported"} />
           </div>
         )}
 
@@ -273,14 +284,17 @@ export default function DeploymentDetailPage({
             }}
           >
             <strong>{deploymentRecord.name}</strong>
-            {deploymentRecord.solution_id
-              ? ` · Solution ${deploymentRecord.solution_id}`
-              : " · No linked solution"}
-            {" · "}Backend record synced as{" "}
-            <strong>{deploymentRecord.status}</strong>.
+            <details style={{ marginTop: 8 }}><summary>Saved solution and execution source</summary>
+              {deploymentRecord.solution_id ? `Solution ${deploymentRecord.solution_id}` : "No linked solution"}
+              {" · "}Backend status: <strong>{deploymentRecord.status}</strong>.
+              {" · "}Status source: {statusSource}.
+            </details>
           </div>
         )}
       </section>
+
+      {!configuredRun && <RecordedResults evidence={evidence} status={workflow?.status || "unknown"} tasks={tasks} />}
+      <SubmittedConfiguration workflowId={workflowId} status={workflow?.status || "unknown"} onConfigured={setConfiguredRun} />
 
       <section
         className="card"
@@ -291,7 +305,8 @@ export default function DeploymentDetailPage({
           boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
         }}
       >
-        <h2 style={{ marginTop: 0 }}>Tasks &amp; Data References</h2>
+        <details><summary style={{ fontWeight: 700 }}>Technical task details</summary>
+        <h2>Tasks &amp; Data References</h2>
         <p style={{ color: "#667085", marginTop: -4, marginBottom: 20 }}>
           Orchestrator task states and the input or output artifacts attached to
           each workflow node.
@@ -329,9 +344,12 @@ export default function DeploymentDetailPage({
                 }}
               >
                 <div>
-                  <strong>{task.node_key}</strong>
+                  <strong style={{ overflowWrap: "anywhere" }}>{task.node_key}</strong>
                   <div style={{ color: "#526173", marginTop: 6 }}>
                     Task ID: {task.task_id}
+                  </div>
+                  <div style={{ color: "#526173", marginTop: 6, fontSize: 13 }}>
+                    Created: {task.created_at || "Unavailable"} · Updated: {task.updated_at || "Unavailable"}
                   </div>
                 </div>
 
@@ -346,14 +364,16 @@ export default function DeploymentDetailPage({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))",
                   gap: 14,
                   marginTop: 18,
                 }}
               >
                 <ReferenceList
                   title="Input References"
-                  refs={task.input_refs || []}
+                  refs={task.input_refs}
+                  status={task.status}
+                  captured={evidence?.state === "available"}
                   onPreview={(ref) =>
                     previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
                   }
@@ -361,7 +381,9 @@ export default function DeploymentDetailPage({
 
                 <ReferenceList
                   title="Output References"
-                  refs={task.output_refs || []}
+                  refs={task.output_refs}
+                  status={task.status}
+                  captured={evidence?.state === "available"}
                   onPreview={(ref) =>
                     previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
                   }
@@ -370,6 +392,7 @@ export default function DeploymentDetailPage({
             </div>
           ))}
         </div>
+        </details>
       </section>
 
       {(previewLoading || preview) && (
@@ -778,7 +801,7 @@ function Info({ label, value }: { label: string; value: string }) {
       }}
     >
       <div style={{ color: "#667085", fontSize: 13 }}>{label}</div>
-      <strong>{value}</strong>
+      <strong style={{ overflowWrap: "anywhere" }}>{value}</strong>
     </div>
   );
 }
@@ -804,22 +827,26 @@ function statusBadgeStyle(status: string) {
 function ReferenceList({
   title,
   refs,
+  status,
+  captured,
   onPreview,
 }: {
   title: string;
-  refs: any[];
+  refs?: any[];
+  status: string;
+  captured: boolean;
   onPreview: (ref: any) => void;
 }) {
   return (
     <div style={{ background: "white", borderRadius: 14, padding: 14 }}>
       <strong>{title}</strong>
 
-      {refs.length === 0 && (
-        <p style={{ color: "#667085", marginBottom: 0 }}>None</p>
+      {referenceMessage(refs, status) && (
+        <p style={{ color: "#667085", marginBottom: 0 }}>{referenceMessage(refs, status)}</p>
       )}
 
       <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-        {refs.map((ref, index) => (
+        {(refs || []).map((ref, index) => (
           <div
             key={`${ref.protocol}-${ref.uri}-${index}`}
             style={{
@@ -845,10 +872,10 @@ function ReferenceList({
                 wordBreak: "break-all",
               }}
             >
-              {ref.uri}
+              {captured ? "Recorded in execution capture. Available artifacts are linked above." : ref.uri}
             </div>
 
-            <button
+            {!captured && <button
               type="button"
               onClick={() => onPreview(ref)}
               style={{
@@ -863,7 +890,7 @@ function ReferenceList({
               }}
             >
               Preview
-            </button>
+            </button>}
           </div>
         ))}
       </div>
