@@ -1,0 +1,183 @@
+{
+  "date": "2026-10-28",
+  "milestone": "AIE-38 bounded offline terminal analyzer composition",
+  "base_commit": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+  "branch": "codex/aie38-bounded-workflow-composition",
+  "provider_interpretation_verified": false,
+  "production_compatibility_verified": false,
+  "main": {
+    "draft_id": "09e27e0b-5bfb-4de7-82b5-6c520bbf5ac9",
+    "revision": 3,
+    "solution_id": "ae5f2c0d-fda4-4868-9eb4-4650873f1130",
+    "design_sha256": "1ce83cd8f1060039095935e137285379e5c783c845f6accada9f86e405c91379",
+    "baseline_sha256": "268d7394acb61dfb20f80504948667e8cd41c8f80be9464404befea52d96b4c5",
+    "execution_counts": {
+      "deployments": 0,
+      "execution_submissions": 0,
+      "local_dutch_executions": 0
+    }
+  },
+  "narrow": {
+    "draft_id": "d4804225-f516-4e59-b4c0-786e2f153562",
+    "revision": 3,
+    "solution_id": "8910ff57-a03b-447e-b91c-c876574c3aab",
+    "design_sha256": "1cc390ec89cbcb6d0fa7f2951bcaa0e39e8efd6fbb3acbb056e305b4a94a5e60",
+    "baseline_sha256": "268d7394acb61dfb20f80504948667e8cd41c8f80be9464404befea52d96b4c5",
+    "execution_counts": {
+      "deployments": 0,
+      "execution_submissions": 0,
+      "local_dutch_executions": 0
+    }
+  },
+  "starting_revision": 0,
+  "pending_revision": 0,
+  "applied_revision": 1,
+  "undo_revision": 2,
+  "saved_revision": 3,
+  "initial_node_ids": [
+    "input",
+    "generate-grid",
+    "output"
+  ],
+  "added_instance": {
+    "id": "c4b7cc19-cb51-455f-92e2-93b828a6cc8f",
+    "service_id": "aie37-benchmark",
+    "operation_name": "RunBenchmark",
+    "pin": {
+      "contract_id": "441153b2-9b3b-48c1-81e4-649645f30143",
+      "contract_version": "1.0.0"
+    }
+  },
+  "removed_edges": [
+    {
+      "id": "aie38-generator-output",
+      "data": {
+        "connection_kind": "workflow_boundary"
+      },
+      "source": "generate-grid",
+      "target": "output"
+    }
+  ],
+  "added_edges": [
+    {
+      "id": "c4b7cc19-cb51-455f-92e2-93b828a6cc8f-input",
+      "data": {
+        "binding": {
+          "source_slot": "captured_grid",
+          "target_slot": "captured_grid"
+        },
+        "connection_kind": "service_connection"
+      },
+      "source": "generate-grid",
+      "target": "c4b7cc19-cb51-455f-92e2-93b828a6cc8f"
+    },
+    {
+      "id": "c4b7cc19-cb51-455f-92e2-93b828a6cc8f-output",
+      "data": {
+        "connection_kind": "workflow_boundary"
+      },
+      "source": "c4b7cc19-cb51-455f-92e2-93b828a6cc8f",
+      "target": "output"
+    }
+  ],
+  "preserved_generator": {
+    "id": "generate-grid",
+    "position": {
+      "x": 310,
+      "y": 150
+    }
+  },
+  "preserved_generator_settings": {
+    "parameters": {
+      "seed": 42
+    },
+    "contract_id": "921a87fc-329f-42b6-a546-ddf7d9c0ec26",
+    "contract_version": "1.0.0"
+  },
+  "preserved_generator_contract": {
+    "contract_id": "921a87fc-329f-42b6-a546-ddf7d9c0ec26",
+    "contract_version": "1.0.0"
+  },
+  "preserved_workflow_input": null,
+  "pending_design_unchanged": true,
+  "undo_design_unchanged": true,
+  "tests": {
+    "portable_full_before_final_three_cases": 234,
+    "final_structural_and_settings_focused": 44,
+    "registry_input_postgresql": 65,
+    "postgresql_persistence": 11,
+    "final_postgresql_structural_race": 1,
+    "web_utilities": 22,
+    "typecheck": "passed",
+    "optimized_webpack_build": "passed",
+    "final_provider_adapter_cases": 9,
+    "provider_temp_directory_setup_error": "one test setup denied; same mocked-provider case passed with explicit writable basetemp"
+  },
+  "rendered": {
+    "desktop": "normal signed-in application, provider-boundary fixture",
+    "narrow": {
+      "method": "actual application in labelled iframe",
+      "viewport_css_px": 390,
+      "height_css_px": 844,
+      "client_width": 367,
+      "scroll_width": 367,
+      "physical_device_test": false
+    }
+  },
+  "preservation_differences": {
+    "databases": [],
+    "files": [],
+    "containers": [],
+    "source": []
+  },
+  "protected_counts": {
+    "databases": 5,
+    "private_files": 156,
+    "original_dirty_source_files": 195
+  },
+  "historical_artifact_sha256": {
+    "configuration": "24f9e01c17119611c6c8315e5415d95cf1843cbb3993b70c1187f3cd0bc8e301",
+    "grid": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+    "network": "a521315934294f2850d03b713e4cc29f0f0710f84b02ee95625f5dbc6f0f0462",
+    "benchmark": "096befec9ccd5d65f19c38d20239dcd5b8f955745144fc66b199883384eaf189"
+  },
+  "allowance": {
+    "calls": 12,
+    "max_calls": 12,
+    "ceiling_usd": "0.10",
+    "accounted_usd": "0.003784750",
+    "remaining_usd": "0.096215250",
+    "outstanding_reservations": 0,
+    "unsettled_usd": "0",
+    "ledger_sha256": "c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165",
+    "new_provider_calls": 0,
+    "amendments": 0
+  },
+  "guard_checks": {
+    "/workflows/submit-to-orchestrator": 403,
+    "/workflows/submit": 403,
+    "/workflows/runtime-preflight": 403,
+    "/deployments": 403,
+    "/orchestrator/workflows/test": 403
+  },
+  "screenshots": {
+    "aie38-builder-desktop.png": "8e9c224db51dbc1774d362bf46b8f27e4df8e6699478d089d549245f06654a6e",
+    "aie38-builder-narrow.png": "9fb5a4223662ed773893c86a4f8e89c59578728efd09277fe31847bd516e5569",
+    "aie38-review-desktop.png": "da1a76eeeeca89cefaa8964d6081e29a756d41da6dee1669a6234c29ad0dd596",
+    "aie38-review-narrow.png": "d4180ccc17f936141caa927b4f6f968c48efb5390da09e312603285c63e3ac2a"
+  },
+  "dependencies": {
+    "portal_prs": [
+      8,
+      9,
+      10
+    ],
+    "wp3_prs": [
+      2,
+      3
+    ]
+  },
+  "recommended_status": "In Review for this bounded milestone; whole conversational composition incomplete",
+  "aie18_status": "In Review",
+  "implementation_commit": "769f951816dd9e68766c69cb68f1d126e57434be"
+}
