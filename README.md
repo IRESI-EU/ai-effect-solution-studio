@@ -8,8 +8,8 @@ The MVP is intended for local consortium testing. It is not a production certifi
 
 Solution Studio supports three main activities:
 
-- node providers publish service metadata and submit services for governance;
-- solution designers compose approved services into saved workflows;
+- node providers publish service metadata and submit services for governance.
+- solution designers compose approved services into saved workflows.
 - TEF operators review services and monitor deployments, tasks, and evidence.
 
 The role selector in the shell is a persona preview. It changes guidance only and does not grant permissions.
