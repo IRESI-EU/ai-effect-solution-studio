@@ -188,6 +188,8 @@ class ExecutionParameterContract(StrictContractModel):
 
 class OperationContractDefinition(StrictContractModel):
     operation_role: OperationRole
+    # Opt-in, exact single-reference semantics; no projection or conversion.
+    binding_transport: Literal["whole-output-v1"] | None = None
     inputs: list[OperationContractInput] = Field(default_factory=list)
     outputs: list[OperationContractOutput] = Field(default_factory=list)
     adapter_capabilities: list[dict[str, Any]] = Field(default_factory=list)

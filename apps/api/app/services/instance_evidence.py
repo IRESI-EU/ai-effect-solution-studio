@@ -15,6 +15,8 @@ def sha(value):
 
 
 def load(row, db=None):
+    if settings.aie37_qualification:
+        return load_qualification(row, db)
     if not settings.aie18_evidence_root:
         return {"state": "unavailable", "message": "Algorithm consumption evidence is not enabled for this runtime", "instances": []}
     if not re.fullmatch(r"wf-[a-f0-9]{12}", row.workflow_id or ""):
@@ -87,3 +89,36 @@ def load(row, db=None):
                 results.append({**identity, "state": "unavailable", "message": "Algorithm evidence failed integrity or association validation"})
     state = "available" if results and all(r["state"] == "available" for r in results) else "unavailable"
     return {"state": state, "instances": results, "limitations": "Isolated software instrumentation; production compatibility unverified"}
+
+
+def load_qualification(row, db):
+    """Reuse validated Dutch collection; never relabel a submission as consumption."""
+    from app.models.deployment import Deployment
+    from app.services import local_dutch_capture as capture
+    from app.services.orchestrator_adapter import get_workflow_status, get_workflow_tasks
+    from fastapi import HTTPException
+    if not capture.qualification_enabled() or db is None:
+        return {"state": "unavailable", "instances": []}
+    deployment = db.query(Deployment).filter(Deployment.workflow_id == row.workflow_id).first()
+    if not deployment or deployment.created_by_user_id != row.owner_user_id:
+        return {"state": "unavailable", "instances": []}
+    try:
+        collected = capture.collect(db, deployment, get_workflow_status(row.workflow_id), get_workflow_tasks(row.workflow_id)["tasks"])
+        if collected is None:
+            return {"state": "unavailable", "instances": []}
+        evidence, blobs = collected
+        instances = []
+        for node in row.submitted["compiled"]["solution_studio_metadata"]["execution_instances"]:
+            source = node["operation_name"] == "ConfigureAndSynthesize"
+            key = "grid" if source else "benchmark"
+            artifact = next((a for a in evidence["artifacts"] if a["id"] == key), {})
+            available = evidence["state"] == "available" and artifact.get("state") == "available"
+            instances.append({"instance_id": node["instance_id"], "task_id": node["task_id"],
+                "state": "available" if available else "unavailable",
+                "algorithm_consumed": evidence.get("algorithm_consumed") if source and available else None,
+                "instrumentation": "Observed PowerGridGenerator seed and returned grid; verified captured configuration" if source else "Benchmark consumed the associated upstream manifest and grid digest",
+                "output_sha256": artifact.get("sha256"), "input_binding_verified": bool(evidence.get("verified_bindings")) if available else False})
+        return {"state": evidence["state"], "instances": instances,
+                "limitations": "Isolated Dutch software workflow. Production compatibility unverified."}
+    except (HTTPException, KeyError):
+        return {"state": "unavailable", "instances": [], "message": "Runtime or associated evidence unavailable"}

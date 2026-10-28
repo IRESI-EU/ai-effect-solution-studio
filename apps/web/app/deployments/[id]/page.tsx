@@ -293,8 +293,8 @@ export default function DeploymentDetailPage({
         )}
       </section>
 
-      {!configuredRun && <RecordedResults evidence={evidence} status={workflow?.status || "unknown"} tasks={tasks} />}
-      <SubmittedConfiguration workflowId={workflowId} status={workflow?.status || "unknown"} onConfigured={setConfiguredRun} />
+      {(!configuredRun || evidence?.capture_version) && <RecordedResults evidence={evidence} status={workflow?.status || "unknown"} tasks={tasks} />}
+      <SubmittedConfiguration workflowId={workflowId} status={workflow?.status || "unknown"} onConfigured={setConfiguredRun} resultsAvailable={Boolean(evidence?.capture_version)} />
 
       <section
         className="card"

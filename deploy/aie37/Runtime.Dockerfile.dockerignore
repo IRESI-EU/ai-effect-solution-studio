@@ -1,0 +1,12 @@
+**
+!deploy/
+!deploy/aie37/
+!deploy/aie37/runtime.py
+!deploy/aie37/capture_algorithms.py
+!deploy/aie37/contracts.json
+!apps/
+!apps/api/
+!apps/api/app/
+!apps/api/app/services/
+!apps/api/app/services/parameter_values.py
+!apps/api/app/services/dutch_capture_contract.py

@@ -1,5 +1,7 @@
 # Operation Contract Registry V1
 
+> Dated update: [AIE-37 local qualification, 28 October 2026](AIE37_CATALOGUE_QUALIFICATION.md) supersedes earlier baseline statements about semantic binding checks. Earlier evidence is retained.
+
 ## Purpose
 
 An operation contract is the governed, versioned declaration of the data an
@@ -287,3 +289,20 @@ only `requirements.txt`.
 - The one-active invariant is application-enforced rather than protected by a
   partial unique database index.
 - Adapter capabilities are stored but not semantically evaluated.
+
+## 28 October 2026 — AIE-37 explicit connection qualification
+
+The existing registry now supports optional `definition.binding_transport`
+`whole-output-v1`. It names the one complete DataReference already forwarded by
+WP3; it does not introduce a second registry, projections, joins or conversions.
+Nodes pin `operation_contract` ID/version; saved edges retain named source/target
+slots. Save, compile and submission reject incompatible or unresolved opt-in
+bindings and preserve ownership/revision checks. Full definitions, provenance and
+digests are recorded in immutable submission metadata. Legacy declarations remain
+unqualified; they are not retrospectively certified.
+
+The Dutch capture schema's actual producer/consumer fields, required inputs,
+protocol, cardinality, parameter distinction and unknown units are documented in
+[deploy/aie37/SCHEMAS.md](../deploy/aie37/SCHEMAS.md).
+[AIE-37 qualification](AIE37_CATALOGUE_QUALIFICATION.md) records the single local
+run and production gaps. All earlier registry/governance evidence above is retained.

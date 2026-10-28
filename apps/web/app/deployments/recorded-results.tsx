@@ -8,11 +8,12 @@ export default function RecordedResults({ evidence, status, tasks = [] }: { evid
     <h2 style={{ marginTop: 0 }}>Experiment results</h2>
     <p><strong>{executionLabel(status)}</strong>{evidence.state !== "available" && <> · <strong>{["pending", "delayed"].includes(evidence.state) ? "Results pending" : "Results unavailable"}</strong></>}</p>
     <p>{status === "failed" ? "Execution failed. " : !["completed", "failed"].includes(status) ? "Execution in progress. " : ""}{evidence.message}</p>
-    <p><strong>Recorded seed: {seed ?? "Unavailable — no execution input captured"}</strong>{seed !== undefined && !evidence.execution_input?.seed ? " (runtime default; no seed submitted)" : ""}</p>
+    <p><strong>Recorded seed: {seed ?? "Unavailable — no execution input captured"}</strong>{seed !== undefined && !evidence.execution_input?.seed && !evidence.algorithm_consumed ? " (runtime default; no seed submitted)" : ""}</p>
     {evidence.input_source && <p style={{ color: "#526173" }}>{evidence.input_source}</p>}
     {tasks.length > 0 && <ul aria-label="Task progress">{tasks.map(task => <li key={task.task_id}>
       <strong>{task.node_key === "grid_synth_service:ConfigureAndSynthesize" ? "Grid generation" : task.node_key === "benchmark-runner:RunBenchmark" ? "Benchmark" : task.node_key}</strong>: {task.status}
     </li>)}</ul>}
+    {evidence.verified_bindings?.length > 0 && <p>Verified data flow: the benchmark consumed the grid captured for this execution.</p>}
     {evidence.grid && <p><strong>Generated grid:</strong> {evidence.grid.nodes} nodes · {evidence.grid.edges} edges · seed {evidence.grid.seed}</p>}
     {evidence.artifacts.length > 0 && <><h3>Downloads (optional)</h3><div style={{ display: "grid", gap: 10 }}>
       {evidence.artifacts.map((artifact: any) => <div key={artifact.id}>

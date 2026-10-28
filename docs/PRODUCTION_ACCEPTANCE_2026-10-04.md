@@ -79,3 +79,12 @@ The public cutover completed on 2026-10-04 using Solution Studio commit
   Traefik reported no new routing errors.
 - Independent HTTPS requests from the deployment workstation returned HTTP 200
   for both public homepages and the public health endpoint.
+
+## 28 October 2026 — separate local AIE-37 checkpoint
+
+[AIE-37 qualification](AIE37_CATALOGUE_QUALIFICATION.md) adds one local Dutch
+generation-to-benchmark run, explicit saved I/O bindings, runtime contract checks
+and authorized artifact/hash evidence. It does not revalidate or change this
+earlier production record, deployment, governance or source pins. Production
+compatibility of the new review branch remains explicitly unverified. AIE-18
+remains In Review.

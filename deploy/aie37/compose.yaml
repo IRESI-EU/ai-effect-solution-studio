@@ -1,0 +1,71 @@
+name: ai-effect-aie37
+services:
+  postgres:
+    image: postgres:16
+    env_file: ${AIE37_PROFILE_DIR:?Prepare the private qualification directory}/postgres.env
+    ports: ["127.0.0.1:28145:5432"]
+    volumes: ["aie37-db:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aie37 -d design_aie37_qualification"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["aie37-redis:/data"]
+  seed-orchestrator:
+    image: ai-effect-aie18-orchestrator:integration-v2
+    environment: {REDIS_URL: "redis://redis:6379/0", HOST: "0.0.0.0", PORT: "8000"}
+    depends_on: [redis]
+  worker:
+    image: ai-effect-aie18-orchestrator:integration-v2
+    command: ["python", "worker_daemon.py"]
+    environment: {REDIS_URL: "redis://redis:6379/0", WORKER_POLL_INTERVAL: "1.0"}
+    depends_on: [redis]
+  seed-synth:
+    image: ai-effect-aie37-synth:qualification-v1
+    build:
+      context: ../..
+      dockerfile: deploy/aie37/Runtime.Dockerfile
+      args:
+        BASE_IMAGE: ai-effect-local-seed-synth:ba598b2459f9
+        CAPTURE_ROLE: synth
+    volumes: ["aie37-synth-evidence:/run-evidence"]
+  seed-benchmark:
+    image: ai-effect-aie37-benchmark:qualification-v1
+    build:
+      context: ../..
+      dockerfile: deploy/aie37/Runtime.Dockerfile
+      args:
+        BASE_IMAGE: ai-effect-local-seed-benchmark:ba598b2459f9
+        CAPTURE_ROLE: benchmark
+    volumes: ["aie37-benchmark-evidence:/run-evidence", "aie37-synth-evidence:/upstream-evidence:ro"]
+  api:
+    image: ai-effect-aie37-api:qualification-v3  # gitleaks:allow -- local Docker image tag, not a credential
+    build: {context: ../.., dockerfile: deploy/aie37/Api.Dockerfile}
+    env_file: ${AIE37_PROFILE_DIR}/api.env
+    environment:
+      ORCHESTRATOR_BASE_URL: http://seed-orchestrator:8000
+      DESIGN_AI_ENABLED: "false"
+      OPENAI_API_KEY: ""
+      DESIGN_AI_ACCEPTANCE_BUDGET_FILE: ""
+      DESIGN_AI_ACCEPTANCE_TASK_LIMIT_FILE: ""
+      BOOTSTRAP_ADMIN_EMAIL: ""
+      BOOTSTRAP_ADMIN_PASSWORD: ""
+      AIE37_QUALIFICATION: "true"
+      LOCAL_DUTCH_AUTO_CAPTURE_ROOT: /runtime-captures
+      LOCAL_DUTCH_CAPTURE_RUNTIME: /capture-runtime.json
+    ports: ["127.0.0.1:28185:8080"]
+    volumes:
+      - "aie37-synth-evidence:/runtime-captures/synth:ro"
+      - "aie37-benchmark-evidence:/runtime-captures/benchmark:ro"
+      - "${AIE37_PROFILE_DIR}/runtime.json:/capture-runtime.json:ro"
+      - "${AIE37_PROFILE_DIR}/source-services.json:/source-services.json:ro"
+    depends_on:
+      postgres: {condition: service_healthy}
+volumes:
+  aie37-db:
+  aie37-redis:
+  aie37-synth-evidence:
+  aie37-benchmark-evidence:

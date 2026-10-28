@@ -1,5 +1,17 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any
+
+
+class OperationContractPin(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    contract_id: str = Field(min_length=1)
+    contract_version: str = Field(min_length=1)
+
+
+class SlotBinding(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    source_slot: str = Field(min_length=1)
+    target_slot: str = Field(min_length=1)
 
 
 class WorkflowSubmitNode(BaseModel):
@@ -16,12 +28,14 @@ class WorkflowSubmitNode(BaseModel):
     internal_host: str | None = None
     internal_port: str | None = None
     configuration: dict[str, Any] | None = None
+    operation_contract: OperationContractPin | None = None
 
 
 class WorkflowSubmitEdge(BaseModel):
     model_config = ConfigDict(extra="forbid")
     source: str
     target: str
+    binding: SlotBinding | None = None
 
 
 class WorkflowSubmitRequest(BaseModel):

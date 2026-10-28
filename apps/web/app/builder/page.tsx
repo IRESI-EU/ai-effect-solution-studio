@@ -25,6 +25,7 @@ import { deploymentResultsUrl, executionLabel, isDutchExperiment } from "../../l
 import { designReturnUrl } from "../design-ai/session";
 import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
 import { copyInstance } from "../../lib/copy-instance";
+import CapabilityBindings from "../../components/capability-bindings";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
 
@@ -332,6 +333,7 @@ function BuilderContent() {
       return {
         node_id: node.id,
         ...("configuration" in node.data ? { configuration: node.data.configuration } : {}),
+        ...("operation_contract" in node.data ? { operation_contract: node.data.operation_contract } : {}),
         service_id: service.id,
         container_name: service.container_name || service.id,
         image: service.image,
@@ -347,7 +349,8 @@ function BuilderContent() {
     const validNodeIds = new Set(serviceNodes.map((node) => node.id));
     const workflowEdges = edges
       .filter((edge) => validNodeIds.has(edge.source) && validNodeIds.has(edge.target))
-      .map((edge) => ({ source: edge.source, target: edge.target }));
+      .map((edge) => ({ source: edge.source, target: edge.target,
+        ...(edge.data && "binding" in edge.data ? { binding: edge.data.binding } : {}) }));
 
     return {
       name: solutionName || "Solution Studio Workflow",
@@ -435,12 +438,12 @@ function BuilderContent() {
       const sourceService = nodes.find((node) => node.id === edge.source)?.data.service as Service;
       const targetService = nodes.find((node) => node.id === edge.target)?.data.service as Service;
 
-      if (sourceService.output_type === targetService.input_type) {
-        notices.push(`Passed: ${sourceService.name} to ${targetService.name} types are compatible.`);
+      if (edge.data?.binding) {
+        notices.push(`Connection: ${sourceService.name} to ${targetService.name} will be checked against pinned operation contracts.`);
+      } else if (sourceService.output_type !== targetService.input_type) {
+        blockers.push(`Blocked: ${sourceService.name} to ${targetService.name} has different catalogue interface labels. Choose a verified data connection or review the services with their owner.`);
       } else {
-        blockers.push(
-          `Blocked: ${sourceService.name} to ${targetService.name} is incompatible.\nOutput: ${sourceService.output_type}\nInput: ${targetService.input_type}`
-        );
+        notices.push(`Unverified: ${sourceService.name} to ${targetService.name} has no explicit semantic binding.`);
       }
     });
 
@@ -466,8 +469,26 @@ function BuilderContent() {
     };
   }
 
-  function validateWorkflow() {
+  async function validateWorkflow() {
+    const revision = workflowRevisionRef.current;
     const result = evaluateWorkflowDesign();
+    if (result.valid) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/workflows/compile`, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...buildWorkflowPayload(), ...(buildRunInput() ? { run_input: buildRunInput() } : {}) }),
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(apiErrorMessage(body, "Connection validation failed."));
+        const report = body.solution_studio_metadata.capability_bindings;
+        result.results.push(`${report.status === "verified" ? "Passed" : "Notice"}: ${report.message}`);
+      } catch (error) {
+        result.valid = false;
+        result.results = result.results.filter(message => message !== "Passed: Workflow design is valid.");
+        result.results.unshift(`Blocked: ${error instanceof Error ? error.message : "Connection validation failed."}`);
+      }
+    }
+    if (revision !== workflowRevisionRef.current) return { valid: false, results: ["Design changed during validation. Validate again."] };
     setWorkflowDesignStatus(result.valid ? "valid" : "invalid");
     setValidationResults(result.results);
     setRuntimePreflight(null);
@@ -482,7 +503,7 @@ function BuilderContent() {
     if (prepareInFlightRef.current) return;
     prepareInFlightRef.current = true;
 
-    const design = validateWorkflow();
+    const design = await validateWorkflow();
     if (!design.valid) {
       prepareInFlightRef.current = false;
       return;
@@ -508,7 +529,7 @@ function BuilderContent() {
 
       if (workflowRevision !== workflowRevisionRef.current) return;
 
-      const preflight = await runRuntimePreflight(buildWorkflowPayload(savedSolution.id));
+      const preflight = await runRuntimePreflight({ ...buildWorkflowPayload(savedSolution.id), ...(buildRunInput() ? { run_input: buildRunInput() } : {}) });
       if (workflowRevision !== workflowRevisionRef.current) return;
       setRuntimePreflight(preflight);
       setDeploymentConfirmationReady(preflight.status === "ready");
@@ -976,6 +997,19 @@ function BuilderContent() {
             </div>
           )}
 
+          <CapabilityBindings nodes={nodes} edges={edges} onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
+            const edge = edges.find(e => e.id === edgeId);
+            if (!edge) return;
+            setNodes(values => values.map(node => {
+              const contract = node.id === edge.source ? source : node.id === edge.target ? target : null;
+              return contract ? { ...node, data: { ...node.data, operation_contract: {
+                contract_id: contract.id, contract_version: contract.contract_version,
+              } } } : node;
+            }));
+            setEdges(values => values.map(value => value.id === edgeId ? { ...value, data: { ...value.data,
+              binding: { source_slot: sourceSlot, target_slot: targetSlot } } } : value));
+            invalidateWorkflowResults();
+          }} />
           <div style={{ marginTop: 30 }}>
             <h3>Validation Results</h3>
 
