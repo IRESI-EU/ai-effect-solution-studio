@@ -1,0 +1,9 @@
+**
+!apps/
+!apps/api/
+!apps/api/app/
+!apps/api/app/**
+!deploy/
+!deploy/aie37/
+!deploy/aie37/initialize.py
+!deploy/aie37/contracts.json

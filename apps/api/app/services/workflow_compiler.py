@@ -11,6 +11,7 @@ from app.schemas.workflow_submit import WorkflowSubmitRequest
 from app.services.instance_configuration import validate_configuration
 from app.models.operation_contract import OperationContract
 from app.services.parameter_values import parameter_contract_digest
+from app.services import capability_bindings
 
 
 def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None = None):
@@ -19,6 +20,7 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
         raise HTTPException(422, "Node instance IDs must be non-empty and unique")
     if any(edge.source not in ids or edge.target not in ids for edge in workflow.edges):
         raise HTTPException(422, "An edge references a missing instance")
+    binding_report = capability_bindings.validate(workflow, db)
     connected_by_source = {}
 
     for edge in workflow.edges:
@@ -143,6 +145,7 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
             ],
             "nodes": onboarding_nodes,
             "warnings": warnings,
+            "capability_bindings": binding_report,
         },
     }
     if configurations:

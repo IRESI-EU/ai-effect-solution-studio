@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     local_dutch_capture_runtime: str = ""
     # Separate disposable AIE-18 proof only; never enabled by default.
     aie18_evidence_root: str = ""
+    # A separate local qualification database/network, never the guarded demos.
+    aie37_qualification: bool = False
 
 
 settings = Settings()

@@ -43,6 +43,8 @@ def validate_builder_configurations(db, nodes, edges, user):
         raise HTTPException(422, "An edge references a missing instance")
     if has_configuration(nodes) and any(edge.get("sourceHandle") or edge.get("targetHandle") for edge in edges):
         raise HTTPException(422, "Named port bindings are not supported by the current compiler; use whole-output connections")
+    from app.services.capability_bindings import validate_builder
+    validate_builder(nodes, edges, db)
     for node in nodes:
         data = node.get("data", {})
         if "configuration" not in data:
@@ -55,4 +57,4 @@ def validate_builder_configurations(db, nodes, edges, user):
 
 
 def has_configuration(nodes):
-    return any(isinstance(node.get("data"), dict) and "configuration" in node["data"] for node in nodes)
+    return any(isinstance(node.get("data"), dict) and ("configuration" in node["data"] or "operation_contract" in node["data"]) for node in nodes)

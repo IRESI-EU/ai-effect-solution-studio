@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, Response
@@ -15,6 +16,8 @@ from app.models.design_ai import DesignDraft
 from app.services import local_dutch_capture
 from app.services import execution_submission
 from app.models.execution_submission import ExecutionSubmission
+from app.services import capability_bindings
+from app.services.capability_readiness import require_binding_transport
 from app.services.instance_configuration import validate_builder_configurations, has_configuration
 from app.dependencies.auth import (
     can_manage_owned_record,
@@ -671,10 +674,14 @@ def runtime_preflight_endpoint(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
+    compiled = compile_to_wp3_payload(workflow, db)
     result = run_runtime_preflight(workflow.nodes, db)
+    result["design_compatibility"] = compiled["solution_studio_metadata"]["capability_bindings"]
     if result["status"] == "ready" and any("configuration" in n.model_fields_set for n in workflow.nodes):
         from app.services.orchestrator_adapter import require_parameter_transport
-        result["parameter_compatibility"] = require_parameter_transport(compile_to_wp3_payload(workflow, db))
+        result["parameter_compatibility"] = require_parameter_transport(compiled)
+    if result["status"] == "ready":
+        result["connection_compatibility"] = require_binding_transport(compiled)
     return result
 
 
@@ -686,7 +693,7 @@ def submit_workflow_to_orchestrator_endpoint(
 ):
     if workflow.solution_id:
         query = db.query(Solution).filter(Solution.id == workflow.solution_id)
-        if any("configuration" in n.model_fields_set for n in workflow.nodes):
+        if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)):
             query = query.with_for_update().populate_existing()
         solution = query.first()
 
@@ -701,20 +708,21 @@ def submit_workflow_to_orchestrator_endpoint(
                 status_code=400,
                 detail="Archived solutions cannot be submitted to the orchestrator.",
             )
-        if any("configuration" in n.model_fields_set for n in workflow.nodes):
+        if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)):
             if workflow.expected_updated_at != solution.updated_at.isoformat():
                 raise HTTPException(409, "Saved solution changed; reload before preparing a run")
             saved = {n["id"]: n.get("data", {}) for n in solution.nodes if n.get("data", {}).get("service")}
             if set(saved) != {n.node_id for n in workflow.nodes} or any(
                 saved[n.node_id].get("configuration") != n.configuration
+                or saved[n.node_id].get("operation_contract") != (n.operation_contract.model_dump() if n.operation_contract else None)
                 or saved[n.node_id]["service"]["id"] != n.service_id for n in workflow.nodes
             ):
                 raise HTTPException(409, "Submitted instances must match the saved configuration")
-            saved_edges = {(e["source"], e["target"]) for e in solution.edges if e["source"] in saved and e["target"] in saved}
-            if saved_edges != {(e.source, e.target) for e in workflow.edges}:
+            saved_edges = sorted((e["source"], e["target"], json.dumps((e.get("data") or {}).get("binding"), sort_keys=True)) for e in solution.edges if e["source"] in saved and e["target"] in saved)
+            if saved_edges != sorted((e.source, e.target, json.dumps(e.binding.model_dump() if e.binding else None, sort_keys=True)) for e in workflow.edges):
                 raise HTTPException(409, "Submitted bindings must match the saved solution")
 
-    if any("configuration" in n.model_fields_set for n in workflow.nodes) and not workflow.solution_id:
+    if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)) and not workflow.solution_id:
         raise HTTPException(422, "Configured execution requires an owned saved solution")
 
     preflight = run_runtime_preflight(workflow.nodes, db)
@@ -729,6 +737,9 @@ def submit_workflow_to_orchestrator_endpoint(
         )
 
     compiled_payload = compile_to_wp3_payload(workflow, db)
+
+    if capability_bindings.explicit(workflow):
+        compiled_payload["solution_studio_metadata"]["connection_compatibility"] = require_binding_transport(compiled_payload)
 
     orchestrator_payload = {
         "blueprint": compiled_payload["blueprint"],

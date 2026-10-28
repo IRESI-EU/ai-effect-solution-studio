@@ -8,12 +8,14 @@ import base64
 import json
 from pathlib import Path
 from uuid import uuid4
+from sqlalchemy.engine import make_url
 
 from fastapi import HTTPException
 
 from app.core.config import settings
 from app.models.deployment import Deployment
 from app.models.local_dutch_execution import LocalDutchExecution
+from app.models.service import Service
 from app.services import local_dutch_evidence as historical
 from app.services.dutch_capture_contract import (BASE_IMAGES, VERSION, SOURCE_REVISION, NODE_KEYS, NAMES,
     confined_read, encode, output_ref, sha, task_id, validate_ids)
@@ -23,7 +25,16 @@ LABELS = {"configuration": "Configuration (JSON)", "grid": "Grid data (JSON)",
 
 
 def enabled():
-    return bool(historical.enabled() and settings.local_dutch_auto_capture_root and settings.local_dutch_capture_runtime)
+    return bool((historical.enabled() or qualification_enabled())
+                and settings.local_dutch_auto_capture_root and settings.local_dutch_capture_runtime)
+
+
+def qualification_enabled():
+    url = make_url(settings.database_url)
+    return (settings.aie37_qualification and url.host == "postgres"
+            and url.database == "design_aie37_qualification"
+            and settings.orchestrator_base_url == "http://seed-orchestrator:8000"
+            and not settings.design_ai_enabled and not settings.openai_api_key)
 
 
 def runtime_identity():
@@ -44,6 +55,8 @@ def prepare_submission(db, user, workflow, compiled):
     nodes = compiled["blueprint"]["nodes"]
     keys = [n["container_name"] + ":" + n["operation_signature_list"][0]["operation_signature"]["operation_name"] for n in nodes]
     if set(keys) != set(NODE_KEYS.values()) or len(nodes) != 2:
+        if qualification_enabled():
+            raise HTTPException(422, "This qualification permits only the reviewed Dutch generation-to-benchmark chain")
         return None
     by_key = dict(zip(keys, nodes))
     links = by_key[NODE_KEYS["synth"]]["operation_signature_list"][0].get("connected_to", [])
@@ -57,6 +70,10 @@ def prepare_submission(db, user, workflow, compiled):
             ("grid_synth_service", "seed-synth", "8080"), ("benchmark-runner", "seed-benchmark", "8080")}:
         raise HTTPException(409, "This capture supports only the isolated Dutch runtime")
     value = workflow.run_input
+    if qualification_enabled():
+        if (value is not None or compiled["solution_studio_metadata"]["capability_bindings"]["status"] != "verified"
+                or not compiled.get("task_configurations")):
+            raise HTTPException(422, "Qualification requires explicit connections and saved instance settings, without workflow seed input")
     if value is not None and (set(value) != {"seed"} or type(value["seed"]) is not int or value["seed"] not in (42, 43)):
         raise HTTPException(422, "Local Dutch capture supports only recorded integer seed 42 or 43")
     refs = compiled.get("inputs", [])
@@ -77,8 +94,17 @@ def prepare_submission(db, user, workflow, compiled):
         raise HTTPException(503, "Local capture runtime identity is unavailable; no workflow was submitted")
     snapshot = {"request": workflow.model_dump(mode="json"), "root_refs": compiled.get("inputs", []),
                 "blueprint": compiled["blueprint"], "dockerinfo": compiled["dockerinfo"], "runtime": pins}
+    if qualification_enabled():
+        snapshot["task_configurations"] = compiled["task_configurations"]
+        snapshot["capability_bindings"] = compiled["solution_studio_metadata"]["capability_bindings"]
     record = LocalDutchExecution(id=str(uuid4()), solution_id=workflow.solution_id, owner_user_id=user.id,
                                  submitted=json.loads(encode(snapshot)), phase="prepared")
+    if qualification_enabled():
+        # A failed submission still consumes this one-time execution permission.
+        # Lock the shared source row so concurrent solutions cannot race the cap.
+        guard = db.query(Service).filter(Service.id == "aie37-synth").with_for_update().first()
+        if guard is None or db.query(LocalDutchExecution).count():
+            raise HTTPException(409, "The one AIE-37 local execution permission has been consumed. Preserve its outcome; no resubmission is authorized.")
     db.add(record)
     db.commit()  # Must be durable before any execution request leaves Studio.
     return record
@@ -118,6 +144,10 @@ def _read_role(root, workflow, role, snapshot):
         raise ValueError("Execution or runtime association mismatch")
     if role == "synth" and _refs(request["inputs"]) != _refs(snapshot["root_refs"]):
         raise ValueError("Submitted input mismatch")
+    if "task_configurations" in snapshot:
+        expected_configuration = snapshot["task_configurations"].get(NODE_KEYS[role])
+        if request.get("configuration") != expected_configuration:
+            raise ValueError("Submitted instance settings mismatch")
     keys = ("configuration", "grid", "network") if role == "synth" else ("benchmark", "benchmark_source")
     blobs = {key: confined_read(root, prefix + NAMES[key], manifest["files"][key]["sha256"]) for key in keys}
     return manifest, manifest_bytes, request, blobs
@@ -154,6 +184,10 @@ def collect(db, deployment, workflow, tasks):
             continue
         try:
             manifest, data, request, files = _read_role(settings.local_dutch_auto_capture_root, wid, role, snapshot)
+            if "capability_bindings" in snapshot:
+                if (_refs(task.get("input_refs", [])) != _refs(request["inputs"])
+                        or _refs(task.get("output_refs", [])) != [output_ref(wid, task_id(role), data)]):
+                    raise ValueError("Orchestrator references do not match the captured execution")
             digest = sha(data)
             if role in accepted and accepted[role] != digest:
                 raise ValueError("Previously accepted execution evidence changed")
@@ -162,7 +196,14 @@ def collect(db, deployment, workflow, tasks):
                 grid = json.loads(files["grid"])["grid_data"]
                 config = json.loads(files["configuration"])["config"]
                 supplied = snapshot["request"]["run_input"]
-                actual_seed = supplied["seed"] if supplied is not None else 42
+                configuration = snapshot.get("task_configurations", {}).get(NODE_KEYS["synth"])
+                actual_seed = configuration["parameters"]["seed"] if configuration else supplied["seed"] if supplied is not None else 42
+                if configuration:
+                    recorded = json.loads(files["configuration"])
+                    if recorded.get("algorithm_consumed") != configuration["parameters"]:
+                        raise ValueError("Algorithm consumption was not recorded")
+                    result["algorithm_consumed"] = recorded["algorithm_consumed"]
+                    result["input_source"] = "Saved instance settings; verified at the grid generation algorithm"
                 if grid["seed"] != config["seed"] or grid["source_config"]["seed"] != config["seed"] or config["seed"] != actual_seed:
                     raise ValueError("Seed evidence mismatch")
                 if files["network"] != grid["pandapower_json"].encode():
@@ -187,6 +228,8 @@ def collect(db, deployment, workflow, tasks):
                 if (bench["upstream"]["grid_id"], bench["upstream"]["nodes"], bench["upstream"]["edges"]) != (result["grid"]["grid_id"], result["grid"]["nodes"], result["grid"]["edges"]):
                     raise ValueError("Grid/benchmark mismatch")
                 result["benchmark"] = bench
+                if "capability_bindings" in snapshot:
+                    result["verified_bindings"] = snapshot["capability_bindings"]["bindings"]
             accepted[role] = digest
             for key in role_keys:
                 blobs[key] = files[key]
