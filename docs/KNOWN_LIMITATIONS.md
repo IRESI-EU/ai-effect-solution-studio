@@ -150,3 +150,13 @@ Several Python requirements and frontend package declarations do not use fixed v
 - [Team testing guide](TEAM_TESTING_GUIDE.md)
 - [Current capabilities](CURRENT_CAPABILITIES.md)
 - [MVP release notes](MVP_RELEASE_NOTES.md)
+
+## AIE-37 local qualification limits — 28 October 2026
+
+Only the pinned Dutch capture chain has the new end-to-end qualification. The
+whole-output transport supports one input/output slot and no merge, projection,
+conversion or workflow-input routing. Scientific validity, KPI units, real
+node-owner attestation, production auth/network/storage, concurrency, cancellation
+and crash recovery are not established by its one local run. The Danish renderer
+and German VILLAS lifecycle still need independent qualification. See
+[AIE37_CATALOGUE_QUALIFICATION.md](AIE37_CATALOGUE_QUALIFICATION.md).

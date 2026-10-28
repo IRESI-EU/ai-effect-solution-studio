@@ -1,5 +1,7 @@
 # Current MVP Capabilities
 
+> Dated update: [AIE-37 local qualification, 28 October 2026](AIE37_CATALOGUE_QUALIFICATION.md) supersedes earlier baseline statements about semantic binding checks. Earlier evidence is retained.
+
 ## Scope
 
 This document records functionality implemented in the AI-EFFECT Solution Studio MVP. “Implemented” means the repository contains the user interface and API path; it does not imply production certification, cloud readiness, or completion of every external WP3 regression.
@@ -143,3 +145,19 @@ Immediate in-flight guards and disabled controls reduce duplicate saves, readine
 - [Team testing guide](TEAM_TESTING_GUIDE.md)
 - [Known limitations](KNOWN_LIMITATIONS.md)
 - [MVP release notes](MVP_RELEASE_NOTES.md)
+
+## 28 October 2026 — AIE-37 local qualification update
+
+The earlier sections describe their historical baseline. Builder now checks
+opt-in explicit slot bindings against pinned operation contracts on Save and
+compile, then checks runtime contract fingerprints separately from governance
+and health. Shared catalogue labels alone do not establish semantic compatibility.
+Supported legacy graphs retain a clearly unqualified compatibility path.
+
+The existing Dutch generation → benchmark workflow completed one isolated run,
+with seed consumption, exact downstream references and four authorized hashed
+downloads verified. A later draft setting edit left history unchanged. Details,
+limits, source/runtime identities and review URLs are in
+[AIE37_CATALOGUE_QUALIFICATION.md](AIE37_CATALOGUE_QUALIFICATION.md). This is not
+production acceptance. AIE-18 remains In Review; AIE-38 structural editing is not
+implemented. No provider call was made and the allowance remains exhausted 12/12.
