@@ -108,3 +108,79 @@ Independent first-time-user usability remains unverified; the independent checkl
 The compatibility compiler remains authoritative; display metadata cannot prove runtime availability or scientific validity. Only the existing bounded terminal-analyzer addition is supported. Arbitrary structural composition and production compatibility are unverified. The backend baseline failure remains visible. **AIE-18 and the bounded AIE-38 milestone remain In Review; broader AIE-38 composition is incomplete.**
 
 Review dependency: this branch → **#11 → #10 → #9 → #8**. Publishing this draft review branch uses the repository's existing **Preview** deployment path; production remains at its pre-existing main-branch deployment. No merge or tracker change is authorized.
+
+
+## Follow-up — workflow review screen, 29 October 2026
+
+This section supersedes the initial-pass layout and click instructions above. Earlier results and screenshots are retained as historical evidence. PR #12 was verified OPEN/DRAFT on `codex/aie41-builder-review-usability` at `f5ac4d10dfdf7465a915f5da45c79e55d952a852` before editing. The original checkout remains untouched; the existing AIE-41 worktree was clean at that head. Port 23122 was a native Next production process, PID 87044, serving that worktree's build, rather than a new Docker web image. Its original build identity is recorded privately. The existing AIE-38 API/profile/database/catalogue/ports were reused.
+
+### Owner finding and response
+
+The owner reviewed the first pass and still found the screen too long and dense: expanded technical sections stretched the page, left a large empty canvas region and mixed settings, connection metadata, validation and readiness. This is **owner feedback**, not independent usability evidence. Individual label changes had not solved the structural problem. No new human walkthrough of this follow-up has occurred; the independent observer checklist remains unfilled.
+
+The primary screen now contains a workflow overview, the processing steps, the saved data-flow explanation, one status/next-action area, and a canvas with a separate concise settings panel. The catalogue is opened only through **Add services**. A selected step reveals its purpose and settings; long descriptions and setting help are expandable. Selecting a processing step moves focus to its settings heading and reveals the panel again after parameter definitions load, so seed 42 is on screen at the narrow breakpoint. It does not open technical details.
+
+The visible purpose for the preserved copy is **“Generate synthetic power grid, then Benchmark generated grid.”** It is derived from the recorded service names in graph order, and communicates generation followed by benchmarking. The adjacent saved connection says **“Benchmark generated grid uses the grid from Generate synthetic power grid.”** No Dutch example sentence, inferred scientific description or LLM is embedded in the shared summary logic. Nonlinear, disconnected, cyclic and missing-metadata cases use a truthful generic summary instead of an invented linear story. Existing processing identities, graph positions, settings and bindings are unchanged.
+
+Technical content is in explicitly opened, bounded native dialogs with their own scrolling, visible Close controls, Escape, focus return and explicit forward/backward Tab wrapping. Step metadata, exact `captured_grid` slots, pins, schemas, protocols, transport limits, provenance and the existing explicit connection-edit controls remain accessible. Details start closed. The canvas has its own height and no longer stretches with the Inspector or diagnostics. Pan/zoom restoration and Fit workflow remain intact; no node positions were rearranged or saved for screenshots.
+
+### One status and next-action area
+
+The repeated Inspector validation/readiness summaries and separate readiness action panel have been consolidated. **Design saved**, **Design compatibility**, **Runtime readiness** and **Execution** each have a distinct status. A saved binding is shown separately from its design check; detailed per-connection check evidence stays in its technical dialog. An absent execution result is described as **“No execution result in this view”**, without claiming global history is empty or that an execution completed.
+
+The primary action follows actual content state: Save changes, validate design, then (outside the offline profile) prepare readiness and explicitly confirm deployment. Preparation and submission retain their existing backend handlers, ownership/revision checks and confirmation guard. Actual name, parameter, position, binding and saved run-input changes are unsaved; selection, measurement, focus, details and viewport changes are excluded from the design fingerprint. Request-time Save snapshots do not mark later edits saved. JSON input formatting alone is not an edit. Loading another solution clears the prior solution's checks and in-flight validation epoch. Deployment-only input on legacy designs retains its existing execution-time behavior.
+
+In this explicit **OFFLINE TEST FIXTURE**, the primary path stops at design review. **Prepare & deploy** and **Confirm deployment** are not offered, and their handlers also refuse this offline profile. The banner states that execution is unavailable and that Save/validation execute nothing. Readiness remains **Not checked**. Required-input/save/validation/readiness failures stay near the action; detailed diagnostics and deployment options use bounded dialogs. No API, database, route or platform-wide lifecycle vocabulary was renamed.
+
+### Source and focused checks
+
+Implementation commit: `884c0c9d182c49ba0207cea5dd331a5e39773801`; frontend tree `939567c794f7c2d7a4685eef842b205970909952`. The backend tree is still `2e180c6a9e998456f0ca155e246c73a98e6380a1`.
+
+| Check | Actual result |
+|---|---|
+| Focused UI regressions | **35 passed / 0 failed**: 28 prior tests plus 7 workflow-order/fallback, view-only dirty state, actual edit/request-snapshot, next-action/offline and run-input tests |
+| Typecheck | Passed |
+| Optimized production build | Passed; no frontend source changed after this build |
+| Desktop and medium | Observed at 1910 × 1074 and 973 × 997 CSS pixels, normal browser zoom; no browser zoom-out used |
+| Comparable medium-height check | Expanded baseline page **4266px**, workbench **3363px**, canvas card **762px**; follow-up selected-step page **2000px**, canvas card **541px** |
+| Desktop height | Selected-step page **1460px**, canvas card **578px** |
+| Long step technical dialog | **820px** dialog, body **746px** client / **931px** scroll; page **2000px** and canvas card **541px** unchanged |
+| Narrow actual app | **390 × 844** iframe; client and scroll width **367px**; page **2138px**, canvas **360px** |
+| Narrow seed | **42**, control at approximately y=658–680 within the 844px viewport after selection |
+| Narrow technical dialog | Approximately **358 × 726px**; body **633px** client / **859px** scroll; page **2138px** and canvas **360px** unchanged |
+| Keyboard/dialog checks | Both Tab boundaries, Close, Escape and focus return verified; no automatic technical opening |
+| Viewport restoration | Chosen canvas transform `translate(-157.731px, 18.2214px) scale(0.964506)` restored exactly after reload |
+| Saved/check states | Opening details, selecting steps, scrolling and viewport controls retained saved state; design validation succeeded while readiness remained unchecked and no execution controls appeared |
+| Real edits | Seed 42→43 and an input-only local edit showed Unsaved changes / Save; input-only edit was discarded without Save |
+| Revision protection | Stale second-view Save was rejected with “This solution changed since it was opened. Reload before saving.” The failure remained visible near Save |
+| Full backend | **No new backend suite run**: backend unchanged; existing inventory remains **339 passed / 1 baseline failure**, not fully green |
+
+The final UI command adds `lib/builder-review.test.ts` to the prior 28-test command above; TypeScript and `next build --webpack` use the same existing offline routing/environment. Private logs and their hashes are recorded in the evidence file. Initial keyboard checks found a browser boundary case: controls inside collapsed disclosures could still report rectangles. The final focus loop excludes them; both directions were verified after the correction. No failed observation was reclassified as a participant pass.
+
+### One new disposable regression copy
+
+Only new draft `eaa079e7-f4a7-4937-bf15-c2cd329c746c` was mutated. It followed Apply **r1** → Undo **r2** → Apply **r3** → Save → Builder. A read-only comparison confirmed full Undo matched its starting design. Two explicitly queued, labelled offline boundary responses supported that path; **real model/provider calls were zero**. The saved solution is `d40c5cff-f101-4f4a-add6-709b74470e0f`.
+
+Builder then saved seed **43** normally. A second view loaded before that Save attempted a stale Save and was rejected. Reload displayed saved seed 43; a current authorized Save restored **42**. Reload and a read-only comparison confirmed the final engineering nodes/edges, identities, positions, pins, settings and bindings match the draft again. Ordinary React Flow measurement/selection fields are distinguished from engineering content in that comparison. The new draft remains r3. This copy is regression evidence, not a new participant handoff or human observation.
+
+All **four** pre-existing completed drafts remain r3 with their full rows/history unchanged, and all pre-existing solutions, services and operation contracts are unchanged. The five earlier databases, protected historical/profile files, original dirty source and container/image identities match the new before checkpoint. Existing credentials and permissions are unchanged; only normal authorized sign-in audit timestamps/sessions changed. No profile, database, port or catalogue was created. Only the identified fixture web process was rebuilt/restarted; the guarded API/runtime stack was not restarted. Current process/build records are private under `local-backups/aie41-followup-20261029/`.
+
+The ledger is byte-for-byte unchanged at the SHA-256 recorded above: **12/12**, US$0.10 ceiling, **US$0.003784750** accounted, **US$0.096215250** remaining, **zero reservations/unsettled charges**. The offline profile still has zero deployments, execution submissions and capture records; submission middleware returned **403**. Provider calls, workflow executions, allowance amendments, production changes, merges and tracker updates are zero.
+
+### Before / after evidence and current owner check
+
+- [Before — selected generator](screenshots/aie41-followup-before.png), [before — expanded technical sections](screenshots/aie41-followup-before-expanded.png).
+- [After — workflow review](screenshots/aie41-followup-after-desktop.png), [long step details](screenshots/aie41-followup-step-details.png), [exact connection details](screenshots/aie41-followup-connection-details.png).
+- [Narrow seed settings](screenshots/aie41-followup-narrow-settings.png), [narrow bounded technical dialog](screenshots/aie41-followup-narrow-details.png), [stale Save rejection](screenshots/aie41-followup-stale-save.png).
+
+These are rendered agent checks at normal browser zoom, not independent usability observations. Canvas Fit/zoom controls were exercised and a readable viewport restored through normal controls; no stored node positions were changed. Full-page images and clearly labelled narrow fixture images retain context; cropped narrow screenshots retain the fixture heading and actual app frame.
+
+Review the preserved owner copy: **http://localhost:23122/builder?solutionId=2b58ac9e-6341-4b2b-88b3-d5607027c0d2**.
+
+1. Read the purpose, two processing-step buttons and saved grid connection; explain what happens first and what data the benchmark uses.
+2. Select **Generate synthetic power grid** and locate **Random seed = 42** in Step settings.
+3. Open **Technical details for this connection**, find both exact `captured_grid` slots, then close it; confirm that Saved, Checked compatibility, unchecked readiness and execution availability are distinct.
+
+Do not save over the owner copy for this read-only review. Existing sign-in and private credential instructions above still apply. The independent brief/checklist remains unchanged and unfilled. A new human walkthrough is needed before claiming layperson usability. The normal readiness/execution path was not exercised in this deliberately blocked offline profile; production compatibility remains unverified. Wider composition, provisioning, new services and workflow/run lifecycle redesign remain deferred. AIE-18 and bounded AIE-38 remain **In Review**; broader AIE-38 composition remains incomplete.
+
+Publication continues on draft [PR #12](https://github.com/IRESI-EU/ai-effect-solution-studio/pull/12), stacked on #11 → #10 → #9 → #8. Production deployment identity before publication remains `7390379741` / `70168fd14bfe4fe64229b16e1d75dbc1e419457d`; the review branch uses Preview only.

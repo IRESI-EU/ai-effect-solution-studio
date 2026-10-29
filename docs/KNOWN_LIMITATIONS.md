@@ -184,3 +184,9 @@ Fit workflow may show a wide graph at overview scale; readable initial view and
 per-user/per-solution viewport restoration remain available. The full backend
 baseline remains 339 passed / 1 failure. See
 [AIE41_USABILITY_REFINEMENT.md](AIE41_USABILITY_REFINEMENT.md).
+
+
+The AIE-41 follow-up has 35 passing UI regressions and rendered desktop/narrow
+checks, including bounded dialogs and stale Save rejection on one disposable copy.
+It still awaits a new human walkthrough; owner feedback is not independent evidence.
+Offline checks do not exercise runtime readiness/execution or production compatibility.

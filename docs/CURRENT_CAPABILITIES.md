@@ -182,3 +182,11 @@ Builder/refresh completed with seed 42 preserved; independent usability remains
 unverified. No broader composition or lifecycle vocabulary redesign was added.
 See [AIE41_USABILITY_REFINEMENT.md](AIE41_USABILITY_REFINEMENT.md) for rendered
 evidence, 28 UI checks, typecheck/build and preserved offline boundaries.
+
+
+### AIE-41 workflow-review follow-up
+
+Builder now groups purpose, processing steps, saved data flow and one state-driven
+review action, with a separately sized canvas/settings area. Technical and detailed
+diagnostic content uses bounded, keyboard-accessible dialogs. The explicit offline
+profile stops at design review. See [the updated AIE-41 report](AIE41_USABILITY_REFINEMENT.md).
