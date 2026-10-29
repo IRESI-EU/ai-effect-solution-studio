@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import ReviewDialog from "./review-dialog";
 import type { Node, Edge } from "@xyflow/react";
 import { bindingSignature, connectionState, connectionSummary, stepLabel, type Binding, type Contract, type Pin } from "../lib/connection-review";
 
@@ -7,6 +8,7 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
   nodes: Node[]; edges: Edge[]; saved: Record<string, string>; checked: Record<string, string>; selectedEdgeId: string | null;
   onBind: (edgeId: string, source: Contract, target: Contract, sourceSlot: string, targetSlot: string) => void;
 }) {
+  const [detailsEdge, setDetailsEdge] = useState<string | null>(null);
   const [contracts, setContracts] = useState<Record<string, Contract>>({});
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -43,15 +45,16 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
       const input = target?.definition.inputs.find(s => s.name === binding?.target_slot) || target?.definition.inputs[0];
       const setup = supported && output && input ? <button type="button" onClick={() => onBind(edge.id, source, target, output.name, input.name)}>Use published connection</button> :
         <p>Published connection setup is unavailable. Ask the service owner to review its contract.</p>;
-      return <article key={edge.id} className="connection-card">
+      return <article key={edge.id} className={`connection-card ${selectedEdgeId === edge.id ? "is-selected" : ""}`}>
         <p className="connection-sentence">{connectionSummary(stepLabel(a), stepLabel(b), binding)}</p>
-        <p className="connection-state"><span>{state.persistence}</span><span className={state.attention ? "connection-attention" : ""}>{state.check}</span></p>
+        <p className="connection-state"><span>{state.persistence}</span>{state.attention && <span className="connection-attention">{state.check}</span>}</p>
         {state.attention && <p role="alert">The selected slots or contract pins need review. Viewing this panel does not update them.</p>}
-        <details open={selectedEdgeId === edge.id || undefined}>
-          <summary>Connection review</summary>
+        <button type="button" className="connection-details-button" onClick={() => setDetailsEdge(edge.id)}>Technical details for this connection</button>
+        <ReviewDialog open={detailsEdge === edge.id} onClose={() => setDetailsEdge(null)} title="Connection technical details">
+          <p><strong>{state.persistence} · {state.check}</strong></p>
           <p>From <strong>{stepLabel(a)}</strong> to <strong>{stepLabel(b)}</strong>.</p>
           <p>Validate design to check compatibility. Runtime availability is checked separately.</p>
-          <details><summary>Technical details</summary>
+          <section aria-label="Exact connection mapping">
             <dl><dt>Output slot</dt><dd>{binding?.source_slot || "Not selected"}</dd><dt>Input slot</dt><dd>{binding?.target_slot || "Not selected"}</dd>
               <dt>Source contract pin</dt><dd>{JSON.stringify(a.data.operation_contract || "Not selected")}</dd>
               <dt>Target contract pin</dt><dd>{JSON.stringify(b.data.operation_contract || "Not selected")}</dd>
@@ -61,10 +64,10 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
               <dt>Current published versions</dt><dd>{source?.contract_version || "Unknown"} → {target?.contract_version || "Unknown"}</dd>
               <dt>Instances</dt><dd>{edge.source} → {edge.target}</dd></dl>
             <p>{supported ? "whole-output-v1 forwards one complete reference. No projection, conversion or merge." : "Supported runtime transport is unknown."}</p>
-          </details>
+          </section>
           {binding ? <details><summary>Edit connection</summary><p>This explicit action selects current published pins and slots. Review changes before Save; compatibility must be checked again.</p>{setup}</details> : setup}
-        </details>
-        {!binding && supported && <p>Expand Connection review to set up the binding.</p>}
+        </ReviewDialog>
+        {!binding && supported && <p>Open the connection details to set up its binding.</p>}
       </article>;
     })}
   </section>;
