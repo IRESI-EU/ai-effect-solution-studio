@@ -137,3 +137,11 @@
 .ai-instance-settings > div { padding: 8px 0; border-top: 1px solid #e7e1f7; }
 .ai-instance-settings p { margin: 6px 0; line-height: 1.5; }
 .ai-instance-settings code, .ai-proposal code { overflow-wrap: anywhere; }
+
+/* Readable proposal hierarchy, keeping the current/proposed distinction. */
+.structural-review { font-size:13px; line-height:1.5; }
+.structural-review .structural-lead { font-size:15px; margin-bottom:7px; }
+.structural-review .structural-unchanged { font-size:12px; color:#4c4664; }
+.structural-review summary { cursor:pointer; color:#5034a7; font-weight:650; padding:6px 0; }
+.structural-review pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; max-height:280px; overflow:auto; }
+.ai-graph-label span { font-size:14px; line-height:1.35; }

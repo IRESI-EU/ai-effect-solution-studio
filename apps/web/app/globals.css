@@ -2892,3 +2892,22 @@ tbody tr:hover {
 
 .guided-service-review { height:auto; min-height:0; padding:20px; overflow-wrap:anywhere; }
 .guided-service-review details { margin:18px 0; }
+
+/* Focused AIE-41 hierarchy: presentation only; saved graph coordinates are untouched. */
+.connection-review { margin-top:20px; }
+.connection-card { border-top:1px solid #e4e0ef; padding:13px 0; overflow-wrap:anywhere; }
+.connection-sentence { color:#282442; font-size:14px; font-weight:650; line-height:1.5; margin:0 0 9px; }
+.connection-state { display:flex; flex-wrap:wrap; gap:6px; font-size:12px; }
+.connection-state span { padding:4px 7px; background:#f2f0f8; border-radius:6px; }
+.connection-state .connection-attention { color:#b42318; background:#fff0ed; }
+.connection-review details, .inspector-technical, .instance-extra-actions, .inspector-check-details, .inspector-deployment { margin-top:12px; }
+.connection-review summary, .builder-details-card summary { cursor:pointer; font-size:13px; font-weight:650; color:#5034a7; padding:5px 0; }
+.connection-review dl { font-size:12px; }
+.connection-review dt { font-weight:650; margin-top:10px; }
+.connection-review dd { margin:3px 0 0; }
+.inspector-technical { overflow-wrap:anywhere; }
+.inspector-step-name { font-size:17px !important; margin:6px 0 0 !important; line-height:1.4; }
+.inspector-purpose, .inspector-workflow-summary { color:#667085; font-size:13px; line-height:1.5; margin:0; }
+.builder-canvas-area .react-flow__node { font-size:14px !important; line-height:1.4; width:220px; padding:12px 14px; }
+.builder-canvas-area .react-flow__node-input, .builder-canvas-area .react-flow__node-output { width:180px; }
+@media(max-width:760px) { .builder-details-card { max-height:none; overflow:visible; } }

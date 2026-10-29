@@ -26,6 +26,7 @@ import { designReturnUrl } from "../design-ai/session";
 import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
+import { bindingSignature, savedBindingSignatures, stepPurpose } from "../../lib/connection-review";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
 
@@ -35,6 +36,7 @@ type Service = {
   provider: string;
   category: string;
   version: string;
+  description?: string;
   input_type: string;
   output_type: string;
   trust_badge: string;
@@ -130,6 +132,9 @@ function BuilderContent() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [savedBindings, setSavedBindings] = useState<Record<string, string>>({});
+  const [checkedBindings, setCheckedBindings] = useState<Record<string, string>>({});
   const savedUpdatedAtRef = useRef<string | null>(null);
   const [validationResults, setValidationResults] = useState<string[]>([]);
   const [runtimePreflight, setRuntimePreflight] = useState<RuntimePreflightResult | null>(null);
@@ -171,6 +176,7 @@ function BuilderContent() {
 
   const invalidateWorkflowResults = useCallback(() => {
     workflowRevisionRef.current += 1;
+    setCheckedBindings({});
     setWorkflowDesignStatus(null);
     setValidationResults([]);
     setRuntimePreflight(null);
@@ -231,6 +237,9 @@ function BuilderContent() {
         setLoadedSolutionScope(JSON.stringify([user.id, solutionId]));
         setCurrentSolutionId(body.id);
         savedUpdatedAtRef.current = body.updated_at;
+        setSelectedEdgeId(null);
+        setSavedBindings(savedBindingSignatures(body.nodes || [], body.edges || []));
+        setCheckedBindings({});
         setSelectedInstanceId(null);
         setSelectedService(null);
         setSolutionName(body.name);
@@ -472,6 +481,7 @@ function BuilderContent() {
   async function validateWorkflow() {
     const revision = workflowRevisionRef.current;
     const result = evaluateWorkflowDesign();
+    const checked: Record<string, string> = {};
     if (result.valid) {
       try {
         const response = await fetch(`${API_BASE_URL}/workflows/compile`, {
@@ -481,6 +491,12 @@ function BuilderContent() {
         const body = await response.json();
         if (!response.ok) throw new Error(apiErrorMessage(body, "Connection validation failed."));
         const report = body.solution_studio_metadata.capability_bindings;
+        for (const edge of edges) {
+          const selectedBinding = edge.data?.binding as {source_slot: string; target_slot: string} | undefined;
+          if (selectedBinding && report.status === "verified" && report.bindings?.some((binding: {source: string; target: string; source_slot: string; target_slot: string}) =>
+            binding.source === edge.source && binding.target === edge.target && binding.source_slot === selectedBinding.source_slot
+              && binding.target_slot === selectedBinding.target_slot)) checked[edge.id] = bindingSignature(nodes, edge);
+        }
         result.results.push(`${report.status === "verified" ? "Passed" : "Notice"}: ${report.message}`);
       } catch (error) {
         result.valid = false;
@@ -489,6 +505,7 @@ function BuilderContent() {
       }
     }
     if (revision !== workflowRevisionRef.current) return { valid: false, results: ["Design changed during validation. Validate again."] };
+    setCheckedBindings(result.valid ? checked : {});
     setWorkflowDesignStatus(result.valid ? "valid" : "invalid");
     setValidationResults(result.results);
     setRuntimePreflight(null);
@@ -580,6 +597,7 @@ function BuilderContent() {
       const saved = (await res.json()) as SavedSolution;
       if (!saved.id) throw new Error("The saved solution response did not include an ID.");
 
+      setSavedBindings(savedBindingSignatures(payload.nodes, payload.edges));
       setCurrentSolutionId(saved.id);
       savedUpdatedAtRef.current = saved.updated_at;
       setSolutionName(saved.name || payload.name);
@@ -888,9 +906,12 @@ function BuilderContent() {
               deleteKeyCode={guidedDutch ? null : ["Backspace", "Delete"]}
               onNodeClick={(_, node) => {
                 const service = node.data?.service as Service | undefined;
+                setSelectedEdgeId(null);
                 setSelectedService(service || null);
                 setSelectedInstanceId(service ? node.id : null);
               }}
+              onEdgeClick={(_, edge) => { setSelectedEdgeId(edge.id); setSelectedService(null); setSelectedInstanceId(null); }}
+              onPaneClick={() => { setSelectedEdgeId(null); setSelectedService(null); setSelectedInstanceId(null); }}
               minZoom={MIN_ZOOM}
               maxZoom={MAX_ZOOM}
               ariaLabelConfig={{ "controls.fitView.ariaLabel": "Fit workflow" }}
@@ -904,27 +925,19 @@ function BuilderContent() {
         </main>
 
         <aside className="card builder-details-card">
-          <div className="builder-panel-heading"><div><span>Inspector</span><h2>Service details</h2></div></div>
+          <div className="builder-panel-heading"><div><span>Inspector</span><h2>{selectedEdgeId ? "Connection review" : "Service details"}</h2></div></div>
 
           {!selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
-              Select a service on the canvas to inspect its provider, interface, lifecycle, and
-              trust status.
+              Select a step to find its settings, or a connection to review its data flow.
             </p>
           )}
 
+          {!selectedService && <p className="inspector-workflow-summary">{canvasServices.length} service steps · {edges.filter(edge => nodes.find(n => n.id === edge.source)?.data.service && nodes.find(n => n.id === edge.target)?.data.service).length} data connections</p>}
           {selectedService && (
             <div style={{ display: "grid", gap: 12 }}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span className="badge">{selectedService.trust_badge}</span>
-                <span style={lifecycleBadgeStyle(getLifecycleStatus(selectedService))}>
-                  {getLifecycleStatus(selectedService)}
-                </span>
-              </div>
-
-              <ServiceBadges service={selectedService} />
-
-              <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
+              <h3 className="inspector-step-name">{String(nodes.find(n => n.id === selectedInstanceId)?.data.label || selectedService.name)}</h3>
+              <p className="inspector-purpose">{stepPurpose(selectedService)}</p>
               {!guidedDutch && selectedInstanceId && nodes.some(node => node.id === selectedInstanceId) && <InstanceParameters
                 key={selectedInstanceId} instanceId={selectedInstanceId} serviceId={selectedService.id}
                 configuration={nodes.find(node => node.id === selectedInstanceId)?.data.configuration as InstanceConfiguration | undefined}
@@ -981,6 +994,18 @@ function BuilderContent() {
                 </div>
               )}
 
+              <details className="inspector-technical"><summary>Technical details</summary>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span className="badge">{selectedService.trust_badge}</span>
+                <span style={lifecycleBadgeStyle(getLifecycleStatus(selectedService))}>
+                  {getLifecycleStatus(selectedService)}
+                </span>
+              </div>
+
+              <ServiceBadges service={selectedService} />
+
+              <Info label="Instance" value={selectedInstanceId || "Not selected"} />
+              <Info label="Operation contract pin" value={JSON.stringify(nodes.find(n => n.id === selectedInstanceId)?.data.operation_contract || "Not selected")} />
               <Info label="Provider" value={selectedService.provider} />
               <Info label="Category" value={selectedService.category} />
               <Info label="Version" value={`v${selectedService.version}`} />
@@ -994,20 +1019,25 @@ function BuilderContent() {
               <Info label="Proto URI" value={selectedService.proto_uri || "Not declared"} />
               <Info label="Input" value={selectedService.input_type} />
               <Info label="Output" value={selectedService.output_type} />
+              {selectedService.description && <p>{selectedService.description}</p>}
+              </details>
             </div>
           )}
 
-          <CapabilityBindings nodes={nodes} edges={edges} onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
+          <CapabilityBindings nodes={nodes} edges={edges} saved={savedBindings} checked={checkedBindings} selectedEdgeId={selectedEdgeId} onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
             const edge = edges.find(e => e.id === edgeId);
             if (!edge) return;
-            setNodes(values => values.map(node => {
+            const nextNodes = nodes.map(node => {
               const contract = node.id === edge.source ? source : node.id === edge.target ? target : null;
               return contract ? { ...node, data: { ...node.data, operation_contract: {
                 contract_id: contract.id, contract_version: contract.contract_version,
               } } } : node;
-            }));
-            setEdges(values => values.map(value => value.id === edgeId ? { ...value, data: { ...value.data,
-              binding: { source_slot: sourceSlot, target_slot: targetSlot } } } : value));
+            });
+            const nextEdges = edges.map(value => value.id === edgeId ? { ...value, data: { ...value.data,
+              binding: { source_slot: sourceSlot, target_slot: targetSlot } } } : value);
+            if (bindingSignature(nodes, edge) === bindingSignature(nextNodes, nextEdges.find(value => value.id === edgeId)!)) return;
+            setNodes(nextNodes);
+            setEdges(nextEdges);
             invalidateWorkflowResults();
           }} />
           <div style={{ marginTop: 30 }}>
@@ -1018,7 +1048,7 @@ function BuilderContent() {
             )}
 
             <div style={{ display: "grid", gap: 10 }}>
-              {validationResults.map((result, index) => (
+              {validationResults.filter(result => /^(Blocked|Warning)/.test(result)).map((result, index) => (
                 <div
                   key={index}
                   style={{
@@ -1034,6 +1064,7 @@ function BuilderContent() {
               ))}
             </div>
 
+            {validationResults.some(result => !/^(Blocked|Warning)/.test(result)) && <details className="inspector-check-details"><summary>Check details</summary>{validationResults.filter(result => !/^(Blocked|Warning)/.test(result)).map((result, index) => <p key={index}>{result}</p>)}</details>}
             <div className="runtime-preflight-compact">
               <div className="runtime-preflight-statuses">
                 <div>
@@ -1050,11 +1081,12 @@ function BuilderContent() {
                 </div>
               </div>
 
-              <div className="runtime-preflight-counts">
+              {runtimePreflight && <div className="runtime-preflight-counts">
                 <span><strong>{runtimePreflight?.summary.ready || 0}</strong> ready</span>
                 <span><strong>{runtimePreflight?.summary.blocked || 0}</strong> blocked</span>
               </div>
 
+              }
               {runtimePreflight?.status === "blocked" && (
                 <p>
                   {workflowDesignStatus === "valid"
@@ -1067,8 +1099,8 @@ function BuilderContent() {
             </div>
           </div>
 
-          <div style={{ marginTop: 30 }}>
-            <h3>Deployment</h3>
+          <details className="inspector-deployment" open={Boolean(runInputError || deploymentResult) || undefined}>
+            <summary>Deployment</summary>
 
             {guidedDutch ? <p>Saved experiment settings: seed <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. Review settings in Design with AI before preparing a run.</p> : <><label htmlFor="run-input-mode" style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Run input (optional)</label>
             <select id="run-input-mode" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} style={{ width: "100%", padding: 10, marginBottom: 10 }}>
@@ -1102,7 +1134,7 @@ function BuilderContent() {
               </div>
             )}
             {deploymentResult?.workflow_id && <p><Link className="btn btn-secondary" href={deploymentResultsUrl(deploymentResult.workflow_id)}>View this run’s results</Link><br /><small>Recorded settings, task progress and automatically captured results for this exact run.</small></p>}
-          </div>
+          </details>
 
           <div className="builder-workflow-health">
             <span>Workflow health</span>

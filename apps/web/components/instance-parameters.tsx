@@ -31,7 +31,6 @@ export default function InstanceParameters({ instanceId, serviceId, configuratio
   }
   return <section aria-label="Instance settings" style={{ borderTop: "1px solid #ddd", paddingTop: 14 }}>
     <h3>Instance settings</h3>
-    <small style={{ overflowWrap: "anywhere" }}>Instance: {instanceId}</small>
     {error && <p role="alert">{error}</p>}
     {incompatible && <p role="alert">The saved contract changed. Review the current settings and select Use current defaults before saving.</p>}
     {properties ? <>
@@ -51,7 +50,9 @@ export default function InstanceParameters({ instanceId, serviceId, configuratio
         })}
       </>}
     </> : <p>No editable execution parameters are published for this operation.</p>}
+    <details className="instance-extra-actions"><summary>More step actions</summary>
     <button type="button" onClick={onCopy}>Copy instance with incoming connections</button>
     <p><small>The copy has independent settings. Connect its outputs on the canvas.</small></p>
+    </details>
   </section>;
 }
