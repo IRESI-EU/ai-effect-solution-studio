@@ -8,7 +8,7 @@ class StrictModel(BaseModel):
 
 
 class Edit(StrictModel):
-    kind: Literal["rename", "describe", "set_run_input", "set_node_label", "set_node_parameters"]
+    kind: Literal["rename", "describe", "set_run_input", "set_node_label", "set_node_parameters", "append_bound_operation"]
     # For run inputs value is JSON text; it is parsed and schema-validated server-side.
     value: str = Field(max_length=16000)
     node_id: str | None

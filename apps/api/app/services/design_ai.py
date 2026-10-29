@@ -48,11 +48,14 @@ class TemplatePolicy(BaseModel):
     solution_name: str | None = None
     run_input: InputPolicy | None = None
     instance_settings_only: bool = False
+    structural_append_only: bool = False
 
     @model_validator(mode="after")
     def selector(self):
         if bool(self.solution_id) == bool(self.solution_name):
             raise ValueError("Provide exactly one template selector")
+        if self.instance_settings_only and self.structural_append_only:
+            raise ValueError("Select exactly one editing scope")
         if self.run_input:
             schema = self.run_input.json_schema
             Draft202012Validator.check_schema(schema)
@@ -183,8 +186,14 @@ def template(key: str, db: Session, user: User) -> dict:
             raise HTTPException(409, "A template operation differs from the current catalogue. Operator review is required.")
     actual = [n["data"]["service"]["operation_name"] for n in chain]
     expected = PILOTS[key][1]
-    if not policy.instance_settings_only and ((expected and actual != expected) or (key == "portugal" and len(chain) != 4)):
+    if not policy.instance_settings_only and not policy.structural_append_only and ((expected and actual != expected) or (key == "portugal" and len(chain) != 4)):
         raise HTTPException(409, "The saved operations or connections do not match this pilot candidate")
+    if policy.structural_append_only:
+        validate_builder_configurations(db, nodes, source.edges, user)
+        if (source.design_metadata or {}).get("run_input") is not None or policy.run_input is not None:
+            raise HTTPException(422, "Structural whole-output copies do not support workflow-input routing")
+        if any(not n["data"].get("operation_contract") for n in chain):
+            raise HTTPException(409, "Structural copies require verified pinned operation contracts")
     if policy.run_input:
         first = chain[0]["data"]["service"]
         if (policy.run_input.service_id, policy.run_input.operation_name) != (first["id"], first["operation_name"]):
@@ -194,10 +203,11 @@ def template(key: str, db: Session, user: User) -> dict:
             "reference_kind": "mutable_saved_design", "execution_snapshot": None},
             "name": source.name, "description": source.description or "", "nodes": nodes,
             "edges": deepcopy(source.edges), "input_policy": policy.run_input.model_dump() if policy.run_input else None,
-            "editing_scope": "instance_settings" if policy.instance_settings_only else None,
+            "editing_scope": "instance_settings" if policy.instance_settings_only else "append_bound_operation" if policy.structural_append_only else None,
             "run_input": deepcopy((source.design_metadata or {}).get("run_input")),
             "reference_note": ("Separate settings copy of the selected saved design. Historical execution snapshots remain separate; no experiment has run."
-                if policy.instance_settings_only else "Copied saved design. No immutable deployment snapshot is stored by this platform; previous execution equivalence is unverified.")}
+                if policy.instance_settings_only else "Separate composition copy; historical execution snapshots remain separate. No workflow has run for this copy."
+                if policy.structural_append_only else "Copied saved design. No immutable deployment snapshot is stored by this platform; previous execution equivalence is unverified.")}
 
 
 def list_templates(db: Session, user: User) -> list[dict]:
@@ -207,6 +217,8 @@ def list_templates(db: Session, user: User) -> list[dict]:
         item = {"key": key, "label": label, "available": False}
         if key in configured and configured[key].instance_settings_only:
             item["editing_scope"] = "instance_settings"
+        if key in configured and configured[key].structural_append_only:
+            item["editing_scope"] = "append_bound_operation"
         if key not in configured:
             item["reason"] = "Not configured by the operator"
         else:
@@ -281,8 +293,14 @@ def validate(design: dict, db: Session, user: User) -> dict:
                             errors.append(f"{item['operation_name']} requires an upstream operation but is first in this chain")
                         elif requirement in {"workflow_input", "upstream_or_workflow_input"} and design.get("run_input") is None:
                             errors.append(f"{item['operation_name']} requires workflow input; supply verified supported input before saving")
-    # Compiler has no slot mappings. Even matching semantic names cannot prove delivery.
-    unknown.append("Named input/output bindings are not compiled; semantic compatibility and required-slot delivery remain unverified.")
+    from app.services.capability_bindings import validate_builder
+    binding_report = validate_builder(nodes, design["edges"], db)
+    if binding_report["status"] == "verified":
+        for item in required:
+            item["resolution"] = "verified"
+        unknown.append("Design binding compatibility verified; live runtime availability and production compatibility remain unchecked.")
+    else:
+        unknown.append("Legacy connections: semantic compatibility and required-slot delivery remain unverified.")
     policy = design.get("input_policy")
     run_input = design.get("run_input")
     if policy_scope(design):
@@ -315,6 +333,8 @@ def load_draft(draft_id: str, db: Session, user: User, lock: bool = False) -> De
         raise HTTPException(409, "The operator selected a different source. Start a new copy.")
     if policies()[row.state["template_key"]].instance_settings_only != policy_scope(row.state["design"]):
         raise HTTPException(409, "The supported editing scope changed. Start a new copy.")
+    if policies()[row.state["template_key"]].structural_append_only != (row.state["design"].get("editing_scope") == "append_bound_operation"):
+        raise HTTPException(409, "The structural editing scope changed. Start a new copy.")
     current_policy = policies()[row.state["template_key"]].run_input
     if digest(current_policy.model_dump() if current_policy else None) != digest(row.state["design"].get("input_policy")):
         raise HTTPException(409, "Supported input configuration changed. Start a new copy.")
@@ -399,6 +419,8 @@ def start(key: str, db: Session, user: User, *, guided: bool = False) -> dict:
               "nodes": value["nodes"], "edges": value["edges"], "run_input": None, "input_policy": value["input_policy"]}
     if policy_scope(value):
         design.update(editing_scope="instance_settings", run_input=value["run_input"])
+    if value.get("editing_scope") == "append_bound_operation":
+        design.update(editing_scope="append_bound_operation", run_input=value["run_input"])
     if guided:
         if not guided_policy(key, value["input_policy"]):
             raise HTTPException(422, "The guided Dutch experiment needs an approved seed input policy")
@@ -433,13 +455,21 @@ def check_revision(row: DesignDraft, revision: int) -> None:
         raise HTTPException(409, "The draft changed. Refresh it before trying again.")
 
 
-def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User) -> tuple[dict, dict]:
+def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User, *, allocation: str | None = None) -> tuple[dict, dict]:
     check_revision(row, turn.expected_revision)
     if turn.template_key is not None and turn.template_key != row.state["template_key"]:
         raise HTTPException(422, "Start a new copy to change templates")
     design = deepcopy(row.state["design"])
+    structural = design.get("editing_scope") == "append_bound_operation"
+    if structural and (len(turn.edits) != 1 or turn.edits[0].kind != "append_bound_operation"):
+        raise HTTPException(422, "This structural scope supports one bound append only; existing settings stay unchanged")
     for edit in turn.edits:
-        if policy_scope(design) and edit.kind != "set_node_parameters":
+        if edit.kind == "append_bound_operation":
+            if not structural:
+                raise HTTPException(422, "Select a structural composition copy before adding an operation")
+            from app.services.structural_proposals import append
+            design = append(design, edit, allocation or str(uuid4()), db, user)
+        elif policy_scope(design) and edit.kind != "set_node_parameters":
             raise HTTPException(422, "This copy supports instance-setting changes only; its structure, labels and workflow input stay fixed")
         if edit.kind == "rename":
             if not edit.value.strip() or len(edit.value) > 160:
@@ -487,12 +517,16 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User) ->
 
 def propose(draft_id: str, turn: AssistantTurn, db: Session, user: User) -> dict:
     row = load_draft(draft_id, db, user, lock=True)
-    design, validation = candidate(row, turn, db, user)
+    allocation = str(uuid4())
+    design, validation = candidate(row, turn, db, user, allocation=allocation)
     from app.services.instance_proposals import parameter_review
     review = parameter_review(row.state["design"], design, db)
     state = deepcopy(row.state)
     state["pending"] = {"id": str(uuid4()), "base_revision": row.revision, "turn": turn.model_dump(), "design": design, "validation": validation,
                         "parameter_review": review}
+    if row.state["design"].get("editing_scope") == "append_bound_operation":
+        from app.services.structural_proposals import review as structural_review
+        state["pending"].update(allocation=allocation, structural_review=structural_review(row.state["design"], design, db, user))
     row.state = state
     db.commit()
     return view(row, db)
@@ -504,10 +538,14 @@ def apply(draft_id: str, revision: int, proposal_id: str, db: Session, user: Use
     pending = row.state.get("pending")
     if not pending or pending["id"] != proposal_id:
         raise HTTPException(409, "This proposal is no longer current")
-    design, validation = candidate(row, AssistantTurn.model_validate(pending["turn"]), db, user)
+    design, validation = candidate(row, AssistantTurn.model_validate(pending["turn"]), db, user, allocation=pending.get("allocation"))
     from app.services.instance_proposals import parameter_review
     if parameter_review(row.state["design"], design, db) != pending.get("parameter_review", {"changes": [], "unchanged": [], "contract_pins": {}}):
         raise HTTPException(409, "The parameter contract or review changed. Request a new proposal before Apply.")
+    if row.state["design"].get("editing_scope") == "append_bound_operation":
+        from app.services.structural_proposals import review as structural_review
+        if design != pending["design"] or structural_review(row.state["design"], design, db, user) != pending.get("structural_review"):
+            raise HTTPException(409, "The catalogue, contract or structural review changed. Request a new proposal.")
     if not validation["valid"]:
         raise HTTPException(422, "The proposed change cannot be applied: " + "; ".join(validation["errors"]))
     state = deepcopy(row.state)

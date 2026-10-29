@@ -106,7 +106,7 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
     async with connection(db, user, draft_id=payload.draft_id) as tools:
         await tools.discover()
         current = service.load_draft(payload.draft_id, db, user) if payload.draft_id else None
-        focused = current is not None and service.policy_scope(current.state["design"])
+        focused = current is not None and (service.policy_scope(current.state["design"]) or current.state["design"].get("editing_scope") == "append_bound_operation")
         if not focused:
             context["templates"] = (await tools.call("list_pilot_templates", {}))["templates"]
         discovery = None
@@ -141,6 +141,8 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                 # No template payload, workflow input, artifacts, runtime endpoints
                 # or unrelated catalogue data enter this focused provider context.
                 context["draft"] = {"revision": row.revision, "editing_scope": "instance_settings"}
+                if design.get("editing_scope") == "append_bound_operation":
+                    context["draft"] = {"id": row.id, "revision": row.revision, "editing_scope": "append_bound_operation"}
                 context["history"] = []  # Each edit is grounded in the current authorized instance projection.
         context = redact_context(context)
         try:

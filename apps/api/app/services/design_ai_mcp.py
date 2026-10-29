@@ -68,6 +68,11 @@ def create_server(db, user: User, *, draft_id: str | None = None, explicit_save:
                 from app.services.instance_proposals import settings_context
                 return settings_context(row, db)
         value = service.template(template_key, db, actor)
+        if draft_id:
+            row = service.load_draft(draft_id, db, actor)
+            if row.state["design"].get("editing_scope") == "append_bound_operation":
+                from app.services.structural_proposals import context
+                return context(row, db, actor)
         contracts = service.contracts(value["nodes"], db)
         parameters_supported = any(c.get("definition", {}).get("execution_parameters") for c in contracts if c.get("definition"))
         return {"contracts": contracts, "run_input": value["input_policy"],

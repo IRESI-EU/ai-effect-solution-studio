@@ -160,3 +160,13 @@ node-owner attestation, production auth/network/storage, concurrency, cancellati
 and crash recovery are not established by its one local run. The Danish renderer
 and German VILLAS lifecycle still need independent qualification. See
 [AIE37_CATALOGUE_QUALIFICATION.md](AIE37_CATALOGUE_QUALIFICATION.md).
+
+## AIE-38 bounded composition limits — 28 October 2026
+
+Structural composition supports one existing terminal analyzer with one pinned
+whole-output input/output and no editable target settings. Replacement, deletion,
+branching, loops, routing, projections, conversions, merges and onboarding remain
+unsupported. Fixture review/Apply/Undo/Save checks do not establish model intent
+quality, runtime availability, scientific validity, independent usability or
+production compatibility. The existing allowance remains exhausted at 12/12.
+See [AIE38_CONVERSATIONAL_COMPOSITION.md](AIE38_CONVERSATIONAL_COMPOSITION.md).

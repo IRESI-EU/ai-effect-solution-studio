@@ -161,3 +161,12 @@ limits, source/runtime identities and review URLs are in
 [AIE37_CATALOGUE_QUALIFICATION.md](AIE37_CATALOGUE_QUALIFICATION.md). This is not
 production acceptance. AIE-18 remains In Review; AIE-38 structural editing is not
 implemented. No provider call was made and the allowance remains exhausted 12/12.
+
+## 28 October 2026 — bounded AIE-38 composition
+
+An explicitly selected structural copy can propose adding one authorized,
+contract-compatible terminal analyzer and its named whole-output connection.
+Review includes terminal edge removal; Apply, full Undo, Save/reload and Builder
+were verified with labelled offline provider-boundary fixtures. Existing settings-only
+scopes remain restricted. No provider call or workflow execution was made. See
+[AIE38_CONVERSATIONAL_COMPOSITION.md](AIE38_CONVERSATIONAL_COMPOSITION.md).
