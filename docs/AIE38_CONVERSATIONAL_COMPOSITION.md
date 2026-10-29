@@ -5,6 +5,12 @@ Recommended status: **In Review for this milestone**. The whole conversational
 composition task is not complete. AIE-18 remains **In Review**; production
 compatibility is explicitly unverified. No tracker was updated.
 
+**29 October review follow-up:** the complete final-source backend inventory now
+records **339 passed / 1 failed** across three isolated suites. The remaining
+legacy failure also occurs on the AIE-37 base; it has not been hidden or repaired.
+A fresh pending proposal and independent participant/observer materials are
+**prepared; awaiting human walkthrough**. See the follow-up section below.
+
 ## Supported behavior
 
 A designer explicitly chooses **Compose a connected analyzer** from an
@@ -246,3 +252,143 @@ Next bounded step: an independent human walkthrough of this offline review/Undo/
 Save journey, followed by a separately authorized provider-interpretation plan if
 needed. The exhausted shared allowance cannot be amended, replaced or bypassed by
 this work. Production qualification and broader composition remain open.
+
+
+## 29 October 2026 — complete backend run and human-walkthrough preparation
+
+**Status: prepared; awaiting human walkthrough.** No participant was available
+in this task. No human completion, hesitation, interpretation, quote or assistance
+outcome is recorded. The agent's readiness inspection is preparation evidence only.
+The structural scope, application code, test expectations and product terminology
+are unchanged. This follow-up does not implement lifecycle/vocabulary redesign.
+
+### Complete final-source backend results
+
+Tested PR #11 commit: `a10ea3142039dc256ff3481e368eb5d2768a1edc`.
+Backend tree: `2e180c6a9e998456f0ca155e246c73a98e6380a1`.
+All backend test files were included, using separate processes because their
+SQLite/PostgreSQL configurations and application imports differ. Documentation-only
+follow-up commits retain this exact backend tree; no frontend behavior changed.
+
+| Suite | Actual result | Time |
+|---|---|---|
+| `apps/api/tests` — complete portable backend, including all final cases | **237 passed**, 1941 warnings, zero skips | 171.32 s |
+| `apps/api/app/tests` — all legacy backend files, short temporary path | **91 passed, 1 failed**, 15 warnings, zero skips | 14.77 s |
+| `apps/api/postgres_tests` — complete persistence suite | **11 passed**, 91 warnings, zero skips | 50.18 s |
+| Registry/input pair, separately checked before the full legacy directory | **65 passed**, 3 warnings | 9.78 s |
+
+The 65 registry/input cases are a subset of the 92 legacy cases and must not be
+counted twice. Complete inventory: **340 distinct tests; 339 passed, 1 failed**.
+The full backend result is therefore **not all green**. The earlier 234-case
+portable run is retained as historical evidence, not presented as the final run.
+
+Commands used the existing Python environment with provider keys/allowance paths
+cleared, an explicit `PYTHONPATH=apps/api`, `pytest -q --tb=short
+--disable-warnings`, and fresh suite-owned test databases. The portable suite used
+`--basetemp=local-backups/pytest-complete-20261029`. The full legacy suite was also
+run with a short unique OS temporary directory. No original profile database was
+used as a test database. Only test-created databases were removed.
+
+The initial full legacy run recorded **88 passed / 4 failed**. Three package-import
+failures arose when this long Windows checkout made copied proto paths exceed the
+existing `VARCHAR(250)` column. Rerunning the unchanged full directory with a short
+temporary path resolved those three failures; the original failed log is preserved.
+No column limit, product validation or test expectation was changed.
+
+The remaining failure is
+`app/tests/test_package_import.py::test_missing_service_reference_returns_actionable_load_error`:
+it expects HTTP **200** when creating a solution referencing `missing-service`,
+then HTTP 409 on load. The existing create endpoint instead returns **409** at
+creation. The identical test also fails with **409 versus 200** on AIE-37 base
+`bd18c212e479084f3dc6b1f169f1163dc1631619`, in a separate disposable database.
+The relevant endpoint and legacy test have no AIE-38 diff. This is a verified
+pre-existing expectation/validation mismatch, retained for separate triage; this
+review does not weaken the missing-service guard or silently rewrite the test.
+
+Raw logs and exact commands are retained privately in
+`local-backups/aie38-walkthrough-20261029/`; their SHA-256 values and actual outcomes
+are recorded in the existing machine-readable evidence. No test or provider failure
+has been converted into a participant pass.
+
+### Fresh pending handoff
+
+- Draft: `fe8110e0-631d-4527-aedc-2979e44ed83b`, **revision 0**.
+- Pending proposal: `b6a8ba50-b61f-482a-b9d3-9ba340037071`.
+- Trusted candidate instance: `1f13ef55-91c8-4fab-a3d4-3cee49672799`.
+- Reserved future solution: `2b58ac9e-6341-4b2b-88b3-d5607027c0d2`;
+  **no saved solution exists for this new copy yet**.
+- Current design remains the complete one-step baseline, SHA-256
+  `268d7394acb61dfb20f80504948667e8cd41c8f80be9464404befea52d96b4c5`.
+  Seed 42, generator identity/pin/settings/input and original connections are unchanged.
+- Normal authorized start/copy and chat/proposal routes created this new copy using
+  one explicitly queued provider-boundary response. The queue was consumed.
+  The agent did not Apply, Undo or Save the participant copy.
+
+Exact URLs:
+
+- [Pending proposal — start here](http://localhost:23122/design-ai?draftId=fe8110e0-631d-4527-aedc-2979e44ed83b).
+- [Optional narrow fixture — same draft](http://localhost:23122/api/offline-fixture/narrow?draft_id=fe8110e0-631d-4527-aedc-2979e44ed83b).
+- [Future Builder URL — only after participant Save](http://localhost:23122/builder?solutionId=2b58ac9e-6341-4b2b-88b3-d5607027c0d2).
+- [Sign in](http://localhost:23122/login); reopen the exact draft link after login.
+
+The existing private credential file is
+`local-backups/aie38-profile-20261028/private-config.json`, relative to the original
+production-ui checkout, not the review worktree. Login identifier:
+`aie38-offline@example.test`. Read its password locally and privately; do not
+print it in chat, logs, observation notes or screenshots. No credential reset,
+new account, permission change, process restart or new stack was needed.
+
+### Participant brief and observer checklist
+
+Give the person [the short participant brief](AIE38_PARTICIPANT_BRIEF_2026-10-29.md).
+It asks them to explain changes/preserved data, Apply and Undo, Apply again, Save
+and open Builder, and explain whether an experiment has executed. It does not ask
+for arbitrary chat, and it does not supply the observer's answer criteria first.
+
+Use [the unfilled observer/operator checklist](AIE38_OBSERVER_CHECKLIST_2026-10-29.md)
+to record independent/assisted completion, hesitation, confusing wording, exact
+help and on-screen evidence. All observation fields remain **Not observed / Not
+recorded**. Record actual participant background before calling the result independent.
+This fixture assesses prepared-proposal review and controls; it is not real-provider
+interpretation or the complete first-time-user journey.
+
+Undo clears the pending proposal. The observer therefore has one explicit planned
+fixture setup step before the second Apply: run the prepared private
+`local-backups/aie38-walkthrough-20261029/restore_prepared_proposal.py`, then ask the
+person to refresh. This helper is prepared and syntax-checked, **not executed** on
+this copy. It requires exact revision-2 baseline state, queues the existing fixture
+and sends only its known request through the normal application path. It never
+Applies/Saves/executes and refuses unexpected state. Record this planned assistance
+separately from any unplanned coaching; do not claim an entirely unassisted journey.
+
+The checklist records candidate wording concerns for later team discussion,
+including Active experiment / Workflow preview / Draft saved, the inherited
+Recorded benchmark boundary label, design checks versus runtime readiness, and
+missing browser conversation history for an operator-prepared proposal. These
+are preparation notes, **not participant findings**. Existing workflow/run/session
+terminology remains unchanged while the team agrees vocabulary.
+
+### Preservation and boundaries
+
+Read-only before/after checks found no differences in the five earlier databases,
+protected files, container/image identities or original dirty source. Both completed
+AIE-38 drafts remain revision **3**, with complete state/history unchanged; every
+pre-existing saved solution in the offline profile is unchanged. The new draft
+remains at revision **0**, with pending proposal and no Undo history or saved solution.
+Normal sign-in creates/refreshes only this offline account's sessions.
+
+The new offline profile still contains **zero** deployments, execution submissions
+and local capture records. Its explicit submission middleware returned **403**.
+The ledger SHA-256 remains
+`c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165`:
+12/12 calls, US$0.10 ceiling, US$0.003784750 accounted,
+US$0.096215250 remaining, zero unsettled charges/outstanding reservations.
+New real-provider calls, workflow executions, allowance changes, production changes
+and merges are **zero**. The consumed qualification permission is preserved.
+
+![Agent-prepared offline pending proposal; no participant observation](screenshots/aie38-walkthrough-pending-20261029.png)
+
+AIE-18 remains **In Review**. Broader AIE-38 composition is incomplete. Next step
+is the actual independent walkthrough, with observed results recorded separately;
+the known legacy test mismatch remains visible for separate triage. No provider
+allowance or production acceptance follows from this preparation.

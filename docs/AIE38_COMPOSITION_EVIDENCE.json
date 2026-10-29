@@ -179,5 +179,123 @@
   },
   "recommended_status": "In Review for this bounded milestone; whole conversational composition incomplete",
   "aie18_status": "In Review",
-  "implementation_commit": "769f951816dd9e68766c69cb68f1d126e57434be"
+  "implementation_commit": "769f951816dd9e68766c69cb68f1d126e57434be",
+  "review_followup_20261029": {
+    "status": "prepared; awaiting human walkthrough",
+    "tested_commit": "a10ea3142039dc256ff3481e368eb5d2768a1edc",
+    "backend_tree": "2e180c6a9e998456f0ca155e246c73a98e6380a1",
+    "application_code_and_product_terminology_changed": false,
+    "complete_backend": {
+      "portable": {
+        "passed": 237,
+        "failed": 0,
+        "skipped": 0,
+        "warnings": 1941,
+        "seconds": 171.32,
+        "log_sha256": "65ed2766516d1fd7d46a821f40ece3be09dcafa41f1d01b1770757a176a8d8c1"
+      },
+      "legacy_all_files": {
+        "passed": 91,
+        "failed": 1,
+        "skipped": 0,
+        "warnings": 15,
+        "seconds": 14.77,
+        "log_sha256": "590add219b8f78f6f4af9ae11770b0f7441a8e1fa26e6449c5262bbc4c39aa19",
+        "temporary_directory": "short unique OS temporary directory"
+      },
+      "postgres_persistence": {
+        "passed": 11,
+        "failed": 0,
+        "skipped": 0,
+        "warnings": 91,
+        "seconds": 50.18
+      },
+      "registry_input_subset": {
+        "passed": 65,
+        "failed": 0,
+        "warnings": 3,
+        "seconds": 9.78,
+        "counted_inside_legacy_all_files": true
+      },
+      "unique_tests": 340,
+      "passed": 339,
+      "failed": 1,
+      "all_green": false,
+      "postgres_log_sha256": "3f827e32a5c0c6012ddda060aa7b634f675e51d1299af1536fb66754baa5345d"
+    },
+    "retained_initial_legacy_run": {
+      "passed": 88,
+      "failed": 4,
+      "log_sha256": "5d66c5decacebf187b5735a2eed060a4685faa4c60f7d6c515156234148fbd8c",
+      "cause": "Three import failures depended on long Windows temporary paths exceeding VARCHAR(250); one missing-service expectation failure remained with a short path."
+    },
+    "remaining_failure": {
+      "test": "app/tests/test_package_import.py::test_missing_service_reference_returns_actionable_load_error",
+      "expected_status": 200,
+      "actual_status": 409,
+      "baseline_commit": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+      "baseline_result": "same failure",
+      "baseline_log_sha256": "ca8901fb13ea97e7004a3d13d0275fab42c36342b4b52c9d7de385d04555bb66",
+      "source_or_expectations_modified": false
+    },
+    "fresh_handoff": {
+      "draft_id": "fe8110e0-631d-4527-aedc-2979e44ed83b",
+      "revision": 0,
+      "proposal_id": "b6a8ba50-b61f-482a-b9d3-9ba340037071",
+      "local_url": "http://localhost:23122/design-ai?draftId=fe8110e0-631d-4527-aedc-2979e44ed83b",
+      "narrow_url": "http://localhost:23122/api/offline-fixture/narrow?draft_id=fe8110e0-631d-4527-aedc-2979e44ed83b",
+      "reserved_solution_id": "2b58ac9e-6341-4b2b-88b3-d5607027c0d2",
+      "saved_solution_id": null,
+      "baseline_sha256": "268d7394acb61dfb20f80504948667e8cd41c8f80be9464404befea52d96b4c5"
+    },
+    "candidate_instance_id": "1f13ef55-91c8-4fab-a3d4-3cee49672799",
+    "human_participant": null,
+    "human_observations": null,
+    "planned_operator_restore": "private helper prepared and syntax-checked; not executed; requires exact revision-2 Undo state; record as planned assistance",
+    "participant_brief": "AIE38_PARTICIPANT_BRIEF_2026-10-29.md",
+    "observer_checklist": "AIE38_OBSERVER_CHECKLIST_2026-10-29.md",
+    "screenshot": {
+      "path": "screenshots/aie38-walkthrough-pending-20261029.png",
+      "sha256": "a4d7154ce62f1ccaeeeb3efe3ad084c2c705ab6a1bbcb635948e01f1d45b711f",
+      "category": "agent preparation evidence, not participant observation"
+    },
+    "preservation": {
+      "differences": {
+        "databases": [],
+        "files": [],
+        "containers": [],
+        "source": [],
+        "completed_drafts_sha256": false,
+        "existing_solutions_sha256": false
+      },
+      "existing_completed_draft_revisions": [
+        3,
+        3
+      ],
+      "pending_revision": 0,
+      "pending_proposal_id": "b6a8ba50-b61f-482a-b9d3-9ba340037071",
+      "pending_design_sha256": "268d7394acb61dfb20f80504948667e8cd41c8f80be9464404befea52d96b4c5",
+      "execution_counts": {
+        "deployments": 0,
+        "execution_submissions": 0,
+        "local_dutch_executions": 0
+      },
+      "ledger_sha256": "c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165",
+      "ledger_usage": [
+        12,
+        3784750,
+        0,
+        0
+      ],
+      "submission_guard_status": 403,
+      "provider_mode": "test",
+      "human_observations": null,
+      "status": "prepared; awaiting human walkthrough"
+    },
+    "real_provider_calls": 0,
+    "workflow_executions": 0,
+    "allowance_changes": 0,
+    "production_changes": 0,
+    "merges": 0
+  }
 }
