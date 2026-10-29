@@ -297,5 +297,21 @@
     "allowance_changes": 0,
     "production_changes": 0,
     "merges": 0
+  },
+  "owner_guided_followup_2026_10_29": {
+    "reported_journey": "Apply → Undo → Apply → Save → Builder → refresh",
+    "seed": 42,
+    "benchmark_preserved": true,
+    "draft_id": "fe8110e0-631d-4527-aedc-2979e44ed83b",
+    "revision": 3,
+    "saved_solution_id": "2b58ac9e-6341-4b2b-88b3-d5607027c0d2",
+    "feedback": [
+      "The technical name captured_grid was difficult to locate.",
+      "The interface felt text-heavy and complicated."
+    ],
+    "evidence_category": "owner-guided feedback; not independent first-time-user evidence",
+    "independent_observations": null,
+    "independent_status": "prepared; awaiting independent human walkthrough",
+    "aie41_report": "AIE41_USABILITY_REFINEMENT.md"
   }
 }

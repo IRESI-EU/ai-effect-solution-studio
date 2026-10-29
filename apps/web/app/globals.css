@@ -2892,3 +2892,96 @@ tbody tr:hover {
 
 .guided-service-review { height:auto; min-height:0; padding:20px; overflow-wrap:anywhere; }
 .guided-service-review details { margin:18px 0; }
+
+/* Focused AIE-41 hierarchy: presentation only; saved graph coordinates are untouched. */
+.connection-review { margin-top:20px; }
+.connection-card { border-top:1px solid #e4e0ef; padding:13px 0; overflow-wrap:anywhere; }
+.connection-sentence { color:#282442; font-size:14px; font-weight:650; line-height:1.5; margin:0 0 9px; }
+.connection-state { display:flex; flex-wrap:wrap; gap:6px; font-size:12px; }
+.connection-state span { padding:4px 7px; background:#f2f0f8; border-radius:6px; }
+.connection-state .connection-attention { color:#b42318; background:#fff0ed; }
+.connection-review details, .inspector-technical, .instance-extra-actions, .inspector-check-details, .inspector-deployment { margin-top:12px; }
+.connection-review summary, .builder-details-card summary { cursor:pointer; font-size:13px; font-weight:650; color:#5034a7; padding:5px 0; }
+.connection-review dl { font-size:12px; }
+.connection-review dt { font-weight:650; margin-top:10px; }
+.connection-review dd { margin:3px 0 0; }
+.inspector-technical { overflow-wrap:anywhere; }
+.inspector-step-name { font-size:17px !important; margin:6px 0 0 !important; line-height:1.4; }
+.inspector-purpose, .inspector-workflow-summary { color:#667085; font-size:13px; line-height:1.5; margin:0; }
+.builder-canvas-area .react-flow__node { font-size:14px !important; line-height:1.4; width:220px; padding:12px 14px; }
+.builder-canvas-area .react-flow__node-input, .builder-canvas-area .react-flow__node-output { width:180px; }
+@media(max-width:760px) { .builder-details-card { max-height:none; overflow:visible; } }
+
+/* AIE-41 workflow review: graph height is independent of settings/diagnostics. */
+.builder-page-header h1 { font-size:30px; margin:0 0 7px; letter-spacing:-.03em; }
+.builder-page-header p { margin:0; color:#626a83; }
+.builder-review-links, .builder-review-secondary { display:flex; align-items:center; flex-wrap:wrap; gap:12px; }
+.builder-review-links button, .builder-review-secondary button, .connection-details-button, .builder-details-card button:not(.react-flow__controls-button) { cursor:pointer; }
+.builder-review-links a { font-size:14px; }
+.builder-offline-notice { display:flex; gap:12px; flex-wrap:wrap; padding:12px 16px; margin:16px 0; border:1px solid #ead9ab; border-radius:12px; background:#fffaf0; font-size:13px; }
+.builder-overview, .builder-review-actions, .builder-connections-card { padding:18px 20px; margin-top:16px; }
+.builder-solution-name { display:block; color:#667085; font-size:12px; }
+.builder-solution-name input { display:block; width:min(100%,650px); margin-top:5px; box-sizing:border-box; font-size:15px; font-weight:600; }
+.builder-workflow-purpose { margin:14px 0; font-size:18px; color:#252842; line-height:1.5; }
+.builder-step-list { display:flex; flex-wrap:wrap; gap:10px; list-style:none; padding:0; margin:0; }
+.builder-step-list button { display:flex; align-items:center; gap:9px; padding:9px 12px; border:1px solid #d9d1ef; border-radius:10px; background:#fff; text-align:left; color:#352658; cursor:pointer; }
+.builder-step-list button[aria-pressed="true"] { background:#f0ebff; border-color:#6946df; }
+.builder-step-list button span { display:grid; place-items:center; min-width:23px; height:23px; border-radius:50%; background:#f0ebff; font-size:12px; }
+.builder-review-statuses { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:0; }
+.builder-review-statuses dt { font-size:12px; color:#667085; }
+.builder-review-statuses dd { margin:4px 0 0; font-size:14px; color:#252842; font-weight:600; }
+.builder-next-action { display:flex; gap:18px; justify-content:space-between; align-items:center; margin-top:14px; border-top:1px solid #eeebf5; padding-top:12px; }
+.builder-next-action p { margin:0; font-size:14px; line-height:1.5; max-width:78%; color:#53576a; }
+.builder-next-action button, .builder-next-action a { flex-shrink:0; }
+.builder-review-secondary { margin-top:12px; font-size:13px; }
+.builder-review-secondary details { max-width:100%; }
+.builder-page .builder-workbench { grid-template-columns:minmax(0,1fr) minmax(270px,320px); align-items:start; min-height:0; margin-top:16px !important; }
+.builder-page .builder-canvas-area { height:clamp(340px,48vh,520px); }
+.builder-page .builder-canvas-card { align-self:start; }
+.builder-page .builder-details-card { grid-column:auto; max-height:580px; overflow:auto; align-self:start; }
+.builder-details-card .inspector-step-name { font-size:18px; }
+.builder-description p { max-height:110px; overflow:auto; overflow-wrap:anywhere; font-size:13px; line-height:1.5; }
+.builder-connections-card .connection-review h3 { margin-top:0; }
+.builder-connections-card .connection-card { padding:10px 0; margin:0; border:none; border-top:1px solid #eeebf5; }
+.builder-connections-card .connection-card.is-selected { border-left:3px solid #6946df; padding-left:12px; }
+.connection-details-button { border:0; padding:3px 0; color:#5b36d6; background:transparent; text-decoration:underline; }
+.builder-review-dialog { padding:0; width:min(760px,calc(100vw - 32px)); max-width:calc(100vw - 32px); max-height:min(86dvh,820px); border:1px solid #d8d1ec; border-radius:16px; box-shadow:0 18px 60px #21104833; color:#252842; overflow:hidden; }
+.builder-review-dialog[open] { display:flex; flex-direction:column; }
+.builder-review-dialog::backdrop { background:#17112c66; }
+.builder-review-dialog > header { display:flex; flex:0 0 auto; gap:20px; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #e5e0ef; background:#faf9ff; }
+.builder-review-dialog h2 { font-size:19px; margin:0; }
+.builder-review-dialog > header button { cursor:pointer; padding:7px 12px; background:white; border:1px solid #cfc5e8; border-radius:8px; color:#4e3298; }
+.builder-review-dialog-body { padding:20px; min-height:0; overflow:auto; overscroll-behavior:contain; line-height:1.5; }
+.builder-review-dialog-body dd, .builder-review-dialog-body pre { overflow-wrap:anywhere; white-space:pre-wrap; margin-left:0; }
+.builder-review-dialog-body dt { margin-top:12px; font-size:13px; color:#667085; font-weight:600; }
+.builder-review-dialog-body select, .builder-review-dialog-body textarea { display:block; width:100%; box-sizing:border-box; margin:8px 0 14px; }
+.builder-review-dialog .builder-service-palette { height:auto; max-height:none; overflow:visible; border:0; box-shadow:none; padding:0; }
+.builder-review-dialog .builder-service-list-scroll { overflow:visible; }
+.builder-review-dialog :focus-visible, .builder-page button:focus-visible, .builder-page summary:focus-visible, .builder-page a:focus-visible { outline:3px solid #9676ed; outline-offset:3px; }
+.instance-setting-help { font-size:12px; line-height:1.5; }
+.instance-setting-help small { display:block; margin-top:6px; max-height:100px; overflow:auto; }
+@media (max-width:1250px) {
+  .builder-page .builder-workbench { grid-template-columns:minmax(0,1fr); }
+  .builder-page .builder-details-card { max-height:480px; }
+}
+@media (max-width:620px) {
+  .builder-review-statuses { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .builder-next-action { align-items:stretch; flex-direction:column; gap:10px; }
+  .builder-next-action p { max-width:none; }
+  .builder-page-header { gap:12px; }
+  .builder-review-links { gap:10px; }
+  .builder-page .builder-canvas-area { height:360px; }
+  .builder-step-list, .builder-step-list li, .builder-step-list button { width:100%; box-sizing:border-box; }
+  .builder-page .builder-details-card { max-height:480px; }
+  .builder-review-dialog-body { padding:16px; }
+}
+
+.builder-overview .builder-connections-card { margin-top:14px; padding:12px 0 0; border-top:1px solid #eeeaf5; }
+.builder-overview .builder-review-actions { margin-top:12px; padding:14px 0 0; border-top:1px solid #eeeaf5; }
+.builder-page .connection-details-button, .builder-page .builder-review-secondary button, .builder-page .builder-review-links button,
+.builder-page .builder-details-card button { background:#fff; color:#51359d; border:1px solid #d6ccec; box-shadow:none; }
+.builder-page .connection-details-button { min-height:30px; font-weight:500; text-decoration:none; }
+.builder-page .builder-review-secondary button { min-height:30px; padding:5px 9px; font-weight:500; }
+.builder-review-actions [role="alert"] { max-height:120px; overflow:auto; overflow-wrap:anywhere; color:#9a251c; }
+
+.builder-details-card .inspector-step-name:focus-visible { outline:3px solid #9676ed; outline-offset:3px; }

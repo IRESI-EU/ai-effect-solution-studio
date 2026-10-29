@@ -427,3 +427,40 @@ Blocking / Major / Minor / Cosmetic
 - [Current capabilities](CURRENT_CAPABILITIES.md)
 - [Known limitations](KNOWN_LIMITATIONS.md)
 - [MVP release notes](MVP_RELEASE_NOTES.md)
+
+
+## 18. AIE-41 offline workflow-review acceptance — 29 October 2026
+
+Use the existing local AIE-41/AIE-38 profile on **23122**. This scoped review does
+not authorize provider calls, workflow execution, provisioning or allowance changes.
+The visible OFFLINE banner means execution is unavailable, even after a successful
+design check. Saved bindings, design compatibility, runtime readiness and completed
+execution are separate evidence states.
+
+Open the [preserved owner review](http://localhost:23122/builder?solutionId=2b58ac9e-6341-4b2b-88b3-d5607027c0d2).
+Read the graph-derived purpose, two processing steps and grid connection without
+opening Technical details. Select the generator and locate Random seed **42**.
+Open the explicitly labelled connection technical dialog, inspect both exact
+`captured_grid` slots, then Close or Escape. Long technical content must scroll
+inside the dialog without stretching the page/canvas; Tab and Shift+Tab must stay
+inside it and focus must return to its opener. Ordinary selection must not open it.
+Check normal browser zoom and the existing 390px iframe harness; do not zoom out
+the browser to improve a screenshot. Do not overwrite or reset the owner copy.
+
+For repeat mutation regressions use an explicitly disposable review copy, not the
+owner or historical copies. The follow-up already used draft
+`eaa079e7-f4a7-4937-bf15-c2cd329c746c` / saved solution
+`d40c5cff-f101-4f4a-add6-709b74470e0f`: full Apply/Undo/Apply/Save, seed edit/Save/
+reload, stale-view rejection and seed restoration passed. Creating or restoring
+fixtures is an attributable operator step; arbitrary chat is not required and no
+real-provider interpretation is established. Existing credentials stay private in
+`local-backups/aie38-profile-20261028/private-config.json` under the original
+checkout; login `aie38-offline@example.test`. Never record the password.
+
+Record new human feedback separately. Existing findings are owner-guided; the
+independent participant checklist remains unfilled. See
+[AIE41_USABILITY_REFINEMENT.md](AIE41_USABILITY_REFINEMENT.md) for actual measurements,
+35 UI checks, typecheck/build, before/after screenshots, preserved histories and
+limits. Backend remains **339 passed / 1 baseline failure** with no new backend run.
+Production compatibility and layperson usability remain unverified; no merge or
+tracker update follows from these local checks.

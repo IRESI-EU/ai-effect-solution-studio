@@ -170,3 +170,23 @@ unsupported. Fixture review/Apply/Undo/Save checks do not establish model intent
 quality, runtime availability, scientific validity, independent usability or
 production compatibility. The existing allowance remains exhausted at 12/12.
 See [AIE38_CONVERSATIONAL_COMPOSITION.md](AIE38_CONVERSATIONAL_COMPOSITION.md).
+
+
+## AIE-41 usability review limits — 29 October 2026
+
+The completed guided walkthrough and wording findings are owner feedback. They
+are not independent first-time-user evidence, and the revised UI awaits owner
+retest and independent observation. The offline fixture checks prepared proposal
+review/controls, not arbitrary conversation, real-provider interpretation or full
+onboarding. Existing workflow/run/session terminology remains pending team agreement.
+Design compatibility does not establish runtime or production readiness. Explicit
+Fit workflow may show a wide graph at overview scale; readable initial view and
+per-user/per-solution viewport restoration remain available. The full backend
+baseline remains 339 passed / 1 failure. See
+[AIE41_USABILITY_REFINEMENT.md](AIE41_USABILITY_REFINEMENT.md).
+
+
+The AIE-41 follow-up has 35 passing UI regressions and rendered desktop/narrow
+checks, including bounded dialogs and stale Save rejection on one disposable copy.
+It still awaits a new human walkthrough; owner feedback is not independent evidence.
+Offline checks do not exercise runtime readiness/execution or production compatibility.

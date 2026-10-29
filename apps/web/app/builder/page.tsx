@@ -26,6 +26,9 @@ import { designReturnUrl } from "../design-ai/session";
 import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
+import ReviewDialog from "../../components/review-dialog";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput } from "../../lib/builder-review";
+import { bindingSignature, savedBindingSignatures, stepPurpose } from "../../lib/connection-review";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
 
@@ -35,6 +38,7 @@ type Service = {
   provider: string;
   category: string;
   version: string;
+  description?: string;
   input_type: string;
   output_type: string;
   trust_badge: string;
@@ -130,6 +134,23 @@ function BuilderContent() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [savedFingerprint, setSavedFingerprint] = useState<string | null>(null);
+  const settingsRef = useRef<HTMLElement | null>(null);
+  const revealSettings = useCallback(() => {
+    if (document.querySelector("dialog[open]")) return;
+    settingsRef.current?.querySelector<HTMLElement>(".inspector-step-name")?.focus({preventScroll:true});
+    settingsRef.current?.scrollIntoView({block:"start"});
+  }, []);
+  const [validationDetailsOpen, setValidationDetailsOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [stepDetailsOpen, setStepDetailsOpen] = useState(false);
+  const [deploymentOptionsOpen, setDeploymentOptionsOpen] = useState(false);
+  const [readinessDetailsOpen, setReadinessDetailsOpen] = useState(false);
+  const [profileConfig, setProfileConfig] = useState<{provider_mode?: string; provider_name?: string} | null>(null);
+  const [validatingDesign, setValidatingDesign] = useState(false);
+  const [savedBindings, setSavedBindings] = useState<Record<string, string>>({});
+  const [checkedBindings, setCheckedBindings] = useState<Record<string, string>>({});
   const savedUpdatedAtRef = useRef<string | null>(null);
   const [validationResults, setValidationResults] = useState<string[]>([]);
   const [runtimePreflight, setRuntimePreflight] = useState<RuntimePreflightResult | null>(null);
@@ -171,6 +192,7 @@ function BuilderContent() {
 
   const invalidateWorkflowResults = useCallback(() => {
     workflowRevisionRef.current += 1;
+    setCheckedBindings({});
     setWorkflowDesignStatus(null);
     setValidationResults([]);
     setRuntimePreflight(null);
@@ -187,6 +209,33 @@ function BuilderContent() {
         .filter(Boolean) as Service[],
     [nodes]
   );
+
+  const review = workflowReview(nodes, edges);
+  const dirty = savedFingerprint !== designFingerprint(solutionName, nodes, edges, designMetadata ? reviewInput(runInputMode, runInput) : undefined);
+  const offline = offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
+  const loaded = !!user && (!solutionId || loadedSolutionScope === JSON.stringify([user.id, solutionId]));
+  const reviewAction = nextReviewAction({steps: canvasServices.length, dirty, design: workflowDesignStatus, offline,
+    readiness: runtimePreflight?.status, confirmationReady: deploymentConfirmationReady, submitted: !!deploymentResult?.workflow_id});
+  const actionLabels = {add: "Add services", save: "Save draft", validate: "Validate design", review: "Validate again", prepare: "Prepare & deploy", confirm: "Confirm deployment", results: "View this run’s results"};
+  const busy = savingSolution || validatingDesign || preparingDeployment || submittingToOrchestrator;
+  async function takeNextAction() {
+    if (busy || !loaded) return;
+    if (reviewAction === "add") { setPaletteOpen(true); return; }
+    if (reviewAction === "save") { await saveSolution(); return; }
+    if (reviewAction === "prepare") { await prepareDeployment(); return; }
+    if (reviewAction === "confirm") { await confirmDeployment(); return; }
+    if (reviewAction === "validate" || reviewAction === "review") {
+      setValidatingDesign(true);
+      try { await validateWorkflow(); } finally { setValidatingDesign(false); }
+    }
+  }
+  useEffect(() => {
+    let active = true;
+    fetch(`${API_BASE_URL}/design-ai/config`).then(r => r.ok ? r.json() : null).then(value => { if (active) setProfileConfig(value); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+  useEffect(() => { setStepDetailsOpen(false); }, [selectedInstanceId, solutionId]);
+  useEffect(() => { if (selectedInstanceId) revealSettings(); }, [selectedInstanceId, revealSettings]);
 
   const deprecatedCanvasServices = useMemo(
     () => canvasServices.filter((service) => getLifecycleStatus(service) === "deprecated"),
@@ -228,9 +277,15 @@ function BuilderContent() {
           throw new Error(apiErrorMessage(body, `Could not load this solution (HTTP ${res.status}).`));
         }
         if (controller.signal.aborted) return;
+        invalidateWorkflowResults();
+        setSolutionNeedsRevalidation(false);
         setLoadedSolutionScope(JSON.stringify([user.id, solutionId]));
         setCurrentSolutionId(body.id);
         savedUpdatedAtRef.current = body.updated_at;
+        setSelectedEdgeId(null);
+        setSavedBindings(savedBindingSignatures(body.nodes || [], body.edges || []));
+        setSavedFingerprint(designFingerprint(body.name, body.nodes || initialNodes, body.edges || [], body.design_metadata ? body.design_metadata.run_input ?? null : undefined));
+        setCheckedBindings({});
         setSelectedInstanceId(null);
         setSelectedService(null);
         setSolutionName(body.name);
@@ -240,7 +295,7 @@ function BuilderContent() {
         if (body.design_metadata?.run_input != null) {
           setRunInputMode("json");
           setRunInput(JSON.stringify(body.design_metadata.run_input, null, 2));
-        }
+        } else { setRunInputMode("prompt"); setRunInput(""); }
       } catch (error) {
         if (controller.signal.aborted) return;
         setSolutionLoadError(error instanceof Error ? error.message : "Could not load this solution.");
@@ -249,7 +304,7 @@ function BuilderContent() {
 
     void loadSolution();
     return () => controller.abort();
-  }, [solutionId, user?.id, setNodes, setEdges]);
+  }, [solutionId, user?.id, setNodes, setEdges, invalidateWorkflowResults]);
 
   useEffect(() => {
     if (!catalogueServiceId || solutionId || services.length === 0) return;
@@ -472,6 +527,7 @@ function BuilderContent() {
   async function validateWorkflow() {
     const revision = workflowRevisionRef.current;
     const result = evaluateWorkflowDesign();
+    const checked: Record<string, string> = {};
     if (result.valid) {
       try {
         const response = await fetch(`${API_BASE_URL}/workflows/compile`, {
@@ -481,6 +537,12 @@ function BuilderContent() {
         const body = await response.json();
         if (!response.ok) throw new Error(apiErrorMessage(body, "Connection validation failed."));
         const report = body.solution_studio_metadata.capability_bindings;
+        for (const edge of edges) {
+          const selectedBinding = edge.data?.binding as {source_slot: string; target_slot: string} | undefined;
+          if (selectedBinding && report.status === "verified" && report.bindings?.some((binding: {source: string; target: string; source_slot: string; target_slot: string}) =>
+            binding.source === edge.source && binding.target === edge.target && binding.source_slot === selectedBinding.source_slot
+              && binding.target_slot === selectedBinding.target_slot)) checked[edge.id] = bindingSignature(nodes, edge);
+        }
         result.results.push(`${report.status === "verified" ? "Passed" : "Notice"}: ${report.message}`);
       } catch (error) {
         result.valid = false;
@@ -489,6 +551,7 @@ function BuilderContent() {
       }
     }
     if (revision !== workflowRevisionRef.current) return { valid: false, results: ["Design changed during validation. Validate again."] };
+    setCheckedBindings(result.valid ? checked : {});
     setWorkflowDesignStatus(result.valid ? "valid" : "invalid");
     setValidationResults(result.results);
     setRuntimePreflight(null);
@@ -500,7 +563,7 @@ function BuilderContent() {
   }
 
   async function prepareDeployment() {
-    if (prepareInFlightRef.current) return;
+    if (offline || prepareInFlightRef.current) return;
     prepareInFlightRef.current = true;
 
     const design = await validateWorkflow();
@@ -580,6 +643,8 @@ function BuilderContent() {
       const saved = (await res.json()) as SavedSolution;
       if (!saved.id) throw new Error("The saved solution response did not include an ID.");
 
+      setSavedBindings(savedBindingSignatures(payload.nodes, payload.edges));
+      setSavedFingerprint(designFingerprint(saved.name || payload.name, payload.nodes, payload.edges, payload.design_metadata ? payload.design_metadata.run_input : undefined));
       setCurrentSolutionId(saved.id);
       savedUpdatedAtRef.current = saved.updated_at;
       setSolutionName(saved.name || payload.name);
@@ -616,7 +681,7 @@ function BuilderContent() {
   async function confirmDeployment() {
     const preparedSolutionId = preparedSolutionIdRef.current;
     if (
-      confirmInFlightRef.current ||
+      offline || confirmInFlightRef.current ||
       !deploymentConfirmationReady ||
       runtimePreflight?.status !== "ready" ||
       !preparedSolutionId
@@ -704,81 +769,73 @@ function BuilderContent() {
 
   return (
     <div className="page builder-page">
-      {solutionSaveError && <section className="card" role="alert" style={{ padding: 18, marginBottom: 18, color: "#b42318" }}>
-        <strong>Could not save this solution.</strong> {solutionSaveError}
-      </section>}
-      {guidedDutch && <section className="card guided-builder-note" aria-label="Experiment review">
-        <strong>Review your sample grid experiment</strong>
-        <p>Generate sample grid → Benchmark grid. Saved seed: <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. These settings are carried into the run automatically.</p>
-        <p>{deploymentResult?.workflow_id ? "Your run has been submitted. Open its results below to follow progress." : deploymentConfirmationReady ? "Ready to run. Review Deployment readiness, then select Confirm deployment when you want to execute." : "Next: Validate design, then Prepare & deploy to check readiness. Execution requires Confirm deployment."}</p>
-        <Link href={designReturnUrl(designMetadata)}>Return to Design with AI</Link>
-      </section>}
-      {solutionLoadError && (
-        <section className="card" style={{ padding: 18, marginBottom: 18, borderColor: "#fda29b", color: "#b42318" }}>
-          <strong>Unable to load solution design.</strong> {solutionLoadError}
-        </section>
-      )}
       <div className="builder-page-header">
-        <div>
-          <span className="badge">AI Vendor Studio</span>
-          <h1 style={{ fontSize: 42, margin: "14px 0 8px", letterSpacing: "-0.04em" }}>Build a solution</h1>
-          <p style={{ color: "#626a83", fontSize: 16, maxWidth: 850, margin: 0, lineHeight: 1.65 }}>
-            Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
-            workflow, and prepare the solution for deployment.
-          </p>
-        </div>
-        <div className="builder-top-actions">
-          <button onClick={saveSolution} style={secondaryButton} disabled={savingSolution || preparingDeployment}>
-            {savingSolution ? "Saving draft..." : "Save draft"}
-          </button>
-          <button onClick={validateWorkflow} style={secondaryButton}>Validate design</button>
-          <button
-            onClick={prepareDeployment}
-            style={{ ...primaryButton, opacity: preparingDeployment ? 0.7 : 1 }}
-            disabled={preparingDeployment || savingSolution}
-          >
-            {preparingDeployment ? "Preparing deployment..." : "Prepare & deploy"}
-          </button>
+        <div><h1>Build a solution</h1><p>Review the workflow, then select a step to change its settings.</p></div>
+        <div className="builder-review-links">
+          <Link href={designReturnUrl(designMetadata)}>Return to Design with AI</Link>
+          {!guidedDutch && <button type="button" disabled={!loaded} onClick={() => setPaletteOpen(true)}>Add services</button>}
         </div>
       </div>
-
-      <div className="builder-name-row">
-        <div><span>Solution name</span><input value={solutionName} onChange={(event) => setSolutionName(event.target.value)} placeholder="Solution name" /></div>
-        <div className="builder-health-summary"><span>{nodes.length}</span> {nodes.length === 1 ? "node" : "nodes"} <span>{edges.length}</span> {edges.length === 1 ? "connection" : "connections"} <span>{validationResults.length}</span> {validationResults.length === 1 ? "check" : "checks"}</div>
+      {offline && <section className="builder-offline-notice" role="status"><strong>OFFLINE TEST FIXTURE</strong>
+        <span>Design review only. Execution is unavailable in this profile. Saving or validating does not execute this workflow.</span></section>}
+      {solutionLoadError && <p role="alert">Unable to load solution design. {solutionLoadError}</p>}
+      <section className="card builder-overview" aria-label="Workflow overview">
+        <label className="builder-solution-name">Solution name<input aria-label="Solution name" value={solutionName}
+          onChange={event => { setSolutionName(event.target.value); invalidateWorkflowResults(); }} /></label>
+        <p className="builder-workflow-purpose">{loaded ? review.purpose : "Loading workflow…"}</p>
+        <ol className="builder-step-list" aria-label="Processing steps">
+          {review.steps.map((node, index) => <li key={node.id}><button type="button" aria-pressed={selectedInstanceId === node.id}
+            onClick={() => { setSelectedEdgeId(null); setSelectedInstanceId(node.id); setSelectedService(node.data.service as Service); }}>
+            <span>{index + 1}</span>{(node.data.service as Service).name}</button></li>)}
+        </ol>
+      <div className="builder-connections-card">
+          <CapabilityBindings nodes={nodes} edges={edges} saved={savedBindings} checked={checkedBindings} selectedEdgeId={selectedEdgeId} onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
+            const edge = edges.find(e => e.id === edgeId);
+            if (!edge) return;
+            const nextNodes = nodes.map(node => {
+              const contract = node.id === edge.source ? source : node.id === edge.target ? target : null;
+              return contract ? { ...node, data: { ...node.data, operation_contract: {
+                contract_id: contract.id, contract_version: contract.contract_version,
+              } } } : node;
+            });
+            const nextEdges = edges.map(value => value.id === edgeId ? { ...value, data: { ...value.data,
+              binding: { source_slot: sourceSlot, target_slot: targetSlot } } } : value);
+            if (bindingSignature(nodes, edge) === bindingSignature(nextNodes, nextEdges.find(value => value.id === edgeId)!)) return;
+            setNodes(nextNodes);
+            setEdges(nextEdges);
+            invalidateWorkflowResults();
+          }} />
       </div>
-
-      {solutionNeedsRevalidation && (
-        <div className="builder-stale-message" role="status">
-          The solution changed and must be validated again before deployment.
+      <section className="builder-review-actions" aria-label="Review status and next action" id="runtime-readiness">
+        <dl className="builder-review-statuses">
+          <div><dt>Design saved</dt><dd>{!loaded ? "Loading" : dirty ? "Unsaved changes" : "Saved"}</dd></div>
+          <div><dt>Design compatibility</dt><dd>{workflowDesignStatus === "valid" ? "Checked successfully" : workflowDesignStatus === "invalid" ? "Needs attention" : "Not checked"}</dd></div>
+          <div><dt>Runtime readiness</dt><dd>{runtimePreflight?.status === "ready" ? "Checked — ready" : runtimePreflight?.status === "blocked" ? "Checked — blocked" : "Not checked"}</dd></div>
+          <div><dt>Execution</dt><dd>{deploymentResult?.workflow_id ? executionLabel(deploymentResult.status) : submittingToOrchestrator ? "Submitting…" : "No execution result in this view"}</dd></div>
+        </dl>
+        <div className="builder-next-action">
+          <p>{!loaded ? "Wait for the workflow to load." : dirty ? "Next: Save your design changes." : workflowDesignStatus !== "valid" ? "Next: Validate the design and its connections." : offline ? "Design review complete. You can review the settings or return to Design with AI. Runtime readiness is unchecked; execution is unavailable." : deploymentConfirmationReady ? "Readiness has passed. Only Confirm deployment submits an execution." : "Next: Prepare & deploy checks readiness before explicit confirmation."}</p>
+          {reviewAction === "results" && deploymentResult?.workflow_id ? <Link className="btn btn-primary" href={deploymentResultsUrl(deploymentResult.workflow_id)}>{actionLabels.results}</Link> :
+            <button type="button" onClick={takeNextAction} disabled={!loaded || busy} style={reviewAction === "review" ? secondaryButton : primaryButton}>
+              {busy ? savingSolution ? "Saving draft…" : validatingDesign ? "Validating design…" : submittingToOrchestrator ? "Submitting deployment…" : "Preparing deployment…" : actionLabels[reviewAction]}</button>}
         </div>
-      )}
-
-      {deprecatedCanvasServices.length > 0 && (
-        <div
-          className="card"
-          style={{
-            marginTop: 20,
-            padding: 18,
-            border: "1px solid #fde68a",
-            background: "#fffbeb",
-          }}
-        >
-          <strong style={{ color: "#92400e" }}>This solution uses deprecated services</strong>
-          <p style={{ color: "#92400e", margin: "8px 0 0", lineHeight: 1.6 }}>
-            Deprecated services remain runnable for compatibility, but new workflows should move to
-            active replacements where available.
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            {deprecatedCanvasServices.map((service) => (
-              <span key={service.id} style={lifecycleBadgeStyle("deprecated")}>
-                {service.name}
-              </span>
-            ))}
-          </div>
+        {solutionNeedsRevalidation && <p className="builder-stale-message">The design changed. Validate again after saving.</p>}
+        {solutionSaveError && <p role="alert">Could not save this solution. {solutionSaveError}</p>}
+        {runInputError && <p role="alert">{runInputError}</p>}
+        {validationResults.filter(result => /^(Blocked|Warning)/.test(result)).map((result, index) => <p key={index} role="alert">{result}</p>)}
+        {deploymentResult && !deploymentResult.workflow_id && <p role="alert">{deploymentResult.status === "blocked" ? "Deployment blocked" : "Deployment failed"}: {String(deploymentResult.error)}</p>}
+        {runtimePreflight?.checks.filter(check => check.blocking).map(check => <p key={check.node_id} role="alert"><strong>{check.service_name}:</strong> {check.recommended_action}</p>)}
+        <div className="builder-review-secondary">
+          {validationResults.length > 0 && <button type="button" onClick={() => setValidationDetailsOpen(true)}>Design check details</button>}
+          <button type="button" onClick={() => setDeploymentOptionsOpen(true)}>Deployment options</button>
+          {runtimePreflight && <button type="button" onClick={() => setReadinessDetailsOpen(true)}>Readiness details</button>}
         </div>
-      )}
-
-      <div className="builder-workbench" style={{ marginTop: deprecatedCanvasServices.length > 0 ? 32 : 24 }}>
+      </section>
+      </section>
+      <ReviewDialog open={validationDetailsOpen} onClose={() => setValidationDetailsOpen(false)} title="Design check details">
+        {validationResults.map((result,index) => <p key={index}>{result}</p>)}
+      </ReviewDialog>
+      <ReviewDialog open={paletteOpen} onClose={() => setPaletteOpen(false)} title="Available services">
         <aside className={`card builder-palette-card builder-service-palette ${guidedDutch ? "guided-service-review" : ""}`}>
           {guidedDutch ? <><h2>Experiment services</h2><p>The generated grid is passed to the benchmark.</p>{canvasServices.map(service => <details key={service.id}><summary>{service.operation_name === "ConfigureAndSynthesize" ? "Generate sample grid." : "Benchmark grid."}</summary><p>{service.name}</p><code>{service.id}</code><br /><code>{service.operation_name}</code></details>)}</> : <>
           <div className="builder-panel-heading"><div><span>Service palette</span><h2>Available services</h2></div><strong>{filteredServices.length}</strong></div>
@@ -864,7 +921,46 @@ function BuilderContent() {
             {filteredServices.length === 0 && <div className="builder-empty-palette">No services match your search.</div>}
           </div></>}
         </aside>
+      </ReviewDialog>
+      <ReviewDialog open={deploymentOptionsOpen} onClose={() => setDeploymentOptionsOpen(false)} title="Deployment options">
+        <p>{offline ? "Execution is unavailable in this offline profile." : "These inputs are sent only after the required readiness check and explicit deployment confirmation."}</p>
+        {guidedDutch ? <p>Saved experiment settings: seed <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. Review settings in Design with AI before preparing a run.</p> : <>
+          <label htmlFor="run-input-mode">Run input (optional)</label>
+          <select id="run-input-mode" value={runInputMode} onChange={event => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); invalidateWorkflowResults(); }}><option value="prompt">Prompt</option><option value="json">JSON object</option></select>
+          <textarea aria-label="Run input" value={runInput} onChange={event => { setRunInput(event.target.value); setRunInputError(""); invalidateWorkflowResults(); }} rows={5} />
+          <p>Leave empty to use the service default. Required input errors are shown next to the review action.</p>
+        </>}
+        {runInputError && <p role="alert">{runInputError}</p>}
+      </ReviewDialog>
+      <ReviewDialog open={readinessDetailsOpen} onClose={() => setReadinessDetailsOpen(false)} title="Readiness details">
+        <RuntimeReadinessDetails preflight={runtimePreflight} roleMode={roleMode} />
+      </ReviewDialog>
+      {deprecatedCanvasServices.length > 0 && (
+        <div
+          className="card"
+          style={{
+            marginTop: 20,
+            padding: 18,
+            border: "1px solid #fde68a",
+            background: "#fffbeb",
+          }}
+        >
+          <strong style={{ color: "#92400e" }}>This solution uses deprecated services</strong>
+          <p style={{ color: "#92400e", margin: "8px 0 0", lineHeight: 1.6 }}>
+            Deprecated services remain runnable for compatibility, but new workflows should move to
+            active replacements where available.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+            {deprecatedCanvasServices.map((service) => (
+              <span key={service.id} style={lifecycleBadgeStyle("deprecated")}>
+                {service.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
+      <div className="builder-workbench" style={{ marginTop: deprecatedCanvasServices.length > 0 ? 32 : 24 }}>
         <main className="card builder-canvas-card">
           <div
             className="builder-canvas-header"
@@ -888,9 +984,12 @@ function BuilderContent() {
               deleteKeyCode={guidedDutch ? null : ["Backspace", "Delete"]}
               onNodeClick={(_, node) => {
                 const service = node.data?.service as Service | undefined;
+                setSelectedEdgeId(null);
                 setSelectedService(service || null);
                 setSelectedInstanceId(service ? node.id : null);
               }}
+              onEdgeClick={(_, edge) => { setSelectedEdgeId(edge.id); setSelectedService(null); setSelectedInstanceId(null); }}
+              onPaneClick={() => { setSelectedEdgeId(null); setSelectedService(null); setSelectedInstanceId(null); }}
               minZoom={MIN_ZOOM}
               maxZoom={MAX_ZOOM}
               ariaLabelConfig={{ "controls.fitView.ariaLabel": "Fit workflow" }}
@@ -903,30 +1002,23 @@ function BuilderContent() {
           </div>
         </main>
 
-        <aside className="card builder-details-card">
-          <div className="builder-panel-heading"><div><span>Inspector</span><h2>Service details</h2></div></div>
+        <aside ref={settingsRef} className="card builder-details-card">
+          <div className="builder-panel-heading"><div><span>Inspector</span><h2>{selectedEdgeId ? "Connection review" : "Step settings"}</h2></div></div>
 
           {!selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
-              Select a service on the canvas to inspect its provider, interface, lifecycle, and
-              trust status.
+              Select a step to find its settings, or a connection to review its data flow.
             </p>
           )}
 
+
           {selectedService && (
             <div style={{ display: "grid", gap: 12 }}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span className="badge">{selectedService.trust_badge}</span>
-                <span style={lifecycleBadgeStyle(getLifecycleStatus(selectedService))}>
-                  {getLifecycleStatus(selectedService)}
-                </span>
-              </div>
-
-              <ServiceBadges service={selectedService} />
-
-              <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
+              <h3 tabIndex={-1} className="inspector-step-name">{String(nodes.find(n => n.id === selectedInstanceId)?.data.label || selectedService.name)}</h3>
+              <p className="inspector-purpose">{stepPurpose(selectedService)}</p>
+              {selectedService.description && <details className="builder-description"><summary>About this step</summary><p>{selectedService.description}</p></details>}
               {!guidedDutch && selectedInstanceId && nodes.some(node => node.id === selectedInstanceId) && <InstanceParameters
-                key={selectedInstanceId} instanceId={selectedInstanceId} serviceId={selectedService.id}
+                key={selectedInstanceId} instanceId={selectedInstanceId} serviceId={selectedService.id} onReady={revealSettings}
                 configuration={nodes.find(node => node.id === selectedInstanceId)?.data.configuration as InstanceConfiguration | undefined}
                 onChange={configuration => {
                   setNodes(existing => existing.map(node => {
@@ -981,6 +1073,19 @@ function BuilderContent() {
                 </div>
               )}
 
+              <button type="button" onClick={() => setStepDetailsOpen(true)}>Technical details for this step</button>
+              <ReviewDialog open={stepDetailsOpen} onClose={() => setStepDetailsOpen(false)} title="Step technical details">
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <span className="badge">{selectedService.trust_badge}</span>
+                <span style={lifecycleBadgeStyle(getLifecycleStatus(selectedService))}>
+                  {getLifecycleStatus(selectedService)}
+                </span>
+              </div>
+
+              <ServiceBadges service={selectedService} />
+
+              <Info label="Instance" value={selectedInstanceId || "Not selected"} />
+              <Info label="Operation contract pin" value={JSON.stringify(nodes.find(n => n.id === selectedInstanceId)?.data.operation_contract || "Not selected")} />
               <Info label="Provider" value={selectedService.provider} />
               <Info label="Category" value={selectedService.category} />
               <Info label="Version" value={`v${selectedService.version}`} />
@@ -994,232 +1099,25 @@ function BuilderContent() {
               <Info label="Proto URI" value={selectedService.proto_uri || "Not declared"} />
               <Info label="Input" value={selectedService.input_type} />
               <Info label="Output" value={selectedService.output_type} />
+              {selectedService.description && <p>{selectedService.description}</p>}
+              </ReviewDialog>
             </div>
           )}
 
-          <CapabilityBindings nodes={nodes} edges={edges} onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
-            const edge = edges.find(e => e.id === edgeId);
-            if (!edge) return;
-            setNodes(values => values.map(node => {
-              const contract = node.id === edge.source ? source : node.id === edge.target ? target : null;
-              return contract ? { ...node, data: { ...node.data, operation_contract: {
-                contract_id: contract.id, contract_version: contract.contract_version,
-              } } } : node;
-            }));
-            setEdges(values => values.map(value => value.id === edgeId ? { ...value, data: { ...value.data,
-              binding: { source_slot: sourceSlot, target_slot: targetSlot } } } : value));
-            invalidateWorkflowResults();
-          }} />
-          <div style={{ marginTop: 30 }}>
-            <h3>Validation Results</h3>
-
-            {validationResults.length === 0 && (
-              <p style={{ color: "#667085" }}>Run workflow validation.</p>
-            )}
-
-            <div style={{ display: "grid", gap: 10 }}>
-              {validationResults.map((result, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: 10,
-                    borderRadius: 10,
-                    background: validationResultBackground(result),
-                    color: validationResultColor(result),
-                    whiteSpace: "pre-line",
-                  }}
-                >
-                  {result}
-                </div>
-              ))}
-            </div>
-
-            <div className="runtime-preflight-compact">
-              <div className="runtime-preflight-statuses">
-                <div>
-                  <span>Workflow design</span>
-                  <strong className={workflowDesignStatus === "invalid" ? "is-blocked" : workflowDesignStatus === "valid" ? "is-ready" : "is-neutral"}>
-                    {workflowDesignStatus === "invalid" ? "Needs attention" : workflowDesignStatus === "valid" ? "Valid" : "Not checked"}
-                  </strong>
-                </div>
-                <div>
-                  <span>Deployment readiness</span>
-                  <strong className={runtimePreflight?.status === "ready" ? "is-ready" : runtimePreflight?.status === "blocked" ? "is-blocked" : "is-neutral"}>
-                    {runtimePreflight?.status === "ready" ? "Ready" : runtimePreflight?.status === "blocked" ? "Blocked" : "Not checked"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="runtime-preflight-counts">
-                <span><strong>{runtimePreflight?.summary.ready || 0}</strong> ready</span>
-                <span><strong>{runtimePreflight?.summary.blocked || 0}</strong> blocked</span>
-              </div>
-
-              {runtimePreflight?.status === "blocked" && (
-                <p>
-                  {workflowDesignStatus === "valid"
-                    ? "The design is valid, but one or more services require provider or operator action."
-                    : "Resolve the design blockers before preparing deployment."}
-                </p>
-              )}
-
-              <a href="#runtime-readiness">View deployment readiness</a>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 30 }}>
-            <h3>Deployment</h3>
-
-            {guidedDutch ? <p>Saved experiment settings: seed <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. Review settings in Design with AI before preparing a run.</p> : <><label htmlFor="run-input-mode" style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Run input (optional)</label>
-            <select id="run-input-mode" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} style={{ width: "100%", padding: 10, marginBottom: 10 }}>
-              <option value="prompt">Prompt</option>
-              <option value="json">JSON object</option>
-            </select>
-            <textarea aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={5} placeholder={runInputMode === "prompt" ? "Describe what this workflow should do..." : '{"prompt":"...", "option":true}'} style={{ width: "100%", padding: 10, boxSizing: "border-box" }} />
-            <p style={{ color: "#667085", fontSize: 13, marginTop: 5 }}>Sent as JSON to the first service when you confirm deployment. Leave empty to use the service default.</p></>}
-            {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
-
-            {!deploymentResult && (
-              <p style={{ color: "#667085" }}>
-                Validate the design, prepare the deployment, then confirm when all services are ready.
-              </p>
-            )}
-
-            {deploymentResult && (
-              <div
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  background:
-                    deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? "#fef3f2" : "#ecfdf3",
-                  color: deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? "#b42318" : "#067647",
-                  whiteSpace: "pre-line",
-                }}
-              >
-                {deploymentResult.workflow_id
-                  ? `${executionLabel(deploymentResult.status)}\nID: ${deploymentResult.workflow_id}`
-                  : `${deploymentResult.status === "blocked" ? "Deployment blocked" : "Deployment failed"}\n${deploymentResult.error}`}
-              </div>
-            )}
-            {deploymentResult?.workflow_id && <p><Link className="btn btn-secondary" href={deploymentResultsUrl(deploymentResult.workflow_id)}>View this run’s results</Link><br /><small>Recorded settings, task progress and automatically captured results for this exact run.</small></p>}
-          </div>
-
-          <div className="builder-workflow-health">
-            <span>Workflow health</span>
-            <div><strong>{canvasServices.length}</strong><small>{canvasServices.length === 1 ? "Service" : "Services"}</small></div>
-            <div><strong>{edges.length}</strong><small>Connections</small></div>
-            <div><strong>{deprecatedCanvasServices.length}</strong><small>Deprecated</small></div>
-          </div>
         </aside>
       </div>
 
-      <RuntimeReadinessPanel
-        preflight={runtimePreflight}
-        onPrepare={prepareDeployment}
-        preparing={preparingDeployment}
-        roleMode={roleMode}
-        confirmationReady={deploymentConfirmationReady}
-        onConfirm={confirmDeployment}
-        confirming={submittingToOrchestrator}
-        runInputError={runInputError}
-      />
     </div>
   );
 }
 
-function RuntimeReadinessPanel({
-  preflight,
-  onPrepare,
-  preparing,
-  roleMode,
-  confirmationReady,
-  onConfirm,
-  confirming,
-  runInputError,
-}: {
-  preflight: RuntimePreflightResult | null;
-  onPrepare: () => void;
-  preparing: boolean;
-  roleMode: UserRole;
-  confirmationReady: boolean;
-  onConfirm: () => void;
-  confirming: boolean;
-  runInputError: string;
-}) {
-  const blockedChecks = preflight?.checks.filter((check) => check.blocking) || [];
-
-  return (
-    <section
-      id="runtime-readiness"
-      className={`card runtime-readiness-panel runtime-readiness-panel--${preflight?.status || "unchecked"}`}
-    >
-      <div className="runtime-readiness-heading">
-        <div>
-          <span>Prepare deployment</span>
-          <h2>Deployment readiness</h2>
-          <p>Confirms that every service is eligible, correctly configured, and operationally ready before deployment.</p>
-        </div>
-        <button onClick={onPrepare} disabled={preparing} style={secondaryButton}>
-          {preparing ? "Preparing deployment..." : "Check readiness again"}
-        </button>
-      </div>
-
-      <div className="runtime-role-note">Signed in as: <strong>{roleLabels[roleMode]}</strong></div>
-
-      {!preflight && (
-        <div className="runtime-readiness-summary runtime-readiness-summary--neutral">
-          <strong>Deployment has not been prepared yet.</strong>
-          <p>Validate the design, then select Prepare &amp; deploy.</p>
-        </div>
-      )}
-
-      {preflight?.status === "ready" && (
-        <div className="runtime-readiness-summary runtime-readiness-summary--ready">
-          <strong>Ready to confirm</strong>
-          <p>{preflight.summary.message}</p>
-        </div>
-      )}
-
-      {preflight?.status === "blocked" && (
-        <>
-          <div className="runtime-readiness-summary runtime-readiness-summary--blocked">
-            <strong>Provider action required</strong>
-            <p>{preflight.summary.message}</p>
-          </div>
-
-          <div className="runtime-readiness-grid">
-            {blockedChecks.map((check) => (
-              <article className="runtime-readiness-card" key={`${check.node_id}-${check.service_id}`}>
-                <span>{formatValue(check.status)}</span>
-                <h3>{check.service_name}</h3>
-                <dl>
-                  <div><dt>Status</dt><dd>{formatValue(check.status)}</dd></div>
-                  <div><dt>Managed by</dt><dd>{runtimeOwnerLabel(check)}</dd></div>
-                  <div><dt>Reason</dt><dd>{check.message}</dd></div>
-                  <div><dt>Recommended action</dt><dd>{check.recommended_action}</dd></div>
-                </dl>
-                <p className="runtime-readiness-card-copy">{runtimeOwnershipGuidance(check.runtime_management_mode)}</p>
-                {check.service_id && (
-                  <a className="runtime-action-button" href={`/catalogue/${check.service_id}`}>Open service details</a>
-                )}
-              </article>
-            ))}
-          </div>
-        </>
-      )}
-
-      {preflight?.status === "ready" && confirmationReady && (
-        <div className="runtime-readiness-actions">
-          <h3>Confirm deployment</h3>
-          <p>Readiness has passed. Confirm to submit the deployment through the platform execution layer.</p>
-          {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
-          <button onClick={onConfirm} disabled={confirming} style={primaryButton}>
-            {confirming ? "Submitting deployment..." : "Confirm deployment"}
-          </button>
-        </div>
-      )}
-    </section>
-  );
+function RuntimeReadinessDetails({ preflight, roleMode }: { preflight: RuntimePreflightResult | null; roleMode: UserRole }) {
+  return <section><p>Signed in as {roleLabels[roleMode]}. {preflight ? preflight.summary.message : "Runtime readiness has not been checked."}</p>
+    {preflight?.checks.map(check => <article key={check.node_id}><h3>{check.service_name}</h3><dl>
+      <dt>Status</dt><dd>{check.status}</dd><dt>Reason</dt><dd>{check.message}</dd><dt>Recommended action</dt><dd>{check.recommended_action}</dd>
+      <dt>Managed by</dt><dd>{runtimeOwnerLabel(check)}</dd><dt>Runtime</dt><dd>{check.runtime_url || "Unknown"}</dd></dl>
+      <p>{runtimeOwnershipGuidance(check.runtime_management_mode)}</p><Link href={`/catalogue/${check.service_id}`}>Open service details</Link></article>)}
+  </section>;
 }
 
 function ServiceBadges({ service }: { service: Service }) {

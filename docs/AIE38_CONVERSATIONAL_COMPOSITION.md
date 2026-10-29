@@ -392,3 +392,34 @@ AIE-18 remains **In Review**. Broader AIE-38 composition is incomplete. Next ste
 is the actual independent walkthrough, with observed results recorded separately;
 the known legacy test mismatch remains visible for separate triage. No provider
 allowance or production acceptance follows from this preparation.
+
+
+## 29 October 2026 — completed owner-guided walkthrough and AIE-41 follow-up
+
+The earlier pending-handoff section records its preparation-time state. The owner
+subsequently completed Apply → Undo → Apply → Save → Builder → refresh; seed 42
+and the connected benchmark were preserved. Draft
+`fe8110e0-631d-4527-aedc-2979e44ed83b` is now revision **3**, saved as
+`2b58ac9e-6341-4b2b-88b3-d5607027c0d2`. It was inspected read-only and was not reset.
+
+Actual owner feedback: “The technical name captured_grid was difficult to locate.”
+and “The interface felt text-heavy and complicated.” This is **owner-guided**
+feedback, not independent first-time-user evidence. The independent observer
+checklist remains unfilled; **prepared; awaiting independent human walkthrough**.
+
+The separate AIE-41 branch simplifies connection summaries, Inspector hierarchy,
+proposal review and workflow labels. Its generic summaries preserve exact named
+bindings under Technical details; saved/configured/checked states remain distinct.
+A new disposable copy verified Apply/Undo/Apply/Save/Builder/reload. No new structural
+edit scope or workflow/run/session terminology redesign was introduced. See
+[AIE41_USABILITY_REFINEMENT.md](AIE41_USABILITY_REFINEMENT.md) for source, 28 passing
+UI tests, typecheck/build, rendered before/after screenshots, exact review URLs,
+preservation and owner checklist. Existing full backend result remains **339 passed /
+1 baseline failure**; no backend change or new full run occurred.
+
+The owner copy and both earlier revision-3 copies, profiles, contracts, history,
+credentials, runtime stack and exhausted 12/12 allowance are preserved. Only the
+existing fixture web process was rebuilt/restarted; no provider call, workflow
+execution, production change, merge or tracker update occurred. AIE-18 and bounded
+AIE-38 remain **In Review**; broader composition and independent/production
+acceptance remain incomplete.

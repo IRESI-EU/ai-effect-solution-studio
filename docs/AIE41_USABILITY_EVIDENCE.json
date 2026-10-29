@@ -1,0 +1,363 @@
+{
+  "differences": {
+    "databases": [],
+    "files": [],
+    "containers": [],
+    "source": []
+  },
+  "preexisting_row_changes": {
+    "design_ai_drafts": [],
+    "solutions": [],
+    "users": [],
+    "operation_contracts": [],
+    "services": [],
+    "deployments": [],
+    "execution_submissions": [],
+    "local_dutch_executions": []
+  },
+  "credential_unchanged": true,
+  "normal_sign_in_audit_changes": {
+    "aie38-offline-designer": {
+      "updated_at": {
+        "before": "2026-10-29T15:04:13.735218",
+        "after": "2026-10-29T15:21:50.964293"
+      },
+      "last_login_at": {
+        "before": "2026-10-29T15:04:13.726277",
+        "after": "2026-10-29T15:21:50.960091"
+      }
+    }
+  },
+  "preserved_draft_revisions": [
+    3,
+    3,
+    3
+  ],
+  "disposable_draft": "83eb8349-643d-4e77-9886-74fc9c25b166",
+  "disposable_revision": 3,
+  "solution_id": "ba9d85b0-3389-4c07-bc0a-d27c7f7e908f",
+  "original_nodes_exactly_preserved": true,
+  "saved_matches_draft": true,
+  "execution_counts": {
+    "deployments": 0,
+    "execution_submissions": 0,
+    "local_dutch_executions": 0
+  },
+  "ledger_sha256": "c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165",
+  "ledger_usage": [
+    12,
+    3784750,
+    0,
+    0
+  ],
+  "submission_guard_status": 403,
+  "provider_mode": "test",
+  "real_provider_calls": 0,
+  "new_workflow_executions": 0,
+  "date": "2026-10-29",
+  "base_pr": 11,
+  "base_commit": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+  "implementation_commit": "e892d204716517cc869061312f8339f3e32291c3",
+  "web_tree": "bcf419e1f182b991aa362f788eb7d536693ec8fa",
+  "backend_tree_unchanged": "2e180c6a9e998456f0ca155e246c73a98e6380a1",
+  "ui_tests": {
+    "passed": 28,
+    "failed": 0,
+    "source_commit": "e892d204716517cc869061312f8339f3e32291c3",
+    "private_log_sha256": "c52ad196fb36ffdc5eb643a3695fa1f9d0124241b19358bfc0be4da9061020bb"
+  },
+  "typecheck": "passed",
+  "optimized_build": "passed",
+  "backend_existing_full_result": {
+    "passed": 339,
+    "failed": 1,
+    "new_backend_run": false
+  },
+  "rendered": {
+    "desktop_css": [
+      1910,
+      1074
+    ],
+    "narrow_css": [
+      390,
+      844
+    ],
+    "narrow_client_scroll": [
+      367,
+      367
+    ],
+    "computed_node_font": "14px",
+    "owner_viewport_scale": 0.9,
+    "apply_undo_apply_save": [
+      1,
+      2,
+      3
+    ],
+    "undo_matches_full_start": true,
+    "unsaved_seed_43_invalidated": true,
+    "reload_seed": 42,
+    "svg_pointer_selection_verified": true
+  },
+  "human_evidence_category": "owner-guided feedback; no independent observations",
+  "independent_status": "prepared; awaiting independent human walkthrough",
+  "screenshots": [
+    {
+      "path": "screenshots/aie41-builder-after.png",
+      "sha256": "3ad88be00a4ebb26181ad7cb8621c11f47ecde52f12304c48e9607cae2d46389"
+    },
+    {
+      "path": "screenshots/aie41-builder-before.png",
+      "sha256": "d83eca4568a346aae5661bcd5adeb04a6fd013af7191baa6ece4329e837890c6"
+    },
+    {
+      "path": "screenshots/aie41-builder-narrow.png",
+      "sha256": "2173930ed9bfb8bae0e3f494084ce9b36d3295e31d48227056ac70bbf635e988"
+    },
+    {
+      "path": "screenshots/aie41-builder-settings-after.png",
+      "sha256": "e3cc5546af63efc5696f3db4aaff5ab9d0ceb51a6fa700047396ced848f7a6ea"
+    },
+    {
+      "path": "screenshots/aie41-connection-details.png",
+      "sha256": "0158cc2ccc8cc466dc2bb2961b7174bd7dd9718e713cd7c3df324716e79c2008"
+    },
+    {
+      "path": "screenshots/aie41-proposal-after.png",
+      "sha256": "793ac6316cb1405b2d33c5449a9d9cd5b3a1b088c06b03af89899b0538d923e2"
+    },
+    {
+      "path": "screenshots/aie41-proposal-before.png",
+      "sha256": "c8201265bff3ab61cf2bb905f37fa4dc467f2ad5c34e9bbaa9f2e421e9630d46"
+    },
+    {
+      "path": "screenshots/aie41-proposal-narrow.png",
+      "sha256": "cc7dfc225caa8738046c46f338fa1db8f3c4a85c645ccccae06d6e601d0e76af"
+    },
+    {
+      "path": "screenshots/aie41-real-edit-revalidation.png",
+      "sha256": "27ee49757487c28165470bb48c13099e5ea0ced7e131330fa4f7aed97a19df38"
+    }
+  ],
+  "preservation_private_record_sha256": "8684c808bcb02b0e368ecfd5909592827df349ac2cb78b47b0f4aac4468f0088",
+  "workflow_review_followup_2026_10_29": {
+    "baseline_pr12_head": "f5ac4d10dfdf7465a915f5da45c79e55d952a852",
+    "implementation_commit": "884c0c9d182c49ba0207cea5dd331a5e39773801",
+    "frontend_tree": "939567c794f7c2d7a4685eef842b205970909952",
+    "backend_tree_unchanged": "2e180c6a9e998456f0ca155e246c73a98e6380a1",
+    "ui_tests": {
+      "passed": 35,
+      "failed": 0,
+      "private_log_sha256": "2cd5b6c7cc94c9cbdb4177472ab491967be4a1472a9a2583eb0577f780d42620"
+    },
+    "typecheck": "passed",
+    "optimized_build": "passed",
+    "backend_inventory": {
+      "passed": 339,
+      "baseline_failed": 1,
+      "new_run": false
+    },
+    "rendered": {
+      "beforeLayout": {
+        "canvas": 700,
+        "canvasCard": 762.3880615234375,
+        "height": 997,
+        "pageHeight": 4266,
+        "width": 973,
+        "workbench": 3362.98486328125
+      },
+      "desktopMetrics": {
+        "canvas": 515.8208618164062,
+        "canvasCard": 578.2089233398438,
+        "client": 1887,
+        "height": 1074,
+        "openDialogs": 0,
+        "pageHeight": 1460,
+        "scroll": 1887,
+        "width": 1910
+      },
+      "finalClosedLayout": {
+        "canvas": 478.56341552734375,
+        "canvasCard": 540.9514770507812,
+        "clientWidth": 950,
+        "height": 997,
+        "openDialogs": 0,
+        "pageHeight": 2000,
+        "scrollWidth": 950,
+        "width": 973
+      },
+      "stepDialogMetrics": {
+        "canvasCard": 540.9514770507812,
+        "dialogBodyClient": 746,
+        "dialogBodyScroll": 931,
+        "dialogHeight": 820,
+        "focusInside": true,
+        "pageHeight": 2000
+      },
+      "backwardWrap": {
+        "inside": true,
+        "text": "Edit connection"
+      },
+      "forwardWrap": {
+        "inside": true,
+        "text": "Close"
+      },
+      "narrowMetrics": {
+        "canvas": 360,
+        "client": 367,
+        "height": 844,
+        "openDialogs": 0,
+        "pageHeight": 2138,
+        "scroll": 367,
+        "width": 390
+      },
+      "narrowSeed": {
+        "bottom": 679.8693675994873,
+        "top": 658.3768310546875,
+        "value": "42",
+        "viewport": 844
+      },
+      "narrowDialog": {
+        "bodyClient": 633,
+        "bodyScroll": 859,
+        "canvas": 360,
+        "client": 367,
+        "dialog": {
+          "bottom": 785.0745887756348,
+          "height": 725.98876953125,
+          "left": 4.664178848266602,
+          "right": 363.0970096588135,
+          "top": 59.085819244384766,
+          "width": 358.4328308105469,
+          "x": 4.664178848266602,
+          "y": 59.085819244384766
+        },
+        "pageHeight": 2138,
+        "scroll": 367
+      }
+    },
+    "viewport_restoration": {
+      "chosenViewport": "transform: translate(-157.731px, 18.2214px) scale(0.964506);",
+      "reloadedViewport": "transform: translate(-157.731px, 18.2214px) scale(0.964506);",
+      "restored": true
+    },
+    "preservation": {
+      "differences": {
+        "databases": [],
+        "files": [],
+        "containers": [],
+        "source": []
+      },
+      "preexisting_row_changes": {
+        "design_ai_drafts": [],
+        "solutions": [],
+        "users": [],
+        "operation_contracts": [],
+        "services": [],
+        "deployments": [],
+        "execution_submissions": [],
+        "local_dutch_executions": []
+      },
+      "credential_unchanged": true,
+      "normal_sign_in_audit_changes": {
+        "aie38-offline-designer": {
+          "updated_at": {
+            "before": "2026-10-29T15:21:50.964293",
+            "after": "2026-10-29T19:17:30.016846"
+          },
+          "last_login_at": {
+            "before": "2026-10-29T15:21:50.960091",
+            "after": "2026-10-29T19:17:30.001647"
+          }
+        }
+      },
+      "preserved_draft_revisions": [
+        3,
+        3,
+        3,
+        3
+      ],
+      "disposable_draft": "eaa079e7-f4a7-4937-bf15-c2cd329c746c",
+      "disposable_revision": 3,
+      "solution_id": "d40c5cff-f101-4f4a-add6-709b74470e0f",
+      "original_node_engineering_fields_preserved": true,
+      "saved_engineering_matches_draft": true,
+      "execution_counts": {
+        "deployments": 0,
+        "execution_submissions": 0,
+        "local_dutch_executions": 0
+      },
+      "ledger_sha256": "c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165",
+      "ledger_usage": [
+        12,
+        3784750,
+        0,
+        0
+      ],
+      "submission_guard_status": 403,
+      "provider_mode": "test",
+      "real_provider_calls": 0,
+      "new_workflow_executions": 0
+    },
+    "normal_save_seed_sequence": [
+      42,
+      43,
+      42
+    ],
+    "stale_save": "rejected; reload message visible; no overwrite",
+    "input_only_edit": "unsaved; discarded without Save",
+    "fixtures": {
+      "boundary_responses": 2,
+      "real_model_requests": 0,
+      "apply_undo_apply_revisions": [
+        1,
+        2,
+        3
+      ],
+      "full_undo_matches_start": true
+    },
+    "human_evidence": "owner feedback; no independent observations",
+    "independent_status": "prepared; awaiting new human walkthrough",
+    "production_before": {
+      "deployment_id": 7390379741,
+      "sha": "70168fd14bfe4fe64229b16e1d75dbc1e419457d"
+    },
+    "screenshots": [
+      {
+        "path": "screenshots/aie41-followup-after-desktop.png",
+        "sha256": "f4448768516ebce87cb6260015c582a6c642a91328ef7f9003674343d77c2cbe"
+      },
+      {
+        "path": "screenshots/aie41-followup-before-expanded.png",
+        "sha256": "32c864a79de7714efe6c7b09220d6869b4a5faa92ae7adc3203fbb65db320a74"
+      },
+      {
+        "path": "screenshots/aie41-followup-before.png",
+        "sha256": "f5314d71afa7364df11c651dde4fa9835d066b5f41304ceb4252060f5d03f018"
+      },
+      {
+        "path": "screenshots/aie41-followup-connection-details.png",
+        "sha256": "0754de42d82e6a185fbf987278f99573ff6a4d9fac7e4df58f9b43d985a13b86"
+      },
+      {
+        "path": "screenshots/aie41-followup-narrow-details.png",
+        "sha256": "e3d7301aca27b87601e6c5d648d25ffe8a89c269801c46f3be5f115981e9a399"
+      },
+      {
+        "path": "screenshots/aie41-followup-narrow-settings.png",
+        "sha256": "b47dd336105504b4a6aab0c27f0ecfe026d9b3496aa56e32ae2d68dff9dcdc47"
+      },
+      {
+        "path": "screenshots/aie41-followup-review-status.png",
+        "sha256": "932c7bd85ebcdf32f4172b67a9d989c8d8915ad1087232bb2f842e52b58c10dc"
+      },
+      {
+        "path": "screenshots/aie41-followup-stale-save.png",
+        "sha256": "8c3af69b4ce9d1a1924b6e5b61be7bef67e3ebc2bb0567a380716df8eb37a2ef"
+      },
+      {
+        "path": "screenshots/aie41-followup-step-details.png",
+        "sha256": "4db5cf5d18e95ad113a0d73c911421bd909571dec785ac2c0791eacb72479548"
+      }
+    ]
+  }
+}
