@@ -1,0 +1,142 @@
+{
+  "differences": {
+    "databases": [],
+    "files": [],
+    "containers": [],
+    "source": []
+  },
+  "preexisting_row_changes": {
+    "design_ai_drafts": [],
+    "solutions": [],
+    "users": [],
+    "operation_contracts": [],
+    "services": [],
+    "deployments": [],
+    "execution_submissions": [],
+    "local_dutch_executions": []
+  },
+  "credential_unchanged": true,
+  "normal_sign_in_audit_changes": {
+    "aie38-offline-designer": {
+      "updated_at": {
+        "before": "2026-10-29T15:04:13.735218",
+        "after": "2026-10-29T15:21:50.964293"
+      },
+      "last_login_at": {
+        "before": "2026-10-29T15:04:13.726277",
+        "after": "2026-10-29T15:21:50.960091"
+      }
+    }
+  },
+  "preserved_draft_revisions": [
+    3,
+    3,
+    3
+  ],
+  "disposable_draft": "83eb8349-643d-4e77-9886-74fc9c25b166",
+  "disposable_revision": 3,
+  "solution_id": "ba9d85b0-3389-4c07-bc0a-d27c7f7e908f",
+  "original_nodes_exactly_preserved": true,
+  "saved_matches_draft": true,
+  "execution_counts": {
+    "deployments": 0,
+    "execution_submissions": 0,
+    "local_dutch_executions": 0
+  },
+  "ledger_sha256": "c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165",
+  "ledger_usage": [
+    12,
+    3784750,
+    0,
+    0
+  ],
+  "submission_guard_status": 403,
+  "provider_mode": "test",
+  "real_provider_calls": 0,
+  "new_workflow_executions": 0,
+  "date": "2026-10-29",
+  "base_pr": 11,
+  "base_commit": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+  "implementation_commit": "e892d204716517cc869061312f8339f3e32291c3",
+  "web_tree": "bcf419e1f182b991aa362f788eb7d536693ec8fa",
+  "backend_tree_unchanged": "2e180c6a9e998456f0ca155e246c73a98e6380a1",
+  "ui_tests": {
+    "passed": 28,
+    "failed": 0,
+    "source_commit": "e892d204716517cc869061312f8339f3e32291c3",
+    "private_log_sha256": "c52ad196fb36ffdc5eb643a3695fa1f9d0124241b19358bfc0be4da9061020bb"
+  },
+  "typecheck": "passed",
+  "optimized_build": "passed",
+  "backend_existing_full_result": {
+    "passed": 339,
+    "failed": 1,
+    "new_backend_run": false
+  },
+  "rendered": {
+    "desktop_css": [
+      1910,
+      1074
+    ],
+    "narrow_css": [
+      390,
+      844
+    ],
+    "narrow_client_scroll": [
+      367,
+      367
+    ],
+    "computed_node_font": "14px",
+    "owner_viewport_scale": 0.9,
+    "apply_undo_apply_save": [
+      1,
+      2,
+      3
+    ],
+    "undo_matches_full_start": true,
+    "unsaved_seed_43_invalidated": true,
+    "reload_seed": 42,
+    "svg_pointer_selection_verified": true
+  },
+  "human_evidence_category": "owner-guided feedback; no independent observations",
+  "independent_status": "prepared; awaiting independent human walkthrough",
+  "screenshots": [
+    {
+      "path": "screenshots/aie41-builder-after.png",
+      "sha256": "3ad88be00a4ebb26181ad7cb8621c11f47ecde52f12304c48e9607cae2d46389"
+    },
+    {
+      "path": "screenshots/aie41-builder-before.png",
+      "sha256": "d83eca4568a346aae5661bcd5adeb04a6fd013af7191baa6ece4329e837890c6"
+    },
+    {
+      "path": "screenshots/aie41-builder-narrow.png",
+      "sha256": "2173930ed9bfb8bae0e3f494084ce9b36d3295e31d48227056ac70bbf635e988"
+    },
+    {
+      "path": "screenshots/aie41-builder-settings-after.png",
+      "sha256": "e3cc5546af63efc5696f3db4aaff5ab9d0ceb51a6fa700047396ced848f7a6ea"
+    },
+    {
+      "path": "screenshots/aie41-connection-details.png",
+      "sha256": "0158cc2ccc8cc466dc2bb2961b7174bd7dd9718e713cd7c3df324716e79c2008"
+    },
+    {
+      "path": "screenshots/aie41-proposal-after.png",
+      "sha256": "793ac6316cb1405b2d33c5449a9d9cd5b3a1b088c06b03af89899b0538d923e2"
+    },
+    {
+      "path": "screenshots/aie41-proposal-before.png",
+      "sha256": "c8201265bff3ab61cf2bb905f37fa4dc467f2ad5c34e9bbaa9f2e421e9630d46"
+    },
+    {
+      "path": "screenshots/aie41-proposal-narrow.png",
+      "sha256": "cc7dfc225caa8738046c46f338fa1db8f3c4a85c645ccccae06d6e601d0e76af"
+    },
+    {
+      "path": "screenshots/aie41-real-edit-revalidation.png",
+      "sha256": "27ee49757487c28165470bb48c13099e5ea0ced7e131330fa4f7aed97a19df38"
+    }
+  ],
+  "preservation_private_record_sha256": "8684c808bcb02b0e368ecfd5909592827df349ac2cb78b47b0f4aac4468f0088"
+}
