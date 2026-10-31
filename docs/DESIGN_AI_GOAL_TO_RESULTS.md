@@ -52,7 +52,7 @@ This runbook has **not been performed live** in this milestone. Agent-run fixtur
 
 ## Verification and source provenance
 
-Review base: Portal PR #12, `c352ca4fab8e065d3105d91ff38c96d92ba9497f`. Branch: `codex/design-ai-goal-to-results`. The full backend inventory was run against the final implementation source, SHA-256 **`8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81`**; each suite checked that the source did not change during its run. Tested implementation commit: **`16a4e0cac567cc75a578f4a68d2a877b82411139`**; subsequent review changes record evidence/documentation only. Tests use separate disposable databases and explicitly labelled provider/runtime/algorithm/capture doubles. They make no paid calls or real submissions.
+Draft review: [PR #13](https://github.com/IRESI-EU/ai-effect-solution-studio/pull/13), stacked on unchanged PR #12. Review base: Portal PR #12, `c352ca4fab8e065d3105d91ff38c96d92ba9497f`. Branch: `codex/design-ai-goal-to-results`. The full backend inventory was run against the final implementation source, SHA-256 **`8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81`**; each suite checked that the source did not change during its run. Tested backend implementation commit: **`16a4e0cac567cc75a578f4a68d2a877b82411139`**. A final frontend follow-up distinguishes known pre-dispatch failure from uncertainty; its tests/typecheck/build were rerun and final source digest is in the machine evidence. Backend source is unchanged. Tests use separate disposable databases and explicitly labelled provider/runtime/algorithm/capture doubles. They make no paid calls or real submissions.
 
 | Check | Actual result |
 |---|---|
@@ -62,7 +62,7 @@ Review base: Portal PR #12, `c352ca4fab8e065d3105d91ff38c96d92ba9497f`. Branch: 
 | Complete backend inventory | **369 passed / 1 failed / 0 skipped**; not fully green |
 | Web Node tests | **36 passed** |
 | TypeScript | Passed, `tsc --noEmit -p tsconfig.json` |
-| Next production build | Passed, `next build --webpack`, 14 pages; staged build ID `j-ZtMetOu_Ihgvr2lpCg2` |
+| Next production build | Passed, `next build --webpack`, 14 pages; staged build ID `wuKelLuSQUTPBqjYaWvww` |
 | Actual staged application | Signed in using existing designer; ordinary landing shows no draft, no conversation/activity, real-provider mode, provider disconnected and Send paused |
 | Real formatted-context audit | Read-only probe stopped before provider: 6,636 characters, conservative input bound **20,653 ≤ 32,000**, max output 2,000; registered workflow and seeds 42/43 |
 | Preservation | Both qualification/offline engineering databases and all **55** protected profile/evidence/ledger files match before/after fingerprints; normal sign-in audit/session changes excluded |

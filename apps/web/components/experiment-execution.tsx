@@ -71,7 +71,7 @@ export default function ExperimentExecution({draftId, revision, saved}: {draftId
       {review.readiness.status === "ready" && review.execution_authorized && !consumed && !uncertain && <button disabled={busy || !saved} onClick={() => setConfirm(true)}>Start execution</button>}</>}
     {confirm && <div role="group" aria-label="Confirm execution"><p>This starts one local workflow using the reviewed saved seed. Results require successful execution and capture.</p>
       <button disabled={busy || !saved} onClick={() => void execute()}>Confirm and start execution</button><button disabled={busy} onClick={() => setConfirm(false)}>Cancel</button></div>}
-    {attempt && <><p>Stored attempt: <code>{attempt.submission_id}</code> · {attempt.phase === "reviewed" ? "Reviewed; not submitted" : attempt.phase === "submitted" ? "Submitted; open its run for progress and results" : "Submission outcome uncertain. Operator reconciliation required; no automatic retry."}</p>
+    {attempt && <><p>Stored attempt: <code>{attempt.submission_id}</code> · {attempt.phase === "reviewed" ? "Reviewed; not submitted" : attempt.phase === "submitted" ? "Submitted; open its run for progress and results" : attempt.phase === "submission_failed" ? "Submission stopped before dispatch. This attempt is consumed; no workflow was started." : "Submission outcome uncertain. Operator reconciliation required; no automatic retry."}</p>
       {attempt.workflow_id && <Link href={deploymentResultsUrl(attempt.workflow_id)}>View this run’s results</Link>}</>}
     <button disabled={busy} onClick={() => void status()}>Check stored execution status</button>
   </section>;

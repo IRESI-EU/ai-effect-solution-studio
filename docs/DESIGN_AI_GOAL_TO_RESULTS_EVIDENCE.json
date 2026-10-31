@@ -2,12 +2,9 @@
   "date": "2026-10-31",
   "scope": "One existing registered Dutch generator-to-benchmark workflow; no arbitrary composition",
   "state": "implemented/offline verified; awaiting separate live acceptance authorization",
-  "implementation_commit": "16a4e0cac567cc75a578f4a68d2a877b82411139",
   "base_commit": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
   "branch": "codex/design-ai-goal-to-results",
   "backend_tested_source_sha256": "8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81",
-  "committed_code_matches_tested_working_source": true,
-  "compared_source_files": 183,
   "checks": {
     "portable": {
       "suite": "portable",
@@ -56,7 +53,9 @@
     "typecheck": "passed",
     "build": "passed",
     "pages": 14,
-    "build_id": "j-ZtMetOu_Ihgvr2lpCg2"
+    "build_id": "wuKelLuSQUTPBqjYaWvww",
+    "final_normalized_source_sha256": "19912b495ff3d497f90976017cd0933b492fff8606985489ed26921ee255f3b3",
+    "final_functional_follow_up": "Known pre-dispatch failure distinguished from uncertain runtime response; frontend tests/typecheck/build rerun. Backend source unchanged."
   },
   "actual_context_audit": {
     "context_chars": 6636,
@@ -182,5 +181,14 @@
     "#9",
     "#8",
     "WP3 #3 -> #2"
-  ]
+  ],
+  "backend_implementation_commit": "16a4e0cac567cc75a578f4a68d2a877b82411139",
+  "committed_source_comparison_at_backend_implementation_commit": true,
+  "compared_files_at_backend_implementation_commit": 183,
+  "review": {
+    "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/13",
+    "state": "OPEN/DRAFT",
+    "base": "codex/aie41-builder-review-usability",
+    "existing_heads_unchanged": true
+  }
 }
