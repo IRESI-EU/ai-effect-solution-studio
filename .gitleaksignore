@@ -1,0 +1,3 @@
+# Exact false positives: existing local Docker image tag, not a credential.
+deploy/aie37/Demo.Api.Dockerfile:generic-api-key:1
+deploy/aie37/stage_demo.py:generic-api-key:38

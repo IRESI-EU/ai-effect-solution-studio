@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     aie18_evidence_root: str = ""
     # A separate local qualification database/network, never the guarded demos.
     aie37_qualification: bool = False
+    # Additive, opt-in journey on the existing isolated AIE-37 catalogue/runtime.
+    design_ai_dutch_demo: bool = False
+    # An immutable, separately authorized one-attempt grant. Empty denies dispatch.
+    design_ai_demo_execution_grant_file: str = ""
 
 
 settings = Settings()

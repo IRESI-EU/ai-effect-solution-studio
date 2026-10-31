@@ -25,7 +25,8 @@ LABELS = {"configuration": "Configuration (JSON)", "grid": "Grid data (JSON)",
 
 
 def enabled():
-    return bool((historical.enabled() or qualification_enabled())
+    from app.services.qualified_demo import profile_enabled
+    return bool((historical.enabled() or qualification_enabled() or profile_enabled())
                 and settings.local_dutch_auto_capture_root and settings.local_dutch_capture_runtime)
 
 
@@ -49,13 +50,14 @@ def runtime_identity():
 
 
 def prepare_submission(db, user, workflow, compiled):
+    from app.services.qualified_demo import profile_enabled
     if not enabled():
         return None
     endpoints = compiled["dockerinfo"]["docker_info_list"]
     nodes = compiled["blueprint"]["nodes"]
     keys = [n["container_name"] + ":" + n["operation_signature_list"][0]["operation_signature"]["operation_name"] for n in nodes]
     if set(keys) != set(NODE_KEYS.values()) or len(nodes) != 2:
-        if qualification_enabled():
+        if qualification_enabled() or profile_enabled():
             raise HTTPException(422, "This qualification permits only the reviewed Dutch generation-to-benchmark chain")
         return None
     by_key = dict(zip(keys, nodes))
@@ -70,7 +72,7 @@ def prepare_submission(db, user, workflow, compiled):
             ("grid_synth_service", "seed-synth", "8080"), ("benchmark-runner", "seed-benchmark", "8080")}:
         raise HTTPException(409, "This capture supports only the isolated Dutch runtime")
     value = workflow.run_input
-    if qualification_enabled():
+    if qualification_enabled() or profile_enabled():
         if (value is not None or compiled["solution_studio_metadata"]["capability_bindings"]["status"] != "verified"
                 or not compiled.get("task_configurations")):
             raise HTTPException(422, "Qualification requires explicit connections and saved instance settings, without workflow seed input")
@@ -94,7 +96,7 @@ def prepare_submission(db, user, workflow, compiled):
         raise HTTPException(503, "Local capture runtime identity is unavailable; no workflow was submitted")
     snapshot = {"request": workflow.model_dump(mode="json"), "root_refs": compiled.get("inputs", []),
                 "blueprint": compiled["blueprint"], "dockerinfo": compiled["dockerinfo"], "runtime": pins}
-    if qualification_enabled():
+    if qualification_enabled() or profile_enabled():
         snapshot["task_configurations"] = compiled["task_configurations"]
         snapshot["capability_bindings"] = compiled["solution_studio_metadata"]["capability_bindings"]
     record = LocalDutchExecution(id=str(uuid4()), solution_id=workflow.solution_id, owner_user_id=user.id,
@@ -116,8 +118,12 @@ def attach_workflow(db, snapshot, result, user):
     workflow = result.get("workflow_id", "")
     validate_ids(workflow, task_id("synth"))
     snapshot.workflow_id, snapshot.phase = workflow, "submitted"
-    db.add(Deployment(id=str(uuid4()), workflow_id=workflow, solution_id=snapshot.solution_id,
-                      created_by_user_id=user.id, name=snapshot.submitted["request"]["name"], status=result.get("status", "submitted")))
+    existing = db.query(Deployment).filter(Deployment.workflow_id == workflow).first()
+    if existing is None:
+        db.add(Deployment(id=str(uuid4()), workflow_id=workflow, solution_id=snapshot.solution_id,
+                          created_by_user_id=user.id, name=snapshot.submitted["request"]["name"], status=result.get("status", "submitted")))
+    elif existing.created_by_user_id != user.id or existing.solution_id != snapshot.solution_id:
+        raise HTTPException(409, "Recorded execution ownership differs from capture")
     db.commit()
 
 
@@ -153,7 +159,24 @@ def _read_role(root, workflow, role, snapshot):
     return manifest, manifest_bytes, request, blobs
 
 
-def collect(db, deployment, workflow, tasks):
+def recorded_state(db, deployment):
+    """Only this new attempt's terminal observation may replace an unavailable live read."""
+    if not enabled():
+        return None
+    record = db.query(LocalDutchExecution).filter(LocalDutchExecution.workflow_id == deployment.workflow_id).first()
+    if (not record or not record.submitted.get("request", {}).get("submission_id")
+        or record.owner_user_id != deployment.created_by_user_id or record.solution_id != deployment.solution_id):
+        return None
+    collection = record.collection or {}
+    observation = collection.get("terminal_observation")
+    if (not isinstance(observation, dict) or sha(encode(observation)) != collection.get("terminal_observation_sha256")
+        or observation.get("workflow", {}).get("workflow_id") != deployment.workflow_id
+        or observation["workflow"].get("status") not in {"completed", "failed"}):
+        return None
+    return observation["workflow"], observation["tasks"]
+
+
+def collect(db, deployment, workflow, tasks, *, runtime_live=True):
     if not enabled():
         return None
     record = (db.query(LocalDutchExecution).filter(LocalDutchExecution.workflow_id == deployment.workflow_id)
@@ -263,6 +286,18 @@ def collect(db, deployment, workflow, tasks):
     else:
         result.update(state="available", message="Results captured automatically for this execution.")
     collection = {"state": result["state"], "manifests": accepted}
+    previous = record.collection or {}
+    for key in ("terminal_observation", "terminal_observation_sha256"):
+        if key in previous:
+            collection[key] = previous[key]
+    complete_task_identity = {(task.get("task_id"), task.get("node_key")) for task in tasks} == {(task_id(role), key) for role, key in NODE_KEYS.items()}
+    if (snapshot["request"].get("submission_id") and runtime_live and complete_task_identity and workflow.get("status") in {"completed", "failed"}
+        and "terminal_observation" not in collection):
+        observation = {"workflow": {"workflow_id": wid, "status": workflow["status"]},
+            "tasks": [{key: value for key, value in task.items() if key in {"task_id", "node_key", "status", "input_refs", "output_refs"}}
+                for task in tasks]}
+        collection.update(terminal_observation=observation, terminal_observation_sha256=sha(encode(observation)))
+        deployment.status = workflow["status"]
     if record.collection != collection:
         record.collection = collection
         db.commit()

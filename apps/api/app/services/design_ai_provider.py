@@ -29,6 +29,10 @@ When guided_experiment is present, explain only its supplied steps, connection a
 expected results/downloads conditional on successful explicit execution/capture.
 A recommendation does not create a draft or run. Creating a copy requires the user's explicit
 Create this experiment action. Never predict grid counts or invent metric units.
+For mechanism=registered_workflow, explicitly say you recommend an existing registered workflow,
+not arbitrary composition. Set recommended_seed to the requested supported seed from
+guided_experiment.supported_seeds. Ask for a seed if it is missing; do not guess.
+Outside this registered-workflow recommendation set recommended_seed=null.
 For an existing draft, expected_revision MUST equal draft.revision as an integer,
 even for an explanation or a refusal with edits=[]. Without a draft use null.
 You can propose ONLY supported edits.
@@ -91,6 +95,10 @@ class OpenAIProvider:
     async def respond(self, context: dict) -> AssistantTurn:
         if not configured():
             raise HTTPException(503, "AI provider not configured")
+        if settings.design_ai_dutch_demo:
+            from app.services.qualified_demo import profile_enabled
+            if not profile_enabled() or not settings.design_ai_acceptance_budget_file or not settings.design_ai_acceptance_task_limit_file:
+                raise HTTPException(503, "The qualified demonstration requires its existing shared ledger and scoped immutable provider checkpoint")
         if settings.design_ai_acceptance_task_limit_file and not settings.design_ai_acceptance_budget_file:
             raise HTTPException(503, "Task allowance requires the existing acceptance ledger")
         serialized = json.dumps(redact_context(context), ensure_ascii=False, allow_nan=False)
@@ -105,7 +113,9 @@ class OpenAIProvider:
         if settings.design_ai_acceptance_budget_file:
             from app.services.design_ai_budget import Budget
             url = make_url(settings.database_url)
-            if (url.host not in {"127.0.0.1", "localhost", "::1"} or not (url.database or "").startswith("design_ai_acceptance_")
+            from app.services.qualified_demo import profile_enabled
+            isolated = (url.host in {"127.0.0.1", "localhost", "::1"} and (url.database or "").startswith("design_ai_acceptance_"))
+            if (not (isolated or profile_enabled())
                     or settings.design_ai_model != "gpt-6-luna" or settings.design_ai_reasoning_effort != "low"):
                 raise HTTPException(503, "Acceptance budget requires the isolated local database and pinned Luna settings")
             budget = Budget(settings.design_ai_acceptance_budget_file, task_limit_file=settings.design_ai_acceptance_task_limit_file)

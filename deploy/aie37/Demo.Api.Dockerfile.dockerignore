@@ -1,0 +1,7 @@
+**
+!apps/
+!apps/api/
+!apps/api/app/
+!apps/api/app/**
+**/__pycache__/**
+**/*.pyc

@@ -6,12 +6,18 @@ from app.models.execution_submission import ExecutionSubmission
 from app.core.config import settings
 
 
-def prepare(db, user, workflow, compiled):
-    value = {"request": workflow.model_dump(mode="json", exclude_unset=True),
+def request_value(workflow):
+    return workflow.model_dump(mode="json", exclude_unset=True, exclude={"submission_id"})
+
+
+def prepare(db, user, workflow, compiled, *, phase="prepared", authorization=None):
+    value = {"request": request_value(workflow),
              "compiled": compiled, "runtime_destination": settings.orchestrator_base_url}
+    if authorization is not None:
+        value["authorization"] = authorization
     encoded = json.dumps(value, sort_keys=True, ensure_ascii=False, allow_nan=False)
     row = ExecutionSubmission(owner_user_id=user.id, solution_id=workflow.solution_id,
-                              submitted=json.loads(encoded), submitted_sha256=hashlib.sha256(encoded.encode()).hexdigest())
+                              submitted=json.loads(encoded), submitted_sha256=hashlib.sha256(encoded.encode()).hexdigest(), phase=phase)
     db.add(row)
     db.commit()
     return row

@@ -1,5 +1,7 @@
 # AIE-37 — Dutch catalogue workflow qualification
 
+> 31 October integration update: the [single-entry Design with AI journey](DESIGN_AI_GOAL_TO_RESULTS.md) reuses this exact qualification profile and saved source. Its real provider is disconnected and the existing ledger remains exhausted; no new workflow ran. The historical execution below is preserved and must not substitute for the proposed new acceptance. Current source/readiness, task-status distinctions and the separate one-call/one-execution request are in that runbook.
+
 28 October 2026. **Locally qualified, production compatibility unverified.**
 AIE-18 remains **In Review**. One new local workflow completed; no provider call,
 production operation, hardware access, merge or tracker update was performed.

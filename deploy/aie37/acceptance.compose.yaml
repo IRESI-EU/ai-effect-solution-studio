@@ -1,0 +1,12 @@
+# NOT ACTIVE. Use only after separate, attributable one-call/one-execution approval.
+# Combine AFTER compose.yaml and demo.compose.yaml; never use for staging.
+services:
+  api:
+    environment:
+      OPENAI_API_KEY: "${OPENAI_API_KEY:?Separate live acceptance authorization and private provider key required}"
+      DESIGN_AI_ACCEPTANCE_TASK_LIMIT_FILE: /task-limits/goal-to-results-provider-task-20261031.json
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: /demo-authorization/one-execution.json
+    volumes:
+      - "${DEMO_ALLOWANCE_DIR:?Exact existing shared directory required}:/acceptance:rw"
+      - "${DEMO_ALLOWANCE_DIR}:/task-limits:ro"
+      - "${DEMO_AUTHORIZATION_DIR:?Attributable one-execution grant required}:/demo-authorization:ro"

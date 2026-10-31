@@ -1,0 +1,26 @@
+# Additive STAGED configuration for the existing qualification project only.
+# No worker/runtime is started by stage_demo.py. No credentials or grants here.
+services:
+  api:
+    image: ai-effect-aie37-api:goal-results-v1
+    build:
+      context: ../..
+      dockerfile: deploy/aie37/Demo.Api.Dockerfile
+    environment:
+      DESIGN_AI_ENABLED: "true"
+      AIE37_QUALIFICATION: "true"
+      DESIGN_AI_DUTCH_DEMO: "true"
+      DESIGN_AI_TEMPLATES: '{"dutch":{"solution_id":"98eadd46-5b58-4517-b706-f2a7b9ed6bc4","instance_settings_only":true,"qualified_experiment":true}}'
+      OPENAI_API_KEY: ""
+      DESIGN_AI_MODEL: gpt-6-luna
+      DESIGN_AI_REASONING_EFFORT: low
+      DESIGN_AI_MAX_OUTPUT_TOKENS: "2000"
+      DESIGN_AI_CONTEXT_CHARS: "16000"
+      DESIGN_AI_TOOL_LIMIT: "8"
+      DESIGN_AI_ACCEPTANCE_BUDGET_FILE: /acceptance/luna-dutch-manual-20261018-04.sqlite3
+      DESIGN_AI_ACCEPTANCE_TASK_LIMIT_FILE: /task-limits/instance-settings-provider-task-20261027.json
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ""
+    volumes:
+      - "${DEMO_ALLOWANCE_DIR:?Existing shared allowance directory required}:/acceptance:ro"
+      - "${DEMO_ALLOWANCE_DIR}:/task-limits:ro"
+      - "${DEMO_AUTHORIZATION_DIR:?Private operator directory required}:/demo-authorization:ro"
