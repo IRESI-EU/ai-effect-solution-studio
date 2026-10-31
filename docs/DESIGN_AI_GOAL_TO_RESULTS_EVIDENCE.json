@@ -1,0 +1,186 @@
+{
+  "date": "2026-10-31",
+  "scope": "One existing registered Dutch generator-to-benchmark workflow; no arbitrary composition",
+  "state": "implemented/offline verified; awaiting separate live acceptance authorization",
+  "implementation_commit": "16a4e0cac567cc75a578f4a68d2a877b82411139",
+  "base_commit": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+  "branch": "codex/design-ai-goal-to-results",
+  "backend_tested_source_sha256": "8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81",
+  "committed_code_matches_tested_working_source": true,
+  "compared_source_files": 183,
+  "checks": {
+    "portable": {
+      "suite": "portable",
+      "exit_code": 0,
+      "backend_source_sha256": "8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81",
+      "test_directory": "apps/api/tests",
+      "tests": 265,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "legacy": {
+      "suite": "legacy",
+      "exit_code": 1,
+      "backend_source_sha256": "8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81",
+      "test_directory": "apps/api/app/tests",
+      "tests": 92,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgres": {
+      "suite": "postgres",
+      "exit_code": 0,
+      "backend_source_sha256": "8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81",
+      "test_directory": "apps/api/postgres_tests",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "backend_total": {
+    "passed": 369,
+    "failed": 1,
+    "skipped": 0
+  },
+  "baseline_failure": {
+    "test": "apps/api/app/tests/test_package_import.py::test_missing_service_reference_returns_actionable_load_error",
+    "expected_creation_status": 200,
+    "actual_creation_status": 409,
+    "predates_change": true
+  },
+  "frontend": {
+    "tests_passed": 36,
+    "typecheck": "passed",
+    "build": "passed",
+    "pages": 14,
+    "build_id": "j-ZtMetOu_Ihgvr2lpCg2"
+  },
+  "actual_context_audit": {
+    "context_chars": 6636,
+    "conservative_input_token_bound": 20653,
+    "maximum_input_tokens": 32000,
+    "maximum_output_tokens": 2000,
+    "supported_seeds": [
+      42,
+      43
+    ],
+    "source_revision": "8ee273139c84fb104d06fb2b4edc7189286b51e1ae29f501500e7bfbf5ca1e1d",
+    "mechanism": "registered_workflow",
+    "provider_calls": 0,
+    "drafts_created": 0,
+    "workflow_submissions": 0
+  },
+  "staging": {
+    "starting_url": "http://localhost:23121/design-ai",
+    "profile": "existing AIE-37 qualification",
+    "database": "design_aie37_qualification",
+    "provider_mode": "real",
+    "provider_connected": false,
+    "execution_grant": null,
+    "ledger_mount": "read-only",
+    "runtime_services": "stopped",
+    "web": "native Windows Next production process",
+    "api_port": 28185,
+    "source_solution_id": "98eadd46-5b58-4517-b706-f2a7b9ed6bc4",
+    "source_saved_seed": 42
+  },
+  "preservation": {
+    "engineering_databases": {
+      "design_aie37_qualification": {
+        "solutions": 1,
+        "services": 2,
+        "operation_contracts": 2,
+        "design_ai_drafts": 0,
+        "deployments": 1,
+        "execution_submissions": 1,
+        "local_dutch_executions": 1,
+        "users": 2
+      },
+      "design_aie38_offline_20261028": {
+        "solutions": 6,
+        "services": 2,
+        "operation_contracts": 2,
+        "design_ai_drafts": 5,
+        "deployments": 0,
+        "execution_submissions": 0,
+        "local_dutch_executions": 0,
+        "users": 1
+      }
+    },
+    "files_checked": 55,
+    "before_after_unchanged": true,
+    "sign_in_audit_and_sessions_excluded": true,
+    "offline_23122_guard_unchanged": true
+  },
+  "shared_allowance": {
+    "calls": 12,
+    "max_calls": 12,
+    "ceiling_usd": "0.10",
+    "accounted_usd": "0.003784750",
+    "remaining_usd": "0.096215250",
+    "outstanding_reservations": 0,
+    "sha256": "c506929d99ae8b63de7e7d941d06aaac48ef27a4bea8eedc1a12fe407959b165",
+    "amendment_preview_or_apply_on_real_ledger": false
+  },
+  "this_milestone": {
+    "actual_provider_attempts": 0,
+    "provider_cost_usd": "0",
+    "workflow_submissions": 0,
+    "algorithm_executions": 0,
+    "new_live_profile_drafts": 0,
+    "allowance_amendments": 0,
+    "tracker_updates": 0,
+    "production_changes": 0,
+    "human_observations": 0
+  },
+  "future_acceptance_NOT_AUTHORIZED": {
+    "prompt": "Create a sample electricity grid using seed 43 and benchmark it.",
+    "max_actual_provider_attempts": 1,
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "processing": "Standard",
+    "max_output_tokens": 2000,
+    "max_input_bound": 32000,
+    "max_reservation_and_spend_usd": "0.005",
+    "sdk_retries": 0,
+    "fallback": false,
+    "supported_amendment": "12 to 13 only; original ledger; unchanged USD0.10 ceiling",
+    "max_new_local_workflow_executions": 1,
+    "seed": 43,
+    "checkpoint_created": false,
+    "execution_grant_created": false,
+    "no_automatic_retry": true
+  },
+  "wp3": {
+    "maintained_source_commit": "c6695d8444edb14b94111f16d8620c460880849b",
+    "recorded_source_file_hashes_matched": 24,
+    "published_review_head": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+    "validator_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
+    "source_changes": false
+  },
+  "verification_limits": {
+    "new_real_provider_interpretation": "pending",
+    "new_real_execution_and_captures": "pending",
+    "independent_human_acceptance": "pending",
+    "production_compatibility": "unverified",
+    "broader_AIE38_composition": "incomplete",
+    "AIE18": "In Review"
+  },
+  "secret_scan": {
+    "tool": "gitleaks 8.30.1",
+    "staged_result": "passed",
+    "exact_false_positives_documented": 2
+  },
+  "dependency_stack": [
+    "new integration",
+    "#12",
+    "#11",
+    "#10",
+    "#9",
+    "#8",
+    "WP3 #3 -> #2"
+  ]
+}

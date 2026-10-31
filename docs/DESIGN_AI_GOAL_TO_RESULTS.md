@@ -52,7 +52,7 @@ This runbook has **not been performed live** in this milestone. Agent-run fixtur
 
 ## Verification and source provenance
 
-Review base: Portal PR #12, `c352ca4fab8e065d3105d91ff38c96d92ba9497f`. Branch: `codex/design-ai-goal-to-results`. The full backend inventory was run against the final implementation source, SHA-256 **`8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81`**; each suite checked that the source did not change during its run. The implementation commit is recorded in the machine evidence after committing. Tests use separate disposable databases and explicitly labelled provider/runtime/algorithm/capture doubles. They make no paid calls or real submissions.
+Review base: Portal PR #12, `c352ca4fab8e065d3105d91ff38c96d92ba9497f`. Branch: `codex/design-ai-goal-to-results`. The full backend inventory was run against the final implementation source, SHA-256 **`8bc9938b586856f947e3eab2b544165029bea755dfa9ade083327e5c92556a81`**; each suite checked that the source did not change during its run. Tested implementation commit: **`16a4e0cac567cc75a578f4a68d2a877b82411139`**; subsequent review changes record evidence/documentation only. Tests use separate disposable databases and explicitly labelled provider/runtime/algorithm/capture doubles. They make no paid calls or real submissions.
 
 | Check | Actual result |
 |---|---|
