@@ -40,14 +40,7 @@ def load_evidence(db, deployment, workflow, tasks, live):
 
 
 def associated_state(db, deployment):
-    workflow, tasks, live = current_state(deployment)
-    source = "orchestrator" if live else "stored deployment record; orchestrator unavailable"
-    if not live:
-        recorded = automatic.recorded_state(db, deployment)
-        if recorded:
-            workflow, tasks = recorded
-            source = "recorded terminal observation for this run; orchestrator unavailable"
-    return workflow, tasks, live, source
+    return automatic.associated_state(db, deployment, current_state)
 
 
 @router.get("/deployments/by-workflow/{workflow_id}/results")

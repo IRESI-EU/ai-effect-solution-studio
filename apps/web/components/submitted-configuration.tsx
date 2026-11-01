@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { submittedSettings } from "../lib/submitted-settings";
+import { submittedEvidenceStatus, submittedSettings } from "../lib/submitted-settings";
 
 export default function SubmittedConfiguration({ workflowId, status, onConfigured, resultsAvailable = false }: { workflowId: string; status: string; resultsAvailable?: boolean; onConfigured: (value: boolean) => void }) {
   const [snapshot, setSnapshot] = useState<any>(null);
@@ -25,16 +25,20 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
       else if (recorded.status === "fulfilled") setError("Algorithm evidence is unavailable. Submitted settings remain recorded below.");
     });
     return () => { active = false; };
-  }, [workflowId, status, onConfigured]);
+  }, [workflowId, status, resultsAvailable, onConfigured]);
   const configured = snapshot?.submitted.compiled.solution_studio_metadata.execution_instances.some((n: any) => n.configuration != null);
   return <section id={configured && !resultsAvailable ? "results" : "instance-settings"} className="card" style={{ padding: 26, marginTop: 20, scrollMarginTop: 90 }} aria-label="Recorded instance settings">
     <h2>Recorded instance settings</h2>
     {error && <p role="status">{error}</p>}
     {snapshot && <>
       <p>Validated settings from the immutable submission. Algorithm consumption is verified separately for each instance.</p>
+      {evidence?.source && <p>Evidence source: {evidence.source}. {evidence.historical && "Historical files and associations are revalidated on inspection."}</p>}
+      {evidence?.observation_source && <p>Task observation: {evidence.observation_source}.</p>}
       {snapshot.submitted.compiled.solution_studio_metadata.capability_bindings?.status === "verified" && <details><summary>Recorded data connections</summary><ul>{snapshot.submitted.compiled.solution_studio_metadata.capability_bindings.bindings.map((binding: any, index: number) => <li key={index}>{binding.source} / {binding.source_slot} → {binding.target} / {binding.target_slot}<br />Schema: {binding.schema_ref}</li>)}</ul></details>}
       {snapshot.submitted.compiled.solution_studio_metadata.execution_instances.map((node: any) => {
         const { requested, effective, consumed, proof } = submittedSettings(snapshot, evidence, node);
+        const parameters = submittedEvidenceStatus(proof, evidence, "parameters");
+        const input = submittedEvidenceStatus(proof, evidence, "input");
         const metadata = snapshot.submitted.compiled.solution_studio_metadata;
         const published = metadata.capability_bindings?.contracts?.[node.instance_id];
         const noEditableSettings = published && !published.definition.execution_parameters;
@@ -44,12 +48,11 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
           <details><summary>Execution identifiers</summary><p style={{ overflowWrap: "anywhere" }}>Instance {node.instance_id} · Task {node.task_id}</p></details>
           {noEditableSettings ? <>
             <p>This operation has no editable settings.</p>
-            {node.input_bindings.length > 0 && <p>Data input: {proof?.state === "available" && proof.input_binding_verified
-              ? "Verified from the upstream output captured for this run." : "Unverified — associated input evidence is unavailable."}</p>}
+            {node.input_bindings.length > 0 && <p>Data input: {input.label} — {input.message}</p>}
           </> : <>
           <p>Requested overrides: {requested != null ? <code>{JSON.stringify(requested)}</code> : "Not recorded"}</p>
           <p>Validated effective settings: {effective != null ? <code>{JSON.stringify(effective)}</code> : "Legacy caller — service defaults were not recorded as instance parameters"}</p>
-          <p>Algorithm consumed: {consumed != null ? <code>{JSON.stringify(consumed)}</code> : "Unverified — no validated algorithm evidence available"}</p>
+          <p>Algorithm consumed: {consumed != null ? <>Verified — <code>{JSON.stringify(consumed)}</code></> : <>{parameters.label} — {parameters.message}</>}</p>
           </>}
           {proof?.summary?.topology_count != null && <p>Topologies generated: {proof.summary.topology_count}</p>}
           {proof?.state === "available" && <details><summary>Evidence details</summary><p>{proof.instrumentation}</p><p style={{ overflowWrap: "anywhere" }}>Output SHA-256: {proof.output_sha256}</p></details>}

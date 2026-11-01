@@ -236,13 +236,16 @@ def test_other_owner_cannot_access_attempt_or_results(qualified,monkeypatch):
     assert q['client'].get('/deployments/by-workflow/'+WF+'/results').status_code==401
 
 
-def test_failed_execution_and_unavailable_capture_are_not_success_results(qualified,monkeypatch):
-    q=qualified;base,draft,review=prepared(q,monkeypatch);assert execute(q,base,review).status_code==200
+@pytest.mark.parametrize("terminal_status", ["completed", "failed"])
+def test_failed_execution_and_unavailable_capture_are_not_success_results(qualified, monkeypatch, terminal_status):
+    q=qualified
+    # Distinct terminal histories: never rewrite a recorded completed observation
+    # into a different failed history to construct the next test case.
+    q['workflow']['status']=terminal_status
+    if terminal_status=='failed':q['tasks'][1]['status']='failed'
+    base,draft,review=prepared(q,monkeypatch);assert execute(q,base,review).status_code==200
     result=q['client'].get('/deployments/by-workflow/'+WF+'/results').json()
-    assert result['workflow']['status']=='completed' and result['evidence']['state']!='available'
-    q['workflow']['status']='failed'
-    result=q['client'].get('/deployments/by-workflow/'+WF+'/results').json()
-    assert result['workflow']['status']=='failed' and result['evidence']['state']!='available'
+    assert result['workflow']['status']==terminal_status and result['evidence']['state']!='available'
     assert len(q['calls'])==1
 
 
@@ -286,7 +289,7 @@ def test_exact_new_run_capture_downloads_and_later_edits_keep_historical_seed(qu
     monkeypatch.setattr(deployment_results,'get_workflow_status',unavailable)
     recorded=q['client'].get(url).json()
     assert recorded['workflow']['status']=='completed' and recorded['evidence']==evidence
-    assert recorded['status_source']=='recorded terminal observation for this run; orchestrator unavailable'
+    assert recorded['status_source']=='recorded terminal observation for this run'
     assert [task['status'] for task in recorded['tasks']]==['completed','completed']
     for artifact in evidence['artifacts']:
         assert q['client'].get(artifact['download_url'].removeprefix('/api')).status_code==200

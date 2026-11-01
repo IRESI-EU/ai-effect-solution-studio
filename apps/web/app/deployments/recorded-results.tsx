@@ -10,6 +10,7 @@ export default function RecordedResults({ evidence, status, tasks = [] }: { evid
     <p>{status === "failed" ? "Execution failed. " : !["completed", "failed"].includes(status) ? "Execution in progress. " : ""}{evidence.message}</p>
     <p><strong>Recorded seed: {seed ?? "Unavailable — no execution input captured"}</strong>{seed !== undefined && !evidence.execution_input?.seed && !evidence.algorithm_consumed ? " (runtime default; no seed submitted)" : ""}</p>
     {evidence.input_source && <p style={{ color: "#526173" }}>{evidence.input_source}</p>}
+    {evidence.historical && <p>Evidence source: {evidence.source}. Historical files and associations are revalidated on inspection.</p>}
     {tasks.length > 0 && <ul aria-label="Task progress">{tasks.map(task => <li key={task.task_id}>
       <strong>{task.node_key === "grid_synth_service:ConfigureAndSynthesize" ? "Grid generation" : task.node_key === "benchmark-runner:RunBenchmark" ? "Benchmark" : task.node_key}</strong>: {task.status}
     </li>)}</ul>}
