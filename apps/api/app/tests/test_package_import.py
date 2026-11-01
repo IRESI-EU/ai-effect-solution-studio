@@ -2,13 +2,18 @@ import io
 import json
 import zipfile
 from pathlib import Path
+from secrets import token_urlsafe
+from uuid import uuid4
 
 import pytest
+from fastapi.testclient import TestClient
 
 from app.core.config import settings
+from app.core.security import hash_password
+from app.main import app
 from app.models.service import Service
 from app.models.solution import Solution
-from app.models.user import AuditEvent
+from app.models.user import AuditEvent, User, UserSession
 from app.services.package_solution_repair import repair_legacy_package_solution
 from app.services.solution_design import count_service_nodes
 
@@ -180,18 +185,94 @@ def test_unsafe_archive_is_rejected_without_writes(client, session_factory, tmp_
         assert db.query(Service).filter(Service.id.like("pkg-%")).count() == 0
 
 
-def test_missing_service_reference_returns_actionable_load_error(client, session_factory):
-    created = client.post("/solutions", json={
+@pytest.fixture
+def solution_owners(session_factory, isolated_database_schema):
+    """Real authenticated owners, confined to the suite's disposable database."""
+    users = [str(uuid4()), str(uuid4())]
+    password = token_urlsafe(24)
+    with session_factory() as db:
+        for identifier in users:
+            db.add(User(id=identifier, email=f"{identifier}@example.test",
+                        display_name="Historical fixture", role="solution_designer",
+                        status="active", password_hash=hash_password(password)))
+        db.commit()
+    try:
+        with TestClient(app) as owner, TestClient(app) as other:
+            for browser, identifier in zip((owner, other), users, strict=True):
+                login = browser.post("/auth/login", json={
+                    "email": f"{identifier}@example.test", "password": password,
+                })
+                assert login.status_code == 200, login.text
+            yield owner, other, users[0]
+    finally:
+        with session_factory() as db:
+            db.query(Solution).filter(Solution.created_by_user_id.in_(users)).delete(synchronize_session=False)
+            db.query(AuditEvent).filter(AuditEvent.actor_user_id.in_(users)).delete(synchronize_session=False)
+            db.query(UserSession).filter(UserSession.user_id.in_(users)).delete(synchronize_session=False)
+            db.query(User).filter(User.id.in_(users)).delete(synchronize_session=False)
+            db.commit()
+
+
+def missing_service_design():
+    return {
         "name": "Missing package service", "status": "draft", "edges": [],
         "nodes": [{"id": "arbitrary", "position": {"x": 1, "y": 2}, "data": {
             "node_kind": "service", "service": {"id": "missing-service"}, "label": "Missing"
         }}],
-    })
-    assert created.status_code == 200
-    response = client.get(f"/solutions/{created.json()['id']}")
+    }
+
+
+def owned_solution_state(session_factory, owner_id):
+    with session_factory() as db:
+        rows = db.query(Solution).filter(Solution.created_by_user_id == owner_id).order_by(Solution.id).all()
+        return [
+            {column.name: getattr(row, column.name) for column in Solution.__table__.columns}
+            for row in rows
+        ], db.query(AuditEvent).filter(AuditEvent.actor_user_id == owner_id).count()
+
+
+def assert_missing_service(response):
     assert response.status_code == 409
-    assert response.json()["detail"]["code"] == "solution_service_missing"
-    assert response.json()["detail"]["service_ids"] == ["missing-service"]
+    assert response.json()["detail"] == {
+        "code": "solution_service_missing",
+        "message": "This solution references services that no longer exist.",
+        "service_ids": ["missing-service"],
+        "recommended_action": "Restore the missing catalogue records or remove their nodes from the solution before editing.",
+    }
+
+
+@pytest.mark.parametrize("method", ["post", "put"])
+def test_missing_service_writes_are_rejected_without_partial_mutation(solution_owners, session_factory, method):
+    owner, other, owner_id = solution_owners
+    created = owner.post("/solutions", json={"name": "Valid empty draft", "nodes": [], "edges": []})
+    assert created.status_code == 200, created.text
+    identifier = created.json()["id"]
+    before = owned_solution_state(session_factory, owner_id)
+    url = "/solutions" if method == "post" else f"/solutions/{identifier}"
+    assert_missing_service(getattr(owner, method)(url, json=missing_service_design()))
+    assert owned_solution_state(session_factory, owner_id) == before
+    assert owner.get(f"/solutions/{identifier}").json()["name"] == "Valid empty draft"
+    forbidden = other.put(f"/solutions/{identifier}", json=missing_service_design())
+    assert forbidden.status_code == 403
+    assert forbidden.json()["detail"] == "You can only modify your own solutions"
+    assert owned_solution_state(session_factory, owner_id) == before
+
+
+def test_missing_service_reference_returns_actionable_load_error(solution_owners, session_factory):
+    owner, other, owner_id = solution_owners
+    identifier = str(uuid4())
+    # Historical catalogue loss cannot be created through today's validating API.
+    # Seed only the isolated test database, with a real owner and fixture cleanup.
+    with session_factory() as db:
+        assert db.get(Service, "missing-service") is None
+        db.add(Solution(id=identifier, created_by_user_id=owner_id, **missing_service_design()))
+        db.commit()
+    before = owned_solution_state(session_factory, owner_id)
+    forbidden = other.get(f"/solutions/{identifier}")
+    assert forbidden.status_code == 403
+    assert forbidden.json()["detail"] == "You can only access your own solutions"
+    assert_missing_service(owner.get(f"/solutions/{identifier}"))
+    assert owned_solution_state(session_factory, owner_id) == before
 
 
 def test_legacy_package_repair_snapshots_original_and_preserves_services(client, session_factory):
