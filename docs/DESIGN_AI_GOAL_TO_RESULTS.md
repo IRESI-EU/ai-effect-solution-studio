@@ -1,5 +1,21 @@
 # Design with AI: one goal to its recorded results
 
+> **1 November staging consolidation:** The known package-import test failure is now resolved without weakening create/update validation. Complete final inventories: **392 backend / 39 frontend / 317 maintained WP3 unit tests passed**, no failures or skips; typecheck/build and synthetic migration/backup-restore rehearsal passed. Integrated staging has **not** been deployed or accepted. See [candidate, blockers and staging runbook](DESIGN_AI_STAGING_READINESS_2026-11-01.md) and [sanitized exact-source checks](DESIGN_AI_STAGING_EVIDENCE_2026-11-01.json). Provider/grants remain disabled; allowance remains 13/13. Earlier records below are historical.
+
+## Current review readiness
+
+| Item | Bounded scope delivered | Available evidence | Specific remaining requirement | Recommended status |
+|---|---|---|---|---|
+| **AIE-18** | Registry-pinned typed reusable instances, independent settings/copies, compile/transport validation and immutable submitted settings | Portable/PostgreSQL tests, exact maintained WP3 validator/317 checks, retained parameter/provider cases | Cross-repository contract/runtime review and approved integrated staging compatibility/ownership | **In Review** |
+| **AIE-37** | One explicit Dutch generator→benchmark capability chain and qualified whole-output binding | Catalogue/contract/source pins; preserved seed-43 run, same-grid association and four authorized hash-verified captures | Node-owner qualification, scientific/KPI limitations and agreed staging runtime scope; other countries not qualified by this result | **In Review** |
+| **AIE-38** | Bounded contract-driven terminal-analyzer addition with proposal/Apply/Undo/Save | Complete final backend inventory; preserved prepared independent fixture/brief/checklist | Actual independent walkthrough and interpretation/structural-composition acceptance; broader composition remains incomplete | **In Review**, bounded milestone; broader work incomplete |
+| **AIE-40** | Registered-workflow goal→reviewed copy→durable local submission→recorded results, followed by separate evidence correction | Original live response/run/downloads plus separately identified 1 November correction and regressions | Cross-repository review and approved integrated staging qualification; original UI acceptance failure remains historical | **In Review** |
+| **AIE-41** | Workflow overview, bounded Technical details and understandable proposal/review controls | Existing desktop/narrow rendered evidence and frontend checks | Real independent participant observations; workflow/run/session terminology decision remains follow-up | **In Review** |
+
+Current application/operations source: `da5b9540265697acd13bdc39921e5107a18c03f8`; maintained WP3: `0221b7ecd4a2d5f072de640350ebc599df22131a`. The actual Production **web** baseline is `70168fd14bfe4fe64229b16e1d75dbc1e419457d`; integrated production API/WP3/configuration remains unverified. The prepared staging boundary keeps AI, provider, execution and generic unowned-reference preview unavailable. Owner approval is still required before isolated staging provisioning and any future bounded paid/execution acceptance.
+
+## Preserved earlier records
+
 > **1 November evidence correction:** The generic reader now reuses the qualified recorded capture, verifies each instance separately and supports historical terminal observations without requiring a live runtime. The existing run now shows consumed seed 43 and verified benchmark input in both sections. This is a separate correction; the original failed acceptance remains intact. See [correction and regressions](DESIGN_AI_EVIDENCE_CORRECTION_2026-11-01.md). Owner action: refresh the existing results page.
 
 > **31 October authorized live follow-up:** One provider request and one new seed-43 workflow completed; exact-run capture and four protected downloads passed. The generic Recorded instance settings panel still disagrees with the qualified results evidence and remains a recorded UI failure. Provider/grant are disconnected; shared allowance is 13/13. See [actual live acceptance](DESIGN_AI_LIVE_ACCEPTANCE_2026-10-31.md). PR/application head remains 97abc34; the following implementation record predates this authorization.
