@@ -1,5 +1,7 @@
 # Design with AI: one goal to its recorded results
 
+> **1 November evidence correction:** The generic reader now reuses the qualified recorded capture, verifies each instance separately and supports historical terminal observations without requiring a live runtime. The existing run now shows consumed seed 43 and verified benchmark input in both sections. This is a separate correction; the original failed acceptance remains intact. See [correction and regressions](DESIGN_AI_EVIDENCE_CORRECTION_2026-11-01.md). Owner action: refresh the existing results page.
+
 > **31 October authorized live follow-up:** One provider request and one new seed-43 workflow completed; exact-run capture and four protected downloads passed. The generic Recorded instance settings panel still disagrees with the qualified results evidence and remains a recorded UI failure. Provider/grant are disconnected; shared allowance is 13/13. See [actual live acceptance](DESIGN_AI_LIVE_ACCEPTANCE_2026-10-31.md). PR/application head remains 97abc34; the following implementation record predates this authorization.
 
 ## Implementation/offline record before live authorization
