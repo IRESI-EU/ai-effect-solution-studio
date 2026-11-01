@@ -1,0 +1,483 @@
+{
+  "source_commit": "da5b9540265697acd13bdc39921e5107a18c03f8",
+  "application_checks_commit": "46f757fa31f86a3ae928d83bab799c0993e0b077",
+  "backend_source_sha256": "595feecd52c8299dbe0aa5c9c6ed4935e44faa32c0451dce5328ee73107fd72f",
+  "wp3_commit": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+  "canonical_validator_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
+  "backend": {
+    "portable": {
+      "suite": "portable",
+      "exit_code": 0,
+      "backend_source_sha256": "595feecd52c8299dbe0aa5c9c6ed4935e44faa32c0451dce5328ee73107fd72f",
+      "test_directory": "apps/api/tests",
+      "tests": 284,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "legacy": {
+      "suite": "legacy",
+      "exit_code": 0,
+      "backend_source_sha256": "595feecd52c8299dbe0aa5c9c6ed4935e44faa32c0451dce5328ee73107fd72f",
+      "test_directory": "apps/api/app/tests",
+      "tests": 94,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgres": {
+      "suite": "postgres",
+      "exit_code": 0,
+      "backend_source_sha256": "595feecd52c8299dbe0aa5c9c6ed4935e44faa32c0451dce5328ee73107fd72f",
+      "test_directory": "apps/api/postgres_tests",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "web": {
+    "source_commit": "46f757fa31f86a3ae928d83bab799c0993e0b077",
+    "test_files": [
+      "app\\deployments\\results.test.ts",
+      "app\\design-ai\\allowance.test.ts",
+      "app\\design-ai\\session.test.ts",
+      "app\\publish\\guided-manifest.test.ts",
+      "lib\\builder-review.test.ts",
+      "lib\\builder-viewport.test.ts",
+      "lib\\connection-review.test.ts",
+      "lib\\copy-instance.test.ts",
+      "lib\\experiment-journey.test.ts",
+      "lib\\submitted-settings.test.ts"
+    ],
+    "lock_sha256": "c666d9d7d02bbe06d7b4b195a99a55e90cdd6292d663544f94780d84bea34974",
+    "build_directory": ".next-staging-candidate-20261101",
+    "checks": {
+      "tests": 0,
+      "typecheck": 0,
+      "build": 0
+    },
+    "build_id": "Gy7DHenxjR0fhStkloYHm"
+  },
+  "wp3_unit": {
+    "passed": 317,
+    "failures": 0,
+    "skipped": 0,
+    "network": "none",
+    "dependency_image": "sha256:0cf40e15edc3508d26f907fc7619980d47f31f16b9ddf7be4429c832db717f06"
+  },
+  "migration_rehearsal": {
+    "production_web_source": "70168fd14bfe4fe64229b16e1d75dbc1e419457d",
+    "synthetic_data_only": true,
+    "migrations": [
+      {
+        "file": "001_auth_rbac.sql",
+        "sha256": "6e948517d0e56c16c9dd9c9d7b993fbdd82e0c6cdd11b34d38616b2cfc14c9c8"
+      },
+      {
+        "file": "002_rename_dutch_node.sql",
+        "sha256": "ddbbfea081202f55702c86dbf8c5c79bbe8e2a4dca68cd3d01860744bf77f024"
+      },
+      {
+        "file": "003_design_ai_pilot.sql",
+        "sha256": "573fb084bcc593ba85a214a135f8cb11e5b8d0d4ea6797af66e5a8544c92b37e"
+      },
+      {
+        "file": "004_instance_submissions.sql",
+        "sha256": "a1c50a7a02f9077eb91a3625db4b2067a12fd6d23969f85fadec09f833f481fb"
+      },
+      {
+        "file": "005_local_capture_records.sql",
+        "sha256": "22935283810c1086b39c1d6b192ecf31f11a1478961470f93980f2c5872896cc"
+      }
+    ],
+    "profile_data_copied": false,
+    "synthetic_backup_restore": "passed",
+    "all_model_columns_and_types_match": true,
+    "synthetic_legacy_rows_preserved": true,
+    "idempotent_reapply": true,
+    "baseline_tables": [
+      "deployments",
+      "operation_contracts",
+      "services",
+      "solutions"
+    ],
+    "candidate_tables": [
+      "audit_events",
+      "deployments",
+      "design_ai_drafts",
+      "execution_submissions",
+      "instance_evidence_receipts",
+      "local_dutch_executions",
+      "operation_contracts",
+      "services",
+      "solutions",
+      "user_sessions",
+      "users"
+    ],
+    "schema_sha256": "0669dc37eaae0aaddccf53a481a689dab27eda99913fc7e9decca9f0ac5d185a",
+    "allocated_databases_removed": 2
+  },
+  "prepared_boundary": {
+    "gateway_dependency_image": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+    "network": "none",
+    "mock_upstream_only": true,
+    "provider_or_workflow_calls": 0,
+    "blocked_posts": {
+      "/api/workflows/submit-to-orchestrator": 403,
+      "/api/workflows/submit": 403,
+      "/api/design-ai/drafts/fixture/execute": 403,
+      "/api/design-ai/chat": 403,
+      "/api/data-references/preview": 403
+    },
+    "mock_auth_proxy_http": 204,
+    "compose_syntax": "passed",
+    "no_staging_project_started": true,
+    "config_sha256": "23d8e6c685a0cf0ae86f0403d1453a605ab229c113b37a640978d2b8e8e9d689"
+  },
+  "remote_baseline": {
+    "portal": [
+      {
+        "number": 8,
+        "head": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+        "base": "feature/production-ui-polish-v1",
+        "base_sha": "df5b75873326ab56cad608990f3bd4add125bcc4",
+        "state": "open",
+        "draft": true,
+        "checks": [
+          {
+            "context": "Vercel",
+            "state": "failure",
+            "target_url": "https://vercel.com/teams/invite?commitId=b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca&gitAvatarUrl=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F17540187%3Fv%3D4&gitUserId=17540187&gitUserLogin=adarshsunil&origin=github&repoId=1293576371&teamId=team_atCBn1XywvEITw7mpJXE2VxE&teamName=cammardella17-7147%27s+projects"
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "head": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+        "base": "codex/review-design-ai-foundation",
+        "base_sha": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+        "state": "open",
+        "draft": true,
+        "checks": [
+          {
+            "context": "Vercel",
+            "state": "failure",
+            "target_url": "https://vercel.com/teams/invite?commitId=fd4b88be692cf9944837cc5fb4c5450ecfa54df8&gitAvatarUrl=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F17540187%3Fv%3D4&gitUserId=17540187&gitUserLogin=adarshsunil&origin=github&repoId=1293576371&teamId=team_atCBn1XywvEITw7mpJXE2VxE&teamName=cammardella17-7147%27s+projects"
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "head": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+        "base": "codex/review-module-parameterisation",
+        "base_sha": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+        "state": "open",
+        "draft": true,
+        "checks": [
+          {
+            "context": "Vercel",
+            "state": "failure",
+            "target_url": "https://vercel.com/teams/invite?commitId=bd18c212e479084f3dc6b1f169f1163dc1631619&gitAvatarUrl=https%3A%2F%2Favatars.githubusercontent.com%2Fu%2F17540187%3Fv%3D4&gitUserId=17540187&gitUserLogin=adarshsunil&origin=github&repoId=1293576371&teamId=team_atCBn1XywvEITw7mpJXE2VxE&teamName=cammardella17-7147%27s+projects"
+          }
+        ]
+      },
+      {
+        "number": 11,
+        "head": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+        "base": "codex/aie37-workflow-qualification",
+        "base_sha": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+        "state": "open",
+        "draft": true,
+        "checks": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/cammardella17-7147s-projects/ai-effect-solution-studio/CViozgNbQqw52YqtyuEzMFfgEEjm"
+          }
+        ]
+      },
+      {
+        "number": 12,
+        "head": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+        "base": "codex/aie38-bounded-workflow-composition",
+        "base_sha": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+        "state": "open",
+        "draft": true,
+        "checks": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/cammardella17-7147s-projects/ai-effect-solution-studio/4asemYsbcHySxfmR4kCK7ZBo6VVr"
+          }
+        ]
+      },
+      {
+        "number": 13,
+        "head": "3c197a7d6b954cac6c12ff143af174fa69b56076",
+        "base": "codex/aie41-builder-review-usability",
+        "base_sha": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+        "state": "open",
+        "draft": true,
+        "checks": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/cammardella17-7147s-projects/ai-effect-solution-studio/AxPPy7G97Fa65KjRYTchvSgQBfwp"
+          }
+        ]
+      }
+    ],
+    "wp3": [
+      {
+        "number": 2,
+        "head": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+        "base": "main",
+        "base_sha": "e8914565e966a2d78879c314f980574769d31b87",
+        "state": "open",
+        "draft": true
+      },
+      {
+        "number": 3,
+        "head": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+        "base": "codex/review-legacy-client-parameters",
+        "base_sha": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+        "state": "open",
+        "draft": true
+      }
+    ],
+    "web_production": {
+      "commit": "70168fd14bfe4fe64229b16e1d75dbc1e419457d",
+      "deployment_id": 7390379741,
+      "environment": "Production",
+      "state": "success",
+      "integrated_api_runtime": "unverified; no current server inventory supplied"
+    },
+    "checked_date": "2026-11-01"
+  },
+  "preserved_demo": {
+    "images": {
+      "api": {
+        "image": "sha256:993302f295ac9feb511b448ea9730bf9aa6b64312841b43ac82b9a880a00cce8",
+        "state": "running"
+      },
+      "postgres": {
+        "image": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+        "state": "running"
+      },
+      "redis": {
+        "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "state": "running"
+      },
+      "worker": {
+        "image": "sha256:0cf40e15edc3508d26f907fc7619980d47f31f16b9ddf7be4429c832db717f06",
+        "state": "exited"
+      },
+      "seed-orchestrator": {
+        "image": "sha256:0cf40e15edc3508d26f907fc7619980d47f31f16b9ddf7be4429c832db717f06",
+        "state": "running"
+      },
+      "seed-synth": {
+        "image": "sha256:877dad093c8dd838ad792d1de768851d193f995b19960c564ef734e2983077ca",
+        "state": "running"
+      },
+      "seed-benchmark": {
+        "image": "sha256:47982c25e775b9b6349d8cae3b95e5c4be7afaeefcd0adfc92026ba15f7a7cb9",
+        "state": "running"
+      }
+    },
+    "source_commit": "d0568d89ea018e91c4af65c9b6a8833e321c1e58",
+    "web_build_id": "_9OUF0yBLv4pKPA0e0pex",
+    "provider_disconnected": true,
+    "grant_disabled": true,
+    "ledger_read_only": true
+  },
+  "build_environment": {
+    "python": "3.12.14",
+    "node": "v24.15.0"
+  },
+  "dependencies_locked_for_web": true,
+  "generic_container_base_and_python_freeze": "requires owner-selected immutable build inputs before staging build",
+  "new_provider_requests": 0,
+  "new_workflows": 0,
+  "new_grants": 0,
+  "ledger_changes": 0,
+  "backend_total": 392,
+  "date": "2026-11-01",
+  "status": "Prepared for review; not deployed to integrated staging",
+  "known_failure_resolution": {
+    "commit": "125191d",
+    "production_api_validation_unchanged": true,
+    "cases": [
+      "create rejected without mutation",
+      "update rejected without mutation",
+      "owned historical fixture load returns actionable 409",
+      "different owner denied first"
+    ],
+    "incidental_fixture_fix": "46f757f: byte-identical repeat ZIP and complete service-row preservation assertions"
+  },
+  "source_policy": "Subsequent commits only add readiness documentation; apps/ remains identical to the complete inventory source",
+  "frontend_passed": 39,
+  "staging_deployed": false,
+  "production_changed": false,
+  "merges": 0,
+  "tracker_updates": 0,
+  "preservation": {
+    "workflow_id": "wf-1b6eb7caaf57",
+    "results_state": "available",
+    "instance_evidence_state": "available",
+    "generator_consumed": {
+      "seed": 43
+    },
+    "benchmark_input_verified": true,
+    "source": "Validated immutable captures recorded for this run",
+    "historical": true,
+    "task_observation": "recorded terminal observation for this run",
+    "immutable_submission_unchanged": true,
+    "downloads": {
+      "configuration": {
+        "sha256": "24f9e01c17119611c6c8315e5415d95cf1843cbb3993b70c1187f3cd0bc8e301",
+        "size_bytes": 1441,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "grid": {
+        "sha256": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+        "size_bytes": 148660,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "network": {
+        "sha256": "a521315934294f2850d03b713e4cc29f0f0710f84b02ee95625f5dbc6f0f0462",
+        "size_bytes": 129851,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "benchmark": {
+        "sha256": "4e88e9b2bf9e71c94548498b31d635b889a3b5b6b39bd39ed5a35422ee79b1f0",
+        "size_bytes": 855,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      }
+    },
+    "all_preserved_rows_and_files_unchanged": true,
+    "ledger_byte_unchanged": true,
+    "shared_count": "13/13",
+    "outstanding_reservations": 0,
+    "provider_disconnected": true,
+    "execution_grant_disabled": true,
+    "ledger_read_only": true,
+    "worker_stopped": true,
+    "provider_calls": 0,
+    "new_workflows": 0
+  },
+  "preserved_worktrees": {
+    "ai-effect-solution-studio": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 4
+    },
+    "ai-effect-solution-studio-production-ui": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 196
+    },
+    "aie37-portal": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    },
+    "aie38-portal": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    },
+    "aie41-portal": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    },
+    "publication-portal-20261027": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    }
+  },
+  "limitations": [
+    "Integrated production API/WP3/configuration inventory not available",
+    "Local qualified execution/capture profile is not a generic staging adapter",
+    "Unmerged authentication/onboarding/operations prerequisites require review",
+    "Generic reference preview lacks per-workflow ownership; prepared gateway denies it",
+    "Immutable generic image/build inputs and Python dependency freeze require approval",
+    "Vercel author-access failures on PR8-10 remain unresolved",
+    "Independent usability and production compatibility remain unverified"
+  ],
+  "current_recommendations": {
+    "AIE-18": "In Review",
+    "AIE-37": "In Review",
+    "AIE-38": "In Review bounded scope; broader composition incomplete",
+    "AIE-40": "In Review",
+    "AIE-41": "In Review"
+  },
+  "candidate_web_api_route": "http://api:8080/:path*",
+  "migration_rehearsed_worktree_bytes_sha256": [
+    {
+      "file": "001_auth_rbac.sql",
+      "sha256": "6e948517d0e56c16c9dd9c9d7b993fbdd82e0c6cdd11b34d38616b2cfc14c9c8"
+    },
+    {
+      "file": "002_rename_dutch_node.sql",
+      "sha256": "ddbbfea081202f55702c86dbf8c5c79bbe8e2a4dca68cd3d01860744bf77f024"
+    },
+    {
+      "file": "003_design_ai_pilot.sql",
+      "sha256": "573fb084bcc593ba85a214a135f8cb11e5b8d0d4ea6797af66e5a8544c92b37e"
+    },
+    {
+      "file": "004_instance_submissions.sql",
+      "sha256": "a1c50a7a02f9077eb91a3625db4b2067a12fd6d23969f85fadec09f833f481fb"
+    },
+    {
+      "file": "005_local_capture_records.sql",
+      "sha256": "22935283810c1086b39c1d6b192ecf31f11a1478961470f93980f2c5872896cc"
+    }
+  ],
+  "migration_git_blob_sha256": [
+    {
+      "file": "001_auth_rbac.sql",
+      "sha256": "de90f22f4e070b2f0ad1213d9bf2d43fad2bdc37949b44810467d48b0da5edfa"
+    },
+    {
+      "file": "002_rename_dutch_node.sql",
+      "sha256": "750acad012c836b79a2e6d7217c5c328eba067a93981e8bc33fc658bf9fb241c"
+    },
+    {
+      "file": "003_design_ai_pilot.sql",
+      "sha256": "8b351d65a60f0868b48c6b35922721543da1d96dfe6f0f83604359248e80a89e"
+    },
+    {
+      "file": "004_instance_submissions.sql",
+      "sha256": "ed8b0e330f79b8d059be5300d4dfc579a4016eb9ffae06dbfd99d22be33429ce"
+    },
+    {
+      "file": "005_local_capture_records.sql",
+      "sha256": "22935283810c1086b39c1d6b192ecf31f11a1478961470f93980f2c5872896cc"
+    }
+  ],
+  "portal_git_trees": [
+    {
+      "path": "apps/api",
+      "git_tree": "4302b1a733b95f8bf5c03c6c24183fb612ffa5ff"
+    },
+    {
+      "path": "apps/web",
+      "git_tree": "cc74e6c180cce17791057d871de4045fc807d41c"
+    },
+    {
+      "path": "deploy/migrations",
+      "git_tree": "81007899371abf381716f33deee685e5690da383"
+    },
+    {
+      "path": "deploy/staging",
+      "git_tree": "57e9a3d658348868a19f3dee6fc8627015cbabaf"
+    }
+  ],
+  "wp3_remote_combined_statuses": {
+    "2": [],
+    "3": []
+  }
+}

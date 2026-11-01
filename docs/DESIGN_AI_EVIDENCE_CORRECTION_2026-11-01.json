@@ -1,0 +1,121 @@
+{
+  "date": "2026-11-01",
+  "kind": "Separate evidence-display correction and regression verification; not fresh live acceptance",
+  "source_commit": "d0568d89ea018e91c4af65c9b6a8833e321c1e58",
+  "backend_source_sha256": "a7fdeee238292e24b7d0cf9f2f275482c3e51dcd4349b0f403bd3ed63dd40875",
+  "build": {
+    "web_pid": 88044,
+    "web_port": 23121,
+    "api_port": 28185,
+    "source_head": "d0568d89ea018e91c4af65c9b6a8833e321c1e58",
+    "build_id": "_9OUF0yBLv4pKPA0e0pex",
+    "api_image_before": "sha256:e0931223845be0b72c53f58a3ceb7dedce3279c0021c128d686a3c7066fb9187",
+    "api_image_after": "sha256:993302f295ac9feb511b448ea9730bf9aa6b64312841b43ac82b9a880a00cce8",
+    "provider_disconnected": true,
+    "execution_grant_disabled": true,
+    "shared_ledger_read_only": true,
+    "worker_still_stopped": true
+  },
+  "cause": {
+    "experiment_results_before": "available",
+    "instance_evidence_before": {
+      "state": "unavailable",
+      "instances": []
+    },
+    "flags": {
+      "aie37_qualification": true,
+      "design_ai_enabled": true,
+      "provider_configured": false,
+      "legacy_qualification_enabled": false,
+      "qualified_demo_enabled": true,
+      "capture_enabled": true
+    },
+    "submitted_and_capture_identity_match": true,
+    "terminal_observation_valid": true,
+    "explanation": "The generic reader required legacy qualification_enabled, which excludes design_ai_enabled. It returned early despite the qualified demo and capture reader being enabled. It also required live runtime reads and used aggregate collection success rather than per-instance evidence."
+  },
+  "verification": {
+    "workflow_id": "wf-1b6eb7caaf57",
+    "results_state": "available",
+    "instance_evidence_state": "available",
+    "generator_consumed": {
+      "seed": 43
+    },
+    "benchmark_input_verified": true,
+    "source": "Validated immutable captures recorded for this run",
+    "historical": true,
+    "task_observation": "recorded terminal observation for this run",
+    "immutable_submission_unchanged": true,
+    "downloads": {
+      "configuration": {
+        "sha256": "24f9e01c17119611c6c8315e5415d95cf1843cbb3993b70c1187f3cd0bc8e301",
+        "size_bytes": 1441,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "grid": {
+        "sha256": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+        "size_bytes": 148660,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "network": {
+        "sha256": "a521315934294f2850d03b713e4cc29f0f0710f84b02ee95625f5dbc6f0f0462",
+        "size_bytes": 129851,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "benchmark": {
+        "sha256": "4e88e9b2bf9e71c94548498b31d635b889a3b5b6b39bd39ed5a35422ee79b1f0",
+        "size_bytes": 855,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      }
+    },
+    "all_preserved_rows_and_files_unchanged": true,
+    "ledger_byte_unchanged": true,
+    "shared_count": "13/13",
+    "outstanding_reservations": 0,
+    "provider_disconnected": true,
+    "execution_grant_disabled": true,
+    "ledger_read_only": true,
+    "worker_stopped": true,
+    "provider_calls": 0,
+    "new_workflows": 0
+  },
+  "tests": {
+    "related_api_passed": 111,
+    "warnings": 1187,
+    "api_seconds": 64.88,
+    "frontend_focused_passed": 6,
+    "typecheck": "passed",
+    "webpack_build": "passed",
+    "full_backend_rerun": false,
+    "known_baseline_failure": "apps/api/app/tests/test_package_import.py::test_missing_service_reference_returns_actionable_load_error (expected creation 200, actual 409), unchanged; previous full inventory 369 passed / 1 failure"
+  },
+  "original_acceptance_preserved": {
+    "md_sha256": "038d0155af05ead4514ec33a0a8dfe1636d6d9a158e3c5c0742e0bb74a488687",
+    "json_sha256": "ad32e1046f74db415ad292364e7533037b49f3dc17d887f39b788fb0a0005176",
+    "original_observation_remains_failed": true,
+    "preserved_in_commit": "eff2931"
+  },
+  "rendered_evidence": [
+    "screenshots/evidence-correction-results-20261101.png",
+    "screenshots/evidence-correction-instances-20261101.png"
+  ],
+  "limits": {
+    "provider_calls": 0,
+    "workflow_executions": 0,
+    "grants_created": 0,
+    "allowance_or_ledger_modifications": 0,
+    "saved_design_edits": 0,
+    "new_profiles": 0,
+    "production_changes": 0,
+    "merges": 0,
+    "tracker_updates": 0,
+    "independent_human_usability": "unverified",
+    "production_compatibility": "unverified",
+    "AIE18": "In Review",
+    "broader_AIE38": "incomplete"
+  }
+}

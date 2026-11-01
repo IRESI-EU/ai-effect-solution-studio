@@ -43,6 +43,8 @@ class WorkflowSubmitRequest(BaseModel):
     name: str
     solution_id: str | None = None
     expected_updated_at: str | None = None
+    # Server-created review identity; replays never dispatch an accepted attempt twice.
+    submission_id: str | None = None
     nodes: list[WorkflowSubmitNode]
     edges: list[WorkflowSubmitEdge]
     # Optional JSON object supplied at run time to the workflow's start nodes.

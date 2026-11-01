@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ReactFlow,
@@ -126,6 +126,7 @@ export default function BuilderPage() {
 }
 
 function BuilderContent() {
+  const journeyRouter = useRouter();
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
@@ -222,6 +223,7 @@ function BuilderContent() {
     if (busy || !loaded) return;
     if (reviewAction === "add") { setPaletteOpen(true); return; }
     if (reviewAction === "save") { await saveSolution(); return; }
+    if ((reviewAction === "prepare" || reviewAction === "confirm") && designMetadata?.guided_experiment === "qualified_dutch_grid") { journeyRouter.push(designReturnUrl(designMetadata)); return; }
     if (reviewAction === "prepare") { await prepareDeployment(); return; }
     if (reviewAction === "confirm") { await confirmDeployment(); return; }
     if (reviewAction === "validate" || reviewAction === "review") {
@@ -740,22 +742,8 @@ function BuilderContent() {
       setDeploymentResult(data);
       setDeploymentConfirmationReady(false);
 
-      if (data.workflow_id) {
-        try {
-          await fetch(`${API_BASE_URL}/deployments`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              workflow_id: data.workflow_id,
-              solution_id: preparedSolutionId,
-              name: solutionName || "Solution Studio Workflow",
-              status: data.status || "submitted",
-            }),
-          });
-        } catch (deploymentError) {
-          console.warn("Deployment submitted, but its local record could not be saved.", deploymentError);
-        }
-      }
+      // Run identity and history are recorded by the server before this response.
+
     } catch {
       setDeploymentResult({
         status: "failed",
@@ -817,7 +805,7 @@ function BuilderContent() {
           <p>{!loaded ? "Wait for the workflow to load." : dirty ? "Next: Save your design changes." : workflowDesignStatus !== "valid" ? "Next: Validate the design and its connections." : offline ? "Design review complete. You can review the settings or return to Design with AI. Runtime readiness is unchecked; execution is unavailable." : deploymentConfirmationReady ? "Readiness has passed. Only Confirm deployment submits an execution." : "Next: Prepare & deploy checks readiness before explicit confirmation."}</p>
           {reviewAction === "results" && deploymentResult?.workflow_id ? <Link className="btn btn-primary" href={deploymentResultsUrl(deploymentResult.workflow_id)}>{actionLabels.results}</Link> :
             <button type="button" onClick={takeNextAction} disabled={!loaded || busy} style={reviewAction === "review" ? secondaryButton : primaryButton}>
-              {busy ? savingSolution ? "Saving draft…" : validatingDesign ? "Validating design…" : submittingToOrchestrator ? "Submitting deployment…" : "Preparing deployment…" : actionLabels[reviewAction]}</button>}
+              {busy ? savingSolution ? "Saving draft…" : validatingDesign ? "Validating design…" : submittingToOrchestrator ? "Submitting deployment…" : "Preparing deployment…" : ((reviewAction === "prepare" || reviewAction === "confirm") && designMetadata?.guided_experiment === "qualified_dutch_grid" ? "Continue in Design with AI" : actionLabels[reviewAction])}</button>}
         </div>
         {solutionNeedsRevalidation && <p className="builder-stale-message">The design changed. Validate again after saving.</p>}
         {solutionSaveError && <p role="alert">Could not save this solution. {solutionSaveError}</p>}

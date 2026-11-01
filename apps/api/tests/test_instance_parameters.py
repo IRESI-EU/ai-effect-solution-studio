@@ -153,7 +153,8 @@ def test_submission_is_durable_and_history_not_reconstructed(configured, monkeyp
     def submit(payload):
         with SessionLocal() as db:
             row = db.query(ExecutionSubmission).one()
-            assert row.phase == "prepared"
+            # The request is now claimed durably before it can leave Studio.
+            assert row.phase == "dispatching"
             assert next(iter(row.submitted["compiled"]["task_configurations"].values()))["parameters"] == {"seed": 42}
         return {"workflow_id": "wf-123456abcdef", "status": "running"}
     monkeypatch.setattr(main, "submit_to_orchestrator", submit)

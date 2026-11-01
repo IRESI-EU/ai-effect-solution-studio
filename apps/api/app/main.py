@@ -30,6 +30,7 @@ from app.dependencies.auth import (
 from app.routers.auth import bootstrap_admin, router as auth_router
 from app.routers.admin_users import router as admin_users_router
 from app.routers.design_ai import router as design_ai_router
+from app.routers.experiment_journey import router as experiment_journey_router
 from app.routers.deployment_results import router as deployment_results_router, authorized_deployment
 from app.routers.operation_contracts import router as operation_contracts_router
 from app.schemas.data_reference import DataReferencePreviewRequest
@@ -99,6 +100,7 @@ app.include_router(operation_contracts_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
 app.include_router(design_ai_router)
+app.include_router(experiment_journey_router)
 app.include_router(deployment_results_router)
 
 app.add_middleware(
@@ -691,6 +693,22 @@ def submit_workflow_to_orchestrator_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    from app.services import execution_journey, qualified_demo
+    submitted_record = None
+    if workflow.submission_id:
+        submitted_record = execution_journey.load_attempt(workflow.submission_id, db, user, lock=True)
+        if submitted_record.submitted["request"] != execution_submission.request_value(workflow):
+            raise HTTPException(409, "This attempt belongs to a different submitted snapshot")
+        if submitted_record.phase == "submitted":
+            return {"workflow_id": submitted_record.workflow_id, "status": "submitted", "submission_id": submitted_record.id,
+                "results_url": f"/deployments/{submitted_record.workflow_id}#results", "replayed": True}
+        if submitted_record.phase != "reviewed":
+            raise HTTPException(409, {"message": "Submission outcome is uncertain or this attempt is already consumed. Do not retry; ask the operator to reconcile it.",
+                "submission_id": submitted_record.id, "phase": submitted_record.phase})
+        if not qualified_demo.profile_enabled():
+            raise HTTPException(403, "This profile does not permit the qualified execution journey")
+    elif qualified_demo.profile_enabled():
+        raise HTTPException(403, "Review and explicitly confirm an authorized execution attempt first")
     if workflow.solution_id:
         query = db.query(Solution).filter(Solution.id == workflow.solution_id)
         if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)):
@@ -756,18 +774,47 @@ def submit_workflow_to_orchestrator_endpoint(
     if "services_api_key" in compiled_payload:
         orchestrator_payload["services_api_key"] = compiled_payload["services_api_key"]
 
-    snapshot = local_dutch_capture.prepare_submission(db, user, workflow, compiled_payload)
-    submitted_record = execution_submission.prepare(db, user, workflow, compiled_payload)
+    if submitted_record:
+        execution_journey.claim(submitted_record, workflow, compiled_payload, db, user)
+    else:
+        submitted_record = execution_submission.prepare(db, user, workflow, compiled_payload)
+        submitted_record.phase = "dispatching"
+        db.commit()
     try:
-        orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+        snapshot = local_dutch_capture.prepare_submission(db, user, workflow, compiled_payload)
     except Exception:
         submitted_record.phase = "submission_failed"
         db.commit()
         raise
-    submitted_record.workflow_id = orchestrator_result.get("workflow_id")
+    try:
+        orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+    except Exception:
+        # Dispatch may have reached the runtime. Never turn uncertainty into an
+        # invitation to send another workflow or lose this durable attempt ID.
+        submitted_record.phase = "submission_unknown"
+        db.commit()
+        raise
+    workflow_id = orchestrator_result.get("workflow_id") if isinstance(orchestrator_result, dict) else None
+    import re
+    if not isinstance(workflow_id, str) or not workflow_id or (workflow.submission_id and not re.fullmatch(r"wf-[a-f0-9]{12}", workflow_id)):
+        submitted_record.phase = "submission_unknown"
+        db.commit()
+        raise HTTPException(502, {"message": "Runtime response has no valid execution identity. Do not retry; ask the operator to reconcile this attempt.", "submission_id": submitted_record.id})
+    if db.query(Deployment).filter(Deployment.workflow_id == workflow_id).first():
+        submitted_record.phase = "submission_unknown"
+        db.commit()
+        raise HTTPException(409, {"message": "Runtime returned an already recorded execution identity. Historical results were not substituted. Do not retry.", "submission_id": submitted_record.id})
+    submitted_record.workflow_id = workflow_id
     submitted_record.phase = "submitted"
-    db.commit()
-    local_dutch_capture.attach_workflow(db, snapshot, orchestrator_result, user)
+    db.add(Deployment(id=str(uuid4()), workflow_id=workflow_id, solution_id=workflow.solution_id,
+        created_by_user_id=user.id, name=workflow.name, status=orchestrator_result.get("status", "submitted")))
+    db.commit()  # Identity, ownership and browser-independent history commit together.
+    try:
+        local_dutch_capture.attach_workflow(db, snapshot, orchestrator_result, user)
+    except Exception:
+        db.rollback()
+        orchestrator_result["capture_warning"] = "Execution identity is recorded; capture association is unavailable. No automatic resubmission."
+    orchestrator_result.update(submission_id=submitted_record.id, results_url=f"/deployments/{workflow_id}#results")
 
     if isinstance(orchestrator_result, dict):
         orchestrator_result["solution_studio_metadata"] = compiled_payload.get(

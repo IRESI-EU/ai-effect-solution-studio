@@ -28,13 +28,20 @@ def scope_allowed(db, ledger, task):
     """The additional slots belong only to the immutable checkpoint in the audit."""
     if not has_amendments(db):
         return True
-    row = db.execute("SELECT scope_path,scope_sha256,ledger_path FROM allowance_amendments ORDER BY rowid DESC LIMIT 1").fetchone()
+    row = db.execute("SELECT scope_path,scope_sha256,ledger_path,audit_json FROM allowance_amendments ORDER BY rowid DESC LIMIT 1").fetchone()
     if row is None:
         return True
     try:
-        return (row[2] == identity(ledger) and bool(task) and row[0] == identity(task)
-                and row[1] == digest(Path(task).read_bytes()))
-    except OSError:
+        if not task or row[1] != digest(Path(task).read_bytes()):
+            return False
+        if row[2] == identity(ledger) and row[0] == identity(task):
+            return True
+        # Only an explicitly audited bind-mount mapping can make the same
+        # checkpoint portable into the existing isolated Linux API container.
+        scope = json.loads(row[3]).get("runtime_scope", {})
+        return (isinstance(scope, dict) and bool(scope) and str(Path(ledger).resolve()) == scope.get("ledger_path")
+            and str(Path(task).resolve()) == scope.get("task_path"))
+    except (OSError, ValueError, TypeError):
         return False
 
 

@@ -19,6 +19,7 @@ class AssistantTurn(StrictModel):
     template_key: Literal["denmark", "dutch", "portugal", "germany"] | None
     expected_revision: int | None
     edits: list[Edit] = Field(max_length=10)
+    recommended_seed: Literal[42, 43] | None = None
 
 
 class ChatRequest(StrictModel):
@@ -40,6 +41,8 @@ class ApplyRequest(RevisionRequest):
 class StartRequest(StrictModel):
     template_key: Literal["denmark", "dutch", "portugal", "germany"]
     guided: bool = False
+    recommended_seed: Literal[42, 43] | None = None
+    recommendation_revision: str | None = None
 
 
 class GuidedSettingsRequest(RevisionRequest):

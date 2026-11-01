@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activeDraftId, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation } from "./session.ts";
+import { activeDraftId, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation } from "./session.ts";
 
 test("ordinary navigation never selects remembered work; explicit draft links survive refresh", () => {
   assert.equal(activeDraftId(new URLSearchParams()), null);
@@ -8,6 +8,17 @@ test("ordinary navigation never selects remembered work; explicit draft links su
   const url = new URL(draftUrl("draft/with ?delimiters"), "http://local.test");
   assert.equal(activeDraftId(url.searchParams), "draft/with ?delimiters");
   assert.equal(activeDraftId(new URL(url.href).searchParams), "draft/with ?delimiters");
+});
+
+test("a stored qualified recommendation carries its reviewed seed and source without selecting a draft", () => {
+  const recommendation = {key:"dutch",label:"Registered Dutch workflow",mechanism:"registered_workflow",source_revision:"a".repeat(64),recommended_seed:43,
+    steps:[{title:"Create sample grid",operation:"ConfigureAndSynthesize"},{title:"Benchmark its grid",operation:"RunBenchmark"}],
+    connection:"Use the grid produced by the first step",availability:"Only after execution and capture",expected_result_view:["recorded seed"],optional_downloads:["Grid JSON"],limitations:["Registered workflow, not arbitrary composition"]};
+  assert.deepEqual(readRecommendation(recommendation),recommendation);
+  for (const changed of [{recommended_seed:44},{recommended_seed:"43"},{source_revision:null},{mechanism:"arbitrary_graph"}]) {
+    assert.equal(readRecommendation({...recommendation,...changed}),null);
+  }
+  assert.equal(activeDraftId(new URLSearchParams()),null);
 });
 
 test("conversation restoration cannot mix another owner or another draft", () => {

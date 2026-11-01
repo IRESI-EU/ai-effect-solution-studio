@@ -52,7 +52,8 @@ def templates(db: Session = Depends(get_db), user: User = Depends(pilot_user)):
 
 @router.post("/drafts")
 def start(payload: StartRequest, db: Session = Depends(get_db), user: User = Depends(pilot_user)):
-    return service.start(payload.template_key, db, user, guided=payload.guided)
+    return service.start(payload.template_key, db, user, guided=payload.guided,
+        recommended_seed=payload.recommended_seed, recommendation_revision=payload.recommendation_revision)
 
 
 @router.get("/drafts")
@@ -166,6 +167,10 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                     raise HTTPException(422, "The recommendation is outside the enabled approved local capabilities. No experiment was created.")
                 # Re-check eligibility after the provider wait, without trusting its service claims.
                 result["recommendation"] = await tools.call("discover_guided_capability", {"template_key": turn.template_key})
+                if result["recommendation"].get("mechanism") == "registered_workflow":
+                    if turn.recommended_seed not in result["recommendation"]["supported_seeds"]:
+                        raise HTTPException(422, "The recommendation needs a supported seed. No experiment was created.")
+                    result["recommendation"]["recommended_seed"] = turn.recommended_seed
         else:
             row = service.load_draft(payload.draft_id, db, user)
             if turn.edits:

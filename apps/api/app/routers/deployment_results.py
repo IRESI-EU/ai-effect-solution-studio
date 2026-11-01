@@ -33,22 +33,26 @@ def current_state(deployment):
 
 
 def load_evidence(db, deployment, workflow, tasks, live):
-    captured = automatic.collect(db, deployment, workflow, tasks)
+    captured = automatic.collect(db, deployment, workflow, tasks, runtime_live=live)
     if captured is not None:
         return captured
     return evidence.load_capture(deployment, workflow if live else None, tasks if live else None)
+
+
+def associated_state(db, deployment):
+    return automatic.associated_state(db, deployment, current_state)
 
 
 @router.get("/deployments/by-workflow/{workflow_id}/results")
 def deployment_results(workflow_id: str, response: Response, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     response.headers["Cache-Control"] = "private, no-store"
     deployment = authorized_deployment(db, user, workflow_id)
-    workflow, tasks, live = current_state(deployment)
+    workflow, tasks, live, source = associated_state(db, deployment)
     captured, _ = load_evidence(db, deployment, workflow, tasks, live)
     if captured["state"] == "available":
         tasks = captured.pop("tasks", tasks)
     return {"deployment": DeploymentRead.model_validate(deployment), "workflow": workflow,
-            "status_source": "orchestrator" if live else "stored deployment record; orchestrator unavailable",
+            "status_source": source,
             "tasks": tasks, "evidence": captured}
 
 
@@ -57,7 +61,7 @@ def deployment_artifact(workflow_id: str, artifact_id: str, db: Session = Depend
     deployment = authorized_deployment(db, user, workflow_id)
     if artifact_id not in {"configuration", "grid", "network", "benchmark"}:
         raise HTTPException(404, "Artifact not recorded")
-    workflow, tasks, live = current_state(deployment)
+    workflow, tasks, live, _ = associated_state(db, deployment)
     captured, blobs = load_evidence(db, deployment, workflow, tasks, live)
     if artifact_id not in blobs:
         state = next((a["state"] for a in captured["artifacts"] if a["id"] == artifact_id), None)

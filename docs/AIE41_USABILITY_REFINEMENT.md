@@ -1,5 +1,7 @@
 # AIE-41 — Builder and proposal-review usability refinement
 
+> 31 October integration update: [one goal-to-results journey](DESIGN_AI_GOAL_TO_RESULTS.md) carries the exact saved experiment into readiness/explicit execution confirmation without requiring full Builder. Existing overview and Technical details remain available. The protected port-23122 offline profile and its guards are unchanged. No further cosmetic/lifecycle redesign, new participant observation or live execution is claimed.
+
 29 October 2026. Focused review branch stacked on draft PR #11. No new composition capability.
 
 ## Owner-guided baseline

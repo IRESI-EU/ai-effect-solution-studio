@@ -1,5 +1,7 @@
 # AIE-38 — Bounded conversational workflow composition
 
+> 31 October integration update: [goal-to-results integration](DESIGN_AI_GOAL_TO_RESULTS.md) keeps this one-analyzer structural scope unchanged. The new Dutch demonstration recommends and copies an existing two-step registered workflow; it does not claim new structural synthesis. The complete final integration backend inventory includes the three late cases: 369 passed / one unchanged baseline failure. Broader AIE-38 remains incomplete, and independent human acceptance remains pending.
+
 28 October 2026. **Offline structural milestone implemented and verified.**
 Recommended status: **In Review for this milestone**. The whole conversational
 composition task is not complete. AIE-18 remains **In Review**; production

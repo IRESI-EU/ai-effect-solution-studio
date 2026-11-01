@@ -20,12 +20,15 @@ from app.services import local_dutch_evidence as historical
 from app.services.dutch_capture_contract import (BASE_IMAGES, VERSION, SOURCE_REVISION, NODE_KEYS, NAMES,
     confined_read, encode, output_ref, sha, task_id, validate_ids)
 
+EVIDENCE_SOURCE = "Validated immutable captures recorded for this run"
+
 LABELS = {"configuration": "Configuration (JSON)", "grid": "Grid data (JSON)",
           "network": "Graph (pandapower JSON)", "benchmark": "Benchmark results (JSON safe export)"}
 
 
 def enabled():
-    return bool((historical.enabled() or qualification_enabled())
+    from app.services.qualified_demo import profile_enabled
+    return bool((historical.enabled() or qualification_enabled() or profile_enabled())
                 and settings.local_dutch_auto_capture_root and settings.local_dutch_capture_runtime)
 
 
@@ -49,13 +52,14 @@ def runtime_identity():
 
 
 def prepare_submission(db, user, workflow, compiled):
+    from app.services.qualified_demo import profile_enabled
     if not enabled():
         return None
     endpoints = compiled["dockerinfo"]["docker_info_list"]
     nodes = compiled["blueprint"]["nodes"]
     keys = [n["container_name"] + ":" + n["operation_signature_list"][0]["operation_signature"]["operation_name"] for n in nodes]
     if set(keys) != set(NODE_KEYS.values()) or len(nodes) != 2:
-        if qualification_enabled():
+        if qualification_enabled() or profile_enabled():
             raise HTTPException(422, "This qualification permits only the reviewed Dutch generation-to-benchmark chain")
         return None
     by_key = dict(zip(keys, nodes))
@@ -70,7 +74,7 @@ def prepare_submission(db, user, workflow, compiled):
             ("grid_synth_service", "seed-synth", "8080"), ("benchmark-runner", "seed-benchmark", "8080")}:
         raise HTTPException(409, "This capture supports only the isolated Dutch runtime")
     value = workflow.run_input
-    if qualification_enabled():
+    if qualification_enabled() or profile_enabled():
         if (value is not None or compiled["solution_studio_metadata"]["capability_bindings"]["status"] != "verified"
                 or not compiled.get("task_configurations")):
             raise HTTPException(422, "Qualification requires explicit connections and saved instance settings, without workflow seed input")
@@ -94,7 +98,7 @@ def prepare_submission(db, user, workflow, compiled):
         raise HTTPException(503, "Local capture runtime identity is unavailable; no workflow was submitted")
     snapshot = {"request": workflow.model_dump(mode="json"), "root_refs": compiled.get("inputs", []),
                 "blueprint": compiled["blueprint"], "dockerinfo": compiled["dockerinfo"], "runtime": pins}
-    if qualification_enabled():
+    if qualification_enabled() or profile_enabled():
         snapshot["task_configurations"] = compiled["task_configurations"]
         snapshot["capability_bindings"] = compiled["solution_studio_metadata"]["capability_bindings"]
     record = LocalDutchExecution(id=str(uuid4()), solution_id=workflow.solution_id, owner_user_id=user.id,
@@ -116,8 +120,12 @@ def attach_workflow(db, snapshot, result, user):
     workflow = result.get("workflow_id", "")
     validate_ids(workflow, task_id("synth"))
     snapshot.workflow_id, snapshot.phase = workflow, "submitted"
-    db.add(Deployment(id=str(uuid4()), workflow_id=workflow, solution_id=snapshot.solution_id,
-                      created_by_user_id=user.id, name=snapshot.submitted["request"]["name"], status=result.get("status", "submitted")))
+    existing = db.query(Deployment).filter(Deployment.workflow_id == workflow).first()
+    if existing is None:
+        db.add(Deployment(id=str(uuid4()), workflow_id=workflow, solution_id=snapshot.solution_id,
+                          created_by_user_id=user.id, name=snapshot.submitted["request"]["name"], status=result.get("status", "submitted")))
+    elif existing.created_by_user_id != user.id or existing.solution_id != snapshot.solution_id:
+        raise HTTPException(409, "Recorded execution ownership differs from capture")
     db.commit()
 
 
@@ -153,7 +161,47 @@ def _read_role(root, workflow, role, snapshot):
     return manifest, manifest_bytes, request, blobs
 
 
-def collect(db, deployment, workflow, tasks):
+def recorded_state(db, deployment):
+    """Only this new attempt's terminal observation may replace an unavailable live read."""
+    if not enabled():
+        return None
+    record = db.query(LocalDutchExecution).filter(LocalDutchExecution.workflow_id == deployment.workflow_id).first()
+    if (not record or not record.submitted.get("request", {}).get("submission_id")
+        or record.owner_user_id != deployment.created_by_user_id or record.solution_id != deployment.solution_id):
+        return None
+    collection = record.collection or {}
+    observation = collection.get("terminal_observation")
+    if (not isinstance(observation, dict) or sha(encode(observation)) != collection.get("terminal_observation_sha256")
+        or observation.get("workflow", {}).get("workflow_id") != deployment.workflow_id
+        or observation["workflow"].get("status") not in {"completed", "failed"}):
+        return None
+    tasks = observation.get("tasks")
+    if (not isinstance(tasks, list) or len(tasks) != 2
+        or any(not isinstance(task, dict) for task in tasks)
+        or {(task.get("task_id"), task.get("node_key")) for task in tasks}
+            != {(task_id(role), key) for role, key in NODE_KEYS.items()}
+        or any(task.get("workflow_id", deployment.workflow_id) != deployment.workflow_id for task in tasks)):
+        return None
+    return observation["workflow"], tasks
+
+
+def associated_state(db, deployment, read_live=None):
+    """Prefer this run's recorded terminal observation; always revalidate files."""
+    recorded = recorded_state(db, deployment)
+    if recorded:
+        return *recorded, False, "recorded terminal observation for this run"
+    if read_live is None:
+        from app.services.orchestrator_adapter import get_workflow_status, get_workflow_tasks
+        def read_live(value):
+            try:
+                return get_workflow_status(value.workflow_id), get_workflow_tasks(value.workflow_id)["tasks"], True
+            except (HTTPException, KeyError):
+                return {"workflow_id": value.workflow_id, "status": value.status}, [], False
+    workflow, tasks, live = read_live(deployment)
+    return workflow, tasks, live, "orchestrator" if live else "stored deployment record; task observation unavailable"
+
+
+def collect(db, deployment, workflow, tasks, *, runtime_live=True):
     if not enabled():
         return None
     record = (db.query(LocalDutchExecution).filter(LocalDutchExecution.workflow_id == deployment.workflow_id)
@@ -165,7 +213,7 @@ def collect(db, deployment, workflow, tasks):
     snapshot, wid = record.submitted, deployment.workflow_id
     result = {"state": "pending", "message": "Results collection pending.",
               "execution_input": snapshot["request"]["run_input"], "input_source": "Saved submission snapshot recorded before execution",
-              "grid": None, "benchmark": None, "artifacts": [], "source": "Automatic immutable per-execution capture",
+              "grid": None, "benchmark": None, "artifacts": [], "roles": {}, "source": EVIDENCE_SOURCE, "historical": workflow.get("status") in {"completed", "failed"},
               "source_revision": SOURCE_REVISION, "capture_version": VERSION,
               "adapter_sha256": snapshot["runtime"]["adapter_sha256"],
               "images": {k: v["id"] for k, v in snapshot["runtime"]["images"].items()},
@@ -174,10 +222,24 @@ def collect(db, deployment, workflow, tasks):
     failures, waiting, stopped = [], [], []
     for role in BASE_IMAGES:
         role_keys = ("configuration", "grid", "network") if role == "synth" else ("benchmark",)
-        task = next((t for t in tasks if t.get("task_id") == task_id(role) and t.get("node_key") == NODE_KEYS[role]), None)
+        identity = {"workflow_id": wid, "task_id": task_id(role), "node_key": NODE_KEYS[role]}
+        matches = [t for t in tasks if t.get("task_id") == task_id(role) and t.get("node_key") == NODE_KEYS[role]]
+        conflicting = (workflow.get("workflow_id") != wid or len(matches) > 1
+            or any(t.get("workflow_id", wid) != wid for t in matches)
+            or any((t.get("task_id") == task_id(role) or t.get("node_key") == NODE_KEYS[role]) and t not in matches for t in tasks))
+        task = matches[0] if len(matches) == 1 else None
+        if conflicting:
+            failures.append(role)
+            result["roles"][role] = {**identity, "state": "conflicting", "message": "Workflow or task observation does not match this recorded operation."}
+            result["artifacts"].extend({"id": key, "label": LABELS[key], "state": "inaccessible", "task_id": task_id(role)} for key in role_keys)
+            continue
         if task is None or task.get("status") != "completed":
             finished_with_failure = workflow.get("status") == "failed" or (task and task.get("status") == "failed")
             (stopped if finished_with_failure else waiting).append(role)
+            result["roles"][role] = {**identity,
+                "state": "unavailable" if finished_with_failure or task is None else "pending",
+                "message": "This task failed; completed consumption evidence was not recorded." if finished_with_failure else
+                    "No matching task observation is available for this run." if task is None else "This task has not completed."}
             for key in role_keys:
                 result["artifacts"].append({"id": key, "label": LABELS[key],
                     "state": "not_recorded" if finished_with_failure else "pending", "task_id": task_id(role)})
@@ -191,7 +253,6 @@ def collect(db, deployment, workflow, tasks):
             digest = sha(data)
             if role in accepted and accepted[role] != digest:
                 raise ValueError("Previously accepted execution evidence changed")
-            manifests[role] = (manifest, data, request)
             if role == "synth":
                 grid = json.loads(files["grid"])["grid_data"]
                 config = json.loads(files["configuration"])["config"]
@@ -202,12 +263,13 @@ def collect(db, deployment, workflow, tasks):
                     recorded = json.loads(files["configuration"])
                     if recorded.get("algorithm_consumed") != configuration["parameters"]:
                         raise ValueError("Algorithm consumption was not recorded")
-                    result["algorithm_consumed"] = recorded["algorithm_consumed"]
-                    result["input_source"] = "Saved instance settings; verified at the grid generation algorithm"
                 if grid["seed"] != config["seed"] or grid["source_config"]["seed"] != config["seed"] or config["seed"] != actual_seed:
                     raise ValueError("Seed evidence mismatch")
                 if files["network"] != grid["pandapower_json"].encode():
                     raise ValueError("Graph evidence mismatch")
+                if configuration:
+                    result["algorithm_consumed"] = recorded["algorithm_consumed"]
+                    result["input_source"] = "Saved instance settings; verified at the grid generation algorithm"
                 result["executed_seed"] = config["seed"]
                 result["grid"] = {"grid_id": grid["grid_id"], "seed": grid["seed"],
                                   "nodes": int(grid["metadata"]["nodes"]), "edges": int(grid["metadata"]["edges"])}
@@ -230,13 +292,22 @@ def collect(db, deployment, workflow, tasks):
                 result["benchmark"] = bench
                 if "capability_bindings" in snapshot:
                     result["verified_bindings"] = snapshot["capability_bindings"]["bindings"]
+            manifests[role] = (manifest, data, request)
             accepted[role] = digest
+            result["roles"][role] = {**identity, "state": "available", "historical": True,
+                "source": EVIDENCE_SOURCE,
+                "message": "Recorded algorithm parameters match the submitted configuration." if role == "synth" else
+                    "Recorded benchmark input matches this run's validated upstream grid.",
+                "algorithm_consumed": result.get("algorithm_consumed") if role == "synth" else None,
+                "input_binding_verified": role == "benchmark" and bool(result.get("verified_bindings")),
+                "output_sha256": sha(files["grid" if role == "synth" else "benchmark"])}
             for key in role_keys:
                 blobs[key] = files[key]
                 result["artifacts"].append({"id": key, "label": LABELS[key], "state": "available", "task_id": task_id(role),
                     "sha256": sha(files[key]), "size_bytes": len(files[key]),
                     "download_url": f"/api/deployments/by-workflow/{wid}/artifacts/{key}"})
         except FileNotFoundError:
+            result["roles"][role] = {**identity, "state": "inaccessible", "message": "A completed capture file is not yet available; no evidence was inferred from task completion."}
             failed_path = f"{role}/{wid}/{task_id(role)}/failed.json"
             try:
                 failed = json.loads(confined_read(settings.local_dutch_auto_capture_root, failed_path))
@@ -248,7 +319,16 @@ def collect(db, deployment, workflow, tasks):
                 waiting.append(role)
             for key in role_keys:
                 result["artifacts"].append({"id": key, "label": LABELS[key], "state": "inaccessible", "task_id": task_id(role)})
-        except (OSError, ValueError, KeyError, TypeError):
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            conflict = str(exc) in {"Execution or runtime association mismatch", "Submitted input mismatch",
+                "Submitted instance settings mismatch", "Orchestrator references do not match the captured execution",
+                "Previously accepted execution evidence changed", "Benchmark consumed another execution",
+                "Upstream capture association mismatch", "Benchmark output association mismatch", "Grid/benchmark mismatch"}
+            result["roles"][role] = {**identity,
+                "state": "inaccessible" if isinstance(exc, OSError) else "conflicting" if conflict else "invalid",
+                "message": "Capture files could not be read." if isinstance(exc, OSError) else
+                    "Capture association conflicts with this run or its previously accepted evidence." if conflict else
+                    "Capture integrity or recorded algorithm evidence failed validation."}
             failures.append(role)
             for key in role_keys:
                 result["artifacts"].append({"id": key, "label": LABELS[key], "state": "inaccessible", "task_id": task_id(role)})
@@ -263,6 +343,20 @@ def collect(db, deployment, workflow, tasks):
     else:
         result.update(state="available", message="Results captured automatically for this execution.")
     collection = {"state": result["state"], "manifests": accepted}
+    previous = record.collection or {}
+    for key in ("terminal_observation", "terminal_observation_sha256"):
+        if key in previous:
+            collection[key] = previous[key]
+    complete_task_identity = (len(tasks) == 2 and workflow.get("workflow_id") == wid
+        and all(task.get("workflow_id", wid) == wid for task in tasks)
+        and {(task.get("task_id"), task.get("node_key")) for task in tasks} == {(task_id(role), key) for role, key in NODE_KEYS.items()})
+    if (snapshot["request"].get("submission_id") and runtime_live and complete_task_identity and workflow.get("status") in {"completed", "failed"}
+        and "terminal_observation" not in collection):
+        observation = {"workflow": {"workflow_id": wid, "status": workflow["status"]},
+            "tasks": [{key: value for key, value in task.items() if key in {"task_id", "node_key", "status", "input_refs", "output_refs"}}
+                for task in tasks]}
+        collection.update(terminal_observation=observation, terminal_observation_sha256=sha(encode(observation)))
+        deployment.status = workflow["status"]
     if record.collection != collection:
         record.collection = collection
         db.commit()

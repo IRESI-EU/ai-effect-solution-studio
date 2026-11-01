@@ -1,0 +1,285 @@
+{
+  "date": "2026-11-01",
+  "status": "Images built; local proposal prepared; provisioning pending disk headroom and owner approval",
+  "baseline_portal_commit": "1df280d3d8debff531ce3470aa000a7658623f96",
+  "image_source_commit": "0458b93949a4182e5dc8bab66cbd04e8bca26367",
+  "operator_source_commit": "b8eadef9f0b74ec1ac4c920e9522d80c0942e420",
+  "wp3_dependency_commit": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+  "wp3_installed_in_proposal": false,
+  "images": [
+    {
+      "role": "api",
+      "tag": "ai-effect-staging-api:0458b93949a4",
+      "image_id": "sha256:8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1",
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "web",
+      "tag": "ai-effect-staging-web:0458b93949a4",
+      "image_id": "sha256:2c9ec04228b8e223d8fcd6adf86188b5a591e814c43eb25317ac95d33a20c36a",
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "postgres",
+      "image_id": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "platform": "linux/amd64"
+    },
+    {
+      "role": "gateway",
+      "image_id": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+      "platform": "linux/amd64"
+    }
+  ],
+  "platform": "linux/amd64",
+  "bases": [
+    {
+      "role": "python",
+      "reference": "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e"
+    },
+    {
+      "role": "node",
+      "reference": "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+    }
+  ],
+  "versions": {
+    "python": "3.12.14",
+    "node": "24.15.0",
+    "pnpm": "11.25.0",
+    "fastapi": "0.142.2",
+    "pydantic": "2.13.5",
+    "sqlalchemy": "2.1.3"
+  },
+  "runtime_wheel_count": 48,
+  "web_dependency_lock_unchanged": true,
+  "checks": {
+    "linux_portable": {
+      "tests": 291,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "existing_auth_postgres": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "account_ownership_races_postgres": {
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "fresh_schema_postgres": {
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "focused_bootstrap_and_approval": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "initial_approval_regressions_before_fix": {
+      "tests": 3,
+      "failures": 3,
+      "errors": 0,
+      "skipped": 0
+    },
+    "web_tests": {
+      "tests": 39,
+      "failures": 0,
+      "skipped": 0
+    },
+    "typegen": "passed",
+    "typecheck": "passed",
+    "production_build": "passed",
+    "web_build_id": "MHMxnSxQ4khLhh2UTWZpF",
+    "api_rewrite": "http://api:8080/:path*",
+    "pip_check": "passed",
+    "native_imports": "passed",
+    "TLS_gateway": {
+      "certificate_and_IP_verified": true,
+      "probes": {
+        "/api/workflows/submit-to-orchestrator": 403,
+        "/api/workflows/submit-to-orchestrator/": 403,
+        "/api/workflows/submit": 403,
+        "/api/design-ai/drafts/fixture/execute": 403,
+        "/api/design-ai/chat": 403,
+        "/api/design-ai/chat/": 403,
+        "/api/workflows/runtime-preflight": 403,
+        "/api/services/fixture/runtime/verify": 403,
+        "/api/services/import/preview": 403,
+        "/api/data-references/preview": 403,
+        "/api/data-references/preview/": 403,
+        "/api/data-references/%70review": 403,
+        "/api/auth/login": 204
+      },
+      "network": "none, shared fixture namespace only",
+      "host_ports_published": false,
+      "mock_upstream": true,
+      "provider_or_workflow_attempts": 0,
+      "staging_services_started": false
+    }
+  },
+  "proposal": {
+    "destination": "Same Windows computer, Docker Desktop desktop-linux",
+    "project": "ai-effect-review-staging-20261101",
+    "browser_url": "https://127.0.0.1:24443/login",
+    "binding": "127.0.0.1:24443 only",
+    "private_network": "ai-effect-review-staging-20261101_private",
+    "new_volumes": [
+      "ai-effect-review-staging-20261101_database",
+      "ai-effect-review-staging-20261101_contracts"
+    ],
+    "secure_cookie_name": "ai_effect_review_staging_session",
+    "memory_limit_MiB": 3200,
+    "cpu_limit": 2.5,
+    "private_files": "<original-checkout>/local-backups/local-staging-proposal-20261101/",
+    "credentials_prepared": true,
+    "accounts_created": false,
+    "certificate_prepared": true,
+    "certificate_trust_installed": false,
+    "services_started": false,
+    "network_or_volumes_created": false,
+    "minimum_free_disk_bytes": 5368709120,
+    "observed_C_free_bytes": 972558336,
+    "disk_headroom_sufficient": false
+  },
+  "scope": {
+    "production_inventory_needed_for_disconnected_review": false,
+    "production_inventory_needed_before_production_upgrade_or_connection": true,
+    "authenticated_manual_portal_review": true,
+    "synthetic_only": true,
+    "chat": "denied",
+    "submission": "denied",
+    "execution": "denied",
+    "generic_reference_preview": "denied; workflow ownership repair still required",
+    "runtime_probes": "denied",
+    "can_reproduce_live_Dutch_experiment": false,
+    "provider_configured": false,
+    "ledger_or_grant_mounted": false
+  },
+  "preservation": {
+    "workflow_id": "wf-1b6eb7caaf57",
+    "results_state": "available",
+    "instance_evidence_state": "available",
+    "generator_consumed": {
+      "seed": 43
+    },
+    "benchmark_input_verified": true,
+    "source": "Validated immutable captures recorded for this run",
+    "historical": true,
+    "task_observation": "recorded terminal observation for this run",
+    "immutable_submission_unchanged": true,
+    "downloads": {
+      "configuration": {
+        "sha256": "24f9e01c17119611c6c8315e5415d95cf1843cbb3993b70c1187f3cd0bc8e301",
+        "size_bytes": 1441,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "grid": {
+        "sha256": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+        "size_bytes": 148660,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "network": {
+        "sha256": "a521315934294f2850d03b713e4cc29f0f0710f84b02ee95625f5dbc6f0f0462",
+        "size_bytes": 129851,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      },
+      "benchmark": {
+        "sha256": "4e88e9b2bf9e71c94548498b31d635b889a3b5b6b39bd39ed5a35422ee79b1f0",
+        "size_bytes": 855,
+        "authenticated_http": 200,
+        "unsigned_http": 401
+      }
+    },
+    "all_preserved_rows_and_files_unchanged": true,
+    "ledger_byte_unchanged": true,
+    "shared_count": "13/13",
+    "outstanding_reservations": 0,
+    "provider_disconnected": true,
+    "execution_grant_disabled": true,
+    "ledger_read_only": true,
+    "worker_stopped": true,
+    "provider_calls": 0,
+    "new_workflows": 0
+  },
+  "other_worktrees": {
+    "ai-effect-solution-studio": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 4
+    },
+    "ai-effect-solution-studio-production-ui": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 196
+    },
+    "aie37-portal": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    },
+    "aie38-portal": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    },
+    "aie41-portal": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    },
+    "publication-portal-20261027": {
+      "head_unchanged": true,
+      "existing_changed_files_preserved": 0
+    }
+  },
+  "merge": false,
+  "tracker_updates": false,
+  "production_changes": false,
+  "staging_deployed": false,
+  "independent_usability": "unverified",
+  "production_compatibility": "unverified",
+  "Vercel_author_access": "Earlier #8-10 failures remain separate owner access actions; attribution/check requirements unchanged",
+  "checksums": [
+    {
+      "file": "pnpm-lock.yaml",
+      "git_blob_sha256": "e24751ceba65437292f017cfb3b19ab55613a0f2731391ef56cf3808b6284cd6"
+    },
+    {
+      "file": "deploy/staging/build/requirements.lock",
+      "git_blob_sha256": "e34211bf27710962fbfbf6e12f2928b72dc1854a56d1f93d5df5ffb075f96905"
+    },
+    {
+      "file": "deploy/staging/build/inputs.lock.json",
+      "git_blob_sha256": "4151f2a1068bb8d0a07c3cd8f2bfded2b46b04790acf3a55a65b0529dbe9615f"
+    },
+    {
+      "file": "deploy/staging/build/Api.Dockerfile",
+      "git_blob_sha256": "884459d1522a51676ba34478884fef4266a79d25311002972424f4486d8719f4"
+    },
+    {
+      "file": "deploy/staging/build/Web.Dockerfile",
+      "git_blob_sha256": "635eee1a0f2a3441dd57090f6132e55659b5c5ec9c3725e45b2861ef5688353d"
+    },
+    {
+      "file": "deploy/staging/compose.yaml",
+      "git_blob_sha256": "3c949204b64f241606d8b907903060818a335b70ab5eeab36e6a55924389b789"
+    },
+    {
+      "file": "deploy/staging/nginx.conf",
+      "git_blob_sha256": "f7c9daf1d977ebb857e4f9793e4192d98ab930a5a7d53f334954bce5c30ca4dd"
+    },
+    {
+      "file": "deploy/staging/local_review.py",
+      "git_blob_sha256": "eda599976926b9354794caff494079548ff2751a0211fe988f9bd18e33abda83"
+    },
+    {
+      "file": "apps/api/app/routers/admin_users.py",
+      "git_blob_sha256": "c35eb1df69733c1f58952e908b10bd26c57b3b5fad017e975bc14b298406437f"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # Gated Design with AI foundation
 
+> 31 October integration update: the [goal-to-results runbook](DESIGN_AI_GOAL_TO_RESULTS.md) now connects the existing qualified registered Dutch workflow, typed seed proposal, explicit Save, same-workspace execution review/confirmation and durable exact-run results. Final offline checks: 369 backend passes and one visible baseline failure; 36 web tests, typecheck and build passed. New live acceptance is pending; the shared allowance remains 12/12. This is registered-workflow recommendation, not arbitrary composition.
+
 The opt-in pilot creates designer-owned, revisioned drafts from operator-approved
 saved templates. A private MCP connection exposes inspection, proposal validation,
 Apply, Undo and explicit Save; it exposes no workflow deployment tool. Requests

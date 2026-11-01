@@ -1,6 +1,6 @@
 export type Message = { role: "user" | "assistant"; content: string };
 export type Activity = { tool: string; status: string; summary: string };
-export type Recommendation = { key: string; label: string; steps: { title: string; operation: string }[]; connection: string; expected_result_view: string[]; optional_downloads: string[]; availability: string; limitations: string[] };
+export type Recommendation = { mechanism?: "registered_workflow"; source_revision?: string; recommended_seed?: 42 | 43; key: string; label: string; steps: { title: string; operation: string }[]; connection: string; expected_result_view: string[]; optional_downloads: string[]; availability: string; limitations: string[] };
 export type Conversation = { ownerId: string; draftId: string | null; messages: Message[]; activity: Activity[]; prompt: string; seedInput: string; historyUnavailable: boolean; recommendation?: Recommendation | null };
 
 // Only an explicit URL selects active work. The legacy last-draft pointer is retained,
@@ -35,7 +35,7 @@ export function readConversation(raw: string | null, ownerId: string, draftId: s
 
 export function readRecommendation(value: unknown): Recommendation | null {
   const item = value as Recommendation | null;
-  return item && item.key === "dutch" && typeof item.label === "string" && typeof item.connection === "string"
+  return item && (!item.mechanism || (item.mechanism === "registered_workflow" && typeof item.source_revision === "string" && [42, 43].includes(item.recommended_seed!))) && item.key === "dutch" && typeof item.label === "string" && typeof item.connection === "string"
     && typeof item.availability === "string" && Array.isArray(item.steps)
     && item.steps.every(step => step && typeof step.title === "string" && typeof step.operation === "string")
     && [item.expected_result_view, item.optional_downloads, item.limitations].every(list => Array.isArray(list) && list.every(text => typeof text === "string")) ? item : null;

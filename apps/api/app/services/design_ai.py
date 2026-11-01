@@ -49,6 +49,7 @@ class TemplatePolicy(BaseModel):
     run_input: InputPolicy | None = None
     instance_settings_only: bool = False
     structural_append_only: bool = False
+    qualified_experiment: bool = False
 
     @model_validator(mode="after")
     def selector(self):
@@ -56,6 +57,8 @@ class TemplatePolicy(BaseModel):
             raise ValueError("Provide exactly one template selector")
         if self.instance_settings_only and self.structural_append_only:
             raise ValueError("Select exactly one editing scope")
+        if self.qualified_experiment and (not self.instance_settings_only or self.run_input or self.structural_append_only):
+            raise ValueError("Qualified experiments require saved instance settings and connections")
         if self.run_input:
             schema = self.run_input.json_schema
             Draft202012Validator.check_schema(schema)
@@ -171,6 +174,10 @@ def template(key: str, db: Session, user: User) -> dict:
         for node in chain:
             data = node["data"]
             if "configuration" not in data:
+                if policy.qualified_experiment:
+                    # The qualified benchmark has no editable parameters. Its
+                    # I/O pin is checked below by the qualified workflow validator.
+                    continue
                 raise HTTPException(409, "Settings-only copies require a pinned parameter contract on every service instance")
             validate_configuration(db, data["service"]["id"], data["service"]["operation_name"], data["configuration"])
     # A saved operation must still refer to the current wrapper, not silently change on hydration.
@@ -225,8 +232,15 @@ def list_templates(db: Session, user: User) -> list[dict]:
             try:
                 value = template(key, db, user)
                 item.update(available=True, description=value["description"], operations=[n["data"]["service"]["operation_name"] for n in ordered_services(value["nodes"], value["edges"], instance_settings_only=policy_scope(value))])
-                item["guided_available"] = guided_policy(key, value["input_policy"])
+                item["qualified_experiment"] = configured[key].qualified_experiment
+                if configured[key].qualified_experiment:
+                    from app.services.qualified_demo import capability
+                    capability(key, value, db, user)
+                    item["guided_available"] = True
+                else:
+                    item["guided_available"] = guided_policy(key, value["input_policy"])
             except HTTPException as exc:
+                item["available"] = False
                 item["reason"] = exc.detail if isinstance(exc.detail, str) else "Referenced services are missing or inaccessible"
         result.append(item)
     return result
@@ -374,6 +388,10 @@ def guided_policy(key: str, policy: dict | None) -> bool:
 
 
 def guided_context(row: DesignDraft) -> dict | None:
+    if row.state.get("guided_experiment") == "qualified_dutch_grid":
+        return {"mechanism": "registered_workflow", "scope": "Qualified local Dutch generation then benchmark; existing registered workflow, not arbitrary composition",
+                "steps": [{"title": "Create a sample grid", "operation": "ConfigureAndSynthesize"}, {"title": "Benchmark the grid produced by the first step", "operation": "RunBenchmark"}],
+                "execution_status": "No execution evidence is supplied by this conversation"}
     facts = guided_capabilities(row.state["template_key"], row.state["design"],
                                 guided=row.state.get("guided_experiment") == "dutch_sample_grid")
     if facts is not None:
@@ -407,21 +425,37 @@ def guided_capabilities(key: str, design: dict, *, guided: bool) -> dict | None:
 
 def discovery_capability(key: str, db: Session, user: User) -> dict:
     value = template(key, db, user)  # Re-check source sharing, approval and governance.
+    if policies()[key].qualified_experiment:
+        from app.services.qualified_demo import capability
+        return capability(key, value, db, user)
     facts = guided_capabilities(key, value, guided=key == "dutch")
     if facts is None:
         raise HTTPException(422, "This request is outside the supported local sample-grid experiment. No experiment was created.")
     return {"key": key, "label": "Generate and benchmark a sample electricity grid.", **facts}
 
 
-def start(key: str, db: Session, user: User, *, guided: bool = False) -> dict:
+def start(key: str, db: Session, user: User, *, guided: bool = False, recommended_seed: int | None = None, recommendation_revision: str | None = None) -> dict:
     value = template(key, db, user)
+    if policies()[key].qualified_experiment:
+        from app.services.qualified_demo import lock_template
+        lock_template(value, db)
+        value = template(key, db, user)
     design = {"name": value["name"] + " — AI draft", "description": value["description"],
               "nodes": value["nodes"], "edges": value["edges"], "run_input": None, "input_policy": value["input_policy"]}
     if policy_scope(value):
         design.update(editing_scope="instance_settings", run_input=value["run_input"])
     if value.get("editing_scope") == "append_bound_operation":
         design.update(editing_scope="append_bound_operation", run_input=value["run_input"])
-    if guided:
+    qualified = policies()[key].qualified_experiment
+    if qualified:
+        from app.services.qualified_demo import capability, seed_turn
+        facts = capability(key, value, db, user)
+        if not guided or recommendation_revision != facts["source_revision"] or recommended_seed not in (42, 43):
+            raise HTTPException(409, "Review the current registered workflow and seed recommendation before creating this experiment")
+        design["name"] = "Sample electricity grid experiment"
+    elif recommended_seed is not None or recommendation_revision is not None:
+        raise HTTPException(422, "Recommendation settings require the qualified experiment")
+    if guided and not qualified:
         if not guided_policy(key, value["input_policy"]):
             raise HTTPException(422, "The guided Dutch experiment needs an approved seed input policy")
         design.update(name="Sample electricity grid experiment", run_input={"seed": 42})
@@ -433,15 +467,25 @@ def start(key: str, db: Session, user: User, *, guided: bool = False) -> dict:
             raise HTTPException(422, "The guided experiment is unavailable: " + "; ".join(validation["errors"]))
     row = DesignDraft(id=str(uuid4()), owner_id=user.id, revision=0, state={"template_key": key, "source": value["source"],
           "reference_note": value["reference_note"], "design": design, "validation": validate(design, db, user),
-          "history": [], "edit_history": [], "pending": None, "saved_solution_id": None, "guided_experiment": "dutch_sample_grid" if guided else None,
+          "history": [], "edit_history": [], "pending": None, "saved_solution_id": None, "guided_experiment": "qualified_dutch_grid" if qualified else "dutch_sample_grid" if guided else None,
           "reserved_solution_id": str(uuid4()), "saved_revision": None, "dirty": True})
     db.add(row)
+    if qualified:
+        db.flush()
+        if recommended_seed == facts["current_seed"]:
+            db.commit()
+            return view(row, db)
+        return propose(row.id, seed_turn(row, recommended_seed), db, user)
     db.commit()
     return view(row, db)
 
 
 def guided_settings(draft_id: str, revision: int, seed: int, db: Session, user: User) -> dict:
     row = load_draft(draft_id, db, user)
+    if row.state.get("guided_experiment") == "qualified_dutch_grid":
+        from app.services.qualified_demo import seed_turn
+        check_revision(row, revision)
+        return propose(draft_id, seed_turn(row, seed), db, user)
     if not guided_policy(row.state["template_key"], row.state["design"].get("input_policy")):
         raise HTTPException(422, "Guided settings are unavailable for this template")
     turn = AssistantTurn(message="Review the seed change, then Apply changes.", template_key="dutch", expected_revision=revision,
@@ -579,6 +623,8 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
     check_revision(row, revision)
     state = deepcopy(row.state)
     current_validation = validate(state["design"], db, user)
+    if state.get("guided_experiment") == "qualified_dutch_grid" and state.get("pending"):
+        raise HTTPException(409, "Apply the reviewed proposal before saving this experiment")
     if not current_validation["valid"]:
         raise HTTPException(422, "Resolve the draft input or catalogue errors before saving")
     solution_id = state["reserved_solution_id"]
