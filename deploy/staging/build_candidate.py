@@ -27,7 +27,9 @@ if __name__ == "__main__":
             raise RuntimeError("Refusing to overwrite an existing tag: " + tag)
         log = args.records / (role + "-image-build.log")
         with log.open("xb") as stream:
-            subprocess.run(DOCKER + ["build", "--platform", "linux/amd64", "--pull=false", "--network", "none",
+            # Only frozen web dependency acquisition needs registry networking;
+            # its test/typegen/typecheck/build RUN steps explicitly use none.
+            subprocess.run(DOCKER + ["build", "--platform", "linux/amd64", "--pull=false", "--network", "default" if role == "web" else "none",
                 "--build-context", "locked_inputs=" + str(args.inputs.resolve()),
                 "--build-arg", "PORTAL_SOURCE_COMMIT=" + source,
                 "--metadata-file", str((args.records / (role + "-build-metadata.json")).resolve()),
