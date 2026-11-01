@@ -9,3 +9,11 @@ apps/web/tsconfig.tsbuildinfo
 **/__pycache__
 **/.pytest_cache
 **/*.pyc
+# Private review profiles, credentials, captures and spending state stay local.
+local-backups
+local-secrets
+.venv
+.codex
+.agents
+**/.next*
+**/*.sqlite3
