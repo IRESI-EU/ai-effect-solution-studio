@@ -1,0 +1,220 @@
+{
+  "date": "2026-10-31",
+  "authorized_pr_head": "97abc34c8bfd8168dd7738ef5f090d6516c5a031",
+  "outcome": "Bounded provider/control/execution/capture checks passed; UI evidence-display inconsistency remains. Do not mark the full demonstration complete.",
+  "results_url": "http://localhost:23121/deployments/wf-1b6eb7caaf57#results",
+  "checks": [
+    {
+      "check": "Authorized head, pins, context and clean Redis preflight",
+      "result": "PASS"
+    },
+    {
+      "check": "One genuine provider recommendation, seed 43, registered workflow",
+      "result": "PASS"
+    },
+    {
+      "check": "Explicit Create / Apply / Undo / Apply / Save",
+      "result": "PASS"
+    },
+    {
+      "check": "New workflow, both tasks completed, consumed seed 43",
+      "result": "PASS"
+    },
+    {
+      "check": "Same-grid association and four protected downloads",
+      "result": "PASS"
+    },
+    {
+      "check": "Provider/grant disconnected; 13/13 and task 1/1 block further calls",
+      "result": "PASS"
+    },
+    {
+      "check": "Consistent consumption evidence across all UI panels",
+      "result": "FAIL",
+      "detail": "Qualified Experiment results validates consumed seed 43 and same-grid flow; generic Recorded instance settings still labels algorithm consumption and associated input evidence unverified."
+    }
+  ],
+  "provider": {
+    "actual_attempts": 1,
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "processing_requested": "Standard (service_tier=default)",
+    "max_output_tokens": 2000,
+    "sdk_retries": 0,
+    "fallback": false,
+    "visible_response": "I recommend the existing registered Dutch workflow\u2014not arbitrary composition. It creates a sample grid using seed 43, then benchmarks that exact grid. After successful explicit execution and capture, the result view can show the recorded seed, task states, grid summary, and recorded benchmark values. Optional downloads are Configuration JSON, Grid JSON, Pandapower graph JSON, and Benchmark JSON. This workflow uses a synthetic grid and a no-op benchmark agent; KPI units and scientific validity are not established, and production compatibility is unverified. This recommendation does not create a draft or run anything. To make a copy, use the separate \u201cCreate this experiment\u201d action.",
+    "response_id": "resp_0afbcf471b1bab82016ae63a2a406087d2b6787a4457995050",
+    "usage": {
+      "input_tokens": 2745,
+      "output_tokens": 159,
+      "total_tokens": 2904,
+      "cached_input_tokens": 0,
+      "cache_write_tokens": 2742,
+      "reasoning_tokens": 0,
+      "lifetime_reservation_nano": 5000000,
+      "conservative_accounted_nano": 422625,
+      "usage_price_estimate_nano": 422550,
+      "accounting_difference_nano": 75,
+      "remaining_nano": 95792625,
+      "outstanding_reservations": 0,
+      "unknown_usage_holds_nano": 0
+    }
+  },
+  "amendment": {
+    "id": "goal-to-results-20261031-12-to-13",
+    "supported_operator_used": true,
+    "before": {
+      "closed": 0,
+      "limit_nano": 100000000,
+      "max_calls": 12
+    },
+    "after": {
+      "closed": 0,
+      "limit_nano": 100000000,
+      "max_calls": 13
+    },
+    "old_12_usage_records_and_original_amendment_preserved": true,
+    "new_checkpoint_max_calls": 1,
+    "new_checkpoint_max_reserved_nano": 5000000,
+    "new_checkpoint_sha256": "5bd58318d99d685664c5da4130ef80664d8a042668e8598279a59d7534771c3c",
+    "old_checkpoints_unchanged": true
+  },
+  "draft": {
+    "id": "7e8361c8-0870-47cf-a670-b6ec03a09324",
+    "owner_id": "aie37-designer",
+    "revision": 3,
+    "saved_solution_id": "ef10cde8-15d4-4f6d-82dd-0525a16de4fd",
+    "undo_exact_design_restoration": true,
+    "seed": 43
+  },
+  "execution": {
+    "workflow_id": "wf-1b6eb7caaf57",
+    "submission_id": "a78745cf-db77-4fa9-abd4-5b201d816083",
+    "submitted_sha256": "3a8d8713362b9fcf9f62360ec78f7b380871fad7d599d2913c6756df0c5997b9",
+    "status": "completed",
+    "task_states": {
+      "grid_synth_service:ConfigureAndSynthesize": "completed",
+      "benchmark-runner:RunBenchmark": "completed"
+    },
+    "grid": {
+      "grid_id": "dutch-synthesized-grid",
+      "seed": 43,
+      "nodes": 169,
+      "edges": 206
+    },
+    "algorithm_consumed": {
+      "seed": 43
+    },
+    "same_grid_association_verified": true,
+    "upstream": {
+      "adapter": "benchmark-service",
+      "edges": 206,
+      "grid_id": "dutch-synthesized-grid",
+      "grid_sha256": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+      "manifest_sha256": "23dd3d9abc8e641d642eacd0e1a652d9c8a57b7b11221a53b939fec6c06ae120",
+      "nodes": 169,
+      "task_id": "task_60e852c4",
+      "workflow_id": "wf-1b6eb7caaf57"
+    },
+    "downloads": {
+      "configuration": {
+        "http_authenticated": 200,
+        "http_unauthenticated": 401,
+        "sha256": "24f9e01c17119611c6c8315e5415d95cf1843cbb3993b70c1187f3cd0bc8e301",
+        "size_bytes": 1441,
+        "security_headers_verified": true
+      },
+      "grid": {
+        "http_authenticated": 200,
+        "http_unauthenticated": 401,
+        "sha256": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+        "size_bytes": 148660,
+        "security_headers_verified": true
+      },
+      "network": {
+        "http_authenticated": 200,
+        "http_unauthenticated": 401,
+        "sha256": "a521315934294f2850d03b713e4cc29f0f0710f84b02ee95625f5dbc6f0f0462",
+        "size_bytes": 129851,
+        "security_headers_verified": true
+      },
+      "benchmark": {
+        "http_authenticated": 200,
+        "http_unauthenticated": 401,
+        "sha256": "4e88e9b2bf9e71c94548498b31d635b889a3b5b6b39bd39ed5a35422ee79b1f0",
+        "size_bytes": 855,
+        "security_headers_verified": true
+      }
+    },
+    "new_workflow_executions": 1,
+    "execution_retries": 0,
+    "replacement_grants": 0
+  },
+  "accounting": {
+    "shared_calls": 13,
+    "shared_max_calls": 13,
+    "new_task_calls": 1,
+    "new_task_max_calls": 1,
+    "ceiling_usd": "0.10",
+    "new_lifetime_reservation_usd": "0.005",
+    "new_conservative_accounted_usd": "0.000422625",
+    "new_usage_price_estimate_usd": "0.000422550",
+    "shared_accounted_usd": "0.004207375",
+    "remaining_usd": "0.095792625",
+    "outstanding_reservations": 0,
+    "unknown_usage_holds_usd": "0",
+    "ledger_sha256_after": "c5d34d33914623978335c02471f635239b1fae29bee6fcf2f77411e930a8477f"
+  },
+  "cleanup": {
+    "provider_disconnected": true,
+    "grant_setting_disabled": true,
+    "grant_and_checkpoint_files_retained_immutable": true,
+    "ledger_read_only": true,
+    "worker_stopped": true,
+    "results_accessible_after_disconnect": true,
+    "components": {
+      "api": "running",
+      "postgres": "running",
+      "redis": "running",
+      "worker": "exited",
+      "seed-orchestrator": "running",
+      "seed-synth": "running",
+      "seed-benchmark": "running"
+    }
+  },
+  "preservation": {
+    "all_preexisting_engineering_rows_preserved": true,
+    "offline_database_unchanged": true,
+    "old_nonledger_files_unchanged": 54,
+    "new_qualification_rows": {
+      "solutions": 1,
+      "services": 0,
+      "operation_contracts": 0,
+      "design_ai_drafts": 1,
+      "deployments": 1,
+      "execution_submissions": 1,
+      "local_dutch_executions": 1,
+      "users": 0
+    },
+    "normal_login_audit_and_sessions_excluded": true
+  },
+  "limitations": [
+    "Generic Recorded instance settings panel still says algorithm consumption/input evidence unverified; qualified results and protected artifacts verify them. No product repair was made during acceptance.",
+    "Synthetic grid and no-op benchmark; KPI units and scientific validity not established.",
+    "No new arbitrary or structural composition claim.",
+    "Independent human usability and production compatibility remain unverified.",
+    "Known pre-existing backend package-import failure remains unresolved; no backend suite rerun for this acceptance-only task."
+  ],
+  "source_changes": {
+    "application_code": false,
+    "commit": false,
+    "push": false,
+    "merge": false,
+    "production": false,
+    "tracker_updates": false
+  },
+  "operator_verification_notes": [
+    "An initial file-preservation comparison incorrectly matched a POSIX suffix against Windows paths and flagged the authorized ledger change. Exact resolved-path comparison then passed; no data was changed.",
+    "An initial checkpoint byte comparison assumed LF serialization. The immutable checkpoint matched the authoritative amendment SHA-256; grant matched original Windows CRLF serialization. Only the private verifier was corrected. No acceptance response, data, checkpoint or grant was repaired."
+  ]
+}
