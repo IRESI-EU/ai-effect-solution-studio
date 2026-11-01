@@ -139,13 +139,19 @@ def test_package_preview_and_atomic_confirmation_preserve_runtime_contracts(clie
 
 def test_repeat_upload_reports_conflicts_and_never_overwrites(client, session_factory, tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "service_contract_path", str(tmp_path / "contracts"))
-    first = upload(client, package_bytes()).json()
+    # A repeat upload means identical archive bytes. Building another ZIP can
+    # change its timestamp/digest and therefore its proposed catalogue IDs.
+    archive = package_bytes()
+    first = upload(client, archive).json()
     response = client.post("/services/import/package/confirm", json={
         "upload_token": first["upload_token"], "services": selections(first),
         "registration_only_acknowledged": True,
     })
     assert response.status_code == 200
-    second = upload(client, package_bytes()).json()
+    with session_factory() as db:
+        before = {row.id: {column.name: getattr(row, column.name) for column in Service.__table__.columns}
+                  for row in db.query(Service).filter(Service.id.in_([s["proposed_id"] for s in first["services"]]))}
+    second = upload(client, archive).json()
     assert all(service["duplicate_conflicts"] for service in second["services"])
     duplicate = client.post("/services/import/package/confirm", json={
         "upload_token": second["upload_token"], "services": selections(second),
@@ -153,7 +159,10 @@ def test_repeat_upload_reports_conflicts_and_never_overwrites(client, session_fa
     })
     assert duplicate.status_code == 409
     with session_factory() as db:
-        assert db.query(Service).filter(Service.id.in_([s["proposed_id"] for s in second["services"]])).count() == 2
+        after = {row.id: {column.name: getattr(row, column.name) for column in Service.__table__.columns}
+                 for row in db.query(Service).filter(Service.id.in_([s["proposed_id"] for s in second["services"]]))}
+        assert len(after) == 2
+        assert after == before
 
 
 def test_multiple_operations_require_explicit_selection(client, tmp_path, monkeypatch):
