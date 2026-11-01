@@ -28,12 +28,20 @@ def _get_user_or_404(user_id: str, db: Session) -> User:
     return user
 
 
-def _active_admin_count(db: Session) -> int:
-    return (
+def _lock_active_admins(db: Session, actor: User) -> list[User]:
+    # Every account-state mutation takes the same ordered locks. Recheck the
+    # actor after waiting: another administrator may have revoked their access.
+    active = (
         db.query(User)
         .filter(User.role == "platform_admin", User.status == "active")
-        .count()
+        .order_by(User.id)
+        .with_for_update()
+        .populate_existing()
+        .all()
     )
+    if not any(user.id == actor.id for user in active):
+        raise HTTPException(status_code=403, detail="Administrator access changed; sign in again")
+    return active
 
 
 def _get_active_user_or_404(user_id: str, db: Session) -> User:
@@ -62,7 +70,10 @@ def approve_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    _lock_active_admins(db, admin)
     user = _get_user_or_404(user_id, db)
+    if user.status != "pending":
+        raise HTTPException(status_code=409, detail="Only pending registrations can be approved; use account controls for an existing account")
     user.role = payload.role
     user.node = payload.node if payload.role != "platform_admin" else None
     user.status = "active"
@@ -87,6 +98,7 @@ def reject_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    _lock_active_admins(db, admin)
     user = _get_user_or_404(user_id, db)
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="You cannot reject your own account")
@@ -104,10 +116,11 @@ def suspend_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    active_admins = _lock_active_admins(db, admin)
     user = _get_user_or_404(user_id, db)
     if user.id == admin.id:
         raise HTTPException(status_code=400, detail="You cannot suspend your own account")
-    if user.role == "platform_admin" and user.status == "active" and _active_admin_count(db) <= 1:
+    if user.role == "platform_admin" and user.status == "active" and len(active_admins) <= 1:
         raise HTTPException(status_code=409, detail="At least one active administrator is required")
     user.status = "suspended"
     db.query(UserSession).filter(UserSession.user_id == user.id).delete()
@@ -123,6 +136,7 @@ def reactivate_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    _lock_active_admins(db, admin)
     user = _get_user_or_404(user_id, db)
     user.status = "active"
     user.approved_at = user.approved_at or utc_now()
@@ -140,6 +154,7 @@ def update_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    active_admins = _lock_active_admins(db, admin)
     user = _get_user_or_404(user_id, db)
     previous_role = user.role
     if payload.display_name is not None:
@@ -149,7 +164,7 @@ def update_user(
             user.id == admin.id
             and user.role == "platform_admin"
             and payload.role != "platform_admin"
-            and _active_admin_count(db) <= 1
+            and len(active_admins) <= 1
         ):
             raise HTTPException(status_code=409, detail="At least one active administrator is required")
         user.role = payload.role
@@ -235,7 +250,7 @@ def assign_legacy_solution(
     admin: User = Depends(require_admin),
 ):
     owner = _get_active_user_or_404(payload.user_id, db)
-    solution = db.query(Solution).filter(Solution.id == solution_id).first()
+    solution = db.query(Solution).filter(Solution.id == solution_id).with_for_update().populate_existing().first()
     if not solution:
         raise HTTPException(status_code=404, detail="Solution not found")
     if solution.created_by_user_id is not None:
@@ -271,7 +286,7 @@ def assign_legacy_deployment(
     admin: User = Depends(require_admin),
 ):
     owner = _get_active_user_or_404(payload.user_id, db)
-    deployment = db.query(Deployment).filter(Deployment.id == deployment_id).first()
+    deployment = db.query(Deployment).filter(Deployment.id == deployment_id).with_for_update().populate_existing().first()
     if not deployment:
         raise HTTPException(status_code=404, detail="Deployment not found")
     if deployment.created_by_user_id is not None:
@@ -296,7 +311,7 @@ def assign_legacy_service(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    service = db.query(Service).filter(Service.id == service_id).first()
+    service = db.query(Service).filter(Service.id == service_id).with_for_update().populate_existing().first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
     if service.owner_node is not None:
