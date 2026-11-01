@@ -2,6 +2,7 @@
 name: ${STAGING_PROJECT_NAME:?Choose a new isolated staging project name}
 services:
   postgres:
+    platform: linux/amd64
     image: ${STAGING_POSTGRES_IMAGE:?Supply an approved immutable PostgreSQL image}
     pull_policy: never
     environment:
@@ -11,19 +12,23 @@ services:
     volumes:
       - database:/var/lib/postgresql/data
     networks: [private]
+    mem_limit: 768m
+    cpus: 0.5
     healthcheck:
       test: [CMD-SHELL, 'pg_isready -U staging -d design_ai_staging']
       interval: 5s
       timeout: 5s
       retries: 12
   api:
+    platform: linux/amd64
     image: ${STAGING_API_IMAGE:?Build the reviewed candidate and supply its immutable image}
     pull_policy: never
     environment:
-      DATABASE_URL: postgresql+psycopg://staging:${STAGING_POSTGRES_PASSWORD}@postgres:5432/design_ai_staging
-      ORCHESTRATOR_BASE_URL: ${STAGING_WP3_URL:?Supply the separately approved staging WP3 endpoint}
-      ORCHESTRATOR_API_KEY: ${STAGING_WP3_API_KEY:-}
+      DATABASE_URL: postgresql+psycopg://staging:${STAGING_POSTGRES_PASSWORD}@postgres:5432/${STAGING_DATABASE_NAME:-design_ai_staging}
+      ORCHESTRATOR_BASE_URL: http://disconnected.invalid:9
+      ORCHESTRATOR_API_KEY: ""
       SECURE_COOKIES: "true"
+      SESSION_COOKIE_NAME: ai_effect_review_staging_session
       BOOTSTRAP_ADMIN_EMAIL: ${STAGING_BOOTSTRAP_EMAIL:-}
       BOOTSTRAP_ADMIN_PASSWORD: ${STAGING_BOOTSTRAP_PASSWORD:-}
       SERVICE_CONTRACT_PATH: /service-contracts
@@ -39,27 +44,41 @@ services:
       DESIGN_AI_ACCEPTANCE_BUDGET_FILE: ""
       DESIGN_AI_ACCEPTANCE_TASK_LIMIT_FILE: ""
       DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ""
+      STAGING_REVIEW_SEED: synthetic-only
+      STAGING_DESIGNER_A_EMAIL: ${STAGING_DESIGNER_A_EMAIL:-}
+      STAGING_DESIGNER_A_PASSWORD: ${STAGING_DESIGNER_A_PASSWORD:-}
+      STAGING_DESIGNER_B_EMAIL: ${STAGING_DESIGNER_B_EMAIL:-}
+      STAGING_DESIGNER_B_PASSWORD: ${STAGING_DESIGNER_B_PASSWORD:-}
     volumes:
       - contracts:/service-contracts
     networks: [private]
+    mem_limit: 768m
+    cpus: 0.75
     depends_on:
       postgres: {condition: service_healthy}
   web:
+    platform: linux/amd64
     image: ${STAGING_WEB_IMAGE:?Build the reviewed candidate for this API route and supply its immutable image}
     pull_policy: never
     environment:
       NODE_ENV: production
       INTERNAL_API_URL: http://api:8080
     networks: [private]
+    mem_limit: 1536m
+    cpus: 1.0
     depends_on: [api]
   gateway:
+    platform: linux/amd64
     image: ${STAGING_GATEWAY_IMAGE:?Supply an approved immutable nginx image}
     pull_policy: never
     ports:
-      - "127.0.0.1:${STAGING_GATEWAY_PORT:?Choose an unused staging-only loopback port}:8080"
+      - "127.0.0.1:${STAGING_GATEWAY_PORT:?Choose an unused staging-only loopback port}:8443"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${STAGING_TLS_DIR:?Prepare private local TLS files}:/tls:ro
     networks: [private]
+    mem_limit: 128m
+    cpus: 0.25
     depends_on: [web]
 networks:
   private:
