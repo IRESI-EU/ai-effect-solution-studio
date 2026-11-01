@@ -21,7 +21,8 @@ def administrators(factory):
         db.commit()
 
 
-def test_concurrent_self_demotions_keep_one_active_administrator(seeded):
+@pytest.mark.parametrize("target", ["self", "other"])
+def test_concurrent_demotions_keep_one_active_administrator_and_recheck_actor(seeded, target):
     administrators(seeded)
     barrier = Barrier(2)
     def demote(identifier):
@@ -29,13 +30,14 @@ def test_concurrent_self_demotions_keep_one_active_administrator(seeded):
             actor = db.get(User, identifier)
             barrier.wait(timeout=10)
             try:
-                admin.update_user(identifier, UserUpdateRequest(role="solution_designer"), db, actor)
+                target_id = identifier if target == "self" else ("b" if identifier == "a" else "a")
+                admin.update_user(target_id, UserUpdateRequest(role="solution_designer"), db, actor)
                 return 200
             except HTTPException as error:
                 db.rollback()
                 return error.status_code
     with ThreadPoolExecutor(max_workers=2) as pool:
-        assert sorted(pool.map(demote, ("a", "b"))) == [200, 409]
+        assert sorted(pool.map(demote, ("a", "b"))) == [200, 409 if target == "self" else 403]
     with seeded() as db:
         assert db.query(User).filter_by(role="platform_admin", status="active").count() == 1
 

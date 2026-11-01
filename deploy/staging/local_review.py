@@ -114,6 +114,15 @@ def operate(directory, action, approved, backup=None, restore_name=None):
         print(json.dumps({"config": "valid", "pinned_images": 4, "services_started": False, "browser_url": proposal["browser_url"]}))
     elif action == "migrate":
         command(compose + ["up", "-d", "--wait", "--pull", "never", "postgres"])
+        # 001 adds authentication to an existing portal schema. A fresh volume
+        # first needs its four core tables, without importing main/startup or
+        # precreating users (which would omit 001's database constraints).
+        initialize = ("from app.db import Base,engine; "
+            "from app.models.service import Service; from app.models.solution import Solution; "
+            "from app.models.deployment import Deployment; from app.models.operation_contract import OperationContract; "
+            "assert engine.url.database=='design_ai_staging' and engine.url.host=='postgres'; "
+            "Base.metadata.create_all(engine,tables=[Service.__table__,Solution.__table__,Deployment.__table__,OperationContract.__table__])")
+        command(compose + ["run", "--rm", "--no-deps", "--pull", "never", "api", "python", "-c", initialize])
         for migration in sorted((REPO / "deploy/migrations").glob("*.sql")):
             command(compose + ["exec", "-T", "postgres", "psql", "-U", "staging", "-d", "design_ai_staging", "-v", "ON_ERROR_STOP=1"], input=migration.read_bytes())
     elif action == "bootstrap":
