@@ -111,7 +111,7 @@ def operate(directory, action, approved, backup=None, restore_name=None):
             raise RuntimeError("A pinned local candidate image is unavailable")
     command(compose + ["config", "--quiet"])
     if action == "check":
-        print(json.dumps({"config": "valid", "pinned_images": 4, "services_started": False, "browser_url": proposal["browser_url"]}))
+        print(json.dumps({"config": "valid", "pinned_images": 4, "services_started_by_check": False, "browser_url": proposal["browser_url"]}))
     elif action == "migrate":
         command(compose + ["up", "-d", "--wait", "--pull", "never", "postgres"])
         # 001 adds authentication to an existing portal schema. A fresh volume
@@ -134,7 +134,7 @@ def operate(directory, action, approved, backup=None, restore_name=None):
     elif action == "backup":
         destination = directory / ("staging-" + datetime.now(UTC).strftime("%Y%m%d%H%M%S") + ".dump")
         with destination.open("xb") as stream:
-            command(compose + ["exec", "-T", "postgres", "pg_dump", "-U", "staging", "-Fc", "-d", "design_ai_staging"], stdout=stream)
+            command(compose + ["exec", "-T", "postgres", "pg_dump", "-U", "staging", "-Fc", "-d", values["STAGING_DATABASE_NAME"]], stdout=stream)
         print(json.dumps({"backup": str(destination), "sha256": hashlib.sha256(destination.read_bytes()).hexdigest()}))
     elif action == "restore":
         if not backup or not backup.is_file() or not restore_name or not re.fullmatch(r"design_ai_staging_restore_[0-9]{14}", restore_name):
