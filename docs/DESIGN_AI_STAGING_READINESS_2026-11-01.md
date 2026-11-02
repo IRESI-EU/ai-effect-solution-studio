@@ -1,5 +1,7 @@
 # Design with AI staging candidate — 1 November 2026
 
+> **2 November feature separation:** The [new catalogue-discovery milestone](DESIGN_AI_CATALOGUE_DISCOVERY_2026-11-02.md) is a separate draft branch stacked on PR #13's published `2c9ba3e648d3782cb5db760a0378d3dc612af2cf` baseline. Its 142 focused backend / 17 frontend checks and typecheck do not replace the candidate's historical inventories. Existing built images and the provisioning proposal remain unchanged; they do not include this new feature. No Docker repair, image build, new profile or staging provisioning was performed for discovery. Integrated browser/provider/runtime verification remains unavailable.
+
 > **Build/local-scope follow-up:** Matching Python 3.12.14 / Node 24.15.0 images are now built from pinned inputs. The owner selected this Windows Docker Desktop for fresh disconnected authenticated review; production inventory is needed only for a later production upgrade/connection. Provisioning remains pending disk headroom and approval. See [concrete local proposal and exact commands](DESIGN_AI_LOCAL_REVIEW_PROPOSAL_2026-11-01.md) and [actual build checks](DESIGN_AI_BUILD_PREPARATION_2026-11-01.json). Earlier baseline/check results below remain historical.
 
 **Prepared for review; integrated staging has not been deployed or accepted.** The known backend baseline failure is resolved through test fixtures, with write-time validation unchanged. No feature, screen redesign, new live experiment, profile, execution grant or allowance change is part of this consolidation.
