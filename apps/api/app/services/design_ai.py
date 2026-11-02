@@ -260,6 +260,9 @@ def contracts(nodes: list[dict], db: Session) -> list[dict]:
 
 
 def validate(design: dict, db: Session, user: User) -> dict:
+    if design.get("editing_scope") == "catalogue_pair" and not design.get("nodes"):
+        return {"valid": False, "errors": ["Apply the proposed two-operation design before Save."],
+            "unknown": ["Initial empty engineering state. Runtime readiness and execution are unverified."], "required_inputs": []}
     errors, unknown, required = [], [], []
     try:
         validate_builder_configurations(db, design["nodes"], design["edges"], user)
@@ -340,6 +343,10 @@ def load_draft(draft_id: str, db: Session, user: User, lock: bool = False) -> De
     row = (query.populate_existing().with_for_update() if lock else query).first()
     if not row:
         raise HTTPException(404, "Draft not found")
+    if row.state.get("source", {}).get("kind") == "catalogue_composed":
+        if row.state["design"].get("editing_scope") != "catalogue_pair" or "template_key" in row.state:
+            raise HTTPException(409, "The catalogue-composed provenance is inconsistent")
+        return row
     # Revocation of operator sharing takes effect for existing sessions too.
     if row.state["template_key"] not in policies():
         raise HTTPException(409, "This pilot template is no longer enabled")
@@ -371,6 +378,7 @@ def view(row: DesignDraft, db: Session | None = None) -> dict:
     state = deepcopy(row.state)
     state.pop("history", None)
     state.pop("saved_fingerprint", None)
+    state.pop("composition", None)  # Full server-owned authority/creation snapshot is not provider/UI context.
     result = {"id": row.id, "revision": row.revision, "can_undo": bool(row.state.get("history")), **state}
     if db is not None and policy_scope(state["design"]):
         from app.services.instance_proposals import settings_context
@@ -388,6 +396,8 @@ def guided_policy(key: str, policy: dict | None) -> bool:
 
 
 def guided_context(row: DesignDraft) -> dict | None:
+    if row.state.get("source", {}).get("kind") == "catalogue_composed":
+        return None
     if row.state.get("guided_experiment") == "qualified_dutch_grid":
         return {"mechanism": "registered_workflow", "scope": "Qualified local Dutch generation then benchmark; existing registered workflow, not arbitrary composition",
                 "steps": [{"title": "Create a sample grid", "operation": "ConfigureAndSynthesize"}, {"title": "Benchmark the grid produced by the first step", "operation": "RunBenchmark"}],
@@ -486,7 +496,7 @@ def guided_settings(draft_id: str, revision: int, seed: int, db: Session, user: 
         from app.services.qualified_demo import seed_turn
         check_revision(row, revision)
         return propose(draft_id, seed_turn(row, seed), db, user)
-    if not guided_policy(row.state["template_key"], row.state["design"].get("input_policy")):
+    if not guided_policy(row.state.get("template_key"), row.state["design"].get("input_policy")):
         raise HTTPException(422, "Guided settings are unavailable for this template")
     turn = AssistantTurn(message="Review the seed change, then Apply changes.", template_key="dutch", expected_revision=revision,
         edits=[{"kind": "set_run_input", "value": json.dumps({"seed": seed}), "node_id": None}])
@@ -501,6 +511,8 @@ def check_revision(row: DesignDraft, revision: int) -> None:
 
 def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User, *, allocation: str | None = None) -> tuple[dict, dict]:
     check_revision(row, turn.expected_revision)
+    if row.state.get("source", {}).get("kind") == "catalogue_composed":
+        raise HTTPException(422, "Use this design's explicit Apply/Undo/Save controls; further structural or setting edits are outside this milestone")
     if turn.template_key is not None and turn.template_key != row.state["template_key"]:
         raise HTTPException(422, "Start a new copy to change templates")
     design = deepcopy(row.state["design"])
@@ -579,6 +591,9 @@ def propose(draft_id: str, turn: AssistantTurn, db: Session, user: User) -> dict
 def apply(draft_id: str, revision: int, proposal_id: str, db: Session, user: User) -> dict:
     row = load_draft(draft_id, db, user, lock=True)
     check_revision(row, revision)
+    if row.state.get("source", {}).get("kind") == "catalogue_composed":
+        from app.services.catalogue_composition import apply as apply_pair
+        return apply_pair(row, revision, proposal_id, db, user)
     pending = row.state.get("pending")
     if not pending or pending["id"] != proposal_id:
         raise HTTPException(409, "This proposal is no longer current")
@@ -610,6 +625,9 @@ def undo(draft_id: str, revision: int, db: Session, user: User) -> dict:
     previous = state["history"].pop()
     state.update(previous)
     state.update(pending=None, dirty=True)
+    if state.get("source", {}).get("kind") == "catalogue_composed" and not state["design"]["nodes"]:
+        from app.services.catalogue_composition import pending as pair_pending
+        state["pending"] = pair_pending(state, revision + 1)
     state["edit_history"] = (state["edit_history"] + [{"revision": revision + 1, "edits": ["undo"]}])[-100:]
     row.state, row.revision = state, revision + 1
     db.commit()
@@ -621,6 +639,9 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
         raise HTTPException(403, "Saving requires the explicit Save draft action")
     row = load_draft(draft_id, db, user, lock=True)
     check_revision(row, revision)
+    if row.state.get("source", {}).get("kind") == "catalogue_composed":
+        from app.services.catalogue_composition import require_save
+        require_save(row, db, user)
     state = deepcopy(row.state)
     current_validation = validate(state["design"], db, user)
     if state.get("guided_experiment") == "qualified_dutch_grid" and state.get("pending"):
@@ -628,7 +649,7 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
     if not current_validation["valid"]:
         raise HTTPException(422, "Resolve the draft input or catalogue errors before saving")
     solution_id = state["reserved_solution_id"]
-    if solution_id == state["source"]["solution_id"]:
+    if solution_id == state["source"].get("solution_id"):
         raise HTTPException(409, "The source template cannot be overwritten")
     solution = db.query(Solution).filter(Solution.id == solution_id).with_for_update().first()
     if solution:
@@ -647,6 +668,9 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
         "guided_experiment": state.get("guided_experiment"),
         "draft_revision": row.revision, "run_input": design["run_input"], "validation": current_validation,
         "edit_history": state["edit_history"]}
+    if state["source"].get("kind") == "catalogue_composed":
+        solution.design_metadata.update(execution_policy="design_only_catalogue_pair",
+            composition_authority=deepcopy(state["composition"]["authority"]))
     solution.updated_at = datetime.utcnow()
     state.update(saved_solution_id=solution.id, saved_revision=row.revision, dirty=False,
                  saved_fingerprint=digest(content(solution)), validation=current_validation)

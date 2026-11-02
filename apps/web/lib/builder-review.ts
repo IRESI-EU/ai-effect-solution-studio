@@ -39,6 +39,10 @@ export function designFingerprint(name: string, nodes: GraphNode[], edges: Graph
 export function offlineReview(config?: { provider_mode?: string; provider_name?: string } | null, environment = "") {
   return environment.startsWith("OFFLINE") || (config?.provider_mode === "test" && config.provider_name === "OFFLINE structural provider-boundary fixtures");
 }
+export function catalogueDesignOnly(metadata: Record<string, unknown> | null) {
+  const source = metadata?.source as {kind?: unknown}|undefined;
+  return source?.kind === "catalogue_composed" || metadata?.execution_policy === "design_only_catalogue_pair";
+}
 export type ReviewAction = "add" | "save" | "validate" | "review" | "prepare" | "confirm" | "results";
 export function nextReviewAction(state: { steps: number; dirty: boolean; design: "valid" | "invalid" | null;
   offline: boolean; readiness?: "ready" | "blocked"; confirmationReady: boolean; submitted: boolean }): ReviewAction {

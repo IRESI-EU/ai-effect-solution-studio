@@ -1,4 +1,5 @@
 from typing import Literal
+import math
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -28,6 +29,22 @@ class DiscoveryDecision(StrictModel):
         return self
 
 
+class SettingAssignment(StrictModel):
+    name: str = Field(min_length=1, max_length=64)
+    value: str | int | float | bool
+
+    @model_validator(mode="after")
+    def finite_value(self):
+        if isinstance(self.value, float) and not math.isfinite(self.value):
+            raise ValueError("Settings must contain finite numbers")
+        return self
+
+
+class CompositionSettings(StrictModel):
+    first: list[SettingAssignment] = Field(default_factory=list, max_length=8)
+    second: list[SettingAssignment] = Field(default_factory=list, max_length=8)
+
+
 class AssistantTurn(StrictModel):
     message: str = Field(min_length=1, max_length=5000)
     template_key: str | None = Field(max_length=80)
@@ -35,6 +52,7 @@ class AssistantTurn(StrictModel):
     edits: list[Edit] = Field(max_length=10)
     recommended_seed: Literal[42, 43] | None = None
     discovery: DiscoveryDecision | None = None
+    composition_settings: CompositionSettings | None = None
 
 
 class ChatRequest(StrictModel):
@@ -59,6 +77,8 @@ class StartRequest(StrictModel):
     guided: bool = False
     recommended_seed: Literal[42, 43] | None = None
     recommendation_revision: str | None = None
+    composition_settings: CompositionSettings | None = None
+    creation_request_id: str | None = Field(default=None, max_length=36)
 
     @model_validator(mode="after")
     def one_creation_path(self):

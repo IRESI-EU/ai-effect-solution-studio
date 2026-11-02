@@ -27,7 +27,7 @@ import InstanceParameters, { type InstanceConfiguration } from "../../components
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
 import ReviewDialog from "../../components/review-dialog";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput } from "../../lib/builder-review";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly } from "../../lib/builder-review";
 import { bindingSignature, savedBindingSignatures, stepPurpose } from "../../lib/connection-review";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
@@ -213,7 +213,8 @@ function BuilderContent() {
 
   const review = workflowReview(nodes, edges);
   const dirty = savedFingerprint !== designFingerprint(solutionName, nodes, edges, designMetadata ? reviewInput(runInputMode, runInput) : undefined);
-  const offline = offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
+  const composedDesignOnly = catalogueDesignOnly(designMetadata);
+  const offline = composedDesignOnly || offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
   const loaded = !!user && (!solutionId || loadedSolutionScope === JSON.stringify([user.id, solutionId]));
   const reviewAction = nextReviewAction({steps: canvasServices.length, dirty, design: workflowDesignStatus, offline,
     readiness: runtimePreflight?.status, confirmationReady: deploymentConfirmationReady, submitted: !!deploymentResult?.workflow_id});
@@ -802,7 +803,7 @@ function BuilderContent() {
           <div><dt>Execution</dt><dd>{deploymentResult?.workflow_id ? executionLabel(deploymentResult.status) : submittingToOrchestrator ? "Submitting…" : "No execution result in this view"}</dd></div>
         </dl>
         <div className="builder-next-action">
-          <p>{!loaded ? "Wait for the workflow to load." : dirty ? "Next: Save your design changes." : workflowDesignStatus !== "valid" ? "Next: Validate the design and its connections." : offline ? "Design review complete. You can review the settings or return to Design with AI. Runtime readiness is unchecked; execution is unavailable." : deploymentConfirmationReady ? "Readiness has passed. Only Confirm deployment submits an execution." : "Next: Prepare & deploy checks readiness before explicit confirmation."}</p>
+          <p>{!loaded ? "Wait for the workflow to load." : dirty ? "Next: Save your design changes." : workflowDesignStatus !== "valid" ? "Next: Validate the design and its connections." : composedDesignOnly ? "Catalogue-composed design only. Runtime readiness and execution are unverified and unavailable; review or return to Design with AI." : offline ? "Design review complete. You can review the settings or return to Design with AI. Runtime readiness is unchecked; execution is unavailable." : deploymentConfirmationReady ? "Readiness has passed. Only Confirm deployment submits an execution." : "Next: Prepare & deploy checks readiness before explicit confirmation."}</p>
           {reviewAction === "results" && deploymentResult?.workflow_id ? <Link className="btn btn-primary" href={deploymentResultsUrl(deploymentResult.workflow_id)}>{actionLabels.results}</Link> :
             <button type="button" onClick={takeNextAction} disabled={!loaded || busy} style={reviewAction === "review" ? secondaryButton : primaryButton}>
               {busy ? savingSolution ? "Saving draft…" : validatingDesign ? "Validating design…" : submittingToOrchestrator ? "Submitting deployment…" : "Preparing deployment…" : ((reviewAction === "prepare" || reviewAction === "confirm") && designMetadata?.guided_experiment === "qualified_dutch_grid" ? "Continue in Design with AI" : actionLabels[reviewAction])}</button>}

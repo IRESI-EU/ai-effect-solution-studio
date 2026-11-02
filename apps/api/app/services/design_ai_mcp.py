@@ -46,6 +46,18 @@ def create_server(db, user: User, *, draft_id: str | None = None, explicit_save:
         return projection(db, authorize())
 
     @design_tool
+    async def inspect_catalogue_composition() -> dict:
+        """Explain the server-owned pair proposal; no template, execution or further edits."""
+        actor = authorize()
+        if not draft_id:
+            raise HTTPException(409, "Create a catalogue-composed draft first")
+        row = service.load_draft(draft_id, db, actor)
+        from app.services.catalogue_composition import composed, context
+        if not composed(row.state):
+            raise HTTPException(422, "This draft does not have catalogue-composed provenance")
+        return context(row)
+
+    @design_tool
     async def list_pilot_templates() -> dict:
         """List operator-selected saved templates and their availability."""
         return {"templates": service.list_templates(db, authorize())}
