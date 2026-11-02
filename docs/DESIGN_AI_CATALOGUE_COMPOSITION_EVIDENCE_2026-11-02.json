@@ -1,0 +1,84 @@
+{
+  "recorded_at": "2026-11-02T19:18:55.270753+00:00",
+  "baseline": "f36f8fdfcfb95576d948fea2971907ad4d433e3a",
+  "implementation_commit": "6efa943b0ce4bd76f372815efc008f43460e823d",
+  "source_sha256": "eecc541a910d16a1454a5a26d6c12a5d97566edcab96889d70fd90ec44260b85",
+  "source_unchanged_through_final_checks": true,
+  "implementation_file_sha256": {
+    "apps/api/app/main.py": "b20ba3434c71849fce8d0454657e4563b6ba59899d4be9d61ac43d3908c9b9fb",
+    "apps/api/app/routers/design_ai.py": "87020fa01adb01dafe59aad53931fb92d1e0d6de1e20bd24072cb019f3417b24",
+    "apps/api/app/schemas/design_ai.py": "130f0206446df8c7c20642ffea3a51b8fde95f060be3025c0e7a129b69673a13",
+    "apps/api/app/services/catalogue_composition.py": "a0cb4be11e2dd547986c05b589680b533cb4a19062aca121532848061204c72d",
+    "apps/api/app/services/catalogue_discovery.py": "68356dae40a42c507eff1b39d0d8e46acb213790c6081880add9daaa5e17044c",
+    "apps/api/app/services/design_ai.py": "da0ac9acf08950db7497f0f24a478a4581f5bf4d3d64cf2bfe73cdc41cdccb8b",
+    "apps/api/app/services/design_ai_mcp.py": "5a4410518dd53696518c6a4ea7d22078eb862b4a7ba15af1fb2efb1f33e82169",
+    "apps/api/app/services/design_ai_provider.py": "6db47443046949a9ead5a596a2e93c55721c68c0fc91a38775585af986884815",
+    "apps/api/tests/test_catalogue_composition.py": "f3364f5bded3aa99d7a910d3f4e8878530efb446ec48e1d633389b97169ca276",
+    "apps/api/tests/test_design_ai.py": "8f0eb16a81ee976cdb7a8cc34441de985547755aa85ac4d08dcc6731359c4d17",
+    "apps/web/app/builder/page.tsx": "fd8baeb950edef14b9f64bf358ec69c4681653491b4a4c322818822c1fc2e739",
+    "apps/web/app/design-ai/composition.test.ts": "dbf88b38dac9ee36a8a808855c4954c76274a2a5d0c522592306a55f4fc0c4d1",
+    "apps/web/app/design-ai/page.tsx": "487d3c0d61983fa533a38ba35358100bf59775df5ac1e4f95343fbd4cb01b204",
+    "apps/web/app/design-ai/session.ts": "15656b979cf94f350974442db9e7a0b6d287aaeacc4d6c5b59804a121590f32e",
+    "apps/web/components/composition-review.tsx": "3741662baf8ecea517ad7643def95dd61f439aca46704d7d63f61b6d59ccf613",
+    "apps/web/components/discovery-recommendation.test.cjs": "53a62ec6ab06cd5035a0973be02b5429fdecf1553b79c6084a79d3884b034c68",
+    "apps/web/components/discovery-recommendation.tsx": "f1d2497d21fb7857214f8a30fe561c5b8de992175b8e7d1f2ed89e6d217a2b71",
+    "apps/web/lib/builder-review.ts": "37a16bd9496d2dc142537b85dcee669832983938e9517ac1132be24463879427"
+  },
+  "checks": {
+    "backend": {
+      "tests": 192,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "composition_tests": 50,
+      "related_compatibility_tests": 142,
+      "duration_seconds": 162.86,
+      "existing_warnings": 1729,
+      "command": "python -m pytest apps/api/tests/test_catalogue_composition.py apps/api/tests/test_catalogue_discovery.py apps/api/tests/test_design_ai.py apps/api/tests/test_design_ai_provider.py apps/api/tests/test_guided_dutch.py apps/api/tests/test_guided_provider_context.py apps/api/tests/test_prompt_first_discovery.py apps/api/tests/test_targeted_instance_edit.py apps/api/tests/test_structural_composition.py apps/api/tests/test_goal_to_results.py -q --tb=short -p no:cacheprovider --basetemp=<fresh-isolated-directory> --junitxml=<private-evidence-path>"
+    },
+    "frontend": {
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "command": "node --experimental-test-isolation=none --test apps/web/app/design-ai/composition.test.ts apps/web/app/design-ai/session.test.ts apps/web/lib/builder-review.test.ts apps/web/components/discovery-recommendation.test.cjs apps/web/app/design-ai/allowance.test.ts apps/web/app/design-ai/experiment-journey.test.ts"
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "node apps/web/node_modules/typescript/bin/tsc --noEmit --incremental false -p apps/web/tsconfig.json"
+    },
+    "staged_secret_scan": {
+      "findings": 0
+    },
+    "diff_check": {
+      "passed": true
+    }
+  },
+  "isolation": {
+    "database": "disposable SQLite only",
+    "provider": "labelled deterministic doubles; real construction/network forbidden in composition tests",
+    "readiness_submission": "forbidden callbacks",
+    "runtime_or_evidence_database_connections": 0
+  },
+  "preservation": {
+    "protected_file_hashes_unchanged": 250,
+    "retained_web_build_id": "_9OUF0yBLv4pKPA0e0pex",
+    "shared_allowance": "13/13; ledger hash unchanged",
+    "provider_grants": "retained disabled state; protected configuration hashes unchanged"
+  },
+  "not_performed": [
+    "real provider request",
+    "workflow execution",
+    "grant or ledger mutation",
+    "existing saved-design edit",
+    "Docker operation",
+    "application or image build",
+    "dependency upgrade",
+    "new profile or port",
+    "integrated browser acceptance",
+    "new PostgreSQL concurrency validation",
+    "independent human usability",
+    "staging or production deployment"
+  ],
+  "scope": "exactly two processing operations and one whole-output-v1 connection; catalogue-composed design only; broader AIE-38 composition incomplete",
+  "next_acceptance": "independent labelled offline proposal/controls walkthrough after separate API recovery; no paid call"
+}
