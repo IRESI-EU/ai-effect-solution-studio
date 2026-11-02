@@ -52,6 +52,11 @@ def templates(db: Session = Depends(get_db), user: User = Depends(pilot_user)):
 
 @router.post("/drafts")
 def start(payload: StartRequest, db: Session = Depends(get_db), user: User = Depends(pilot_user)):
+    if payload.candidate_id:
+        from app.services.catalogue_discovery import create
+        return create(payload, db, user)
+    if payload.template_key not in service.PILOTS:
+        raise HTTPException(422, "Unknown legacy template selector; use an advertised registered recommendation")
     return service.start(payload.template_key, db, user, guided=payload.guided,
         recommended_seed=payload.recommended_seed, recommendation_revision=payload.recommendation_revision)
 
@@ -108,19 +113,14 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
         await tools.discover()
         current = service.load_draft(payload.draft_id, db, user) if payload.draft_id else None
         focused = current is not None and (service.policy_scope(current.state["design"]) or current.state["design"].get("editing_scope") == "append_bound_operation")
-        if not focused:
+        if payload.draft_id and not focused:
             context["templates"] = (await tools.call("list_pilot_templates", {}))["templates"]
         discovery = None
         if not payload.draft_id:
-            # Discovery is scoped by authenticated MCP catalogue reads, not model choice.
-            context["templates"] = [t for t in context["templates"] if t["key"] == "dutch" and t.get("available") and t.get("guided_available")]
-            if context["templates"]:
-                context["template"] = await tools.call("read_template", {"template_key": "dutch"})
-                context["configuration"] = await tools.call("inspect_supported_configuration", {"template_key": "dutch"})
-                discovery = await tools.call("discover_guided_capability", {"template_key": "dutch"})
-                context["guided_experiment"] = discovery
+            discovery = await tools.call("discover_catalogue_capabilities", {})
+            context["catalogue_discovery"] = discovery
             context["discovery"] = {"draft_exists": False, "creation": "Recommendation only. A separate copy requires explicit Create this experiment.",
-                "supported_scope": "Only the enabled approved local Dutch sample-grid experiment. Explain unsupported requests honestly; no datasets, forecasting, model replacement or execution."}
+                "supported_scope": "Use only advertised candidate identifiers. Catalogue services are not executable workflows. Ask for missing objectives, data sources or ambiguous targets. Runtime and data availability have not been checked."}
         if payload.draft_id:
             row = service.load_draft(payload.draft_id, db, user)
             service.check_revision(row, payload.revision)
@@ -160,13 +160,36 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             raise HTTPException(499, "Request cancelled; no proposal was stored")
         result = {"message": turn.message, "recommendation": None, "draft": None}
         if not payload.draft_id:
+            if turn.discovery is not None:
+                from app.services.catalogue_discovery import selected
+                result["recommendation"] = selected(turn, discovery, db, user)
+                result["outcome"] = turn.discovery.outcome
+                result["question"] = turn.discovery.question
+                # Selection/question comes from the provider. Capability claims and
+                # creation authority come from validated server facts, not free prose.
+                if turn.discovery.outcome == "clarification_needed":
+                    result["message"] = turn.discovery.question
+                elif turn.discovery.outcome == "no_supported_match":
+                    result["message"] = "No supported match was identified in the advertised catalogue capabilities. No experiment was created. You can clarify your objective or data source."
+                else:
+                    item = result["recommendation"]
+                    result["message"] = (f"Relevant capability: {item['label']}. " +
+                        ("Review the registered workflow before explicitly creating a copy. " if item["creation_supported"] else
+                         "This catalogue service has no supported experiment creation path here. ") +
+                        "Runtime and data availability have not been checked.")
+                result["activity"] = tools.activity
+                return result
             if turn.edits:
                 raise HTTPException(422, "Create an editable draft before proposing changes")
             if turn.template_key:
-                if discovery is None or turn.template_key != discovery["key"]:
-                    raise HTTPException(422, "The recommendation is outside the enabled approved local capabilities. No experiment was created.")
-                # Re-check eligibility after the provider wait, without trusting its service claims.
-                result["recommendation"] = await tools.call("discover_guided_capability", {"template_key": turn.template_key})
+                # Compatibility for existing clients/providers; the new discovery prompt
+                # selects opaque advertised candidates instead of country/template keys.
+                if turn.template_key not in {item["key"] for item in discovery["legacy_templates"]}:
+                    raise HTTPException(422, "The recommendation was not advertised. No experiment was created.")
+                try:
+                    result["recommendation"] = await tools.call("discover_guided_capability", {"template_key": turn.template_key})
+                except HTTPException as exc:
+                    raise HTTPException(422, "The recommendation is outside the supported registered paths. No experiment was created.") from exc
                 if result["recommendation"].get("mechanism") == "registered_workflow":
                     if turn.recommended_seed not in result["recommendation"]["supported_seeds"]:
                         raise HTTPException(422, "The recommendation needs a supported seed. No experiment was created.")

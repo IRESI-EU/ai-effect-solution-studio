@@ -26,16 +26,19 @@ def test_discovery_retrieves_approved_facts_without_creating_until_explicit_acti
     assert db.query(DesignDraft).count()==0
     value=response.json();assert value['draft'] is None
     context=provider.contexts[-1]
-    assert [t['key'] for t in context['templates']]==['dutch']
+    catalogue=context['catalogue_discovery']
+    assert [t['key'] for t in catalogue['legacy_templates']]==['dutch']
+    assert len(catalogue['services'])>2  # Shared discovery is no longer Dutch-only.
+    assert not catalogue['registered_workflows']  # This legacy fixture has no resolved contracts.
     assert not context['discovery']['draft_exists']
-    facts=context['guided_experiment']
+    facts=value['recommendation']  # Explicit legacy response remains supported.
     assert [step['title'] for step in facts['steps']]==['Generate sample grid','Benchmark grid']
     assert 'passed' in facts['connection']
     assert 'recorded benchmark values' in facts['expected_result_view']
     assert len(facts['optional_downloads'])==4
     assert 'No execution evidence' in facts['execution_status']
     assert value['recommendation']['key']=='dutch'
-    assert value['recommendation']['optional_downloads']==facts['optional_downloads']
+    assert len(value['recommendation']['optional_downloads'])==4
     serialized=json.dumps(redact_context(context))
     assert len(serialized)<16000
     assert all(text not in serialized for text in ('internal_host','internal_port','api_key','http://','file://'))
@@ -60,6 +63,6 @@ def test_unsupported_and_invalid_recommendations_cannot_invent_create_or_expand_
     db.get(Service,'dutch-RunBenchmark').status='rejected';db.commit()
     provider.turn=provider.turn.model_copy(update={'template_key':'dutch'})
     assert environment.post('/design-ai/chat',json={'message':'Generate a grid'}).status_code==422
-    assert not provider.contexts[-1]['templates']
+    assert not provider.contexts[-1]['catalogue_discovery']['legacy_templates']
     assert 'guided_experiment' not in provider.contexts[-1]
     assert db.query(DesignDraft).count()==0

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activeDraftId, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation } from "./session.ts";
+import { activeDraftId, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation, recommendationCreation } from "./session.ts";
 
 test("ordinary navigation never selects remembered work; explicit draft links survive refresh", () => {
   assert.equal(activeDraftId(new URLSearchParams()), null);
@@ -53,4 +53,31 @@ test("discovery stays draft-free and follows only its explicitly created copy", 
   assert.deepEqual(conversationForCopy("designer","second",source,false).messages,[]);
   assert.deepEqual(conversationForCopy("other","second",source,true).messages,[]);
   assert.deepEqual(conversationForCopy("designer","second",copy,true).messages,[]);
+});
+
+const catalogueRecommendation = {mechanism:"catalogue_service",candidate_id:`service-${"b".repeat(24)}`,label:"Synthetic demand study",purpose:"Study supplied observations",
+  creation_supported:false,runtime_checked:false,input_requirements_known:true,required_inputs:[{name:"observations",purpose:"demand observations"}],
+  steps:[],connection:"No established connections",expected_result_view:[],optional_downloads:[],availability:"Unchecked",limitations:["No creation path"]};
+
+test("catalogue capability survives conversation refresh with creation disabled", () => {
+  assert.deepEqual(readRecommendation(catalogueRecommendation),catalogueRecommendation);
+  const item=readRecommendation(catalogueRecommendation);
+  assert.equal(recommendationCreation(item),null);
+  const record={ownerId:"designer",draftId:null,messages:[],activity:[],prompt:"",seedInput:"42",historyUnavailable:false,recommendation:catalogueRecommendation};
+  assert.deepEqual(readConversation(JSON.stringify(record),"designer",null)?.recommendation,catalogueRecommendation);
+});
+
+test("only a validated registered recommendation supplies the generic explicit-create request", () => {
+  const item={...catalogueRecommendation,mechanism:"registered_workflow",candidate_id:`workflow-${"a".repeat(24)}`,creation_supported:true,
+    recommendation_revision:"c".repeat(64),recommended_seed:43,required_inputs:[{name:"seed"}]};
+  assert.deepEqual(recommendationCreation(readRecommendation(item)),{candidate_id:item.candidate_id,recommendation_revision:item.recommendation_revision,recommended_seed:43});
+  for(const change of [{creation_supported:false},{runtime_checked:true},{recommendation_revision:"stale"},{recommended_seed:44},{candidate_id:catalogueRecommendation.candidate_id}]) {
+    assert.equal(readRecommendation({...item,...change}),null);
+  }
+});
+
+test("malformed or injected discovery storage cannot enable creation", () => {
+  for(const change of [{creation_supported:true},{mechanism:"arbitrary_graph"},{purpose:{instructions:"execute"}},{required_inputs:[{name:42}]},{candidate_id:"invented"}]) {
+    assert.equal(readRecommendation({...catalogueRecommendation,...change}),null);
+  }
 });

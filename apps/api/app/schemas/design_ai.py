@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class StrictModel(BaseModel):
@@ -14,12 +14,27 @@ class Edit(StrictModel):
     node_id: str | None
 
 
+class DiscoveryDecision(StrictModel):
+    outcome: Literal["clarification_needed", "supported_recommendation", "no_supported_match"]
+    candidate_id: str | None = Field(default=None, max_length=100)
+    question: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def consistent_outcome(self):
+        if (self.outcome == "supported_recommendation") != bool(self.candidate_id) or (self.outcome != "supported_recommendation" and self.candidate_id is not None):
+            raise ValueError("Only recommendations select one advertised candidate")
+        if (self.outcome == "clarification_needed") != bool(self.question and self.question.strip()) or (self.outcome != "clarification_needed" and self.question is not None):
+            raise ValueError("Only clarification contains a non-empty question")
+        return self
+
+
 class AssistantTurn(StrictModel):
     message: str = Field(min_length=1, max_length=5000)
-    template_key: Literal["denmark", "dutch", "portugal", "germany"] | None
+    template_key: str | None = Field(max_length=80)
     expected_revision: int | None
     edits: list[Edit] = Field(max_length=10)
     recommended_seed: Literal[42, 43] | None = None
+    discovery: DiscoveryDecision | None = None
 
 
 class ChatRequest(StrictModel):
@@ -39,10 +54,19 @@ class ApplyRequest(RevisionRequest):
 
 
 class StartRequest(StrictModel):
-    template_key: Literal["denmark", "dutch", "portugal", "germany"]
+    template_key: str | None = Field(default=None, max_length=80)
+    candidate_id: str | None = Field(default=None, max_length=100)
     guided: bool = False
     recommended_seed: Literal[42, 43] | None = None
     recommendation_revision: str | None = None
+
+    @model_validator(mode="after")
+    def one_creation_path(self):
+        if bool(self.template_key) == bool(self.candidate_id):
+            raise ValueError("Select one registered recommendation or legacy template")
+        if self.candidate_id and not self.recommendation_revision:
+            raise ValueError("Creation requires the reviewed recommendation revision")
+        return self
 
 
 class GuidedSettingsRequest(RevisionRequest):
