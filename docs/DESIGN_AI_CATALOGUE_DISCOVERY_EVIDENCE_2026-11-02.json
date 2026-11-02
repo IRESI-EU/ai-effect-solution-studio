@@ -1,0 +1,78 @@
+{
+  "milestone": "Catalogue-grounded discovery and clarification",
+  "baseline_pr": 13,
+  "baseline_commit": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf",
+  "implementation_commit": "2e40306e2497dcd55077056758960e3d779eb625",
+  "checks": {
+    "backend": {
+      "tests": 142,
+      "new_discovery_cases": 39,
+      "compatibility_cases": 103,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "seconds": 112.563,
+      "fixture": "SQLite in memory; provider/runtime test doubles"
+    },
+    "frontend": {
+      "tests": 17,
+      "failures": 0,
+      "skipped": 0,
+      "rendering": "static React, installed Next compiler in memory; no application build"
+    },
+    "typecheck": "passed: noEmit, incremental=false",
+    "gitleaks_staged": "passed, zero findings"
+  },
+  "scope": {
+    "service_limit": 40,
+    "projection_character_limit": 24000,
+    "arbitrary_composition": false,
+    "registered_creation": "existing qualified workflow only",
+    "catalogue_only_creation": false,
+    "runtime_availability_checked": false,
+    "data_availability_checked": false,
+    "country_independent_service_discovery": true
+  },
+  "preservation": {
+    "file_hashes_checked": 250,
+    "all_unchanged": true,
+    "retained_native_build_unchanged": true,
+    "shared_allowance": "13/13",
+    "outstanding_reservations": 0,
+    "original_pr_stack_unchanged": true
+  },
+  "new_actual_activity": {
+    "paid_provider_requests": 0,
+    "workflow_executions": 0,
+    "execution_grants": 0,
+    "allowance_amendments": 0,
+    "docker_commands": 0,
+    "image_builds": 0,
+    "application_builds": 0,
+    "new_profiles": 0,
+    "staging_provisioning": false,
+    "tracker_updates": false
+  },
+  "limitations": [
+    "Second family uses labelled synthetic metadata, not a live qualified service",
+    "Real-provider interpretation and integrated browser unavailable",
+    "No new PostgreSQL concurrency verification",
+    "Independent usability and production compatibility unverified"
+  ],
+  "implementation_file_sha256": {
+    "apps/api/app/routers/design_ai.py": "4fe463ca44fa6f52da22159ac55ccb4ed19098fc0b0556df7e1c845da93b429b",
+    "apps/api/app/schemas/design_ai.py": "4c99d3e612df28141bec32f26c62829120d68354f8d223f74888096f557468b3",
+    "apps/api/app/services/catalogue_discovery.py": "5833c09e556c3d42549d4939fee1cbaba651dda4801d77d91b6d6162bc4d022f",
+    "apps/api/app/services/design_ai_mcp.py": "43052e79b260616e3050e49b0b19d02e2c6bbed485963b675f90afe653df7d56",
+    "apps/api/app/services/design_ai_provider.py": "d4c250285d5b7e914b224100f1a021269c3ebd73dd550d11228a7ec7846562aa",
+    "apps/api/app/services/qualified_demo.py": "7d77fcf2d567d47b51d464b8c9a86764b58b7aeae0aa533dbd6b98f92946bb9b",
+    "apps/api/tests/test_catalogue_discovery.py": "213547d3d3603cfabc8a2937939c3ef21853696ccc95c5a24632613baafd6292",
+    "apps/api/tests/test_design_ai.py": "2e86ac2dae67aba344bdfa2492b90647203d2a24cf414c09f1266231adde5749",
+    "apps/api/tests/test_prompt_first_discovery.py": "c8641aae977700048255ec5cc26cc7fdd4fc327bbf0d22117bd90de45763f126",
+    "apps/web/app/design-ai/page.tsx": "36d2fd67ff4057304d3401cb7434b3de6b39e64366267fbb7780bfefc9b936c0",
+    "apps/web/app/design-ai/session.test.ts": "48a5d9b33f79d74de4e1e8885be713fa5f6094db4f972568bfb6f5d059fd8d9f",
+    "apps/web/app/design-ai/session.ts": "ecd05deb912c1a685067484f270d55845960cbbbb8b7817da940dac5b6d9907a",
+    "apps/web/components/discovery-recommendation.test.cjs": "51abe3ecc67a9b139324bd9cd472a7b16a59d12e3b836195b928af792722374a",
+    "apps/web/components/discovery-recommendation.tsx": "4fc2c06ac55cb2bd23562751ac8e2c409084b18f921430ad1919760a4b1a2074"
+  }
+}

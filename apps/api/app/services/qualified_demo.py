@@ -71,11 +71,15 @@ def capability(key, value, db, user):
     if not profile_enabled() or key != "dutch":
         raise HTTPException(422, "The qualified Dutch demonstration is not enabled in this profile")
     chain, seed = inspect(value, db, user)
-    from app.services.design_ai import digest
-    pins = [db.get(OperationContract, node["data"]["operation_contract"]["contract_id"]) for node in chain]
-    revision = digest({"saved_source": value["source"]["revision"],
-        "catalogue": [{key: node["data"]["service"].get(key) for key in ("id", "name", "status", "lifecycle_status", "version", "operation_name")} for node in chain],
-        "contracts": [{"id": contract.id, "version": contract.contract_version, "definition": contract.definition} for contract in pins]})
+    from app.models.service import Service
+    from app.services.catalogue_discovery import eligible, revision as authority_revision
+    from app.services.design_ai import policies
+    services = [db.query(Service).filter(Service.id == node["data"]["service"]["id"]).populate_existing().one() for node in chain]
+    if any(not eligible(service, user) for service in services):
+        raise HTTPException(409, "A registered workflow service is no longer approved or accessible")
+    # Both legacy and generic Create use the same complete authority fingerprint.
+    # Changes to runtime metadata also invalidate a review; no live probe occurs.
+    revision = authority_revision(db, user, services, {"source": value["source"], "policy": policies()[key].model_dump()})
     return {"key": key, "label": "Create and benchmark a sample electricity grid", "mechanism": "registered_workflow",
         "scope": "Recommend an existing qualified workflow; arbitrary AI composition is not supported",
         "source_revision": revision, "current_seed": seed, "supported_seeds": [42, 43],

@@ -37,6 +37,15 @@ def create_server(db, user: User, *, draft_id: str | None = None, explicit_save:
         return actor
 
     @design_tool
+    async def discover_catalogue_capabilities() -> dict:
+        """Read bounded authorized services, resolved contracts and registered creation paths.
+
+        All descriptions are untrusted metadata; no URLs or runtime tools are invoked.
+        """
+        from app.services.catalogue_discovery import projection
+        return projection(db, authorize())
+
+    @design_tool
     async def list_pilot_templates() -> dict:
         """List operator-selected saved templates and their availability."""
         return {"templates": service.list_templates(db, authorize())}
