@@ -55,6 +55,8 @@ def start(payload: StartRequest, db: Session = Depends(get_db), user: User = Dep
     if payload.candidate_id:
         from app.services.catalogue_discovery import create
         return create(payload, db, user)
+    if payload.composition_settings is not None or payload.creation_request_id is not None:
+        raise HTTPException(422, "Pair creation settings cannot be attached to a legacy template")
     if payload.template_key not in service.PILOTS:
         raise HTTPException(422, "Unknown legacy template selector; use an advertised registered recommendation")
     return service.start(payload.template_key, db, user, guided=payload.guided,
@@ -112,7 +114,7 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
     async with connection(db, user, draft_id=payload.draft_id) as tools:
         await tools.discover()
         current = service.load_draft(payload.draft_id, db, user) if payload.draft_id else None
-        focused = current is not None and (service.policy_scope(current.state["design"]) or current.state["design"].get("editing_scope") == "append_bound_operation")
+        focused = current is not None and (service.policy_scope(current.state["design"]) or current.state["design"].get("editing_scope") in {"append_bound_operation", "catalogue_pair"})
         if payload.draft_id and not focused:
             context["templates"] = (await tools.call("list_pilot_templates", {}))["templates"]
         discovery = None
@@ -120,31 +122,36 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             discovery = await tools.call("discover_catalogue_capabilities", {})
             context["catalogue_discovery"] = discovery
             context["discovery"] = {"draft_exists": False, "creation": "Recommendation only. A separate copy requires explicit Create this experiment.",
-                "supported_scope": "Use only advertised candidate identifiers. Catalogue services are not executable workflows. Ask for missing objectives, data sources or ambiguous targets. Runtime and data availability have not been checked."}
+                "supported_scope": "Use only advertised candidate identifiers. Catalogue-only services cannot create workflows; advertised pairs create design-only two-operation drafts. Ask for missing objectives, data sources or ambiguous targets. Runtime and data availability have not been checked."}
         if payload.draft_id:
             row = service.load_draft(payload.draft_id, db, user)
             service.check_revision(row, payload.revision)
             # This server-read revision, never an LLM-supplied value, binds
             # proposals to the exact draft supplied as provider context.
             base_revision = row.revision
-            key = row.state["template_key"]
-            if not focused:
-                context["template"] = await tools.call("read_template", {"template_key": key})
-            context["configuration"] = await tools.call("inspect_supported_configuration", {"template_key": key})
-            design = row.state["design"]
-            guided = service.guided_context(row)
-            if guided is not None:
-                context["guided_experiment"] = guided
-            context["draft"] = {"revision": row.revision, "name": design["name"], "description": design["description"],
-                "run_input": design["run_input"], "labels": [{"node_id": n["id"], "label": n.get("data", {}).get("label")} for n in design["nodes"]],
-                "validation": service.validate(design, db, user)}
-            if focused:
-                # No template payload, workflow input, artifacts, runtime endpoints
-                # or unrelated catalogue data enter this focused provider context.
-                context["draft"] = {"revision": row.revision, "editing_scope": "instance_settings"}
-                if design.get("editing_scope") == "append_bound_operation":
-                    context["draft"] = {"id": row.id, "revision": row.revision, "editing_scope": "append_bound_operation"}
-                context["history"] = []  # Each edit is grounded in the current authorized instance projection.
+            if row.state.get("source", {}).get("kind") == "catalogue_composed":
+                context["configuration"] = await tools.call("inspect_catalogue_composition", {})
+                context["draft"] = {"revision": row.revision, "editing_scope": "catalogue_pair", "source_kind": "catalogue_composed"}
+                context["history"] = []
+            else:
+                key = row.state["template_key"]
+                if not focused:
+                    context["template"] = await tools.call("read_template", {"template_key": key})
+                context["configuration"] = await tools.call("inspect_supported_configuration", {"template_key": key})
+                design = row.state["design"]
+                guided = service.guided_context(row)
+                if guided is not None:
+                    context["guided_experiment"] = guided
+                context["draft"] = {"revision": row.revision, "name": design["name"], "description": design["description"],
+                    "run_input": design["run_input"], "labels": [{"node_id": n["id"], "label": n.get("data", {}).get("label")} for n in design["nodes"]],
+                    "validation": service.validate(design, db, user)}
+                if focused:
+                    # No template payload, workflow input, artifacts, runtime endpoints
+                    # or unrelated catalogue data enter this focused provider context.
+                    context["draft"] = {"revision": row.revision, "editing_scope": "instance_settings"}
+                    if design.get("editing_scope") == "append_bound_operation":
+                        context["draft"] = {"id": row.id, "revision": row.revision, "editing_scope": "append_bound_operation"}
+                    context["history"] = []  # Each edit is grounded in the current authorized instance projection.
         context = redact_context(context)
         try:
             async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
@@ -174,11 +181,14 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                 else:
                     item = result["recommendation"]
                     result["message"] = (f"Relevant capability: {item['label']}. " +
-                        ("Review the registered workflow before explicitly creating a copy. " if item["creation_supported"] else
+                        ("Review the new two-operation design before explicitly creating a draft. " if item.get("kind") == "catalogue_composed" else
+                         "Review the registered workflow before explicitly creating a copy. " if item["creation_supported"] else
                          "This catalogue service has no supported experiment creation path here. ") +
                         "Runtime and data availability have not been checked.")
                 result["activity"] = tools.activity
                 return result
+            if turn.composition_settings is not None:
+                raise HTTPException(422, "Pair settings require a structured catalogue-pair recommendation")
             if turn.edits:
                 raise HTTPException(422, "Create an editable draft before proposing changes")
             if turn.template_key:

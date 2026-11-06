@@ -1,0 +1,101 @@
+{
+  "recorded_at": "2026-11-06T10:19:03.169417+00:00",
+  "baseline": "a2efec14911624f0d4d423163461cd69229951a4",
+  "harness_commit": "22cded06e3f4efdaef4055376b0724929df975b0",
+  "application_feature_source_unchanged": true,
+  "entry": "http://127.0.0.1:23123/api/offline-controls/human",
+  "label": "Offline controls walkthrough: prepared synthetic proposal. No live AI or execution.",
+  "infrastructure": {
+    "api": "native Uvicorn on IPv4 loopback 28187",
+    "web": "native Next development/Webpack on IPv4 loopback 23123",
+    "web_output": ".next-controls-20261106",
+    "database": "separate disposable SQLite only; test-only JSONB compiler support",
+    "docker_check": "one bounded check: named-pipe permission error; no recovery attempted",
+    "existing_api_check": "one unavailable response",
+    "disk_free_before_gib": 45.11,
+    "disk_free_after_initial_compilation_gib": 43.66
+  },
+  "agent_checks": {
+    "browser_flow": [
+      "normal sign-in",
+      "review prepared recommendation",
+      "Create: owned new draft without saved template",
+      "Apply: revision 1, two nodes/one binding",
+      "Undo: revision 2, empty applied engineering state and pending proposal",
+      "Apply again: revision 3, same allocated identities/settings/pins/binding",
+      "Save, reload, reopen actual Builder",
+      "inspect count 3, both contract pins and exact observations binding",
+      "normal sign-out; normal human-account sign-in; leave proposal uncreated"
+    ],
+    "draft": "22e31c23-7eee-5390-8c81-7ee8cbe9ee36",
+    "saved_solution": "b899b411-47db-4208-a5eb-1c3e7c289917",
+    "readiness_or_execution_invoked": false,
+    "actual_http_rejections": {
+      "stale_apply": 409,
+      "stale_undo": 409,
+      "stale_save": 409,
+      "/workflows/runtime-preflight": 403,
+      "/workflows/submit-to-orchestrator": 403,
+      "/design-ai/drafts/22e31c23-7eee-5390-8c81-7ee8cbe9ee36/execution-review": 403,
+      "/design-ai/chat": 403,
+      "other_owner": 404,
+      "other_owner/apply": 404,
+      "other_owner/save": 404
+    },
+    "network_guard_tests": {
+      "passed": 3,
+      "duration_seconds": 0.19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "launcher_syntax": "passed",
+    "valid_control_actions_via_helpers": false
+  },
+  "human": {
+    "status": "prepared; awaiting human walkthrough",
+    "drafts": 0,
+    "saved_solutions": 0,
+    "prepared_recommendation_sha256": "204420f2df0f5446d94dbe910fa9906e71f6cf9eb2037f4c9fce8951d23bea5c",
+    "proposal_created_or_applied_by_agent": false,
+    "observer_checklist": "blank; see harness README"
+  },
+  "preservation": {
+    "protected_hashes_unchanged": 548,
+    "protected_mismatches": 0,
+    "original_checkout_changes_unchanged": true,
+    "retained_web_build_id": "_9OUF0yBLv4pKPA0e0pex",
+    "disposable_counts": {
+      "agent_drafts": 1,
+      "human_drafts": 0,
+      "agent_solutions": 1,
+      "human_solutions": 0,
+      "deployments": 0,
+      "execution_submissions": 0
+    }
+  },
+  "screenshots_sha256": {
+    "docs\\screenshots\\composition-controls-prepared-20261106.png": "122e2a57ec7acd50353139069c09285d43544f783e2fa976a761122b14026cfb",
+    "docs\\screenshots\\composition-controls-builder-20261106.png": "79f987c42b359223a28fd7afcc5c305be125a936c4757993c1289f4d760acaac"
+  },
+  "actual_provider_requests": 0,
+  "actual_workflows": 0,
+  "runtime_qualification_or_grants": 0,
+  "ledger_changes": 0,
+  "shared_allowance": "13/13; protected ledger hash unchanged",
+  "new_fixtures": "two synthetic operations/contracts and typed registry count; two deterministic preparation-only fixture responses, never real AI",
+  "not_verified": [
+    "real-provider interpretation",
+    "full first-time user journey",
+    "PostgreSQL concurrency",
+    "live runtime availability and qualification",
+    "scientific validity",
+    "independent human usability",
+    "production compatibility"
+  ],
+  "warnings": [
+    "Transient React Flow container-size warnings; connected Builder canvas subsequently rendered",
+    "Narrow viewport requires internal proposal scrolling",
+    "Existing generic library/readiness wording retained; no UI redesign"
+  ],
+  "full_inventories_or_production_builds_rerun": false
+}

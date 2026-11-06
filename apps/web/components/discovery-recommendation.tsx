@@ -1,16 +1,18 @@
 "use client";
 
+import CompositionReview from "./composition-review";
 import { recommendationCreation, type Recommendation } from "../app/design-ai/session";
 
 export default function DiscoveryRecommendation({ recommendation: item, busy, onCreate }: {
   recommendation: Recommendation; busy: boolean; onCreate: () => void;
 }) {
+  const composed = item.mechanism === "catalogue_composed";
   const registered = item.mechanism === "registered_workflow";
   return <div className="ai-discovery-card">
-    <strong>{registered ? "Registered workflow recommendation" : "Relevant catalogue capability"}</strong>
+    <strong>{composed ? "Proposed new workflow design" : registered ? "Registered workflow recommendation" : "Relevant catalogue capability"}</strong>
     <h3>{item.label}</h3>
     {item.purpose && <p>{item.purpose}</p>}
-    {registered ? <>
+    {composed && item.composition_review ? <CompositionReview review={item.composition_review} /> : registered ? <>
       <p>Use the existing registered workflow with seed <strong>{item.recommended_seed}</strong>. Its supported steps and connection stay fixed.</p>
       <ol>{item.steps.map(step => <li key={step.operation}>{step.title}</li>)}</ol>
       <p>{item.connection}.</p>

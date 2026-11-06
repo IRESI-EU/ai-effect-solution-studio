@@ -674,8 +674,10 @@ def compile_workflow(
 def runtime_preflight_endpoint(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
+    from app.services.catalogue_composition import require_execution_allowed
+    require_execution_allowed(workflow, db, user)
     compiled = compile_to_wp3_payload(workflow, db)
     result = run_runtime_preflight(workflow.nodes, db)
     result["design_compatibility"] = compiled["solution_studio_metadata"]["capability_bindings"]
@@ -693,6 +695,8 @@ def submit_workflow_to_orchestrator_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    from app.services.catalogue_composition import require_execution_allowed
+    require_execution_allowed(workflow, db, user)
     from app.services import execution_journey, qualified_demo
     submitted_record = None
     if workflow.submission_id:
@@ -1114,6 +1118,14 @@ def update_solution(
             status_code=400,
             detail="Archived solutions cannot be edited. Restore the solution first.",
         )
+
+    if payload.design_metadata is not None:
+        from app.services.catalogue_composition import design_only
+        if design_only(solution.design_metadata) and any(
+            payload.design_metadata.get(key) != solution.design_metadata.get(key)
+            for key in ("source", "execution_policy", "composition_authority", "draft_id")
+        ):
+            raise HTTPException(409, "Keep the catalogue-composed provenance and design-only execution boundary")
 
     configured = has_configuration(solution.nodes) or has_configuration(payload.nodes or [])
     if (configured or payload.expected_updated_at is not None) and payload.expected_updated_at != solution.updated_at.isoformat():
