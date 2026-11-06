@@ -35,3 +35,40 @@ Real-provider interpretation, integrated browser rendering, new PostgreSQL concu
 After the separate Docker/API availability blocker is resolved and an offline walkthrough environment is explicitly prepared, have an independent person review a labelled synthetic pair proposal, explain what changes and what remains unverified, Create, Apply, Undo to the empty design, Apply again, Save, reopen and open Builder. Ask whether any workflow executed; the answer must be no. Record hesitation, confusing wording and assistance without inventing observations. No arbitrary chat interpretation, provider call or execution is required for that walkthrough. **Prepared in code; awaiting independent human acceptance.** No new profile or fixture deployment was created in this milestone.
 
 Preservation: original local changes, protected evidence/configuration/credentials, retained demonstration build and existing source stack remain intact. Shared allowance remains exhausted at 13/13 with no ledger or grant changes. AIE-18 remains In Review. Docker recovery and staging approval remain separate work.
+
+## 6 November — separate host browser acceptance preparation
+
+The original implementation/offline record above is preserved. Starting source was verified as PR #15 `a2efec14911624f0d4d423163461cd69229951a4`, on PR #14 `f36f8fdfcfb95576d948fea2971907ad4d433e3a`, with a clean milestone worktree. Harness source: **`22cded06e3f4efdaef4055376b0724929df975b0`**. No application feature source changed. Existing Python 3.12.14, Node 24.15.0, Next 16.3.8 and installed dependencies were reused. C: free space was 45.11 GiB before preparation and 43.66 GiB after initial development compilation. No cleanup, downloads, production build or container operation was performed.
+
+One bounded Docker check returned a named-pipe permission error; the existing API did not respond. This does not establish that Docker was stopped. No repair, restart or repeated Docker diagnosis was attempted. Instead, the opt-in [host walkthrough harness and five-step brief](../deploy/composition_walkthrough/README.md) use disposable SQLite with the existing portable test-only JSONB compiler support. Production database behavior and validation are unchanged. The native API binds `127.0.0.1:28187`; Next dev binds `127.0.0.1:23123` and uses `.next-controls-20261106`. Retained `.next` and tracked TypeScript configuration remain byte-for-byte preserved. Processes are detached with private local logs and a startup/PID record.
+
+**One human entry:** <http://127.0.0.1:23123/api/offline-controls/human>. Normal sign-in is `controls-human@example.test`; read `human.password` privately from `local-backups/composition-browser-acceptance-20261106/profile/private-credentials.json` under the original checkout. No password is included here, in browser evidence or in Git. The browser is left signed into that account with its prepared recommendation open. The entry restores the existing conversation format then opens the actual Design with AI application; it does not imitate the controls or bypass authentication. The fixed recommendation, two catalogue operations and contracts are synthetic, and its label is:
+
+> Offline controls walkthrough: prepared synthetic proposal. No live AI or execution.
+
+Two distinct actor-bound recommendations were generated through normal authenticated discovery and a labelled provider double during one-time harness preparation. During serving, chat is rejected server-side and Send is disabled. The fixture cannot interpret arbitrary chat or become a production fallback. Outbound connect/connect_ex/create_connection, real provider SDK calls, runtime/readiness functions and submission/execution HTTP routes are blocked. No allowance or grant is attached. The sole network exception is the exact stdlib Windows asyncio socketpair caller used for the server's own wake-up pipe.
+
+### Agent technical checks — completed, not human usability observations
+
+| Actual check | Observed result |
+|---|---|
+| Normal login and real Design with AI proposal | Both synthetic steps, count 3, complete upstream observation-reference connection, new-design provenance and no-execution label displayed |
+| Explicit Create | New owned draft `22e31c23-7eee-5390-8c81-7ee8cbe9ee36`, revision 0; zero applied nodes/edges plus pending proposal; no saved template copied |
+| Apply | Revision 1, two nodes and one binding |
+| Undo | Revision 2, entire applied graph empty and the same proposal reviewable; Apply control immediately available |
+| Apply again | Revision 3 with exact same settings, node identities, contract pins and binding; no helper or new fixture response |
+| Save/reload/Builder | Saved solution `b899b411-47db-4208-a5eb-1c3e7c289917`; exact graph preserved; Builder shows count 3, both pins/IDs and `observations → observations`, `whole-output-v1`; states no execution result and execution unavailable |
+| Focused rejection checks on actual API | Stale Apply/Undo/Save: 409; another owner Read/Apply/Save: 404; chat, execution review, runtime preflight and submission: 403; no design mutation |
+| Harness network checks | Three tests passed in 0.19s, with each outbound method rejected before network access; stdlib socketpair still works |
+| Launcher | PowerShell syntax passed; initial native start succeeded; generated type-reference restoration was independently verified against original bytes |
+| Fresh human recommendation | Separate account/nonce; **zero drafts and zero saved solutions**; no Create, Apply or Save performed on it |
+| No execution | Disposable database contains zero deployments and zero execution submissions; no actual algorithm, provider call, readiness probe or grant |
+| Preservation | All **548** protected file hashes match (250 prior local-work/evidence records plus retained build/configuration); original checkout's dirty status unchanged; existing allowance remains 13/13 and protected provider/grant state unchanged |
+
+Agent [prepared-proposal evidence](screenshots/composition-controls-prepared-20261106.png) and [saved Builder evidence](screenshots/composition-controls-builder-20261106.png) are labelled synthetic. Private records retain revision responses, binding/pin inspection, rejection statuses, logs and screenshots. [Sanitized browser-preparation evidence](DESIGN_AI_COMPOSITION_BROWSER_EVIDENCE_2026-11-06.json) records source, hashes and counts. No full unrelated suites or previous acceptance were repeated. Next dev emitted transient React Flow container-size warnings; the subsequent saved Builder screenshot shows the actual connected canvas. A narrow viewport requires scrolling inside the proposal card. Existing unavailable Dutch-library copy and general readiness wording were not redesigned in this task.
+
+### Human acceptance — prepared; awaiting human walkthrough
+
+Use the five-step participant brief and blank observer checklist in the harness README. The human proposal is left untouched and requires no chat interpretation or operator restoration between Undo and Apply again. Record completion, hesitation, confusing wording and assistance only after observation. No owner or independent participant usability result is claimed.
+
+This verifies the actual host browser controls journey with synthetic catalogue/settings/provider data. Real-provider interpretation, the full first-time-user journey, PostgreSQL concurrency, live availability/qualification, scientific validity and production compatibility remain unverified. Docker/API recovery remains separate and does not block this host-only controls walkthrough. AIE-18 remains In Review; broader AIE-38 composition remains incomplete. No staging, production, tracker or merge action occurred.
