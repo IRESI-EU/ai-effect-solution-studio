@@ -1,5 +1,10 @@
 /** Presentation only. Never returns a graph that is sent to the API. */
 export type WorkspaceArea = "library" | "canvas" | "assistant";
+/** Disabled paid access is not a synthetic fixture. Keep the distinction visible. */
+export function promptPlaceholder(fixture:boolean, chatEnabled:boolean, paused:boolean) {
+  return fixture ? "Prepared walkthrough · chat unavailable" : paused ? "AI messages paused · existing controls available" :
+    chatEnabled ? "Describe your objective…" : "AI disconnected · existing controls available";
+}
 export function designStage(draft: {pending: unknown; dirty: boolean; saved_solution_id: string|null} | null) {
   return !draft ? "Empty" : draft.pending ? "Proposed" : !draft.dirty && draft.saved_solution_id ? "Saved" : "Applied · unsaved";
 }

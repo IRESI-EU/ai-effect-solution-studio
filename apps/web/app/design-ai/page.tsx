@@ -13,7 +13,7 @@ import { activeDraftId, conversationKey, conversationForCopy, draftUrl, readConv
 import "./workspace.css";
 import WorkspaceViewport from "./workspace-viewport";
 import ReviewDialog from "../../components/review-dialog";
-import {designStage,nodeReview,supportedExamples,nextWorkspaceArea,type WorkspaceArea} from "./workspace-view";
+import {designStage,nodeReview,supportedExamples,nextWorkspaceArea,promptPlaceholder,type WorkspaceArea} from "./workspace-view";
 import DiscoveryRecommendation from "../../components/discovery-recommendation";
 import ExperimentExecution from "../../components/experiment-execution";
 import CompositionReview, { type CompositionReviewData } from "../../components/composition-review";

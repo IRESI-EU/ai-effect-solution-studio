@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {designStage,nodeReview,supportedExamples,nextWorkspaceArea} from "./workspace-view.ts";
+import {designStage,nodeReview,supportedExamples,nextWorkspaceArea,promptPlaceholder} from "./workspace-view.ts";
+
+test("disconnected and exhausted normal providers never appear to be synthetic walkthroughs",()=>{
+  assert.match(promptPlaceholder(true,false,false),/Prepared walkthrough/);
+  assert.match(promptPlaceholder(false,false,true),/AI messages paused/);
+  assert.match(promptPlaceholder(false,false,false),/AI disconnected/);
+  assert.equal(promptPlaceholder(false,true,false),"Describe your objective…");
+});
 
 test("empty, pending, applied and saved describe design state without readiness claims",()=>{
   assert.equal(designStage(null),"Empty");
