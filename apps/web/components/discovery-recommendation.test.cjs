@@ -31,8 +31,8 @@ const service = {mechanism:"catalogue_service",candidate_id:`service-${"a".repea
   creation_supported:false,runtime_checked:false,purpose:"Study observations <script>do not execute</script>",
   input_requirements_known:true,required_inputs:[{name:"observations"}],contract_resolution:"resolved",
   steps:[],connection:"Unverified",expected_result_view:[],optional_downloads:[],availability:"Unchecked",limitations:["No registered path"]};
-function render(recommendation, busy = false) {
-  return renderToStaticMarkup(React.createElement(Component, {recommendation,busy,onCreate:()=>assert.fail("render must not create")}));
+function render(recommendation, busy = false, compact = false) {
+  return renderToStaticMarkup(React.createElement(Component, {recommendation,busy,compact,onCreate:()=>assert.fail("render must not create")}));
 }
 
 test("service match renders required information, unchecked runtime and a disabled creation control", () => {
@@ -76,4 +76,25 @@ test("a new pair renders the complete design-only proposal without claiming regi
   assert.match(html,/Execution is unavailable/);
   assert.ok(!html.includes("Registered workflow recommendation") && !html.includes("<script>") && !html.includes("Expected after successful execution"));
   assert.ok(!/<button[^>]+disabled/.test(html));
+});
+
+
+test("compact review presents both steps/settings and exactly one explicit Create without duplicating purpose", () => {
+  const item={...service,mechanism:"catalogue_composed",candidate_id:`pair-${"b".repeat(24)}`,creation_supported:true,execution_supported:false,
+    creation_request_id:"12345678-1234-4234-8234-123456789abc",recommendation_revision:"c".repeat(64),required_inputs:[],
+    composition_settings:{first:[{name:"count",value:3}],second:[]},purpose:"Duplicate combined purpose",
+    composition_review:{steps:[{title:"Source",purpose:"Declared source purpose",settings:{count:3}},{title:"Analyzer",purpose:"Declared analysis purpose",settings:{}}],
+      connection:"Pass the upstream reference",binding:{source_slot:"observations",target_slot:"observations",transport:"whole-output-v1",schema_fingerprint:"a".repeat(64)},
+      unresolved_requirements:[],runtime_checked:false,execution_supported:false}};
+  const html=render(item,false,true);
+  assert.match(html,/Declared source purpose/);assert.match(html,/Declared analysis purpose/);assert.match(html,/count: 3/);
+  assert.match(html,/Pass the upstream reference/);assert.match(html,/Execution unavailable; runtime unverified/);
+  assert.equal((html.match(/Create this experiment/g)||[]).length,1);assert.ok(!html.includes("Duplicate combined purpose"));
+  assert.match(html,/<details><summary>Technical details<\/summary>/);
+});
+
+test("compact catalogue-only review retains missing-input restrictions and cannot enable Create", () => {
+  const html=render({...service,input_requirements_known:false},false,true);
+  assert.match(html,/Input requirements are unresolved/);assert.match(html,/<button[^>]+disabled/);
+  assert.ok(!html.includes("Workflow complete"));
 });
