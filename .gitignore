@@ -16,3 +16,5 @@ __pycache__/
 .pytest_cache/
 local-backups/
 local-secrets/
+# Opt-in host walkthrough bootstrap, generated from an authorised synthetic fixture.
+apps/web/public/offline-workspace-review.html

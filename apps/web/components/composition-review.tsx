@@ -4,7 +4,15 @@ export type CompositionReviewData = {
   unresolved_requirements: unknown[]; runtime_checked: false; execution_supported: false;
 };
 
-export default function CompositionReview({ review }: { review: CompositionReviewData }) {
+export default function CompositionReview({ review, compact = false }: { review: CompositionReviewData; compact?: boolean }) {
+  if (compact) return <div className="ai-composition-review compact">
+    <ol>{review.steps.map((step,index) => <li key={index}><strong>{step.title}</strong><p>{step.purpose}</p>
+      {Object.keys(step.settings).length > 0 && <p className="ai-setting-value">{Object.entries(step.settings).map(([key,value]) => `${key}: ${String(value)}`).join(" · ")}</p>}
+    </li>)}</ol>
+    <p>{review.connection}.</p>
+    <p>Design only. Execution unavailable; runtime unverified.</p>
+    <details><summary>Technical details</summary><p>No saved workflow template is copied. Omitted settings use registry defaults.</p><p><code>{review.binding.source_slot}</code> → <code>{review.binding.target_slot}</code> · {review.binding.transport}</p><code>{review.binding.schema_fingerprint}</code></details>
+  </div>;
   return <div className="ai-composition-review">
     <p>New catalogue-composed design · two processing steps. No saved workflow template is copied.</p>
     <ol>{review.steps.map((step,index) => <li key={index}><strong>{step.title}</strong><p>{step.purpose}</p>

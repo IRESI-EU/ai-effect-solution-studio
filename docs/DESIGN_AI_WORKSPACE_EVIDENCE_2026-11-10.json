@@ -1,0 +1,210 @@
+{
+  "baseline": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+  "implementation": "66114c6fe3b8183dd890ecc1aeb7464ba92c0a60",
+  "implementation_file_sha256": {
+    ".gitignore": "161307422e73477d8253aa7af6e7abdd5e41bf53844e17b9d93bfd5b36fc99e4",
+    "apps/web/app/design-ai/page.tsx": "232a891e1fa9bcc0ad82e764cb4c880db5a0d47a13c0fee7ff2eca85031cde4f",
+    "apps/web/app/design-ai/workspace-view.test.ts": "46802a916eaad5569849185220abb30795b1c374e7b752a3a2d4cd40bb75637b",
+    "apps/web/app/design-ai/workspace-view.ts": "be241820016e1c2c2ab62ffe1e84cdb86118478108009730ad1869dd95075db9",
+    "apps/web/app/design-ai/workspace-viewport.tsx": "b8fc39eab03830b55a06ba9c8b7f1fe846720184009787465fe50b02e3c08a7a",
+    "apps/web/app/design-ai/workspace.css": "2353fc25108ef21610ca3c172f957a6e07f43ee337a14faff90809826dceb7d0",
+    "apps/web/components/composition-review.tsx": "4d4aad90251fa08ff8a336ce5a1b63ef94d020fa1b04ee9ca92d5d1981f01d48",
+    "apps/web/components/discovery-recommendation.test.cjs": "d7c156f2a535e4d56c089289b36b74f9a3999751409ae26ef702e14b4c0bc356",
+    "apps/web/components/discovery-recommendation.tsx": "cbf5ea8389ce075062592552671f85bd1daa7be8e85d06fa73749cf2322a23a7",
+    "deploy/composition_walkthrough/prepare_workspace_review.py": "3fd2d2bc0fe5775601bfee83ecbb838dce4845201ab84186519558ed9f9d346d"
+  },
+  "reference": "https://ai-effect-chatbot-composer.vercel.app/",
+  "reference_states_inspected": [
+    "empty",
+    "scripted populated"
+  ],
+  "reference_behavior_not_adopted": [
+    "unsupported catalogue",
+    "automatic design mutation",
+    "Ready/Workflow complete claims",
+    "simulated execution"
+  ],
+  "owner_acceptance": {
+    "source": "explicit owner brief, 10 November 2026",
+    "count_3": "confirmed",
+    "refresh_design_connection_count": "confirmed",
+    "undo_empty": "confirmed",
+    "reapply_save": "confirmed",
+    "purpose_controls": "PARTLY",
+    "feedback": "Still text-heavy and far from reference",
+    "independent_usability": false,
+    "real_provider_acceptance": false
+  },
+  "owner_draft": "49ce7803-1e55-51ac-b47b-94b8731a913c",
+  "owner_solution": "f6f86d6f-107a-46b4-8ce1-000b06405473",
+  "owner_completed_copy_replayed": false,
+  "agent_flow": {
+    "protected_files": 551,
+    "protected_file_mismatches": 0,
+    "prior_drafts_preserved": 2,
+    "prior_solutions_preserved": 2,
+    "all_prior_rows_unchanged": true,
+    "engineering_draft": "a719a04c-a06f-57fb-9e41-9cac795d9534",
+    "engineering_solution": "4ed856eb-8b95-46b4-a2cd-8ca8b82fe764",
+    "saved_revision": 5,
+    "undo_restored_complete_empty_design": true,
+    "stable_identities_settings_pins_binding": true,
+    "selection_details_viewport_response_unchanged": true,
+    "no_executions": {
+      "deployments": 0,
+      "execution_submissions": 0
+    }
+  },
+  "agent_additional_checks": [
+    "Immediate empty applied canvas after Undo with retained proposal",
+    "Narrow keyboard Home/End navigation",
+    "Unsent prompt and active area retained after switching/reload",
+    "Selection, dialogs and viewport controls leave complete API response unchanged",
+    "Post-fix resize leaves saved response unchanged and node bounds inside canvas",
+    "Save stays in Design with AI; optional Builder and return"
+  ],
+  "ui_tests": {
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node --experimental-test-isolation=none --test apps/web/app/design-ai/workspace-view.test.ts apps/web/app/design-ai/session.test.ts apps/web/app/design-ai/composition.test.ts apps/web/app/design-ai/allowance.test.ts apps/web/app/design-ai/experiment-journey.test.ts apps/web/lib/builder-review.test.ts apps/web/components/discovery-recommendation.test.cjs"
+  },
+  "typecheck": {
+    "passed": true,
+    "command": "node apps/web/node_modules/typescript/bin/tsc --noEmit --incremental false -p apps/web/tsconfig.json"
+  },
+  "backend": {
+    "source_unchanged": true,
+    "prior_192_focused_checks_reused": true,
+    "new_backend_inventory_run": false,
+    "new_PostgreSQL_concurrency_verified": false
+  },
+  "desktop_geometry": {
+    "canvas": {
+      "bottom": 849.3999938964844,
+      "height": 628.2999877929688,
+      "left": 478.8000183105469,
+      "right": 1081.2000427246094,
+      "top": 221.1000061035156,
+      "width": 602.4000244140625,
+      "x": 478.8000183105469,
+      "y": 221.1000061035156
+    },
+    "composer": {
+      "bottom": 875.2000045776367,
+      "height": 112.20000457763672,
+      "left": 1104.800048828125,
+      "right": 1413.2000427246094,
+      "top": 763,
+      "width": 308.3999938964844,
+      "x": 1104.800048828125,
+      "y": 763
+    },
+    "height": 900,
+    "nodes": [
+      {
+        "bottom": 504.6000061035156,
+        "height": 64,
+        "left": 657.2999877929688,
+        "right": 902.2999877929688,
+        "top": 440.6000061035156,
+        "width": 245,
+        "x": 657.2999877929688,
+        "y": 440.6000061035156
+      },
+      {
+        "bottom": 629.6000366210938,
+        "height": 64,
+        "left": 657.2999877929688,
+        "right": 902.2999877929688,
+        "top": 565.6000366210938,
+        "width": 245,
+        "x": 657.2999877929688,
+        "y": 565.6000366210938
+      }
+    ],
+    "pageWidth": 1440,
+    "width": 1440,
+    "zoom": "1"
+  },
+  "narrow_geometry": {
+    "width": 390,
+    "height": 844,
+    "zoom": "1",
+    "document_width": 390,
+    "canvas_horizontal": [
+      10.8,
+      379.6
+    ],
+    "post_fix_node_horizontal": [
+      72.8,
+      317.8
+    ],
+    "composer_bottom_during_proposal": 827.46,
+    "apply_bottom_during_proposal": 684.46
+  },
+  "screenshots": {
+    "docs\\screenshots\\workspace-before-desktop-20261110.jpg": {
+      "sha256": "434d492ece213cecaef31832e4ce3597fb30f08ad4cd17a5c082acaa4c0caffc",
+      "native_raster_pixels": [
+        1425,
+        891
+      ],
+      "configured_browser_viewport": [
+        1440,
+        900
+      ],
+      "browser_zoom": "1",
+      "modified_or_resized": false
+    },
+    "docs\\screenshots\\workspace-after-desktop-20261110.jpg": {
+      "sha256": "59e7e53f0ec4a9c0ea3eb9fccee78b252cb8111c12591ccc6df4daf3aaa6d7ff",
+      "native_raster_pixels": [
+        1440,
+        900
+      ],
+      "configured_browser_viewport": [
+        1440,
+        900
+      ],
+      "browser_zoom": "1",
+      "modified_or_resized": false
+    },
+    "docs\\screenshots\\workspace-after-narrow-20261110.jpg": {
+      "sha256": "4be01c10894af2b13fe0d0fbdf07cb0cda7e893bdb39a562ca35140d32c51a66",
+      "native_raster_pixels": [
+        390,
+        843
+      ],
+      "configured_browser_viewport": [
+        390,
+        844
+      ],
+      "browser_zoom": "1",
+      "modified_or_resized": false
+    }
+  },
+  "entry": "http://127.0.0.1:23123/design-ai?draftId=49ce7803-1e55-51ac-b47b-94b8731a913c",
+  "runtime": {
+    "existing_port_23123_walkthrough": true,
+    "new_profiles_ports_accounts_or_stacks": false,
+    "retained_demo_build_unchanged": true,
+    "actual_provider_requests": 0,
+    "actual_workflow_executions": 0,
+    "new_grants_ledger_or_allowance_changes": false,
+    "shared_allowance": "13/13; protected ledger hash unchanged",
+    "staging_production_merges_tracker_updates": false
+  },
+  "remaining_unverified": [
+    "owner usability of new layout",
+    "independent usability",
+    "broader composition",
+    "real-provider interpretation",
+    "production compatibility"
+  ],
+  "intermediate_findings": [
+    "Clipped nodes on narrow resize fixed via viewport-only adapter",
+    "Preliminary stale-frame captures excluded; final native captures visually checked"
+  ],
+  "separate_engineering_fixture": "Preparation-only labelled provider double through existing auth/discovery; generated local bootstrap ignored by Git; no mock controls"
+}
