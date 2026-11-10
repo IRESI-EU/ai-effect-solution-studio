@@ -97,7 +97,9 @@ class Provider(Protocol):
 
 
 def configured() -> bool:
-    return bool(settings.openai_api_key and settings.design_ai_model)
+    return bool(settings.openai_api_key and settings.design_ai_model
+        and (not settings.design_ai_restricted_beta
+             or (settings.design_ai_acceptance_budget_file and settings.design_ai_acceptance_task_limit_file)))
 
 
 def redact_context(value):
@@ -119,6 +121,9 @@ class OpenAIProvider:
     mode = "real"
 
     async def respond(self, context: dict) -> AssistantTurn:
+        if settings.design_ai_restricted_beta and (not settings.design_ai_acceptance_budget_file
+                or not settings.design_ai_acceptance_task_limit_file):
+            raise HTTPException(503, "Restricted beta requires durable shared accounting and a scoped allowance; provider requests are disabled")
         if not configured():
             raise HTTPException(503, "AI provider not configured")
         if settings.design_ai_dutch_demo:
