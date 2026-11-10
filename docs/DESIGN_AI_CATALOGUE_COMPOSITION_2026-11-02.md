@@ -72,3 +72,9 @@ Agent [prepared-proposal evidence](screenshots/composition-controls-prepared-202
 Use the five-step participant brief and blank observer checklist in the harness README. The human proposal is left untouched and requires no chat interpretation or operator restoration between Undo and Apply again. Record completion, hesitation, confusing wording and assistance only after observation. No owner or independent participant usability result is claimed.
 
 This verifies the actual host browser controls journey with synthetic catalogue/settings/provider data. Real-provider interpretation, the full first-time-user journey, PostgreSQL concurrency, live availability/qualification, scientific validity and production compatibility remain unverified. Docker/API recovery remains separate and does not block this host-only controls walkthrough. AIE-18 remains In Review; broader AIE-38 composition remains incomplete. No staging, production, tracker or merge action occurred.
+
+## 10 November — owner functional acceptance and separate workspace refinement
+
+The owner confirms count 3, design/connection/count surviving refresh, full Undo to the empty design, and reapply/Save. Purpose/controls are **PARTLY** understandable; the remaining feedback is that the workspace is text-heavy and far from the original reference. This is owner functional acceptance with unresolved usability feedback, not independent usability or real-provider acceptance. The completed owner draft and solution are preserved without reset or replay.
+
+A separate focused draft stacked on PR #15 implements the [workspace refinement and three-step owner review](DESIGN_AI_WORKSPACE_REVIEW_2026-11-10.md), using the existing host walkthrough and a distinct engineering copy. The earlier records above remain historical; the new design awaits owner usability feedback. AIE-18 is unchanged.
