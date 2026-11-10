@@ -2,6 +2,8 @@
 
 > Later 10 November availability/catalogue follow-up is appended below. Normal catalogue reads are now restored, and current PR #17 source validates one real registered pair. The retained serving image still predates discovery/composition. Original results and the earlier blocked observation remain historical.
 
+> Subsequent authorized packaging/update: source **1068cea** now serves both normal ports, and discovery passes under the actual unchanged Dutch policy. Browser verification found that the earlier claimed placeholder fix was incomplete: the helper is imported but unused. The failed wording check and unapplied one-line correction are recorded in the final section. No provider acceptance is claimed.
+
 Implementation and serving source: **76a4d72a284916a3279d61a0754d62123e99a864**. Focused draft stacked on verified PR #16 **d8e6e3b269da0d3a6f936cb7e8349c719a9049fe**, whose base is PR #15 **5d9c398cad1a0944f3fe61edc1da90a832341e11**, on PR #14 **f36f8fdfcfb95576d948fea2971907ad4d433e3a**. Existing PRs are unchanged.
 
 ## What already works, and the focused changes
@@ -154,3 +156,76 @@ The earlier two exact proposed messages can now be grounded in the actual pair a
 These remain **provisional pending serving-source parity and separately approved provider preflight**. No provider acceptance has occurred. The previously proposed maximum two attempts, gpt-6-luna/low/Standard, output ≤2,000 tokens, zero retries/fallback, US$0.005 each and US$0.010 aggregate remain a proposal only. Any future supported audited **13→15** amendment/new checkpoint requires separate approval; preserve the same US$0.10 ceiling and remaining funds. Do not reopen old checkpoints.
 
 Final normal config confirms **request_count=13, max_calls=13, remaining_calls=0, outstanding_reservations=0, can_request=false**. Provider is unconfigured, execution grant empty, shared allowance mount read-only. No paid request, grant, workflow, saved-design edit, owner controls replay, synthetic demonstration, image build, Docker settings repair, production operation, merge or tracker update occurred. No unrelated test suites were rerun for these documentation findings.
+
+## Authorized normal-profile packaging/update of 1068cea
+
+The owner subsequently authorized packaging and updating only the normal local web **23121** and API **28185** from **1068ceaa4bfd30d664b5cf475bc05ebe5e54d80e**. The source worktree was clean at that exact commit before packaging. No application source change was included. Report-only publication afterward does not change the served application identity.
+
+### Recovery point and build inputs
+
+Private recovery directory under the original checkout: **local-backups/normal-composition-update-20261110/**. It contains:
+
+- **before.json**, private retained/candidate container inspections and configuration references; original API image **sha256:993302f295ac9feb511b448ea9730bf9aa6b64312841b43ac82b9a880a00cce8**, historical native web build **_9OUF0yBLv4pKPA0e0pex**, unchanged database container **9ab6a3495af7ed408795440ca15a805d397d752012327f445b3dd2bd09abde27**, volume **ai-effect-aie37_aie37-db**, database **design_aie37_qualification**, role **aie37**.
+- **design_aie37_qualification-before.dump**, a consistent **pg_dump -U aie37 -d design_aie37_qualification -Fc** snapshot, **39,470 bytes**. SHA-256 and a successful **pg_restore --list** check are in **backup-verified.json**; user/solution table data are present. No restore-roundtrip rehearsal is claimed and the dump was not restored over any retained database.
+- **Rollback-API.ps1** verifies the retained historical image then recreates only API from the original base/demo Compose files plus rollback.compose.json, with **--no-deps --no-build --pull never**. It does not restore data or start workers.
+- **Start-NormalWeb.ps1 -Rollback** verifies the retained historical BUILD_ID, checks the exact recorded normal-port process, and starts that retained build detached with local logs. No new web compilation is needed for rollback. The original .next build remains in local-backups/design-ai-demo-portal/apps/web.
+
+Read-only model/schema inspection found all current model columns and types already present. Models/migrations are unchanged since the earlier candidate baseline; **no migration was necessary or run**. Engineering data was hashed before replacement for comparison afterward. Normal login/session/audit metadata is separately excluded.
+
+API context was a **727,040-byte source-only archive** of the committed apps/api/app tree plus the local packaging Dockerfile. Its dependency base is the positively identified historical API image above; the derived image adds only the current app source/labels, with the retained dependency layer chain verified. Docker used **linux/amd64, --pull=false, --network=none**. No pip install, dependency upgrade or base-image pull occurred.
+
+Web package is a minimal Git export of apps/web, the package/workspace/lock files and four tracked JSON examples imported by the existing publish route. It links installed dependencies instead of copying them. No private configuration, profile, credentials, captures, historical builds or untracked synthetic bootstrap HTML entered either context. **3,178** output-trace references were checked with zero references to protected runtime/profile/credential paths.
+
+Host inputs: **Node v24.15.0, Next 16.3.8**, existing installed dependency versions, pnpm-lock SHA-256 **c666d9d7d02bbe06d7b4b195a99a55e90cdd6292d663544f94780d84bea34974**. C: free space was **25.31 GiB** before packaging and **24.73 GiB** after cutover.
+
+Intermediate failures are retained in private logs: sandbox compiler-worker EPERM; Docker plain-PAX stdin detection; initially omitted tracked workshop JSON imports; and a Windows trace-read failure. The trace failure was specifically **semver@7.8.5/preload.js**, an unreadable **83-byte OneDrive placeholder**. The exact **29,399-byte semver-7.8.5.tgz** archive was fetched from the official npm registry and verified against the existing lock's SHA-512 before recovering that one file. The original unreadable object remains preserved privately; dependency version and expected code did not change. No broad dependency hydration/reinstall or unrelated cleanup occurred. Final build ran without diagnostic hooks, skipped checks or tracing exclusions.
+
+### Actual served identities and update
+
+| Component | Actual served identity |
+|---|---|
+| API source | **1068ceaa4bfd30d664b5cf475bc05ebe5e54d80e**; all **72** app-file hashes match committed source |
+| API image | **ai-effect-local-api:conversation-1068ceaa4bfd** / **sha256:076b83f6fe526682c78b103343fd7006e5d008a0a9337dd62e3e9f0ca8b6a3cf** |
+| API container | **a30d8c5f1b31b2a92cbb285e6b2e21a452737eef900121d5faad4ce0ff827e22** |
+| Web source | **1068ceaa4bfd30d664b5cf475bc05ebe5e54d80e**; **77** exported web/example files match exactly, with zero source differences |
+| Web build | **ZwPsznKFUeJqsX_w16oos**, native Next production build; Design with AI bundle SHA-256 **5c8f0881efade0b1582b437fcbe2e02c3a96b5264c51c1a33aad4285986e6ee0** |
+| Web runtime | Detached native node PID **36272**, IPv4 loopback **127.0.0.1:23121**; source package **local-backups/normal-composition-update-20261110/web-source/apps/web**, logs **web-normal.stdout.log / web-normal.stderr.log** |
+
+API replacement used only the documented base/demo Compose configuration plus the candidate image override and **up -d --no-deps --no-build --pull never api**. Every environment value, port and all seven read-only mount targets/sources/modes were verified against the prior container. Docker Desktop canonicalized the same authorization directory from Windows notation to its /run/desktop/mnt/host/c path; this is not a different directory or permission. PostgreSQL was neither recreated nor migrated. No unrelated retained container was started. Old API image and old web build remain usable rollback inputs.
+
+### Actual normal-policy discovery and preservation checks
+
+The existing **aie37-designer** signed in through the normal application proxy and in the browser. Within the **served API container**, the installed normal private MCP discovery tool ran for that same authorized designer in an enforced **read-only transaction**, with its **actual unchanged template policy**. No policy clearing, chat request, provider double or prepared recommendation was used.
+
+Outcome: **dutch** policy remains configured. **workflow-283fb89a71a310be07f72cbd** is still advertised as a separate registered workflow; it does **not** hide or replace **pair-a5c5793a07b3017820d63c7a**. The pair authority revision remains **26add1b21313352f06577e801fb4178c012cd3b4ed7f3d0505d5e7401a10a0db**.
+
+| Pair pin / binding | Verified unchanged |
+|---|---|
+| aie37-synth / ConfigureAndSynthesize | **921a87fc-329f-42b6-a546-ddf7d9c0ec26 @ 1.0.0**, active |
+| aie37-benchmark / RunBenchmark | **441153b2-9b3b-48c1-81e4-649645f30143 @ 1.0.0**, active |
+| Settings | **first={seed:43}; second={}**, accepted by existing parameter validation and pure compiler |
+| Connection | **captured_grid → captured_grid**, **whole-output-v1**, unchanged exact semantic/schema/protocol/content type/1..1 rules and fingerprint **ba3e279298a6ead4581484ccfbcef4061182d9c9b35601c8197c9384e576ad80** |
+
+Both normal catalogue/contract HTTP reads and saved solution **ef10cde8-15d4-4f6d-82dd-0525a16de4fd** are accessible. Existing workflow **wf-1b6eb7caaf57** remains completed with recorded seed **43**, both tasks completed and available qualified evidence, using its **recorded terminal observation**, without starting a runtime. All four authorized downloads match their recorded SHA-256 and byte counts (configuration 1,441; grid 148,660; network 129,851; benchmark 855). This is historical inspection, not a new live execution.
+
+**Preservation:** all **nine engineering-table hashes** match before/after; user credentials/roles/permissions are unchanged apart from ordinary login timestamps. Both ledger file hashes match. Database container/volume identity is unchanged. All **41** retained-profile containers remain represented (only the authorized API container was replaced); other container IDs/states are unchanged. All **551** previously protected file hashes and six recorded prior fixture draft/solution rows match, including the completed owner design. The separate synthetic walkthrough on **23123** was not rebuilt, restarted, replayed or reconfigured.
+
+Normal API/web pages and proxy return 200. Synthetic bootstrap URLs on normal port 23121 return **404**. Provider remains **unconfigured**, grant empty, ledger mounts read-only, count **13/13**, zero outstanding reservations. No chat, recommendation nonce, design creation/mutation, checkpoint, provider call, workflow, production/staging change, merge or tracker operation occurred.
+
+### Failed browser wording check — correction required before full handoff acceptance
+
+The actual browser displays the updated library/canvas/assistant workspace and **AI messages paused**, with Send disabled. However its composer placeholder still says **Prepared walkthrough · chat unavailable** in this genuine normal profile.
+
+**Cause:** approved source 1068cea imports the tested promptPlaceholder helper but the textarea still uses the old hard-coded conditional. Earlier reports claiming this wording was corrected were inaccurate. Helper-only unit tests did not verify its connection to the actual page. This failed observation is retained in [actual normal browser evidence](screenshots/normal-composition-1068cea-browser.jpg); it is not reported as a pass.
+
+The exact **unapplied** one-line correction is prepared as [review patch](patches/normal-placeholder-wiring-1068cea.patch):
+
+```tsx
+placeholder={promptPlaceholder(config.provider_mode==="test",chatEnabled,allowancePaused)}
+```
+
+It replaces the hard-coded textarea placeholder in apps/web/app/design-ai/page.tsx. It was **not applied** to the shared review checkout or normal source package: this task authorized serving exact 1068cea, and changing the shared page would also recompile the separately protected 23123 dev walkthrough. No served-code change beyond the authorized commit was silently introduced.
+
+**Provider boundary:** genuine discovery/context/pins/settings prerequisites now pass, but the requested complete browser wording check does not. The two already grounded provider cases remain locked and **are not reported ready for spending approval**. Next change is to review the one-line wiring correction, verify the actual normal page under disconnected/exhausted conditions, and package an authorized corrected web source while preserving the synthetic walkthrough. No ledger amendment or paid request should be used to diagnose this display defect.
+
+Normal owner URL: **http://127.0.0.1:23121/design-ai**. Sign in as **aie37-designer@example.test**, reading the unchanged password privately from **local-backups/aie37-profile-20261028/reviewer.json** under the original checkout. The browser is left signed in on that normal workspace. Do not replay the owner's completed synthetic copy or submit chat.

@@ -262,5 +262,340 @@
     "provider_proposal": "grounded in recorded real pair, provisional pending served-source parity and separate approval",
     "actual_provider_calls": 0,
     "actual_workflows": 0
+  },
+  "authorized_normal_packaging_update": {
+    "authorized_served_source": "1068ceaa4bfd30d664b5cf475bc05ebe5e54d80e",
+    "api": {
+      "id": "sha256:076b83f6fe526682c78b103343fd7006e5d008a0a9337dd62e3e9f0ca8b6a3cf",
+      "source": "1068ceaa4bfd30d664b5cf475bc05ebe5e54d80e",
+      "base": "sha256:993302f295ac9feb511b448ea9730bf9aa6b64312841b43ac82b9a880a00cce8",
+      "platform": "linux/amd64",
+      "image_reference": {
+        "repository": "ai-effect-local-api",
+        "tag": "conversation-1068ceaa4bfd"
+      }
+    },
+    "web": {
+      "source": "1068ceaa4bfd30d664b5cf475bc05ebe5e54d80e",
+      "build_id": "ZwPsznKFUeJqsX_w16oos",
+      "node": "v24.15.0",
+      "next": "16.3.8",
+      "platform": "Windows x64 native Next production",
+      "source_files_verified": 77,
+      "generated_only_source_differences": [],
+      "bundle_sha256": "5c8f0881efade0b1582b437fcbe2e02c3a96b5264c51c1a33aad4285986e6ee0",
+      "package_lock_sha256": "c666d9d7d02bbe06d7b4b195a99a55e90cdd6292d663544f94780d84bea34974",
+      "synthetic_bootstraps_excluded": true
+    },
+    "backup": {
+      "file": "design_aie37_qualification-before.dump",
+      "bytes": 39470,
+      "sha256": "2b85b8929956df228f348cc5d9a0c3b7fffe30a18adf6d820bb8acce18997d00",
+      "format": "PostgreSQL pg_dump -Fc consistent snapshot",
+      "archive_list_validated": true,
+      "restored_database_test": false
+    },
+    "schema": {
+      "all_current_model_columns_and_types_present": true,
+      "model_tables": 11,
+      "migration_needed": false
+    },
+    "normal_discovery": {
+      "source_files_verified": 72,
+      "actual_policy_keys": [
+        "dutch"
+      ],
+      "projection": {
+        "services": [
+          {
+            "candidate_id": "service-91a70667531e7b33cf645178",
+            "kind": "catalogue_service",
+            "label": "Benchmark generated grid",
+            "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+            "category": "Netherlands Use Case",
+            "revision": "48c75a1395fd1e96c92a89d1100df4a7687de6b6d8da4c69c1eeff00548a18de",
+            "creation_supported": false,
+            "contract_resolution": "resolved",
+            "required_inputs": [
+              {
+                "name": "captured_grid",
+                "purpose": "urn:aieffect:nl:synthetic-grid-capture",
+                "representation": "data_reference",
+                "required": true,
+                "source": "upstream_operation"
+              }
+            ],
+            "input_requirements_known": true,
+            "runtime_checked": false
+          },
+          {
+            "candidate_id": "service-6c1a7c165b446ed5b7226659",
+            "kind": "catalogue_service",
+            "label": "Generate synthetic power grid",
+            "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+            "category": "Netherlands Use Case",
+            "revision": "d00008e7e68f238c388060086bfa1877f52ae3fb0ed876ef68da7dde99c3eb61",
+            "creation_supported": false,
+            "contract_resolution": "resolved",
+            "required_inputs": [],
+            "input_requirements_known": true,
+            "runtime_checked": false
+          }
+        ],
+        "operations": [
+          {
+            "service_candidate_id": "service-91a70667531e7b33cf645178",
+            "contract_fingerprint": "355c90832abc86b7d30bd4db5ab1b39712a33dfebdd884f97c126f0265f93c71",
+            "role": "analyzer",
+            "inputs": [
+              {
+                "name": "captured_grid",
+                "purpose": "urn:aieffect:nl:synthetic-grid-capture",
+                "representation": "data_reference",
+                "required": true,
+                "source": "upstream_operation"
+              }
+            ],
+            "outputs": [
+              {
+                "name": "benchmark_capture",
+                "purpose": "urn:aieffect:nl:benchmark-capture",
+                "representation": "data_reference"
+              }
+            ],
+            "settings": [],
+            "declared_connections": {
+              "transport": "whole-output-v1",
+              "meaning": "Declared slots only; this does not establish a connection to another service."
+            }
+          },
+          {
+            "service_candidate_id": "service-6c1a7c165b446ed5b7226659",
+            "contract_fingerprint": "8c1cdb006ca8bc7935b3ba75f91488a57f67c9e5b135ea51577ddbb1469fa193",
+            "role": "source",
+            "inputs": [],
+            "outputs": [
+              {
+                "name": "captured_grid",
+                "purpose": "urn:aieffect:nl:synthetic-grid-capture",
+                "representation": "data_reference"
+              }
+            ],
+            "settings": [
+              {
+                "name": "seed",
+                "title": "Random seed",
+                "description": "Seed passed to the pinned Dutch grid synthesis algorithm. Only the two supported pilot seeds are exposed.",
+                "type": "integer",
+                "required": false,
+                "choices": [
+                  42,
+                  43
+                ]
+              }
+            ],
+            "declared_connections": {
+              "transport": "whole-output-v1",
+              "meaning": "Declared slots only; this does not establish a connection to another service."
+            }
+          }
+        ],
+        "registered_workflows": [
+          {
+            "candidate_id": "workflow-283fb89a71a310be07f72cbd",
+            "revision": "9c41db47b7938acbdc761928fbd45ed737aec368d8cbd8f2a1a2e6f20e599228",
+            "kind": "registered_workflow",
+            "label": "Create and benchmark a sample electricity grid",
+            "purpose": "Saved workflow design from Builder",
+            "creation_supported": true,
+            "required_inputs": [
+              {
+                "name": "seed",
+                "required": true,
+                "choices": [
+                  42,
+                  43
+                ]
+              }
+            ],
+            "runtime_checked": false,
+            "steps": [
+              {
+                "title": "Create a sample grid",
+                "operation": "ConfigureAndSynthesize"
+              },
+              {
+                "title": "Benchmark the grid produced by the first step",
+                "operation": "RunBenchmark"
+              }
+            ],
+            "connection": "Benchmark the exact grid produced by the first step",
+            "limitations": [
+              "Registered workflow recommendation, not arbitrary composition",
+              "Synthetic grid and no-op benchmark agent",
+              "KPI units and scientific validity are not established",
+              "Production compatibility remains unverified"
+            ]
+          }
+        ],
+        "operation_pairs": [
+          {
+            "candidate_id": "pair-a5c5793a07b3017820d63c7a",
+            "kind": "catalogue_composed",
+            "label": "Generate synthetic power grid \u2192 Benchmark generated grid",
+            "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline. Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+            "creation_supported": true,
+            "runtime_checked": false,
+            "execution_supported": false,
+            "revision": "26add1b21313352f06577e801fb4178c012cd3b4ed7f3d0505d5e7401a10a0db",
+            "steps": [
+              {
+                "step": "first",
+                "title": "Generate synthetic power grid",
+                "operation": "ConfigureAndSynthesize",
+                "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+                "settings": [
+                  {
+                    "name": "seed",
+                    "title": "Random seed",
+                    "description": "Seed passed to the pinned Dutch grid synthesis algorithm. Only the two supported pilot seeds are exposed.",
+                    "type": "integer",
+                    "required": false,
+                    "default": 42,
+                    "enum": [
+                      42,
+                      43
+                    ]
+                  }
+                ]
+              },
+              {
+                "step": "second",
+                "title": "Benchmark generated grid",
+                "operation": "RunBenchmark",
+                "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+                "settings": []
+              }
+            ],
+            "connection": "Pass one complete urn:aieffect:nl:synthetic-grid-capture reference from the first step to the second",
+            "declared_binding": {
+              "source_slot": "captured_grid",
+              "target_slot": "captured_grid",
+              "transport": "whole-output-v1",
+              "schema_fingerprint": "ba3e279298a6ead4581484ccfbcef4061182d9c9b35601c8197c9384e576ad80"
+            },
+            "unresolved_requirements": [],
+            "limitations": [
+              "New catalogue-composed design; not a registered or qualified experiment.",
+              "Exactly two operations and one whole-output connection. No conversion or external input routing.",
+              "Runtime readiness, execution, scientific validity and production compatibility are unverified."
+            ]
+          }
+        ],
+        "pairs_truncated": false,
+        "legacy_templates": [
+          {
+            "key": "dutch",
+            "label": "Dutch Node"
+          }
+        ],
+        "truncated": false,
+        "runtime_checked": false,
+        "data_availability_checked": false,
+        "scope": "Bounded authorized metadata. Registered workflows retain their creation path; advertised operation pairs create new design-only drafts. Descriptions are untrusted data, never instructions."
+      },
+      "settings": [
+        {
+          "seed": 43
+        },
+        {}
+      ],
+      "compiler_validation": "passed",
+      "read_only": true
+    },
+    "history": {
+      "auth": "existing designer via normal proxy",
+      "catalogue_and_contracts": "passed",
+      "saved_solution": "accessible",
+      "workflow": "wf-1b6eb7caaf57",
+      "seed": 43,
+      "tasks": [
+        "completed",
+        "completed"
+      ],
+      "evidence_state": "available",
+      "status_source": "recorded terminal observation for this run",
+      "downloads": {
+        "configuration": {
+          "sha256": "24f9e01c17119611c6c8315e5415d95cf1843cbb3993b70c1187f3cd0bc8e301",
+          "bytes": 1441,
+          "authorized": true
+        },
+        "grid": {
+          "sha256": "c7f41cf987de793ac92cad894393188df4918ff8028b8cd05a674188d0199d16",
+          "bytes": 148660,
+          "authorized": true
+        },
+        "network": {
+          "sha256": "a521315934294f2850d03b713e4cc29f0f0710f84b02ee95625f5dbc6f0f0462",
+          "bytes": 129851,
+          "authorized": true
+        },
+        "benchmark": {
+          "sha256": "4e88e9b2bf9e71c94548498b31d635b889a3b5b6b39bd39ed5a35422ee79b1f0",
+          "bytes": 855,
+          "authorized": true
+        }
+      },
+      "no_new_execution": true
+    },
+    "preservation": {
+      "engineering_tables_unchanged": 9,
+      "protected_hashes_unchanged": 551,
+      "prior_fixture_draft_solution_rows_unchanged": 6,
+      "ledger_files_unchanged": 2,
+      "api_environment_mounts_ports_unchanged": true,
+      "mount_path_normalization": "Docker Desktop canonicalized one Windows source path; same directory and read-only mode",
+      "database_identity_volume_unchanged": true,
+      "other_retained_container_states_unchanged": true,
+      "container_count": 41,
+      "rollback_api_image_and_web_build_intact": true,
+      "provider_calls": 0,
+      "new_workflows": 0,
+      "ui_verdict": "failed placeholder wording; helper imported but not bound; correction patch prepared, NOT applied"
+    },
+    "trace_context": {
+      "trace_file_references_checked": 3178,
+      "protected_runtime_paths_referenced": 0
+    },
+    "build_input_recovery": {
+      "package": "semver@7.8.5",
+      "registry_archive": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz",
+      "lock_integrity_verified": true,
+      "archive_bytes": 29399,
+      "recovered_file": "preload.js",
+      "file_bytes": 83,
+      "file_sha256": "edb6808911bebcb324b2df57e5c9935149e56984ff083b74c6cfe215f5b710ba",
+      "dependency_version_changed": false
+    },
+    "disk_free_gib": {
+      "before": 25.31,
+      "after": 24.73
+    },
+    "rollback_directory": "local-backups/normal-composition-update-20261110",
+    "browser": {
+      "updated_workspace": true,
+      "paused_status": true,
+      "send_disabled": true,
+      "placeholder_wording": "FAILED: hard-coded Prepared walkthrough remains; imported helper unused",
+      "correction": "docs/patches/normal-placeholder-wiring-1068cea.patch; NOT applied"
+    },
+    "provider_acceptance_ready": false,
+    "remaining_requirement": "review/apply/package the one-line page binding correction under a corrected source authorization, without changing 23123",
+    "provider_calls": 0,
+    "chat_requests": 0,
+    "new_recommendations": 0,
+    "new_workflows": 0,
+    "ledger_changes": 0
   }
 }
