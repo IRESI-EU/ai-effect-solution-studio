@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     bootstrap_admin_name: str = "Platform Administrator"
     service_contract_path: str = "/service-contracts"
     design_ai_enabled: bool = False
+    # Opt-in restricted release: exact existing user IDs, with no admin bypass.
+    design_ai_restricted_beta: bool = False
+    design_ai_reviewer_ids: str = ""
     # Explicitly shared, operator-selected templates; never inferred by an LLM.
     design_ai_templates: str = "{}"
     openai_api_key: str = ""
