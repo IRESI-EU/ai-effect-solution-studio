@@ -1,0 +1,98 @@
+{
+  "kind": "offline application integration; synthetic provider-boundary fixtures, no real interpretation",
+  "base_pr16": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe",
+  "dependency_pr15": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+  "implementation": "76a4d72a284916a3279d61a0754d62123e99a864",
+  "served": {
+    "url": "http://127.0.0.1:23123",
+    "source_worktree": "local-backups/design-ai-demo-portal",
+    "mode": "native Next dev --webpack; .next-controls-20261106",
+    "api": "127.0.0.1:28187; retained SQLite harness; serving chat disabled"
+  },
+  "checks": {
+    "backend": {
+      "passed": 92,
+      "warnings": 737,
+      "seconds": 59.45,
+      "files": [
+        "apps/api/tests/test_catalogue_composition.py",
+        "apps/api/tests/test_catalogue_discovery.py"
+      ]
+    },
+    "frontend": {
+      "passed": 35,
+      "failed": 0,
+      "skipped": 0
+    },
+    "typecheck": "passed",
+    "initial_backend_attempt": "sandbox temporary-directory access denied; retained failed log; identical checks rerun with permitted host access",
+    "flow": {
+      "protected_hashes_unchanged": 551,
+      "preexisting_rows_unchanged": {
+        "design_ai_drafts": 3,
+        "solutions": 3
+      },
+      "empty_undo": true,
+      "graph_settings_ids_pins_binding_retained": true,
+      "draft": "560f381c-b04c-505f-a9dc-0cabbbe48f41",
+      "revision": 3,
+      "solution": "ca93949c-86cd-42d3-ba82-b4b4616914f9"
+    },
+    "desktop": {
+      "viewport": [
+        1920,
+        1080
+      ],
+      "zoom": 1,
+      "assistant_width": 480,
+      "canvas_width": 912.4,
+      "message_font": "14px",
+      "document_overflow": false,
+      "technical_details_initially_open": false
+    },
+    "narrow": {
+      "viewport": [
+        390,
+        844
+      ],
+      "zoom": 1,
+      "canvas_width": 368.8,
+      "nodes_inside_canvas": true,
+      "document_overflow": false
+    }
+  },
+  "catalogue": {
+    "normal_web_proxy": "port 23121 /api/design-ai/config returned HTTP 500",
+    "recorded_normal_api": "127.0.0.1:28185 timed out",
+    "current_real_authorized_pair": "not established; blocked",
+    "harness_pair": "labelled synthetic only, not genuine node catalogue"
+  },
+  "spending": {
+    "actual_provider_calls": 0,
+    "workflow_executions": 0,
+    "shared_allowance": "13/13; unchanged",
+    "proposed_future_calls": 2,
+    "proposed_total_cap_usd": "0.010",
+    "approval_status": "NOT enabled or amendment-ready; real pair preflight blocked"
+  },
+  "limitations": [
+    "No real-provider interpretation",
+    "No new PostgreSQL concurrency result",
+    "No independent usability result",
+    "No runtime or production compatibility result"
+  ],
+  "screenshots": {
+    "conversation-review-desktop-1920-20261110.jpg": "f0fb16a446461177451d87da105dd9f70fb269420e1f720e62da5df8cffad52b",
+    "conversation-review-narrow-390-20261110.jpg": "4be01c10894af2b13fe0d0fbdf07cb0cda7e893bdb39a562ca35140d32c51a66"
+  },
+  "screenshot_raster_dimensions": {
+    "conversation-review-desktop-1920-20261110.jpg": [
+      1920,
+      1061
+    ],
+    "conversation-review-narrow-390-20261110.jpg": [
+      390,
+      843
+    ]
+  }
+}
