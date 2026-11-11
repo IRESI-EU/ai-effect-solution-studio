@@ -1,0 +1,132 @@
+{
+  "status": "NOT LIVE: engineering prepared; activation gates unmet",
+  "prior_report_head": "e0145d09a6603b239fcb17468ce4c3dacda1c630",
+  "sources": [
+    {
+      "role": "api",
+      "commit": "7165a398c1583daae567fb5cf48aabf35fe32a7b"
+    },
+    {
+      "role": "web",
+      "commit": "4ff3285bdaf6cd0951b946b1d1667212b197e74d"
+    },
+    {
+      "role": "dutch_selected_source_files",
+      "commit": "ba598b2459f9986dac4e37dcc5d7d3298f25dc3a"
+    }
+  ],
+  "candidate": {
+    "platform": "linux/amd64",
+    "api": {
+      "role": "api",
+      "tag": "ai-effect-beta-candidate-api:7165a398c158",
+      "image_id": "sha256:3717c012fed8d8cd4f04469335b8f93a42224708f54dfd08c3b6858aa4d74c19"
+    },
+    "web": {
+      "image_id": "sha256:fba983fef01d461e79db22444c34c76b9737df84365d200972085672a4052614",
+      "build_id": "XLX_batDPkRXN0X7avzOq",
+      "rebuilt": false
+    },
+    "inputs": [
+      "sha256:8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1",
+      "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e"
+    ],
+    "context_sha256": "1700a51b0efb83087022ae913c4a4a372c7182be2d203d3b93c103329ed60f4b",
+    "verification": {
+      "verified_api_files": 68,
+      "authority_disabled": true,
+      "provider_disabled": true,
+      "network": "none",
+      "read_only": true
+    }
+  },
+  "contract_drafts": {
+    "version": "0.1.0-draft.1",
+    "count": 4,
+    "schema_validation": "passed",
+    "activated": 0,
+    "owner_confirmation": null,
+    "eligible_production_pair": null,
+    "selected_deployed_files_matched": 9,
+    "unknowns": [
+      "strict composer seed-setting delivery",
+      "whole-output reference schema/MIME/cardinality owner confirmation",
+      "immutable task-specific grid association",
+      "package declared-image/source/proto equivalence"
+    ]
+  },
+  "accounting_implementation": {
+    "activated": false,
+    "canonical_existing_ledger_only": true,
+    "operator_transitions": [
+      {
+        "before": 13,
+        "after": 15,
+        "phase": "acceptance",
+        "max_calls": 2,
+        "max_reserved_nano": 10000000
+      },
+      {
+        "before": 15,
+        "after": 25,
+        "phase": "beta_after_confirmed_acceptance",
+        "max_calls": 10,
+        "max_reserved_nano": 50000000
+      }
+    ],
+    "per_request_nano": 5000000,
+    "global_limit_nano": 100000000,
+    "one_unresolved_permit_globally": true,
+    "transport": "proposed private loopback/SSH Unix socket, not provisioned or end-to-end qualified",
+    "legacy_database_guard_unchanged": true
+  },
+  "checks": {
+    "backend_focused": {
+      "passed": 111,
+      "warnings": 203,
+      "seconds": 49.36,
+      "real_provider_calls": 0,
+      "real_ledger_fixtures": false
+    },
+    "api_build": "passed",
+    "api_source_files_verified": 68,
+    "web_and_migration_source_unchanged": true,
+    "full_suite_repeated": false,
+    "source_secret_scan": "passed"
+  },
+  "preserved_real_accounting": {
+    "sha256": "c5d34d33914623978335c02471f635239b1fae29bee6fcf2f77411e930a8477f",
+    "before_after_bytes_identical": true,
+    "authority_active": false,
+    "count": 13,
+    "max_calls": 13,
+    "limit_nano": 100000000,
+    "held_nano": 4207375,
+    "conservative_remaining_nano": 95792625,
+    "outstanding_reservations": 0,
+    "new_calls": 0,
+    "new_spend_nano": 0
+  },
+  "operations": {
+    "provider_requests": 0,
+    "workflow_executions": 0,
+    "new_execution_grants": 0,
+    "contract_activations": 0,
+    "allowance_amendments": 0,
+    "ledger_copies": 0,
+    "production_deployments": 0,
+    "credential_login_retries": 0,
+    "new_profiles": 0,
+    "merges": 0,
+    "tracker_updates": 0
+  },
+  "remaining_gates": [
+    "Dutch owner selects family and confirms reviewed versioned contracts after required setting-delivery changes",
+    "Normal existing production account sign-in and exact reviewer identities",
+    "Cumulative draft-stack and accounting scope/protocol code review",
+    "Isolated end-to-end private authority transport/ACL and environment verification",
+    "Genuine bounded acceptance after all applicable prerequisites; no request yet",
+    "Partner immutable grid association before future runtime claims"
+  ],
+  "evidence_report": "DESIGN_AI_BETA_ENGINEERING_2026-11-11.md"
+}

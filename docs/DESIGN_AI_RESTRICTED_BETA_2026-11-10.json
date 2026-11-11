@@ -206,5 +206,13 @@
     "Complete isolated authenticated production-compatible controls verification and genuine-provider acceptance before any release"
   ],
   "production_deployed": false,
-  "new_grants": 0
+  "new_grants": 0,
+  "followups": [
+    {
+      "date": "2026-11-11",
+      "report": "DESIGN_AI_BETA_ENGINEERING_2026-11-11.md",
+      "evidence": "DESIGN_AI_BETA_ENGINEERING_2026-11-11.json",
+      "historical_fields_above_unchanged": true
+    }
+  ]
 }
