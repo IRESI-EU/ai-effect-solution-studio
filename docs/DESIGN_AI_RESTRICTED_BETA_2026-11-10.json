@@ -1,0 +1,210 @@
+{
+  "status": "NOT LIVE",
+  "candidate_source": "4ff3285bdaf6cd0951b946b1d1667212b197e74d",
+  "candidate_platform": "linux/amd64",
+  "candidate_images": [
+    {
+      "role": "api",
+      "image_id": "sha256:da0a7a87a9cebb479f6458491621cdd6856a2b45f2c5481dc1c999145e22823d"
+    },
+    {
+      "role": "web",
+      "image_id": "sha256:fba983fef01d461e79db22444c34c76b9737df84365d200972085672a4052614"
+    }
+  ],
+  "build_id": "XLX_batDPkRXN0X7avzOq",
+  "build_context_sha256": "a921b3b0fd3144993134b0536b424acb7d9fbf1d833f3a5e122515cb01099fa6",
+  "build_inputs": [
+    "sha256:8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1",
+    "sha256:2c9ec04228b8e223d8fcd6adf86188b5a591e814c43eb25317ac95d33a20c36a",
+    "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  ],
+  "verified_api_files": 65,
+  "verified_web_files": 74,
+  "synthetic_bootstrap_in_images": false,
+  "production": {
+    "api_image": "sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340",
+    "web_image": "sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f",
+    "web_build_id": "aLp4c1xkUjCM1v23PtrYY",
+    "database": "solution_studio",
+    "postgres_version": "16.15",
+    "tables": [
+      "audit_events",
+      "deployments",
+      "operation_contracts",
+      "services",
+      "solutions",
+      "user_sessions",
+      "users"
+    ],
+    "services": 37,
+    "solutions": 46,
+    "deployments": 54,
+    "users": 31,
+    "active_contracts": 0,
+    "owner_login_status": 401,
+    "authenticated_reviewer_identified": false,
+    "reviewers_enabled": [],
+    "sources": [
+      {
+        "role": "api",
+        "commit": "89072340c9a13f3aa49d3e433380de8928cc16dd"
+      },
+      {
+        "role": "web",
+        "commit": "df5b75873326ab56cad608990f3bd4add125bcc4"
+      }
+    ]
+  },
+  "real_catalogue": {
+    "status": 200,
+    "visible_service_count": 37,
+    "dutch_candidates": [
+      {
+        "id": "pkg-benchmarking1-cef41fb569",
+        "name": "Benchmarking1",
+        "operation_name": "RunBenchmark",
+        "status": "approved",
+        "lifecycle_status": "active",
+        "owner_node": "dutch",
+        "input_type": "RunBenchmarkRequest",
+        "output_type": "RunBenchmarkResponse"
+      },
+      {
+        "id": "pkg-data-synthesizer1-afa8ed26ac",
+        "name": "Data Synthesizer1",
+        "operation_name": "ConfigureAndSynthesize",
+        "status": "approved",
+        "lifecycle_status": "active",
+        "owner_node": "dutch",
+        "input_type": "ConfigureAndSynthesizeRequest",
+        "output_type": "ConfigureAndSynthesizeResponse"
+      },
+      {
+        "id": "svc-imported-benchmark-runner-runbenchmark",
+        "name": "benchmark-runner / RunBenchmark",
+        "operation_name": "RunBenchmark",
+        "status": "approved",
+        "lifecycle_status": "active",
+        "owner_node": "dutch",
+        "input_type": "benchmark-runner Input",
+        "output_type": "Workflow Output"
+      },
+      {
+        "id": "svc-imported-grid-synth-service-configureandsynthesize",
+        "name": "grid_synth_service / ConfigureAndSynthesize",
+        "operation_name": "ConfigureAndSynthesize",
+        "status": "approved",
+        "lifecycle_status": "active",
+        "owner_node": "dutch",
+        "input_type": "Workflow Start",
+        "output_type": "benchmark-runner Input"
+      }
+    ],
+    "contracts": [
+      {
+        "service_id": "pkg-benchmarking1-cef41fb569",
+        "status": 200,
+        "active_count": 0
+      },
+      {
+        "service_id": "pkg-data-synthesizer1-afa8ed26ac",
+        "status": 200,
+        "active_count": 0
+      },
+      {
+        "service_id": "svc-imported-benchmark-runner-runbenchmark",
+        "status": 200,
+        "active_count": 0
+      },
+      {
+        "service_id": "svc-imported-grid-synth-service-configureandsynthesize",
+        "status": 200,
+        "active_count": 0
+      }
+    ]
+  },
+  "migration_rehearsal": {
+    "backup_bytes": 86227,
+    "backup_sha256": "b5d862f4d99c57d3e4532166cc171a57b053f8eb439a8a90be2d0c5915b59764",
+    "migrations": [
+      {
+        "file": "001_auth_rbac.sql",
+        "sha256": "6e948517d0e56c16c9dd9c9d7b993fbdd82e0c6cdd11b34d38616b2cfc14c9c8"
+      },
+      {
+        "file": "002_rename_dutch_node.sql",
+        "sha256": "ddbbfea081202f55702c86dbf8c5c79bbe8e2a4dca68cd3d01860744bf77f024"
+      },
+      {
+        "file": "003_design_ai_pilot.sql",
+        "sha256": "573fb084bcc593ba85a214a135f8cb11e5b8d0d4ea6797af66e5a8544c92b37e"
+      },
+      {
+        "file": "004_instance_submissions.sql",
+        "sha256": "a1c50a7a02f9077eb91a3625db4b2067a12fd6d23969f85fadec09f833f481fb"
+      },
+      {
+        "file": "005_local_capture_records.sql",
+        "sha256": "22935283810c1086b39c1d6b192ecf31f11a1478961470f93980f2c5872896cc"
+      }
+    ],
+    "restores": 2,
+    "reapplications": 2,
+    "existing_rows_preserved": true,
+    "normalized_node_values": 0,
+    "temporary_databases_removed": 2
+  },
+  "checks": {
+    "backend_focused_before_last_provider_guard": 94,
+    "last_provider_guard_and_adapter": 20,
+    "frontend_focused": 14,
+    "actual_page_states": [
+      "disconnected",
+      "allowance_paused",
+      "synthetic"
+    ],
+    "typecheck": "passed",
+    "linux_next_build": "passed",
+    "sdk_requests": 0,
+    "full_inventory_repeated": false,
+    "reviews_submitted_pr8_through17": 0
+  },
+  "acceptance": {
+    "case_a": "NOT RUN: real catalogue prerequisite failed",
+    "case_b": "NOT RUN: real catalogue prerequisite failed",
+    "provider_calls": 0,
+    "workflows": 0,
+    "allowance_amendments": 0,
+    "checkpoints_created": 0,
+    "beta_activated": false
+  },
+  "accounting": {
+    "batch": {
+      "id": 1,
+      "closed": 0,
+      "limit_nano": 100000000,
+      "max_calls": 13
+    },
+    "count": 13,
+    "held_nano": 4207375,
+    "conservative_remaining_nano": 95792625,
+    "outstanding_reservations": 0,
+    "outstanding_nano": 0,
+    "input_tokens": 26575,
+    "output_tokens": 1771,
+    "sha256": "c5d34d33914623978335c02471f635239b1fae29bee6fcf2f77411e930a8477f",
+    "new_calls": 0,
+    "new_spend_nano": 0
+  },
+  "remaining_gates": [
+    "Owner-attested active native operation contracts for one selected real pair; prove seed 43 and whole-output compatibility without local capture-profile assumptions",
+    "Existing production owner sign-in and exact reviewer IDs remain unverified (retained temporary credential returned 401; no reset or retry)",
+    "Cumulative draft stack review; no submitted reviews and no self-approval",
+    "Supported audited 13-to-15 amendment and later bounded beta policy with one authoritative durable shared ledger across environments; current local-only guard must remain intact",
+    "Complete isolated authenticated production-compatible controls verification and genuine-provider acceptance before any release"
+  ],
+  "production_deployed": false,
+  "new_grants": 0
+}

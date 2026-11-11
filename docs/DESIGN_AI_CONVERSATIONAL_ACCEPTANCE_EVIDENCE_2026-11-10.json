@@ -597,5 +597,15 @@
     "new_recommendations": 0,
     "new_workflows": 0,
     "ledger_changes": 0
+  },
+  "restricted_beta_follow_up": {
+    "status": "NOT LIVE",
+    "candidate_source": "4ff3285bdaf6cd0951b946b1d1667212b197e74d",
+    "record": "DESIGN_AI_RESTRICTED_BETA_2026-11-10.json",
+    "actual_production_active_contracts": 0,
+    "owner_login_status": 401,
+    "provider_calls": 0,
+    "workflows": 0,
+    "ledger_changes": 0
   }
 }

@@ -229,3 +229,73 @@ It replaces the hard-coded textarea placeholder in apps/web/app/design-ai/page.t
 **Provider boundary:** genuine discovery/context/pins/settings prerequisites now pass, but the requested complete browser wording check does not. The two already grounded provider cases remain locked and **are not reported ready for spending approval**. Next change is to review the one-line wiring correction, verify the actual normal page under disconnected/exhausted conditions, and package an authorized corrected web source while preserving the synthetic walkthrough. No ledger amendment or paid request should be used to diagnose this display defect.
 
 Normal owner URL: **http://127.0.0.1:23121/design-ai**. Sign in as **aie37-designer@example.test**, reading the unchanged password privately from **local-backups/aie37-profile-20261028/reviewer.json** under the original checkout. The browser is left signed in on that normal workspace. Do not replay the owner's completed synthetic copy or submit chat.
+
+
+## Restricted live beta follow-up — NOT LIVE (10–11 November 2026)
+
+This record supplements all earlier results. The original failed normal-browser placeholder observation and screenshot remain intact. The maintained textarea now calls promptPlaceholder; a regression renders the **actual page** in disconnected, allowance-paused and synthetic configurations, checks the helper arguments, rendered placeholder and disabled Send, and forbids network access. These are agent checks, not owner or independent usability observations. The retained normal port-23121 build was not silently replaced by this candidate.
+
+**Candidate source:** 4ff3285bdaf6cd0951b946b1d1667212b197e74d (implementation 21320aa, packaging e732f6d, fail-closed accounting guard 4ff3285). The later evidence-only commit does not change application/build source. Both local **linux/amd64** images built successfully without pulls, downloads, service starts or dependency upgrades:
+
+| Component | Candidate image identity |
+|---|---|
+| API | sha256:da0a7a87a9cebb479f6458491621cdd6856a2b45f2c5481dc1c999145e22823d |
+| Web | sha256:fba983fef01d461e79db22444c34c76b9737df84365d200972085672a4052614 |
+
+Web BUILD_ID **XLX_batDPkRXN0X7avzOq**. Read-only, network-disabled utility containers verified all 65 exported API Python files and 74 web files against the committed-source manifest. Synthetic bootstrap HTML and the staging seed script are absent. Only installed dependencies were copied from retained content-addressed images; their source/application/configuration was not inherited. Python 3.12.14 / Node 24.15.0 base digests, dependency image IDs, lock validation and the source-only context hash are recorded in [machine evidence](DESIGN_AI_RESTRICTED_BETA_2026-11-10.json). Reproduce with deploy/restricted-beta/build_candidate.py --records <new-private-record-directory>; it refuses dirty source, changed dependency tags and overwriting existing image tags. The historical builds, images and profiles remain retained.
+
+### Actual production baseline and release gates
+
+Retained authorized SSH access succeeded to the server serving the public hostname. This is the existing Traefik/server deployment, not a Vercel Preview. HTTPS homepage, proxied health and public catalogue respond 200. Running identities:
+
+| Component | Actual served identity |
+|---|---|
+| API | 89072340c9a13f3aa49d3e433380de8928cc16dd; image sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340 |
+| Web | df5b75873326ab56cad608990f3bd4add125bcc4; image sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f |
+| Web build | aLp4c1xkUjCM1v23PtrYY |
+| Database | solution_studio, PostgreSQL 16.15; 37 services, 46 solutions, 54 deployments, 31 users |
+
+All 44 served Python source files and 32 served web source files examined match those Git revisions. This records the source files and the actual build identity; it does not assert that an older source tag alone proves a reproducible bundle. Authentication/ownership columns already exist in production; the previous historical claim that production lacked all authentication is not the current baseline. Cumulative differences still include 42 API and 46 web files, plus additive migrations 003–005. Secure cookies are enabled. The web uses its retained internal API target, API/database ports are private, web binds server loopback behind Traefik, and existing artifact/contract volumes remain mounted with their retained identities. No Clerk or infrastructure migration was introduced.
+
+One HTTPS login attempt using the existing private temporary credential record returned **401**. It was not retried, reset or replaced. No owner/reviewer account was activated or inferred from a local test account, role, email similarity or stored session. Existing identities, permissions and passwords remain unchanged. A failed-login audit entry may be recorded normally. The private credential record is under the original checkout at local-secrets/production-admin-credentials.txt; it is **not currently verified usable** and must not be copied into a deployment.
+
+PRs **#8–#17 are drafts with zero submitted reviews** at inspection. Main reports no branch protection and the repository lists no rulesets; that absence is not approval or permission to self-approve. The queried prior head's Vercel status/Preview Comments passed; those checks do not verify this server, migrations, restricted access or genuine AI. No stack PR was merged and no check requirement was modified. Final pushed-head checks must be assessed separately.
+
+### Real catalogue: no eligible production pair
+
+The normal public catalogue advertises two approved/active Dutch families:
+
+| Generator / ConfigureAndSynthesize | Benchmark / RunBenchmark |
+|---|---|
+| pkg-data-synthesizer1-afa8ed26ac | pkg-benchmarking1-cef41fb569 |
+| svc-imported-grid-synth-service-configureandsynthesize | svc-imported-benchmark-runner-runbenchmark |
+
+All four normal operation-contract endpoints return 200 with **zero active contracts**. The live database has **zero operation-contract records in total**, independently confirmed by read-only SQL and both backup restores. Similar operation names and legacy input/output labels do not establish native compatibility. No production pair ID, seed-43 accepted-settings proof, contract/version pins or validated whole-output binding exists. The local pair-a5c5793a07b3017820d63c7a and its capture-profile pins are not production authority and were not copied or substituted.
+
+**Immediate owner action:** have the Dutch service owner select the authoritative service family and provide reviewed, versioned contracts for those actual deployed operations. Required evidence is the precise accepted seed/settings schema (including whether 43 is valid), all required inputs, output/input slot semantics and schema/version fingerprints, representation/protocol/content type/cardinality, provenance and exact whole-output connection. Publish/activate only through normal owner-authorized contract governance after verification. Do not invent a 1.0.0 version or assume captured_grid exists in these services. If the upstream output is not accepted whole by the benchmark, an explicitly reviewed service/adapter change is required; this report does not declare that change implemented or portable. Runtime/scientific qualification is separate and remains unverified for new composition.
+
+### Focused security corrections and checks
+
+Restricted mode now uses exact **existing user IDs** on every Design with AI route, including config and the execution-review routes sharing pilot_user. An empty list fails closed; active-role checks remain authoritative and administrators have no allowlist bypass. The feature remains off in current production. No production reviewer IDs or provider key were configured.
+
+Generic preview now requires an authorized, non-legacy-owned deployment; an integrity-checked **server-recorded submitted execution** with matching workflow/owner/solution; an exact task from the same observed workflow; and the task's recorded output reference. File resolution must retain the workflow namespace after traversal/symlink resolution. Directory children must remain inside a verified owned output directory. Unknown legacy associations and unqualified remote preview transports return a truthful unavailable/conflict response. Arbitrary remote fetches are blocked. The browser supplies workflow identity. Existing protected qualified-capture downloads are unchanged.
+
+The review also found that POST /deployments could previously claim an otherwise unregistered runtime workflow ID. New registrations now require matching server-recorded submission authority and snapshot integrity; existing authorized records are preserved. An arbitrary client workflow ID cannot establish ownership. No legacy owner was guessed or backfilled. These repairs are **candidate source only**, not a claim that the live route has been repaired already.
+
+Checks: **94 focused backend tests** passed on the composition/preview/restriction/evidence source before the final provider-only guard; **20 restricted-mode/provider-adapter tests** then passed on the final source. The latter reruns overlapping restricted tests and adds the fail-closed cases; these counts are not summed as independent inventories. **14 frontend tests**, host typecheck and Linux Next production build passed; cached web steps were reused for the final API-only guard because web/build source was byte-identical. Deprecation warnings remain visible. An initial sandbox temporary-directory permission failure is retained; the permitted host runs passed. No complete unrelated inventory was repeated. Historical failures/results remain in their earlier records.
+
+A fresh **86,227-byte PostgreSQL custom backup**, SHA-256 b5d862f4d99c57d3e4532166cc171a57b053f8eb439a8a90be2d0c5915b59764, restored independently into two newly allocated local databases. All five reviewed migrations were applied twice on one restore. Existing rows were preserved except the declared Netherlands-to-Dutch normalization, if present; new tables/design_metadata were additive. The second restore exactly reproduced the original backup rows. Both temporary databases were removed. Production was not migrated; no local qualification data/accounts/captures entered production. These checks do not establish successful existing-owner login, complete production-compatible browser controls or PostgreSQL pair concurrency.
+
+### Spending and activation boundary
+
+**Both genuine-provider cases: NOT RUN.** Catalogue prerequisites failed before spending. No 13→15 amendment, new checkpoint, beta policy, execution grant, model request or workflow occurred. The locked exact two messages and expected outcomes in the earlier report remain unchanged.
+
+Read-only ledger inspection: **13/13**, US$0.10 ceiling, accounted conservative usage **US$0.004207375**, conservative monetary remainder **US$0.095792625**, **zero outstanding reservations**, 26,575 input / 1,771 output tokens across prior requests. This task used **0 calls / US$0**. These are durable ledger accounting figures, not a newly verified provider invoice. The ledger SHA-256 remains c5d34d33914623978335c02471f635239b1fae29bee6fcf2f77411e930a8477f. No funds or usage were reset.
+
+Current accounting supports only the earlier exact audited amendments/local database guards and checkpoints capped at three calls. It does **not** yet support the requested 13→15 amendment followed by ten beta calls or one authoritative ledger across this Windows profile and the live server. No ledger was copied/forked, mounted into production, enlarged or hand-edited. That narrow durable operator/accounting work remains a release prerequisite. Restricted mode now explicitly prevents an unbudgeted provider fallback if either accounting control is absent; the existing database-identity guard also continues to reject unsupported deployment scopes. No guard was relaxed to treat production as the local qualification database.
+
+Remain disabled: DESIGN_AI_ENABLED=false; for any later reviewed beta configuration use DESIGN_AI_RESTRICTED_BETA=true and exact established reviewer IDs, with keys server-side. Do not turn these on until current production login, owner-approved real contracts, cumulative reviews, complete isolated controls checks, audited shared accounting and genuine acceptance all pass. Paid acceptance pricing/context checks were not represented as passed after the catalogue stop.
+
+Private rollback/recovery evidence is under the original checkout at **local-backups/restricted-beta-release-20261110/**: production-before.custom, backup identity, private production inventory/source/auth response records, source comparison, rehearsal report, both build logs/manifests and image verification. The live API/web images and release directories are still running; **no production rollback is necessary because no deployment occurred**. For a later application rollback retain those exact authenticated image/configuration identities and additive history; never restore this older database over new user writes automatically. Retained local rollback remains under local-backups/normal-composition-update-20261110/.
+
+**Target only, not a launched beta:** https://platform.ai-effect.eu/design-ai. No beta reviewer access has been enabled. After the gates pass, the owner checklist is: (1) sign in with the existing approved account and review both grounded steps/settings/connection; (2) explicitly Create → Apply → Undo → Apply → Save/reopen; (3) request the unsupported three-step case and confirm clarification/no-match with no mutation or execution. No independent usability or production compatibility pass is claimed. No tracker changes, production deployment, merge, new account/permission, provider call or execution was performed.
