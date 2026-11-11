@@ -45,7 +45,13 @@ def configuration(provider: Provider = Depends(get_provider), user: User | None 
     if settings.design_ai_enabled:
         result.update(provider_name=getattr(provider, "name", "Test provider"),
                       provider_mode=getattr(provider, "mode", "test"), model=settings.design_ai_model or None)
-        if settings.design_ai_acceptance_budget_file:
+        from app.services.allowance_client import Client, requested
+        if requested(settings):
+            try:result["test_allowance"]=Client(settings).availability()
+            except HTTPException:
+                result["test_allowance"]={"can_request":False,"blocked_reason":"accounting_unavailable",
+                    "message":"AI messages paused: shared accounting is unavailable. Do not retry or use a local allowance."}
+        elif settings.design_ai_acceptance_budget_file:
             from app.services.design_ai_budget import Budget
             try:
                 result["test_allowance"] = Budget(settings.design_ai_acceptance_budget_file, task_limit_file=settings.design_ai_acceptance_task_limit_file).availability()

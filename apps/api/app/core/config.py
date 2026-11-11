@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     design_ai_acceptance_budget_file: str = ""
     # Optional immutable task ceiling, accounted in the same existing ledger.
     design_ai_acceptance_task_limit_file: str = ""
+    # Separate, explicit shared-authority scope. Never a local-budget fallback.
+    design_ai_budget_authority_url: str = ""
+    design_ai_budget_authority_socket: str = ""
+    design_ai_budget_authority_token: str = ""
+    design_ai_budget_authority_id: str = ""
+    design_ai_budget_scope: str = ""
+    design_ai_budget_consumer: str = ""
+    design_ai_budget_environment: str = ""
     design_ai_timeout_seconds: int = 40
     design_ai_context_chars: int = 48000
     design_ai_tool_limit: int = 8

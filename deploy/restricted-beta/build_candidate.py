@@ -29,13 +29,17 @@ DEPENDENCY_TAGS = {
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--records", type=Path, required=True)
+    parser.add_argument("--roles", choices=("api","web"), nargs="+", default=["api","web"],
+                        help="Build only changed components; retain other verified images without relabeling")
     args = parser.parse_args()
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT).strip():
         raise RuntimeError("Commit the reviewed candidate before building")
     source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    for reference in INPUTS:
+    selected_inputs=[INPUTS[i] for i in range(4) if ("api" if i in {0,2} else "web") in args.roles]
+    for reference in selected_inputs:
         subprocess.run(DOCKER + ["image", "inspect", reference], stdout=subprocess.DEVNULL, check=True)
     for tag, expected in DEPENDENCY_TAGS.items():
+        if ("api" if "-api:" in tag else "web") not in args.roles:continue
         actual = json.loads(subprocess.check_output(DOCKER + ["image", "inspect", tag]))[0]["Id"]
         if actual != expected:
             raise RuntimeError("Retained dependency tag drift: " + tag)
@@ -58,10 +62,10 @@ def main():
             info.mode = member.mode
             out.addfile(info, io.BytesIO(data))
     context = gzip.compress(buf.getvalue(), mtime=0)
-    result = {"source_commit":source,"platform":"linux/amd64","inputs":INPUTS,
+    result = {"source_commit":source,"platform":"linux/amd64","inputs":selected_inputs,
               "context_sha256":hashlib.sha256(context).hexdigest(),"manifest":manifest,"images":[],"services_started":False}
     (args.records / "build-inputs.json").write_text(json.dumps(result, indent=2))
-    for role in ("api", "web"):
+    for role in args.roles:
         tag = "ai-effect-beta-candidate-" + role + ":" + source[:12]
         if subprocess.run(DOCKER + ["image", "inspect", tag], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
             raise RuntimeError("Refusing to overwrite " + tag)

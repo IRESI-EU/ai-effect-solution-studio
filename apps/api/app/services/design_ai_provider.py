@@ -97,6 +97,11 @@ class Provider(Protocol):
 
 
 def configured() -> bool:
+    from app.services.allowance_client import Client, requested
+    if requested(settings):
+        try:Client(settings)
+        except HTTPException:return False
+        return bool(settings.openai_api_key and settings.design_ai_model)
     return bool(settings.openai_api_key and settings.design_ai_model
         and (not settings.design_ai_restricted_beta
              or (settings.design_ai_acceptance_budget_file and settings.design_ai_acceptance_task_limit_file)))
@@ -121,7 +126,13 @@ class OpenAIProvider:
     mode = "real"
 
     async def respond(self, context: dict) -> AssistantTurn:
-        if settings.design_ai_restricted_beta and (not settings.design_ai_acceptance_budget_file
+        from app.services.allowance_client import Client, requested
+        shared=requested(settings)
+        remote=Client(settings) if shared else None
+        if shared and (settings.design_ai_model!="gpt-6-luna" or settings.design_ai_reasoning_effort!="low"
+                or not 1<=settings.design_ai_max_output_tokens<=2000):
+            raise HTTPException(503,"Shared allowance requires exact Luna/low/Standard/output controls")
+        if not shared and settings.design_ai_restricted_beta and (not settings.design_ai_acceptance_budget_file
                 or not settings.design_ai_acceptance_task_limit_file):
             raise HTTPException(503, "Restricted beta requires durable shared accounting and a scoped allowance; provider requests are disabled")
         if not configured():
@@ -141,7 +152,11 @@ class OpenAIProvider:
         if settings.design_ai_reasoning_effort:
             options["reasoning"] = {"effort": settings.design_ai_reasoning_effort}
         budget, reservation = None, None
-        if settings.design_ai_acceptance_budget_file:
+        if shared:
+            budget=remote
+            input_bound = len(serialized.encode("utf-8")) + len(SYSTEM.encode("utf-8")) + len(json.dumps(AssistantTurn.model_json_schema()).encode("utf-8")) + 8192
+            reservation=budget.reserve(input_bound,output_limit)
+        elif settings.design_ai_acceptance_budget_file:
             from app.services.design_ai_budget import Budget
             url = make_url(settings.database_url)
             from app.services.qualified_demo import profile_enabled
@@ -161,6 +176,10 @@ class OpenAIProvider:
                     kwargs = dict(model=settings.design_ai_model, store=False, service_tier="default",
                         input=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": serialized}],
                         text_format=AssistantTurn, max_output_tokens=output_limit, **options)
+                    if shared:
+                        # Match the reviewed USD0.125/MTok conservative write bound;
+                        # no 12-hour cache writes or regional/priority endpoint.
+                        kwargs["prompt_cache_options"]={"ttl":"30m"}
                     if budget:
                         # Record usage even for refusals, incomplete output or a
                         # parser failure, before running the strict SDK parser.
@@ -186,7 +205,8 @@ class OpenAIProvider:
         except (TimeoutError, APITimeoutError) as exc:
             if budget:
                 budget.failed(reservation, "timeout_usage_unknown")
-            raise HTTPException(504, "The AI provider timed out. Your draft is unchanged; you can retry.") from exc
+            raise HTTPException(504, "The AI provider timed out. Stop; the shared reservation remains held. Do not retry." if shared
+                                else "The AI provider timed out. Your draft is unchanged; you can retry.") from exc
         except (APIError, ValidationError, ValueError) as exc:
             if budget:
                 budget.failed(reservation, "http_" + str(getattr(exc, "status_code", "unknown")))
