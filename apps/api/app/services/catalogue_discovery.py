@@ -107,6 +107,7 @@ def operation_projection(service, contract, definition):
         "role": definition["operation_role"], "inputs": slots(definition["inputs"]), "outputs": slots(definition["outputs"]),
         "settings": [{"name": name, "title": text(spec["title"], 120), "description": text(spec["description"], 240),
                       **{key: spec[key] for key in ("type", "required", "minimum", "maximum") if key in spec},
+                      **({"default": spec["default"]} if "default" in spec and (not isinstance(spec["default"],str) or text(spec["default"],80)==spec["default"]) else {}),
                       **({"choices": [text(v, 80) if isinstance(v, str) else v for v in spec["enum"][:16]]} if spec.get("enum") else {})}
                      for name, spec in properties.items()],
         "declared_connections": {"transport": definition.get("binding_transport"),
@@ -140,7 +141,8 @@ def registered(db, user):
             item = {"candidate_id": identifier("workflow", value["source"]["solution_id"]),
                 "revision": fingerprint, "kind": "registered_workflow", "label": text(facts["label"], 160),
                 "purpose": text(value["description"]), "creation_supported": True,
-                "required_inputs": [{"name": "seed", "required": True, "choices": facts["supported_seeds"]}],
+                "required_inputs": [{"name": "seed", "required": facts.get("declared_seed_default") is None, "choices": facts["supported_seeds"],
+                    **({"default":facts["declared_seed_default"]} if facts.get("declared_seed_default") is not None else {})}],
                 "runtime_checked": False, "steps": [{"title": text(s["title"], 160), "operation": text(s["operation"], 120)} for s in facts["steps"]],
                 "connection": text(facts["connection"]), "limitations": [text(v) for v in facts["limitations"]]}
             for service in services:
@@ -228,11 +230,15 @@ def selected(turn, advertised, db, user):
     if turn.composition_settings is not None:
         raise HTTPException(422, "Pair settings apply only to an advertised operation pair")
     if item["kind"] == "registered_workflow":
-        if turn.recommended_seed not in item["required_inputs"][0]["choices"]:
+        seed = turn.recommended_seed
+        if seed is None:
+            seed = item["required_inputs"][0].get("default")
+        if seed not in item["required_inputs"][0]["choices"]:
             raise HTTPException(422, "A supported seed is required. Ask a clarification before recommending this workflow.")
         registered_item = next(w for w in registered(db, actor(db, user)) if w["candidate_id"] == item["candidate_id"])
         # Preserve the established execution/results UI contract, with generic creation authority added.
-        return {**registered_item["_facts"], **item, "recommended_seed": turn.recommended_seed,
+        return {**registered_item["_facts"], **item, "recommended_seed": seed,
+            "defaults_used": ["seed"] if turn.recommended_seed is None else [],
             "recommendation_revision": item["revision"]}
     if turn.recommended_seed is not None:
         raise HTTPException(422, "A catalogue service has no registered workflow settings")

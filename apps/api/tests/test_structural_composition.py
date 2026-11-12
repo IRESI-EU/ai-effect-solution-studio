@@ -90,8 +90,8 @@ def test_main_pending_apply_undo_save_builder(composition):
     assert propose((client, current, provider)).status_code == 422  # existing analyzer
     context = provider.contexts[0]
     assert set(context) == {"request", "history", "draft", "configuration"}
-    assert context["history"] == []
-    assert not any(word in json.dumps(context) for word in ("internal_host", "internal_port", "password", "unrelated history", "artifact contents"))
+    assert context["history"] == [{"role":"user","content":"unrelated history"}]
+    assert not any(word in json.dumps(context) for word in ("internal_host", "internal_port", "password", "artifact contents"))
     assert len(context["configuration"]["compatible_candidates"]) == 1
 
 

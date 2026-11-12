@@ -60,6 +60,11 @@
 .ai-message.user { background:#6036cf; color:white; margin-left:20px; }
 .ai-message small { font-size:9px; opacity:.65; }
 .ai-message p { margin:5px 0 0; font-size:14px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+.ai-message-content ul, .ai-message-content ol { margin:6px 0; padding-left:22px; font-size:14px; line-height:1.6; overflow-wrap:anywhere; }
+.ai-message-content ul { list-style:disc; }
+.ai-message-content ol { list-style:decimal; }
+.ai-message-content pre { max-width:100%; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; margin:6px 0; padding:8px; background:#eee9f7; border-radius:5px; }
+.ai-message-content code { font-size:.95em; }
 .ai-chat-welcome h3 { font-size:15px; }
 .ai-chat-welcome p { font-size:12px; line-height:1.6; color:#7c6c8a; }
 .ai-discovery-card,.ai-proposal { margin:8px 10px; background:#faf7ff; border:1px solid #d8caee; border-radius:9px; padding:12px; font-size:12px; min-height:0; }

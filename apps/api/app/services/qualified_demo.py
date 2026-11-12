@@ -80,9 +80,14 @@ def capability(key, value, db, user):
     # Both legacy and generic Create use the same complete authority fingerprint.
     # Changes to runtime metadata also invalidate a review; no live probe occurs.
     revision = authority_revision(db, user, services, {"source": value["source"], "policy": policies()[key].model_dump()})
+    source_contract = db.get(OperationContract, chain[0]["data"]["operation_contract"]["contract_id"])
+    seed_spec = (source_contract.definition.get("execution_parameters") or {}).get("properties", {}).get("seed", {})
+    declared_default = seed_spec.get("default")
+    if type(declared_default) is not int or declared_default not in seed_spec.get("enum", []):
+        declared_default = None
     return {"key": key, "label": "Create and benchmark a sample electricity grid", "mechanism": "registered_workflow",
         "scope": "Recommend an existing qualified workflow; arbitrary AI composition is not supported",
-        "source_revision": revision, "current_seed": seed, "supported_seeds": [42, 43],
+        "source_revision": revision, "current_seed": seed, "supported_seeds": [42, 43], "declared_seed_default": declared_default,
         "steps": [{"title": "Create a sample grid", "operation": "ConfigureAndSynthesize"},
                   {"title": "Benchmark the grid produced by the first step", "operation": "RunBenchmark"}],
         "connection": "Benchmark the exact grid produced by the first step",

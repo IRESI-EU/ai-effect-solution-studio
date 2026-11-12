@@ -192,3 +192,30 @@ restore or allowance rollback is part of a source-only rollback. Restoring old
 application code must preserve the newer authority binding and fail closed.
 
 ![Prepared empty local pilot, with no human messages](evidence/local-pilot-20261112/ready-empty-conversation.png)
+
+## Later checkpoint: pilot paused and conversation repair
+
+The original handoff above remains historical. Participant 1/2 conversational
+failures prompted Stop-Pilot and a separately reviewed repair, not a successful
+new acceptance. **Provider is now disconnected, grants empty; 23/25 shared and
+8/10 pilot calls used, two remain, zero outstanding reservations.** The shared
+ledger and participant/engineering evidence are preserved unchanged.
+
+See [the diagnosis, source/build identity, preservation checks and bounded
+two-request retest runbook](CONVERSATION_REPAIR_2026-11-12.md) and
+[draft PR #21](https://github.com/IRESI-EU/ai-effect-solution-studio/pull/21),
+stacked on this PR #20. Source/tests were published before the later evidence.
+The normal API/web serve that repair with paid access disconnected; do not run
+Start-Pilot during paused review. The existing helper's optional private build
+pointer preserves the corrected build across later start/stop operations.
+No genuine-provider retest, workflow or participant replay occurred in the repair.
+
+### Subsequent bounded agent retest
+
+The [separate genuine retest](CONVERSATION_RETEST_2026-11-12.md) used the two
+remaining requests exactly once, with both dialogue cases passing. The controls
+result is partial: separate Apply was unavailable on an already-applied seed-42
+registered copy; Save/refresh and preservation checks passed. Provider is again
+disconnected, grant empty, **25/25 shared and 10/10 pilot**, zero outstanding,
+USD0.089396500 shared balance. No workflow was run and no earlier human observation
+was overwritten. Do not run Start-Pilot against this exhausted allowance.

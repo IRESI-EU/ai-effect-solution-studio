@@ -58,6 +58,9 @@ test("registered recommendation enables explicit Create only when its complete a
   assert.ok(!/<button[^>]+disabled/.test(render(item)));
   assert.match(render(item,true),/<button[^>]+disabled/);
   assert.match(render({...item,recommendation_revision:undefined}),/<button[^>]+disabled/);
+  const defaultReview=render({...item,recommended_seed:42,defaults_used:["seed"]});
+  assert.match(defaultReview,/declared default/);
+  assert.match(defaultReview,/42/);
 });
 
 test("a new pair renders the complete design-only proposal without claiming registration or execution", () => {

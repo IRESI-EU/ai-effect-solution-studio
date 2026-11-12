@@ -9,12 +9,13 @@ import "@xyflow/react/dist/style.css";
 import { useAuth } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
 import { allowanceFromError, type TestAllowance } from "./allowance";
-import { activeDraftId, activeConversationId, conversationUrl, conversationKey, conversationForCopy, draftUrl, readConversation, readRecommendation, recommendationCreation, type Message, type Activity, type Recommendation } from "./session";
+import { activeDraftId, activeConversationId, conversationUrl, conversationKey, conversationForCopy, draftUrl, readConversation, readRecommendation, recommendationCreation, boundedHistory, readClarification, type Clarification, type Message, type Activity, type Recommendation } from "./session";
 import "./workspace.css";
 import WorkspaceViewport from "./workspace-viewport";
 import ReviewDialog from "../../components/review-dialog";
 import {designStage,nodeReview,supportedExamples,nextWorkspaceArea,promptPlaceholder,type WorkspaceArea} from "./workspace-view";
 import DiscoveryRecommendation from "../../components/discovery-recommendation";
+import ConversationMessage from "../../components/conversation-message";
 import ExperimentExecution from "../../components/experiment-execution";
 import CompositionReview, { type CompositionReviewData } from "../../components/composition-review";
 import StructuralReview, { type StructuralReviewData } from "../../components/structural-review";
@@ -106,6 +107,7 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
   useEffect(()=>{try {const value=sessionStorage.getItem(`design-ai-area:${user?.id}`);if(value==="library"||value==="canvas"||value==="assistant")setArea(value);} catch {}},[user?.id]);
   useEffect(()=>{inspectorHeading.current?.focus();},[selectedId]);
   const [seed, setSeed] = useState("42");
+  const [clarification,setClarification] = useState<Clarification|null>(null);
   const controller = useRef<AbortController | null>(null);
   const inFlight = useRef(false);
   const chatEnd = useRef<HTMLDivElement | null>(null);
@@ -135,6 +137,7 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
         setDraft(selected); setMessages(retained?.messages || []); setActivity(retained?.activity || []);
         setPrompt(retained?.prompt || ""); setSeed(retained?.seedInput ?? String(appliedSeed(selected) ?? 42));
         setRecommendation(retained?.recommendation || null);
+        setClarification(retained?.clarification || null);
         setHistoryUnavailable(retained?.historyUnavailable ?? !!draftId); setConversationReady(true);
       }
     } catch (failure) {
@@ -148,9 +151,9 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
   }, [user?.id, draftId]);
   useEffect(() => {
     if (!sessionKey || !conversationReady || !user) return;
-    try { localStorage.setItem(sessionKey, JSON.stringify({ ownerId: user.id, draftId: draft?.id ?? null, messages, activity, prompt, seedInput: seed, historyUnavailable, recommendation })); }
+    try { localStorage.setItem(sessionKey, JSON.stringify({ ownerId: user.id, draftId: draft?.id ?? null, messages, activity, prompt, seedInput: seed, historyUnavailable, recommendation, clarification })); }
     catch { setConversationWarning("This browser cannot retain conversation history. Your draft is stored separately."); }
-  }, [sessionKey, draft?.id, conversationReady, messages, activity, prompt, seed, historyUnavailable, recommendation]);
+  }, [sessionKey, draft?.id, conversationReady, messages, activity, prompt, seed, historyUnavailable, recommendation, clarification]);
   useEffect(() => {
     if (!draft) return;
     if (lastRevision.current !== null && lastRevision.current !== draft.revision) setSeed(String(appliedSeed(draft) ?? 42));
@@ -198,6 +201,9 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
   async function send(text = prompt, retry = false) {
     if (!text.trim() || inFlight.current || !chatEnabled) return;
     const before = messages;
+    let history:Message[];
+    try { history=boundedHistory(before); }
+    catch(failure) {setError(failure instanceof Error?failure.message:"Conversation context unavailable; no request sent.");return;}
     if (!retry) setMessages((current) => [...current, { role: "user", content: text }]);
     setPrompt(""); setRetryPrompt("");
     if (!draft) setRecommendation(null);
@@ -205,11 +211,12 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
       const abort = new AbortController(); controller.current = abort;
       try {
         const value = await api("/chat", { message: text, draft_id: draft?.id || null, revision: draft?.revision ?? null,
-          history: before.slice(-6).map((message) => ({ ...message, content: message.content.slice(0, 2000) })) }, abort.signal);
+          history, clarification }, abort.signal);
         setMessages((current) => [...current, { role: "assistant", content: value.message }]);
         setActivity((current) => [...current, ...value.activity].slice(-60));
         if (value.draft) { setDraft(value.draft); setShowProposed(true); }
         setRecommendation(readRecommendation(value.recommendation));
+        setClarification(readClarification(value.clarification));
       } catch (failure) {
         if (abort.signal.aborted) {
           setMessages((current) => [...current, { role: "assistant", content: "Request cancelled. No changes have been applied." }]);
@@ -293,7 +300,7 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
       </section>
       <section className="ai-panel ai-conversation ai-area" id="area-assistant" data-active={area==="assistant"} aria-label="Design conversation">
         <div className="ai-panel-title"><h2><Sparkles size={16}/>Assistant</h2><span className="ai-tag">{config.provider_mode==="test"?"Prepared fixture":config.provider_name || "AI"}</span></div>
-        <div className="ai-chat-history" role="log" aria-live="polite">{!messages.length && <div className="ai-chat-welcome"><h3>{draft?"Review this design":"What would you like to explore?"}</h3><p>{config.provider_mode==="test"?"Use the prepared proposal and explicit controls. Chat is disabled.":"Describe your objective. Nothing changes until you review and apply a supported proposal."}</p></div>}{messages.map((message,index)=><div className={`ai-message ${message.role}`} key={index}><small>{message.role==="user"?"You":"Assistant"}</small><p>{message.content}</p></div>)}{busy && <p className="ai-thinking"><LoaderCircle size={14} className="ai-spin"/>{busy}…</p>}<div ref={chatEnd}/></div>
+        <div className="ai-chat-history" role="log" aria-live="polite">{!messages.length && <div className="ai-chat-welcome"><h3>{draft?"Review this design":"What would you like to explore?"}</h3><p>{config.provider_mode==="test"?"Use the prepared proposal and explicit controls. Chat is disabled.":"Describe your objective. Nothing changes until you review and apply a supported proposal."}</p></div>}{messages.map((message,index)=><div className={`ai-message ${message.role}`} key={index}><small>{message.role==="user"?"You":"Assistant"}</small>{message.role==="assistant"?<ConversationMessage content={message.content}/>:<p>{message.content}</p>}</div>)}{busy && <p className="ai-thinking"><LoaderCircle size={14} className="ai-spin"/>{busy}…</p>}<div ref={chatEnd}/></div>
         {!draft && recommendation && <DiscoveryRecommendation compact recommendation={recommendation} busy={!!busy} onCreate={()=>{chooseArea("assistant");requestSwitch({kind:"start",key:recommendation.key || "",carryDiscovery:true});}}/>}
         {draft?.pending && <section className="ai-proposal" aria-label="Proposed changes"><strong>Proposed changes</strong><div className="ai-review-body">{draft.pending.composition_review?<CompositionReview compact review={draft.pending.composition_review}/>:draft.pending.structural_review?<StructuralReview review={draft.pending.structural_review}/>:draft.pending.parameter_review?.changes.length?<InstanceSettingReview review={draft.pending.parameter_review}/>:<ul>{draft.pending.turn.edits.map((edit,index)=><li key={index}>{edit.kind.replaceAll("_"," ")}: {edit.value}</li>)}</ul>}{!draft.pending.validation.valid && <p role="alert">{draft.pending.validation.errors.join(" ")}</p>}</div><button className="ai-primary" disabled={!!busy || !draft.pending.validation.valid} onClick={()=>action("Applying",async()=>{setDraft(await api(`/drafts/${draft.id}/apply`,{revision:draft.revision,proposal_id:draft.pending!.id}));setMessages(current=>[...current,{role:"assistant",content:"Changes applied to the draft. Save when ready; no workflow executed."}]);})}>Apply changes</button></section>}
         {conversationWarning && <p className="ai-conversation-warning" role="status">{conversationWarning}</p>}

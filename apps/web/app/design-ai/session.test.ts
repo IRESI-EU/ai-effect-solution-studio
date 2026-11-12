@@ -1,6 +1,24 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { activeDraftId, activeConversationId, conversationUrl, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation, recommendationCreation } from "./session.ts";
+import {boundedHistory,readClarification} from "./session.ts";
+
+test("bounded history preserves the entire clarification and answer sequence or refuses without truncation",()=>{
+  const messages=Array.from({length:10},(_,i)=>({role:i%2?"assistant" as const:"user" as const,content:i===0?"Original benchmark objective":i===6?"What does the sample setting mean?":i===8?"42":"Explanation "+i}));
+  assert.deepEqual(boundedHistory(messages),messages);
+  assert.equal(boundedHistory(messages)[0].content,"Original benchmark objective");
+  assert.throws(()=>boundedHistory([...messages,...messages]),/preserved/);
+  assert.throws(()=>boundedHistory([{role:"assistant",content:"x".repeat(5001)}]),/no AI request/);
+  assert.throws(()=>boundedHistory(Array.from({length:4},()=>({role:"user",content:"x".repeat(4001)}))),/preserved/);
+  const pending={request:"Design a sample benchmark",question:"Which sample seed?"};
+  const stored={ownerId:"designer",draftId:null,messages,activity:[],prompt:"",seedInput:"42",historyUnavailable:false,clarification:pending};
+  assert.deepEqual(readConversation(JSON.stringify(stored),"designer",null)?.clarification,pending);
+  assert.equal(readClarification({...pending,candidate_id:"invented"}),null);
+  assert.equal(readConversation(JSON.stringify(stored),"another",null),null);
+  const next=conversationForCopy("designer","new-draft",stored,false);
+  assert.deepEqual(next.messages,[]);
+  assert.equal(next.clarification,undefined);
+});
 
 test("fresh conversation URLs isolate discovery and preserve accepted work and legacy history", () => {
   const first="11111111-1111-4111-8111-111111111111", second="22222222-2222-4222-8222-222222222222";

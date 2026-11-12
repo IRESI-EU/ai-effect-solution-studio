@@ -1,0 +1,67 @@
+Browser tab: 12, Title: "AI-EFFECT Web portal", URL: "http://127.0.0.1:23121/design-ai?conversationId=e4cc1cfc-d0f9-4fda-b3aa-dc5953a8627c".
+1 AXWebArea AI-EFFECT Web portal, URL: 127.0.0.1:23121/design-ai?conversationId=e4cc1cfc-d0f9-4fda-b3aa-dc5953a8627c
+	2 container
+		3 link Description: AI-EFFECT home, Value: 127.0.0.1:23121/
+		4 text WORKSPACE
+		5 container Primary navigation
+			6 link Description: Dashboard, Value: 127.0.0.1:23121/
+			7 link Description: Catalogue, Value: 127.0.0.1:23121/catalogue
+			8 link Description: Build solution, Value: 127.0.0.1:23121/builder
+			23 link Description: Design with AI, Value: 127.0.0.1:23121/design-ai
+			9 link Description: Solutions, Value: 127.0.0.1:23121/solutions
+			10 link Description: Deployments, Value: 127.0.0.1:23121/deployments
+			11 link Description: My account, Value: 127.0.0.1:23121/account
+		12 text WP3 Orchestrator Workflow submissions are checked by the backend before they reach WP3. Connection Checked on deploy
+		13 link Description: Dutch workflow qualification reviewer Solution Designer, Value: 127.0.0.1:23121/account
+		14 button Sign out
+	15 container
+		16 text Trusted Energy AI Marketplace Discover, compose, validate, and run energy AI services Restricted beta candidate · not deployed
+		17 container Signed in as Dutch workflow qualification reviewer
+			18 text DU
+	19 container
+		24 heading Design with AI, Value: 1
+			25 text Design with AI
+		26 text New workflow
+		27 text Empty
+		28 button New conversation
+		29 button Technical details
+		30 text Restricted local design-only pilot · Supervised use through one existing reviewer account. Saving does not execute a workflow. Saving does not execute a workflow Manual AI messages enabled
+		31 container Description: Authorised library, ID: area-library
+			32 text Catalogue & library 1
+			33 heading IN THIS REVIEW, Value: 2
+				34 text IN THIS REVIEW
+			35 text No workflow selected. Review a recommendation or an available creation path.
+			64 heading AVAILABLE CREATION PATHS, Value: 2
+				65 text AVAILABLE CREATION PATHS
+			66 button Dutch Node Saved workflow design from Builder Create a separate copy
+				67 text Dutch Node
+				68 text Saved workflow design from Builder
+				69 text Create a separate copy
+			36 button (collapsed) Resume (6), Secondary Actions: Expand
+				37 text Resume (
+				38 text 6
+				39 text )
+			40 text Additions require a supported proposal. Catalogue metadata does not establish live availability.
+		41 container Description: Workflow preview, ID: area-canvas
+			42 heading Workflow, Value: 2
+				43 text Workflow
+			44 text No design created
+			45 container
+				46 heading Your workflow starts here, Value: 2
+					47 text Your workflow starts here
+				48 text Review a supported recommendation in the assistant before creating a design.
+			49 text Design view · nothing executes here Select a step to inspect settings
+		50 container Description: Design conversation, ID: area-assistant
+			51 heading Assistant, Value: 2
+				52 text Assistant
+			53 text OpenAI
+			54 container
+				70 text You What benchmarking capability is available, and what does its seed setting mean? Please explain before recommending a design. Assistant The available benchmarking capability is the existing registered workflow “Create and benchmark a sample electricity grid.” It creates a sample grid, then benchmarks that exact grid. It is a synthetic-grid demonstration with a no-op benchmark agent; KPI units and scientific validity are not established, and production compatibility and runtime availability are unverified. Its seed setting controls randomness in sample generation. The supported seeds are 42 and 43, with 42 as the advertised default. Choosing the other seed selects another sample; it does not indicate better quality or a different benchmark version. The workflow’s expected results or downloads are not specified in the available information, and a recommendation does not create or run it. I’ll explain this first; I haven’t recommended a design yet.
+			58 button Which authorised catalogue capabilities match my objective?
+			59 container
+				60 text Describe your objective or request a change
+				61 text entry area (settable) Describe your objective or request a change, ID: design-prompt
+				62 text Review before Apply. Each Send uses a manual AI message.
+				63 button (disabled) Send request
+
+The focused UI element is 1 AXWebArea AI-EFFECT Web portal, URL: 127.0.0.1:23121/design-ai?conversationId=e4cc1cfc-d0f9-4fda-b3aa-dc5953a8627c

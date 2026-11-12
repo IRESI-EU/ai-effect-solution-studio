@@ -177,7 +177,11 @@ def test_registered_dutch_candidate_uses_existing_create_apply_undo_save_path(qu
 
 
 def test_missing_seed_requires_clarification_not_a_guessed_recommendation(qualified):
-    q = qualified; item = project(q["db"])["registered_workflows"][0]
+    q = qualified
+    from copy import deepcopy
+    c=q["db"].get(OperationContract,"qualified-synth");d=deepcopy(c.definition)
+    d["execution_parameters"]["properties"]["seed"].pop("default");c.definition=d;q["db"].commit()
+    item = project(q["db"])["registered_workflows"][0]
     decision(q["provider"], "supported_recommendation", item["candidate_id"])
     assert q["client"].post("/design-ai/chat", json={"message": "Generate and benchmark a grid."}).status_code == 422
     decision(q["provider"], "clarification_needed", question="Which supported seed should the grid use: 42 or 43?")

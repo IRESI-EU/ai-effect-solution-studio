@@ -16,7 +16,7 @@ class Edit(StrictModel):
 
 
 class DiscoveryDecision(StrictModel):
-    outcome: Literal["clarification_needed", "supported_recommendation", "no_supported_match"]
+    outcome: Literal["answer_only", "clarification_needed", "supported_recommendation", "no_supported_match"]
     candidate_id: str | None = Field(default=None, max_length=100)
     question: str | None = Field(default=None, max_length=500)
 
@@ -54,6 +54,19 @@ class AssistantTurn(StrictModel):
     discovery: DiscoveryDecision | None = None
     composition_settings: CompositionSettings | None = None
 
+    @model_validator(mode="after")
+    def answer_has_no_authority(self):
+        if self.discovery and self.discovery.outcome == "answer_only" and (
+            self.edits or self.template_key is not None or self.recommended_seed is not None or self.composition_settings is not None
+        ):
+            raise ValueError("An answer-only turn cannot select a creation path, supply settings or propose edits")
+        return self
+
+
+class PendingClarification(StrictModel):
+    request: str = Field(min_length=1, max_length=4000)
+    question: str = Field(min_length=1, max_length=500)
+
 
 class ChatRequest(StrictModel):
     message: str = Field(min_length=1, max_length=4000)
@@ -61,6 +74,8 @@ class ChatRequest(StrictModel):
     revision: int | None = None
     # History is context only. It never supplies authorization or executable state.
     history: list[dict[str, str]] = Field(default_factory=list, max_length=12)
+    # Untrusted conversational context only, never settings or creation authority.
+    clarification: PendingClarification | None = None
 
 
 class RevisionRequest(StrictModel):
