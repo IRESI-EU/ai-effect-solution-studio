@@ -109,12 +109,13 @@ def test_ambiguous_fixture_clarifies_without_mutation_and_context_is_scoped(scen
     assert client.get(f"/design-ai/drafts/{draft['id']}").json()["design"] == draft["design"]
     context = provider.contexts[0]
     assert set(context) == {"request", "history", "configuration", "draft"}
-    assert context["history"] == [] and context["draft"] == {"revision": 0, "editing_scope": "instance_settings"}
+    assert context["history"] == [{"role":"user","content":"unrelated old private data"}]
+    assert context["draft"] == {"revision": 0, "editing_scope": "instance_settings"}
     instances = context["configuration"]["instances"]
     assert [(n["node_id"], n["label"], n["parameters"]["how_many"]) for n in instances] == [
         ("topology-first", "First topology step", 1), ("topology-second", "Second topology step", 2)]
     assert instances[1]["definition"]["properties"]["how_many"]["maximum"] == 20
-    assert not any(key in json.dumps(context) for key in ("internal_host", "internal_port", "password", "artifact", "unrelated old private data"))
+    assert not any(key in json.dumps(context) for key in ("internal_host", "internal_port", "password", "artifact"))
 
 
 @pytest.mark.parametrize("parameters", [{"unknown": 4}, {"how_many": "4"}, {"how_many": True}, {"how_many": 21}, {"how_many": None}])

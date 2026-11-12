@@ -1,11 +1,26 @@
 import type { CompositionReviewData } from "../../components/composition-review";
 export type Message = { role: "user" | "assistant"; content: string };
+export type Clarification = { request: string; question: string };
 export type Activity = { tool: string; status: string; summary: string };
 export type Recommendation = { mechanism?: "registered_workflow" | "catalogue_service" | "catalogue_composed"; source_revision?: string; recommended_seed?: 42 | 43; key?: string; label: string; steps: { title: string; operation: string }[]; connection: string; expected_result_view: string[]; optional_downloads: string[]; availability: string; limitations: string[];
-  composition_review?: CompositionReviewData; composition_settings?: {first: {name:string;value:string|number|boolean}[];second: {name:string;value:string|number|boolean}[]}; creation_request_id?: string;
+  defaults_used?: string[]; composition_review?: CompositionReviewData; composition_settings?: {first: {name:string;value:string|number|boolean}[];second: {name:string;value:string|number|boolean}[]}; creation_request_id?: string;
   candidate_id?: string; recommendation_revision?: string; creation_supported?: boolean; purpose?: string; contract_resolution?: string; input_requirements_known?: boolean; runtime_checked?: boolean; execution_supported?: boolean;
   required_inputs?: { name: string; purpose?: string; choices?: number[] }[]; supported_settings?: { name: string; title: string; description: string }[] };
-export type Conversation = { ownerId: string; draftId: string | null; messages: Message[]; activity: Activity[]; prompt: string; seedInput: string; historyUnavailable: boolean; recommendation?: Recommendation | null };
+export type Conversation = { ownerId: string; draftId: string | null; messages: Message[]; activity: Activity[]; prompt: string; seedInput: string; historyUnavailable: boolean; recommendation?: Recommendation | null; clarification?: Clarification | null };
+
+export function readClarification(value: unknown): Clarification | null {
+  if (!value || typeof value !== "object") return null;
+  const item=value as Clarification;
+  return Object.keys(item).sort().join(",")==="question,request" && typeof item.request==="string" && item.request.length>0 && item.request.length<=4000
+    && typeof item.question==="string" && item.question.length>0 && item.question.length<=500 ? {request:item.request,question:item.question} : null;
+}
+
+export function boundedHistory(messages: Message[]): Message[] {
+  if (messages.length>12 || messages.some(m=>m.content.length>5000) || messages.reduce((n,m)=>n+m.content.length,0)>16000) {
+    throw new Error("Conversation context is full. Your messages are preserved. Start a New conversation; no AI request was sent.");
+  }
+  return messages.map(({role,content})=>({role,content}));
+}
 
 // Only an explicit URL selects active work. The legacy last-draft pointer is retained,
 // but is never used to activate a draft on the starting page.
@@ -43,7 +58,8 @@ export function readConversation(raw: string | null, ownerId: string, draftId: s
       || !Array.isArray(value.messages) || !Array.isArray(value.activity)
       || !value.messages.every((m: Message) => m && ["user", "assistant"].includes(m.role) && typeof m.content === "string")
       || !value.activity.every((a: Activity) => a && typeof a.tool === "string" && typeof a.status === "string" && typeof a.summary === "string")) return null;
-    return { ...value, ...(value.recommendation === undefined ? {} : { recommendation: readRecommendation(value.recommendation) }) };
+    return { ...value, ...(value.recommendation === undefined ? {} : { recommendation: readRecommendation(value.recommendation) }),
+      ...(value.clarification === undefined ? {} : {clarification:readClarification(value.clarification)}) };
   } catch { return null; }
 }
 

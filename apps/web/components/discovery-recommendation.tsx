@@ -14,6 +14,7 @@ export default function DiscoveryRecommendation({ recommendation: item, busy, on
     {item.purpose && !(compact && composed) && <p>{item.purpose}</p>}
     {composed && item.composition_review ? <CompositionReview review={item.composition_review} compact={compact} /> : registered ? <>
       <p>Use the existing registered workflow with seed <strong>{item.recommended_seed}</strong>. Its supported steps and connection stay fixed.</p>
+      {item.defaults_used?.includes("seed") && <p>Seed {item.recommended_seed} is the declared default. You can change it in the draft's supported input settings before saving.</p>}
       <ol>{item.steps.map(step => <li key={step.operation}>{step.title}</li>)}</ol>
       <p>{item.connection}.</p>
       <p>Expected after successful execution and capture: {item.expected_result_view.join(", ")}.</p>

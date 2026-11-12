@@ -128,6 +128,8 @@ async def save(draft_id: str, payload: RevisionRequest, db: Session = Depends(ge
 @router.post("/chat")
 async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get_db), user: User = Depends(pilot_user), provider: Provider = Depends(get_provider)):
     context = {"request": payload.message, "history": []}
+    if payload.clarification:
+        context["pending_clarification"] = payload.clarification.model_dump()
     base_revision = None
     for item in payload.history:
         if set(item) != {"role", "content"} or item["role"] not in {"user", "assistant"} or len(item["content"]) > 5000:
@@ -156,7 +158,6 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             if row.state.get("source", {}).get("kind") == "catalogue_composed":
                 context["configuration"] = await tools.call("inspect_catalogue_composition", {})
                 context["draft"] = {"revision": row.revision, "editing_scope": "catalogue_pair", "source_kind": "catalogue_composed"}
-                context["history"] = []
             else:
                 key = row.state["template_key"]
                 if not focused:
@@ -175,7 +176,6 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                     context["draft"] = {"revision": row.revision, "editing_scope": "instance_settings"}
                     if design.get("editing_scope") == "append_bound_operation":
                         context["draft"] = {"id": row.id, "revision": row.revision, "editing_scope": "append_bound_operation"}
-                    context["history"] = []  # Each edit is grounded in the current authorized instance projection.
         context = redact_context(context)
         try:
             async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
@@ -189,7 +189,8 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
         service.enabled()
         if await request.is_disconnected():
             raise HTTPException(499, "Request cancelled; no proposal was stored")
-        result = {"message": turn.message, "recommendation": None, "draft": None}
+        result = {"message": turn.message, "recommendation": None, "draft": None,
+                  "clarification": payload.clarification.model_dump() if payload.clarification else None}
         if not payload.draft_id:
             if turn.discovery is not None:
                 from app.services.catalogue_discovery import selected
@@ -199,21 +200,25 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                 # Selection/question comes from the provider. Capability claims and
                 # creation authority come from validated server facts, not free prose.
                 if turn.discovery.outcome == "clarification_needed":
-                    result["message"] = turn.discovery.question
-                elif turn.discovery.outcome == "no_supported_match":
-                    result["message"] = "No supported match was identified in the advertised catalogue capabilities. No experiment was created. You can clarify your objective or data source."
-                else:
-                    item = result["recommendation"]
-                    result["message"] = (f"Relevant capability: {item['label']}. " +
-                        ("Review the new two-operation design before explicitly creating a draft. " if item.get("kind") == "catalogue_composed" else
-                         "Review the registered workflow before explicitly creating a copy. " if item["creation_supported"] else
-                         "This catalogue service has no supported experiment creation path here. ") +
-                        "Runtime and data availability have not been checked.")
+                    question = turn.discovery.question.strip()
+                    # Preserve the explanation and append the structured question once.
+                    if question not in turn.message:
+                        result["message"] = turn.message.rstrip() + "\n\n" + question
+                    result["clarification"] = {"request": payload.clarification.request if payload.clarification else payload.message,
+                                               "question": question}
+                elif turn.discovery.outcome != "answer_only":
+                    result["clarification"] = None
+                if turn.discovery.outcome == "no_supported_match":
+                    # No-match prose has no grounded selection to support capability
+                    # claims. Keep the honest server limitation; explanations have
+                    # their own answer-only outcome without creation authority.
+                    result["message"] = "No supported catalogue match was found for this request. No design was created or changed."
                 result["activity"] = tools.activity
                 return result
             if turn.composition_settings is not None:
                 raise HTTPException(422, "Pair settings require a structured catalogue-pair recommendation")
             if turn.edits:
+                result["clarification"] = None
                 raise HTTPException(422, "Create an editable draft before proposing changes")
             if turn.template_key:
                 # Compatibility for existing clients/providers; the new discovery prompt
