@@ -6,6 +6,7 @@ from app.models.execution_submission import ExecutionSubmission
 from app.models.deployment import Deployment
 
 assert settings.database_url.endswith('/pt_parameter_sandbox')
+from app.main import app  # Register the complete existing ORM model graph.
 with SessionLocal() as db:
     assert db.query(ExecutionSubmission).count()==0 and db.query(Deployment).count()==0
     records=db.query(Service).all()
