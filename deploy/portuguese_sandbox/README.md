@@ -11,7 +11,7 @@ WP3 draft PR #4 stacks on PR #3.
 - Adapter source: be8722c01dc41b26b083302531e4a780bdec8598
 - Adapter image: sha256:76f7eea8d48eff6aeb3182dc755cd70d195899404c17785ce73a5766b0352bba
 - Retained web: sha256:913b314cc09a974b7dddcc1a85bc889bda599694970aed80c7b7b758e68d8eeb
-  source f1e49485e37e; BUILD_ID 6y7rN_AJRS7b9xNgfh1Ab. Existing generic Builder controls are reused.
+  source f1e49485e37eac5a2e5963695b4a06efdd270f5c; BUILD_ID 6y7rN_AJRS7b9xNgfh1Ab. Existing generic Builder controls are reused.
 - Original ML image: sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f
   (pt33-tef-integrated-synthetic-data:latest). Unchanged, separate model volume.
 - Original sidecar image preserved, unused: sha256:f7202018956f326c6dc62d3b7b699776d32dcaed54bd4eae0653ebac63d5a2e8.
@@ -86,3 +86,55 @@ single-principal server-derived namespace, not a hosted multitenant solution.
 Hosted testing needs service-owner/API approval, private auth/storage/network
 design, pinned portable artifacts and a separate bounded execution plan.
 Execution evidence will be appended only after actual outcomes.
+
+## Completed bounded local verification
+
+See verification.json and docs/PORTUGUESE_PARAMETER_SANDBOX_2026-11-12.md.
+One training and two generation workflows completed. Counts 10/20 produced
+1000/2000 rows, independently counted by example markers. The first immutable
+snapshot/output and model hash survived the second Save/run unchanged.
+The journal is exhausted; the worker is stopped with zero queued items.
+Do not use the initial activation sequence again or submit another workflow.
+
+Existing-profile restart (original checkout in $root):
+
+```powershell
+$records = Join-Path $root 'local-backups/portuguese-sandbox-20261112'
+$cfg = Join-Path $records 'profile/compose.private.json'
+docker --context desktop-linux compose -f $cfg start postgres redis
+docker --context desktop-linux compose -f $cfg exec -T postgres pg_isready -U pt_sandbox -d pt_parameter_sandbox
+# Continue only after accepting connections:
+docker --context desktop-linux compose -f $cfg start orchestrator ml pt-adapter api web
+docker --context desktop-linux compose -f $cfg ps --all
+# Keep worker stopped. Do not rerun initialize/bootstrap.
+```
+
+Read-only evidence checks from this review checkout with the installed Python:
+
+```powershell
+$env:PT_SANDBOX_RECORDS = $records
+python deploy/portuguese_sandbox/bounded_jobs.py observe train
+python deploy/portuguese_sandbox/bounded_jobs.py observe generate10
+python deploy/portuguese_sandbox/bounded_jobs.py observe generate20
+python deploy/portuguese_sandbox/collect_artifact.py generate10 after20
+python deploy/portuguese_sandbox/collect_artifact.py generate20 final
+```
+
+The bounded operator's submit command is intentionally one-shot and retains an
+attempt marker before network dispatch; it is not part of restart or review.
+prepare_designs.py is the source of the initial non-executing authorized API
+preparation, with explicit PT_SANDBOX_RECORDS and PT_SANDBOX_WP3_CHECKOUT paths.
+Never rerun it against this completed profile. export_evidence.py reads the
+existing ledger only via SQLite mode=ro and requires an explicit
+PT_SANDBOX_LEDGER_READONLY path; the runtime never mounts that ledger.
+
+WP3 experimental/portuguese_parameters/build_images.py preserves the offline
+source-archive packaging procedure with explicit --role, --revision and --records.
+It verifies retained dependency IDs and refuses to overwrite existing image tags.
+The two recorded image builds used adapter revision be8722c and WP3 a8b529e;
+do not rebuild or run anything merely to review these results.
+
+The generic results page remains truthful: immutable parameters are validated,
+while algorithm consumption is unavailable in that generic evidence adapter.
+Correlated experimental artifact/model proof is recorded separately; no Dutch
+qualification or generic artifact-preview guard was weakened.
