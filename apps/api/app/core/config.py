@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     # Separate, explicit shared-authority scope. Never a local-budget fallback.
     design_ai_budget_authority_url: str = ""
     design_ai_budget_authority_socket: str = ""
+    # Optional private CA bundle for a verified HTTPS accounting authority.
+    design_ai_budget_authority_ca_file: str = ""
     design_ai_budget_authority_token: str = ""
     design_ai_budget_authority_id: str = ""
     design_ai_budget_scope: str = ""

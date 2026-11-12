@@ -1,6 +1,8 @@
 """No ledger replica, local fallback, redirects, environment proxy or retries."""
 from urllib.parse import urlsplit
 from pathlib import PurePosixPath
+from pathlib import Path
+import ssl
 from uuid import uuid4
 
 import httpx
@@ -11,7 +13,7 @@ from app.services.shared_allowance import CONTROLS, database_scope, digest, safe
 
 def requested(settings):
     return any(getattr(settings,"design_ai_budget_"+name) for name in (
-        "authority_url","authority_socket","authority_token","authority_id","scope","consumer","environment"))
+        "authority_url","authority_socket","authority_ca_file","authority_token","authority_id","scope","consumer","environment"))
 
 
 class Client:
@@ -38,10 +40,22 @@ class Client:
         self.claims={"scope":settings.design_ai_budget_scope,"consumer_id":settings.design_ai_budget_consumer,
                      "environment":settings.design_ai_budget_environment,"database_scope":db_scope}
         self.transport=transport
+        self.verify=True
+        ca_file=settings.design_ai_budget_authority_ca_file
+        if ca_file:
+            try:
+                path=Path(ca_file)
+                if socket or url.scheme!="https" or not path.is_absolute() or not path.is_file() or path.stat().st_size>1_048_576:
+                    raise ValueError("Explicit HTTPS CA file required")
+                self.verify=ssl.create_default_context()
+                self.verify.load_verify_locations(cafile=str(path))
+            except (OSError,ValueError,ssl.SSLError) as exc:
+                raise HTTPException(503,"Accounting HTTPS CA unavailable or invalid; no fallback") from exc
         self.key=None
 
     def call(self, operation, **body):
-        transport=self.transport or httpx.HTTPTransport(uds=self.settings.design_ai_budget_authority_socket or None,retries=0,trust_env=False)
+        transport=self.transport or httpx.HTTPTransport(uds=self.settings.design_ai_budget_authority_socket or None,
+            verify=self.verify,retries=0,trust_env=False)
         try:
             with httpx.Client(base_url=self.settings.design_ai_budget_authority_url,transport=transport,
                     headers={"Authorization":"Bearer "+self.settings.design_ai_budget_authority_token},

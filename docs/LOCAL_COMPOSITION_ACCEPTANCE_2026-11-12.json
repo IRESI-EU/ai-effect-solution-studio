@@ -1,0 +1,288 @@
+{
+  "scope": "Genuine local conversational design acceptance; no execution or production launch",
+  "baseline": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d",
+  "source_checkpoints": [
+    "d950cb3356246cd756fa6e377644b881981b2e1b",
+    "df6d860f608fed9569203e1d9a5173ba8a51fca8",
+    "Evidence checkpoint is the commit containing this record; see PR #19 history"
+  ],
+  "served_components": [
+    {
+      "role": "api",
+      "source": "d950cb3356246cd756fa6e377644b881981b2e1b",
+      "image": "sha256:dd79cf9a36ac9b81b97c20eee17d5b08e9e404aa98934a3adf2b1036afcc77d4",
+      "verified_python_files": 68
+    },
+    {
+      "role": "web",
+      "source": "4ff3285bdaf6cd0951b946b1d1667212b197e74d",
+      "image": "sha256:fba983fef01d461e79db22444c34c76b9737df84365d200972085672a4052614",
+      "build_id": "XLX_batDPkRXN0X7avzOq",
+      "unchanged_web_source": true
+    }
+  ],
+  "catalogue": {
+    "candidate_id": "pair-a5c5793a07b3017820d63c7a",
+    "kind": "catalogue_composed",
+    "label": "Generate synthetic power grid \u2192 Benchmark generated grid",
+    "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline. Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+    "creation_supported": true,
+    "runtime_checked": false,
+    "execution_supported": false,
+    "revision": "26add1b21313352f06577e801fb4178c012cd3b4ed7f3d0505d5e7401a10a0db",
+    "steps": [
+      {
+        "step": "first",
+        "title": "Generate synthetic power grid",
+        "operation": "ConfigureAndSynthesize",
+        "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+        "settings": [
+          {
+            "name": "seed",
+            "title": "Random seed",
+            "description": "Seed passed to the pinned Dutch grid synthesis algorithm. Only the two supported pilot seeds are exposed.",
+            "type": "integer",
+            "required": false,
+            "default": 42,
+            "enum": [
+              42,
+              43
+            ]
+          }
+        ]
+      },
+      {
+        "step": "second",
+        "title": "Benchmark generated grid",
+        "operation": "RunBenchmark",
+        "purpose": "Imported from WP3 blueprint Dutch Node Synth-Benchmark Pipeline.",
+        "settings": []
+      }
+    ],
+    "connection": "Pass one complete urn:aieffect:nl:synthetic-grid-capture reference from the first step to the second",
+    "declared_binding": {
+      "source_slot": "captured_grid",
+      "target_slot": "captured_grid",
+      "transport": "whole-output-v1",
+      "schema_fingerprint": "ba3e279298a6ead4581484ccfbcef4061182d9c9b35601c8197c9384e576ad80"
+    },
+    "unresolved_requirements": [],
+    "limitations": [
+      "New catalogue-composed design; not a registered or qualified experiment.",
+      "Exactly two operations and one whole-output connection. No conversion or external input routing.",
+      "Runtime readiness, execution, scientific validity and production compatibility are unverified."
+    ]
+  },
+  "controls": {
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "processing": "Standard",
+    "max_output_tokens": 2000,
+    "automatic_retries": 0,
+    "fallback": false,
+    "cache_ttl": "30m",
+    "framed_input_ceiling": 32000
+  },
+  "cases": [
+    {
+      "case": "A",
+      "status": "PASS",
+      "response_id": "resp_055e11074e98b2f2016af5ba9802cc87d299f94f8d01046616",
+      "model": "gpt-6-luna",
+      "status_from_provider": "completed",
+      "service_tier": "default",
+      "actual_visible_response": {
+        "message": "I recommend a new catalogue-composed design: \u201cGenerate synthetic power grid \u2192 Benchmark generated grid.\u201d It uses the requested seed 43 and passes the complete grid reference from the first step to the benchmark. This is a new design, not a registered or saved workflow. Runtime execution is unavailable for this composed design, and readiness and data availability have not been checked. A recommendation does not create a draft; use the separate \u201cCreate this experiment\u201d action if you want to create a copy.",
+        "template_key": null,
+        "expected_revision": null,
+        "edits": [],
+        "recommended_seed": null,
+        "discovery": {
+          "outcome": "supported_recommendation",
+          "candidate_id": "pair-a5c5793a07b3017820d63c7a",
+          "question": null
+        },
+        "composition_settings": {
+          "first": [
+            {
+              "name": "seed",
+              "value": 43
+            }
+          ],
+          "second": []
+        }
+      },
+      "usage": {
+        "input_tokens": 3335,
+        "input_tokens_details": {
+          "cache_write_tokens": 3332,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 3332
+          },
+          "cached_tokens": 0
+        },
+        "output_tokens": 224,
+        "output_tokens_details": {
+          "reasoning_tokens": 41
+        },
+        "total_tokens": 3559
+      },
+      "framed_input_bound": 23765,
+      "reserved_nano": 5000000,
+      "conservative_accounted_nano": 528875,
+      "token_rate_estimate_nano_not_invoice": 528800,
+      "settlement_status": "settled"
+    },
+    {
+      "case": "B",
+      "status": "PASS",
+      "response_id": "resp_0f72d3697be0306b016af5bc8d69e087d2bc7878ecde067193",
+      "model": "gpt-6-luna",
+      "status_from_provider": "completed",
+      "service_tier": "default",
+      "actual_visible_response": {
+        "message": "I can\u2019t recommend a workflow that forecasts demand, optimizes dispatch, and controls live equipment. The available options are a two-step synthetic-grid generation and benchmarking experiment; they do not provide those requested capabilities. Live equipment control is also unsupported. What data source and forecasting/dispatch objective do you want to use, and would you like to consider the available synthetic-grid benchmark instead?",
+        "template_key": null,
+        "expected_revision": null,
+        "edits": [],
+        "recommended_seed": null,
+        "discovery": {
+          "outcome": "clarification_needed",
+          "candidate_id": null,
+          "question": "What data source and forecasting/dispatch objective should the workflow use, and would you like to consider the available synthetic-grid benchmark instead?"
+        },
+        "composition_settings": null
+      },
+      "usage": {
+        "input_tokens": 3321,
+        "input_tokens_details": {
+          "cache_write_tokens": 1596,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 1596
+          },
+          "cached_tokens": 1722
+        },
+        "output_tokens": 155,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 3476
+      },
+      "framed_input_bound": 23706,
+      "reserved_nano": 5000000,
+      "conservative_accounted_nano": 492625,
+      "token_rate_estimate_nano_not_invoice": 294520,
+      "settlement_status": "settled"
+    }
+  ],
+  "case_a_controls": {
+    "status": "PASS",
+    "draft_id": "a81c5992-7676-5f40-834c-db781e52ff1d",
+    "saved_solution_id": "50edcf79-5afd-4a2a-8689-242537b26814",
+    "revisions": [
+      0,
+      1,
+      2,
+      3,
+      3
+    ],
+    "empty_state_equal": true,
+    "pending_proposal_equal_after_undo": true,
+    "applied_design_equal_after_reapply_save_refresh": true,
+    "source": {
+      "kind": "catalogue_composed",
+      "revision": "26add1b21313352f06577e801fb4178c012cd3b4ed7f3d0505d5e7401a10a0db",
+      "candidate_id": "pair-a5c5793a07b3017820d63c7a",
+      "authority_sha256": "4cf96b10005eaf68cda3529c53220002a8e49758dd751e17f587b1bcf6e0fa66"
+    },
+    "execution_policy": "design_only_catalogue_pair",
+    "additional_model_calls_for_controls": 0
+  },
+  "case_b_observations": {
+    "empty_separate_conversation_before_send": true,
+    "same_retained_application_port": 23121,
+    "isolated_origin": "http://localhost.:23121",
+    "loopback_resolution_verified": true,
+    "historical_localhost_conversation_preserved": true,
+    "no_create_authority": true,
+    "no_database_mutation": true,
+    "no_clarification_answer": true,
+    "case_a_unchanged": true
+  },
+  "accounting": {
+    "original_shared_count": 13,
+    "shared_count": 15,
+    "shared_count_limit": 15,
+    "global_limit_nano": 100000000,
+    "new_calls": 2,
+    "new_input_tokens": 6656,
+    "new_output_tokens": 379,
+    "ledger_input_tokens": 33231,
+    "ledger_output_tokens": 2150,
+    "lifetime_reservations_nano": 10000000,
+    "new_conservative_accounted_nano": 1021500,
+    "new_token_rate_estimate_nano_not_invoice": 823320,
+    "total_conservative_accounted_nano": 5228875,
+    "remaining_nano": 94771125,
+    "remaining_calls": 0,
+    "outstanding_reservations": 0,
+    "new_scope_max_calls": 2,
+    "new_scope_max_reserved_nano": 10000000,
+    "prior_13_records_unchanged": true,
+    "audit_head": "cce9c7b910c92834c4c12a23ffc61eafdb99f088d49b106b0b22a433a54d4ad5",
+    "ledger_sha256": "4a1be5fe115d61fc0bea1edbd76e19490f75d21c714bb2c58d022eabcd27f54e"
+  },
+  "final_controls": {
+    "provider_disconnected": true,
+    "execution_grants_empty": true,
+    "new_workflows": 0,
+    "beta_amendment_applied": false
+  },
+  "preservation": {
+    "draft_count": 4,
+    "only_new_draft_owned": true,
+    "provider_disconnected": true,
+    "grant_empty": true,
+    "case_b_no_mutation": true,
+    "case_a_saved_design_unchanged_after_b": true,
+    "original_13_accounting_rows_unchanged": true,
+    "original_18_capture_hashes_unchanged": true,
+    "both_prior_parameterisation_runs_eight_artifact_hashes_unchanged": true,
+    "prior_amendment_metadata_unchanged": true
+  },
+  "checks": {
+    "focused_offline_tests_passed": 104,
+    "provider_doubles_only_in_tests": true,
+    "real_loopback_tls_verified": true,
+    "live_authenticated_accounting_tls_verified": true,
+    "full_backend_suite_repeated": false,
+    "frontend_unchanged_no_rebuild": true
+  },
+  "urls": {
+    "design_ai": "http://127.0.0.1:23121/design-ai?draftId=a81c5992-7676-5f40-834c-db781e52ff1d",
+    "builder": "http://127.0.0.1:23121/builder?solutionId=50edcf79-5afd-4a2a-8689-242537b26814",
+    "case_b": "http://localhost.:23121/design-ai"
+  },
+  "limitations": [
+    "B clarification offers the synthetic-grid benchmark as an alternative; it was not accepted or turned into a proposal.",
+    "Normal discovery replaces the model explanation with a server capability summary/question; both original visible structured responses are retained here.",
+    "Conversation isolation used a verified second loopback origin on the same app; no new profile or account and no historical storage deletion.",
+    "New compositions remain design-only. Runtime/scientific/partner-native/production/independent-human usability claims are not established.",
+    "Accounted charges conservatively price every input token at the maximum short-cache-write rate. Token-rate estimates reflect returned cache detail but are not provider invoices."
+  ],
+  "amendment": {
+    "at": "2026-11-12T13:07:28.644160+00:00",
+    "action": "activate_acceptance",
+    "actor": "Codex acting for the workspace owner",
+    "authorization_ref": "Owner explicit genuine local acceptance request 2026-11-12, PR18@dca4838d0d41ca2bc18b1271adb4684bf7979f5d; 13-to-15 only",
+    "before_calls": 13,
+    "after_calls": 15,
+    "global_limit_nano": 100000000,
+    "scope": "composition-acceptance-20261112",
+    "max_calls": 2,
+    "max_reserved_nano": 10000000,
+    "per_request_nano": 5000000
+  }
+}

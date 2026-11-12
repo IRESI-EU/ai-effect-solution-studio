@@ -1,0 +1,25 @@
+# Optional overlay on the retained aie37 profile. Operator activation is separate.
+# Start api only, with --no-deps --no-build --pull never. No execution authority.
+services:
+  api:
+    image: ${COMPOSITION_API_IMAGE:?Published verified API image required}
+    environment:
+      OPENAI_API_KEY: ${COMPOSITION_PROVIDER_KEY:-}
+      DESIGN_AI_RESTRICTED_BETA: "true"
+      DESIGN_AI_REVIEWER_IDS: aie37-designer
+      DESIGN_AI_ACCEPTANCE_BUDGET_FILE: ""
+      DESIGN_AI_ACCEPTANCE_TASK_LIMIT_FILE: ""
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ""
+      DESIGN_AI_BUDGET_AUTHORITY_URL: https://host.docker.internal:28205
+      DESIGN_AI_BUDGET_AUTHORITY_CA_FILE: /accounting-ca.pem
+      DESIGN_AI_BUDGET_AUTHORITY_SOCKET: ""
+      DESIGN_AI_BUDGET_AUTHORITY_TOKEN: ${COMPOSITION_AUTHORITY_TOKEN:?Exact audited consumer required}
+      DESIGN_AI_BUDGET_AUTHORITY_ID: ${COMPOSITION_AUTHORITY_ID:?Existing authority identity required}
+      DESIGN_AI_BUDGET_SCOPE: ${COMPOSITION_SCOPE:?New acceptance checkpoint required}
+      DESIGN_AI_BUDGET_CONSUMER: ${COMPOSITION_CONSUMER:?Exact audited consumer required}
+      DESIGN_AI_BUDGET_ENVIRONMENT: ${COMPOSITION_ENVIRONMENT:?Exact audited environment required}
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--log-config", "/provider-audit-config.json"]
+    volumes:
+      - "${COMPOSITION_CA_FILE:?Public private-CA bundle required}:/accounting-ca.pem:ro"
+      - "${COMPOSITION_AUDIT_DIR:?Private empty output directory required}:/acceptance-audit"
+      - "${COMPOSITION_LOG_CONFIG:?Reviewed logging configuration required}:/provider-audit-config.json:ro"
