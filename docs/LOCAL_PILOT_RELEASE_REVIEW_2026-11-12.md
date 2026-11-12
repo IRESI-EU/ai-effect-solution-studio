@@ -209,3 +209,13 @@ The normal API/web serve that repair with paid access disconnected; do not run
 Start-Pilot during paused review. The existing helper's optional private build
 pointer preserves the corrected build across later start/stop operations.
 No genuine-provider retest, workflow or participant replay occurred in the repair.
+
+### Subsequent bounded agent retest
+
+The [separate genuine retest](CONVERSATION_RETEST_2026-11-12.md) used the two
+remaining requests exactly once, with both dialogue cases passing. The controls
+result is partial: separate Apply was unavailable on an already-applied seed-42
+registered copy; Save/refresh and preservation checks passed. Provider is again
+disconnected, grant empty, **25/25 shared and 10/10 pilot**, zero outstanding,
+USD0.089396500 shared balance. No workflow was run and no earlier human observation
+was overwritten. Do not run Start-Pilot against this exhausted allowance.

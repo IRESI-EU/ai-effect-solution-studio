@@ -1,0 +1,313 @@
+{
+  "kind": "agent-operated genuine-provider explanation-and-explicit-selection verification; not independent usability",
+  "date": "2026-11-12",
+  "review_checkpoint": "8548a907d37fc25ed50d6955e562f77c95607807",
+  "pr": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/21",
+  "preflight": {
+    "passed": true,
+    "review_checkpoint": "8548a907d37fc25ed50d6955e562f77c95607807",
+    "serving_source": "f1e49485e37eac5a2e5963695b4a06efdd270f5c",
+    "web_build_id": "6y7rN_AJRS7b9xNgfh1Ab",
+    "first_input_bound": 25869,
+    "ceiling": 32000,
+    "max_reservation_each_nano": 5000000,
+    "max_additional_reservations_nano": 10000000,
+    "status": {
+      "protocol_version": 1,
+      "authority_id": "original-shared-local-20261112",
+      "scope": "local-pilot-20261112",
+      "can_request": true,
+      "blocked_reason": null,
+      "message": "Shared allowance available",
+      "max_calls": 25,
+      "request_count": 23,
+      "remaining_calls": 2,
+      "limit_usd": 0.1,
+      "remaining_usd": 0.09057025,
+      "outstanding_reservations": 0,
+      "scope_count": 8,
+      "scope_max_calls": 10,
+      "scope_reserved_nano": 40000000,
+      "scope_limit_nano": 50000000
+    },
+    "verified_tls": true,
+    "certificate_not_after": "Nov 15 12:59:00 2026 GMT",
+    "claims": {
+      "scope": "local-pilot-20261112",
+      "consumer_id": "normal-aie37-api-reviewer-aie37-designer",
+      "environment": "retained-normal-local-aie37",
+      "database_scope": "75477913d69304c5a5f0f79e13bfb79438f3c24c51d7ad5fa7bdb66fd4f4d071"
+    },
+    "source_defaults_pins_unchanged": true,
+    "existing_state_and_ledger_unchanged": true,
+    "provider_disconnected": true,
+    "execution_grant_empty": true,
+    "pricing": {
+      "verified_date": "2026-11-12",
+      "model_url": "https://developers.openai.com/api/docs/models/gpt-6-luna",
+      "cache_url": "https://developers.openai.com/api/docs/guides/prompt-caching",
+      "input_per_million_usd": 0.1,
+      "cache_read_per_million_usd": 0.01,
+      "cache_write_30m_per_million_usd": 0.125,
+      "output_per_million_usd": 0.5,
+      "conservative_input_per_million_usd": 0.125
+    }
+  },
+  "conversation_url": "http://127.0.0.1:23121/design-ai?conversationId=e4cc1cfc-d0f9-4fda-b3aa-dc5953a8627c",
+  "saved_design_url": "http://127.0.0.1:23121/design-ai?draftId=4451cffc-24bd-4349-9d14-0059987755e6",
+  "saved_builder_url": "http://127.0.0.1:23121/builder?solutionId=1cb4c118-677d-4b39-9ac6-3f96280ac8d0",
+  "requests": [
+    {
+      "number": 1,
+      "assessment": "PASS",
+      "request": {
+        "request": "What benchmarking capability is available, and what does its seed setting mean? Please explain before recommending a design.",
+        "history": []
+      },
+      "provider": {
+        "id": "resp_046da22947496f71016af5f5e5800487d28ef3963df5f14fa7",
+        "model": "gpt-6-luna",
+        "status": "completed",
+        "service_tier": "default",
+        "usage": {
+          "input_tokens": 3716,
+          "input_tokens_details": {
+            "cache_write_tokens": 3713,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 3713
+            },
+            "cached_tokens": 0
+          },
+          "output_tokens": 203,
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "total_tokens": 3919
+        }
+      },
+      "structured_response": {
+        "message": "The available benchmarking capability is the existing registered workflow \u201cCreate and benchmark a sample electricity grid.\u201d It creates a sample grid, then benchmarks that exact grid. It is a synthetic-grid demonstration with a no-op benchmark agent; KPI units and scientific validity are not established, and production compatibility and runtime availability are unverified.\n\nIts seed setting controls randomness in sample generation. The supported seeds are 42 and 43, with 42 as the advertised default. Choosing the other seed selects another sample; it does not indicate better quality or a different benchmark version. The workflow\u2019s expected results or downloads are not specified in the available information, and a recommendation does not create or run it. I\u2019ll explain this first; I haven\u2019t recommended a design yet.",
+        "template_key": null,
+        "expected_revision": null,
+        "edits": [],
+        "recommended_seed": null,
+        "discovery": {
+          "outcome": "answer_only",
+          "candidate_id": null,
+          "question": null
+        },
+        "composition_settings": null
+      },
+      "rendered_message": "The available benchmarking capability is the existing registered workflow \u201cCreate and benchmark a sample electricity grid.\u201d It creates a sample grid, then benchmarks that exact grid. It is a synthetic-grid demonstration with a no-op benchmark agent; KPI units and scientific validity are not established, and production compatibility and runtime availability are unverified.\n\nIts seed setting controls randomness in sample generation. The supported seeds are 42 and 43, with 42 as the advertised default. Choosing the other seed selects another sample; it does not indicate better quality or a different benchmark version. The workflow\u2019s expected results or downloads are not specified in the available information, and a recommendation does not create or run it. I\u2019ll explain this first; I haven\u2019t recommended a design yet.",
+      "rendered_text_observed": "request-one-rendered.txt",
+      "accounting": {
+        "request_id": 24,
+        "input_tokens": 3716,
+        "output_tokens": 203,
+        "reasoning_tokens_included": 0,
+        "cached_input": 0,
+        "cache_write_30m_input": 3713,
+        "ordinary_input": 3,
+        "reserved_nano": 5000000,
+        "conservative_charge_nano": 566000,
+        "rate_derived_cost_nano": 565925,
+        "status": "settled",
+        "input_bound": 25869
+      }
+    },
+    {
+      "number": 2,
+      "assessment": "PASS",
+      "request": {
+        "request": "42. Use that seed for the supported generate-and-benchmark design; recommend it for review.",
+        "history": [
+          {
+            "role": "user",
+            "content": "What benchmarking capability is available, and what does its seed setting mean? Please explain before recommending a design."
+          },
+          {
+            "role": "assistant",
+            "content": "The available benchmarking capability is the existing registered workflow \u201cCreate and benchmark a sample electricity grid.\u201d It creates a sample grid, then benchmarks that exact grid. It is a synthetic-grid demonstration with a no-op benchmark agent; KPI units and scientific validity are not established, and production compatibility and runtime availability are unverified.\n\nIts seed setting controls randomness in sample generation. The supported seeds are 42 and 43, with 42 as the advertised default. Choosing the other seed selects another sample; it does not indicate better quality or a different benchmark version. The workflow\u2019s expected results or downloads are not specified in the available information, and a recommendation does not create or run it. I\u2019ll explain this first; I haven\u2019t recommended a design yet."
+          }
+        ]
+      },
+      "provider": {
+        "id": "resp_0c9795956dd3d304016af5f69195dc87d2be2235613708336c",
+        "model": "gpt-6-luna",
+        "status": "completed",
+        "service_tier": "default",
+        "usage": {
+          "input_tokens": 3906,
+          "input_tokens_details": {
+            "cache_write_tokens": 1801,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 1801
+            },
+            "cached_tokens": 2102
+          },
+          "output_tokens": 239,
+          "output_tokens_details": {
+            "reasoning_tokens": 45
+          },
+          "total_tokens": 4145
+        }
+      },
+      "structured_response": {
+        "message": "I recommend the existing registered workflow \u201cCreate and benchmark a sample electricity grid,\u201d using seed 42. It creates a sample grid and benchmarks that exact grid. Seed 42 controls randomness in sample generation; choosing another supported seed selects another sample, not a quality improvement. This is a synthetic-grid demonstration with a no-op benchmark agent; KPI units, scientific validity, production compatibility, and runtime availability are unverified. The expected result view and optional downloads are not specified. This recommendation does not create or run the workflow; creating a copy requires the separate \u201cCreate this experiment\u201d action, and execution requires an explicit run.",
+        "template_key": null,
+        "expected_revision": null,
+        "edits": [],
+        "recommended_seed": 42,
+        "discovery": {
+          "outcome": "supported_recommendation",
+          "candidate_id": "workflow-283fb89a71a310be07f72cbd",
+          "question": null
+        },
+        "composition_settings": null
+      },
+      "rendered_message": "I recommend the existing registered workflow \u201cCreate and benchmark a sample electricity grid,\u201d using seed 42. It creates a sample grid and benchmarks that exact grid. Seed 42 controls randomness in sample generation; choosing another supported seed selects another sample, not a quality improvement. This is a synthetic-grid demonstration with a no-op benchmark agent; KPI units, scientific validity, production compatibility, and runtime availability are unverified. The expected result view and optional downloads are not specified. This recommendation does not create or run the workflow; creating a copy requires the separate \u201cCreate this experiment\u201d action, and execution requires an explicit run.",
+      "rendered_text_observed": "request-two-rendered.txt",
+      "accounting": {
+        "request_id": 25,
+        "input_tokens": 3906,
+        "output_tokens": 239,
+        "reasoning_tokens_included": 45,
+        "cached_input": 2102,
+        "cache_write_30m_input": 1801,
+        "ordinary_input": 3,
+        "reserved_nano": 5000000,
+        "conservative_charge_nano": 607750,
+        "rate_derived_cost_nano": 365945,
+        "status": "settled",
+        "input_bound": 26865
+      }
+    }
+  ],
+  "verification": {
+    "source_commit": "f1e49485e37eac5a2e5963695b4a06efdd270f5c",
+    "web_build_id": "6y7rN_AJRS7b9xNgfh1Ab",
+    "images": [
+      {
+        "role": "api",
+        "tag": "ai-effect-beta-candidate-api:f1e49485e37e",
+        "image_id": "sha256:a294c9a4db5ee39b6a1c24d2d385f996e2f72ec0a0a36c8657ed77139c5ae60d"
+      },
+      {
+        "role": "web",
+        "tag": "ai-effect-beta-candidate-web:f1e49485e37e",
+        "image_id": "sha256:913b314cc09a974b7dddcc1a85bc889bda599694970aed80c7b7b758e68d8eeb"
+      }
+    ],
+    "case_one": "PASS",
+    "case_two": "PASS",
+    "controls": "PARTIAL",
+    "create": "PASS",
+    "apply": "NOT RUN: registered copy already has seed 42 applied; no pending proposal/Apply control",
+    "save_refresh_persistence": "PASS",
+    "draft_id": "4451cffc-24bd-4349-9d14-0059987755e6",
+    "solution_id": "1cb4c118-677d-4b39-9ac6-3f96280ac8d0",
+    "seed": 42,
+    "owner_id": "aie37-designer",
+    "node_identities_preserved": true,
+    "contract_pins": [
+      {
+        "node_id": "generate-grid",
+        "pin": {
+          "contract_id": "921a87fc-329f-42b6-a546-ddf7d9c0ec26",
+          "contract_version": "1.0.0"
+        }
+      },
+      {
+        "node_id": "benchmark-grid",
+        "pin": {
+          "contract_id": "441153b2-9b3b-48c1-81e4-649645f30143",
+          "contract_version": "1.0.0"
+        }
+      }
+    ],
+    "binding": {
+      "id": "grid-to-benchmark",
+      "data": {
+        "binding": {
+          "source_slot": "captured_grid",
+          "target_slot": "captured_grid"
+        },
+        "connection_kind": "service_connection"
+      },
+      "source": "generate-grid",
+      "target": "benchmark-grid"
+    },
+    "all_prior_rows_and_roles_preserved": true,
+    "capture_hashes_preserved": 36,
+    "prior_23_accounting_records_unchanged": true,
+    "original_eight_provider_responses_unchanged": true,
+    "no_new_submission_deployment_or_execution": true,
+    "provider_disconnected": true,
+    "execution_grant_empty": true,
+    "final_status": {
+      "protocol_version": 1,
+      "authority_id": "original-shared-local-20261112",
+      "scope": "local-pilot-20261112",
+      "can_request": false,
+      "blocked_reason": "call_limit",
+      "message": "AI messages paused: call_limit",
+      "max_calls": 25,
+      "request_count": 25,
+      "remaining_calls": 0,
+      "limit_usd": 0.1,
+      "remaining_usd": 0.0893965,
+      "outstanding_reservations": 0,
+      "scope_count": 10,
+      "scope_max_calls": 10,
+      "scope_reserved_nano": 50000000,
+      "scope_limit_nano": 50000000
+    },
+    "costs": [
+      {
+        "request_id": 24,
+        "input_tokens": 3716,
+        "output_tokens": 203,
+        "reasoning_tokens_included": 0,
+        "cached_input": 0,
+        "cache_write_30m_input": 3713,
+        "ordinary_input": 3,
+        "reserved_nano": 5000000,
+        "conservative_charge_nano": 566000,
+        "rate_derived_cost_nano": 565925,
+        "status": "settled",
+        "input_bound": 25869
+      },
+      {
+        "request_id": 25,
+        "input_tokens": 3906,
+        "output_tokens": 239,
+        "reasoning_tokens_included": 45,
+        "cached_input": 2102,
+        "cache_write_30m_input": 1801,
+        "ordinary_input": 3,
+        "reserved_nano": 5000000,
+        "conservative_charge_nano": 607750,
+        "rate_derived_cost_nano": 365945,
+        "status": "settled",
+        "input_bound": 26865
+      }
+    ],
+    "additional_reservations_nano": 10000000,
+    "additional_conservative_charge_nano": 1173750,
+    "rate_derived_cost_nano": 931870,
+    "shared_conservative_total_nano": 10603500,
+    "pilot_conservative_total_nano": 5374625,
+    "no_additional_provider_attempt": true
+  },
+  "overall": "PARTIAL: both dialogue requests pass; separate Apply was NOT RUN because registered-copy Create returned an already-applied design",
+  "limitations": [
+    "Does not reproduce the longer clarification -> explanation -> numeric-answer sequence",
+    "No independent human usability or broad conversational-quality claim",
+    "No runtime/readiness/scientific execution or production compatibility verification",
+    "Prose says results/downloads unspecified while server-validated card lists them",
+    "No separate Apply control for the already-applied seed-42 registered copy"
+  ],
+  "evidence": "Only specified agent prompts, actual provider replies, selected metadata and screenshots; no participant transcripts, credentials, database rows or private configuration"
+}

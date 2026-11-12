@@ -217,3 +217,17 @@ failure; this plan does not guarantee completion or replenish the allowance.
 Human retest observations: **prepared; awaiting supervised human retest**.
 Independent usability, genuine-provider correction, production compatibility and
 scientific/runtime execution are unverified by this work.
+
+## Later checkpoint: agent-operated genuine retest completed
+
+The [separate retest record](CONVERSATION_RETEST_2026-11-12.md) preserves both
+actual fixed-prompt responses and usage. Both dialogue requests pass; the controls
+sequence is partial because unchanged-seed registered Create returned an already
+applied design, leaving no separate Apply action. Create/review/Save/refresh and
+persistence passed; no artificial proposal or response repair was used.
+
+Stop-Pilot has disconnected the provider again. Shared usage is now **25/25**,
+pilot **10/10**, zero calls/holds remaining; shared balance **USD0.089396500**.
+Original participant failures, prior acceptance and historical evidence above
+remain unchanged. The short agent test is not independent human usability or a
+complete reproduction of the longer clarification sequence.
