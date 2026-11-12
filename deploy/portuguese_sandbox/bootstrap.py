@@ -31,6 +31,7 @@ def main():
                 description='Actual retained Portuguese API through a parameter-aware experimental sidecar. Synthetic test data only.',
                 status='approved',lifecycle_status='active',operation_name=value.runtime_operation_name,
                 container_name='pt-'+value.runtime_operation_name, interface_type='control',orchestration_mode='sidecar',
+                image='sha256:76f7eea8d48eff6aeb3182dc755cd70d195899404c17785ce73a5766b0352bba',
                 adapter_type='platform-experimental',contract_uri=value.operation_identity,
                 internal_host='pt-adapter',internal_port='8080',health_path='/health',
                 input_type='opaque authorized reference',output_type='CSV sequences' if value.runtime_operation_name=='GenerateData' else 'model reference',
