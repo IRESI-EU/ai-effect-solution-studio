@@ -16,7 +16,12 @@ WP3 draft PR #4 stacks on PR #3.
   (pt33-tef-integrated-synthetic-data:latest). Unchanged, separate model volume.
 - Original sidecar image preserved, unused: sha256:f7202018956f326c6dc62d3b7b699776d32dcaed54bd4eae0653ebac63d5a2e8.
 - Maintained WP3 runtime retained: sha256:edcac597f327dc817ff0c9b9c930dbf9b4cb62235d42f2ef1940845ca1820a21.
-  Its manifest names historical source c6695d8444edb14b94111f16d8620c460880849b; verify relevant source bytes against PR #3, rather than relabeling it.
+  Its manifest names historical source c6695d8444edb14b94111f16d8620c460880849b.
+  Preflight found its readiness source was older than PR #3, so it is retained
+  only as a dependency base. The experimental profile uses a new source-only
+  layer sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589,
+  built from a8b529ea25bcfd6a16dbb77ebc893a2b0b22ab77. All maintained runtime
+  source files must match the exact PR #3 baseline; the old image is unchanged.
 - PostgreSQL and Redis IDs are pinned in profile.py. No dependencies downloaded.
 
 The first adapter packaging attempt used a bare image ID in FROM. BuildKit treated
