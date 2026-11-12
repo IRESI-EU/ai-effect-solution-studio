@@ -54,15 +54,34 @@ def capabilities():
             "operations": [operation]}
 
 
+def validate_request(request):
+    if request.method != METHOD:
+        raise ValueError("Unsupported operation")
+    if ROLE == "synth":
+        if request.inputs or request.configuration is None:
+            raise ValueError("Use saved instance parameters, without an additional workflow seed")
+        match_wrapper_configuration(METHOD, request.configuration, capabilities())
+        return effective_parameters(DEFINITION["execution_parameters"], request.configuration["parameters"])
+    if request.configuration is not None or len(request.inputs) != 1:
+        raise ValueError("Benchmark requires one captured input and no configurable parameters")
+    return None
+
+
 def compute_synth(request, ops):
-    if request.inputs or request.configuration is None:
-        raise ValueError("Use saved instance parameters, without an additional workflow seed")
-    match_wrapper_configuration(METHOD, request.configuration, capabilities())
-    parameters = effective_parameters(DEFINITION["execution_parameters"], request.configuration["parameters"])
+    parameters = validate_request(request)
     from common.control_interface import ExecuteRequest as InnerRequest
     inner = InnerRequest(method=METHOD, workflow_id=request.workflow_id, task_id=request.task_id,
         inputs=[{"protocol": "inline", "format": "json", "uri": base64.b64encode(encode(parameters)).decode()}])
     original, calls = ops.PowerGridGenerator, []
+    original_configurator, configured = ops.InputConfigurator, []
+    class ObservedConfigurator(original_configurator):
+        def __init__(self, *args, **kwargs):
+            self.observed_seed = kwargs["seed"]
+            super().__init__(*args, **kwargs)
+        def create_params(self, *args, **kwargs):
+            output = super().create_params(*args, **kwargs)
+            configured.append({"seed": self.observed_seed})
+            return output
     class ObservedGenerator(original):
         def __init__(self, *args, **kwargs):
             self.observed_seed = kwargs["seed"]
@@ -72,16 +91,20 @@ def compute_synth(request, ops):
             calls.append({"seed": self.observed_seed})
             return output
     ops.PowerGridGenerator = ObservedGenerator
+    ops.InputConfigurator = ObservedConfigurator
     try:
         files, upstream = capture.compute_synth(inner, ops)
-        if calls != [parameters]:
+        if calls != [parameters] or configured != [parameters]:
             raise ValueError("Algorithm consumption does not match the saved setting")
         configuration = json.loads(files["configuration"])
         files["configuration"] = encode({**configuration, "algorithm_consumed": calls[0],
-            "instrumentation": "PowerGridGenerator.__init__(seed); generate_grid returned"})
+            "algorithm_consumed_steps": {"InputConfigurator.create_params": configured[0],
+                                        "PowerGridGenerator.generate_grid": calls[0]},
+            "instrumentation": "Both constructors observed seed; create_params and generate_grid returned"})
         return files, upstream
     finally:
         ops.PowerGridGenerator = original
+        ops.InputConfigurator = original_configurator
 
 
 @app.post("/control/execute")
@@ -89,6 +112,10 @@ def execute(request: ExecuteRequest):
     if request.method != METHOD:
         raise HTTPException(422, "Unsupported operation")
     with LOCK:
+        try:
+            validate_request(request)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
         try:
             if ROLE == "synth":
                 from common import synth_operations as ops

@@ -45,19 +45,27 @@ def test_parameter_is_passed_to_algorithm_and_restored(runtime, monkeypatch):
     class Generator:
         def __init__(self, **kwargs): calls.append(kwargs)
         def generate_grid(self): return "grid"
-    ops = SimpleNamespace(PowerGridGenerator=Generator)
+    class Configurator:
+        def __init__(self, **kwargs): pass
+        def create_params(self): return {}
+    ops = SimpleNamespace(PowerGridGenerator=Generator, InputConfigurator=Configurator)
     monkeypatch.setitem(sys.modules, "common", SimpleNamespace())
     monkeypatch.setitem(sys.modules, "common.control_interface", SimpleNamespace(ExecuteRequest=lambda **kw: SimpleNamespace(**kw)))
     def compute(inner, operations):
         import base64
         parameters = json.loads(base64.b64decode(inner.inputs[0]["uri"]))
+        operations.InputConfigurator(seed=parameters["seed"]).create_params()
         operations.PowerGridGenerator(seed=parameters["seed"]).generate_grid()
         return {"configuration": runtime.encode({"config": parameters})}, None
     monkeypatch.setattr(runtime.capture, "compute_synth", compute)
     files, _ = runtime.compute_synth(request(runtime), ops)
     assert calls == [{"seed": 43}]
     assert json.loads(files["configuration"])["algorithm_consumed"] == {"seed": 43}
+    assert json.loads(files["configuration"])["algorithm_consumed_steps"] == {
+        "InputConfigurator.create_params": {"seed": 43},
+        "PowerGridGenerator.generate_grid": {"seed": 43}}
     assert ops.PowerGridGenerator is Generator
+    assert ops.InputConfigurator is Configurator
 
 
 @pytest.mark.parametrize("mutation", ["missing", "null", "type", "range", "version", "extra-input"])
@@ -87,3 +95,24 @@ def test_failure_is_preserved_and_same_identity_cannot_recompute(runtime, monkey
         assert client.post("/control/execute", json=payload).json()["status"] == "failed"
     assert calls == ["invoked"]
     assert list(runtime.STORE.root.rglob("failed.json"))
+
+
+@pytest.mark.parametrize("parameters", [{"seed": True}, {"seed": "43"}, {"seed": 43.5},
+    {"seed": 44}, {"seed": 43, "unknown": 1}])
+def test_http_invalid_settings_leave_capture_store_untouched(runtime, parameters):
+    payload = request(runtime).model_dump()
+    payload["configuration"]["parameters"] = parameters
+    with TestClient(runtime.app) as client:
+        assert client.post("/control/execute", json=payload).status_code == 422
+    assert not runtime.STORE.root.exists()
+
+
+@pytest.mark.parametrize("change", ["version", "protocol", "conflict"])
+def test_http_incompatible_or_conflicting_sources_reject_before_capture(runtime, change):
+    payload = request(runtime).model_dump()
+    if change == "version": payload["configuration"]["contract_version"] = "2.0"
+    if change == "protocol": payload["configuration"]["schema_version"] = "2.0"
+    if change == "conflict": payload["inputs"] = [{"protocol": "inline", "format": "json", "uri": "eyJzZWVkIjo0Mn0="}]
+    with TestClient(runtime.app) as client:
+        assert client.post("/control/execute", json=payload).status_code == 422
+    assert not runtime.STORE.root.exists()
