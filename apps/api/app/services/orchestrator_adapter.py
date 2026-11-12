@@ -13,6 +13,21 @@ def _orchestrator_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {settings.orchestrator_api_key}"}
 
 
+def _service_authorized_payload(payload):
+    """Add the server-owned control credential only to the private wire copy.
+
+    Compiled payloads, browser responses and immutable snapshots remain secret-free.
+    The default is empty, preserving all retained profiles unchanged.
+    """
+    wire = dict(payload)
+    key = settings.orchestrator_services_api_key
+    if key:
+        if "services_api_key" in wire and wire["services_api_key"] != key:
+            raise HTTPException(409, "Conflicting service authority; no workflow was submitted")
+        wire["services_api_key"] = key
+    return wire
+
+
 def require_parameter_transport(compiled):
     try:
         response = requests.get(f"{settings.orchestrator_base_url}/capabilities", headers=_orchestrator_headers(), timeout=5)
@@ -24,7 +39,7 @@ def require_parameter_transport(compiled):
             raise ValueError("Runtime cannot verify target-wrapper parameter contracts")
         # This endpoint is read-only: it never initializes tasks or starts a workflow.
         checked = requests.post(f"{settings.orchestrator_base_url}/workflows/check-compatibility",
-            json={key: compiled[key] for key in ("blueprint", "dockerinfo", "task_configurations", "services_api_key") if key in compiled},
+            json=_service_authorized_payload({key: compiled[key] for key in ("blueprint", "dockerinfo", "task_configurations", "services_api_key") if key in compiled}),
             headers=_orchestrator_headers(), timeout=20)
         report = checked.json() if checked.status_code == 200 else None
         expected = {node["node_key"]: node for node in compiled["solution_studio_metadata"]["execution_instances"] if node["configuration"]}
@@ -87,7 +102,7 @@ def submit_to_orchestrator(payload: dict[str, Any]) -> dict[str, Any]:
     try:
         response = requests.post(
             url,
-            json=payload,
+            json=_service_authorized_payload(payload),
             headers=_orchestrator_headers(),
             timeout=20,
         )
