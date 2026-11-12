@@ -1,0 +1,23 @@
+# Combine with the retained compose.yaml and demo.compose.yaml. Local use only.
+# Images are built separately from tracked source; no build/pull on startup.
+services:
+  seed-synth:
+    image: ${PARAMETER_SYNTH_IMAGE:?Verified local image required}
+  seed-benchmark:
+    image: ${PARAMETER_BENCHMARK_IMAGE:?Verified local image required}
+  seed-orchestrator:
+    image: ${PARAMETER_WP3_IMAGE:?Verified maintained WP3 image required}
+  worker:
+    image: ${PARAMETER_WP3_IMAGE:?Verified maintained WP3 image required}
+  api:
+    image: sha256:3717c012fed8d8cd4f04469335b8f93a42224708f54dfd08c3b6858aa4d74c19
+    environment:
+      OPENAI_API_KEY: ""
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ${PARAMETER_GRANT_PATH:-}
+    volumes:
+      - "${PARAMETER_RUNTIME_FILE:?Verified runtime identity required}:/capture-runtime.json:ro"
+  web:
+    image: sha256:fba983fef01d461e79db22444c34c76b9737df84365d200972085672a4052614
+    environment: {INTERNAL_API_URL: "http://api:8080", NEXT_TELEMETRY_DISABLED: "1"}
+    command: ["node", "node_modules/next/dist/bin/next", "start", "--hostname", "0.0.0.0", "--port", "3000"]
+    ports: ["127.0.0.1:23121:3000"]

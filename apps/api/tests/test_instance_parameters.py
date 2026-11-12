@@ -116,6 +116,30 @@ def test_save_reload_ownership_stale_and_unsupported(configured):
     app.dependency_overrides.pop(get_current_user)
 
 
+def test_second_instance_edit_does_not_change_first_after_save_copy_and_compile(configured):
+    from copy import deepcopy
+    initial = configured.post("/solutions", json={"name": "Second-only edit",
+        "nodes": [node("first"), node("second")], "edges": []}).json()
+    edited = deepcopy(initial["nodes"])
+    edited[1]["data"]["configuration"]["parameters"]["seed"] = 43
+    saved = configured.put(f"/solutions/{initial['id']}", json={
+        "nodes": edited, "expected_updated_at": initial["updated_at"]})
+    assert saved.status_code == 200, saved.text
+    reopened = configured.get(f"/solutions/{initial['id']}").json()
+    assert [n["data"]["configuration"]["parameters"]["seed"] for n in reopened["nodes"]] == [42, 43]
+    # Builder identity is the node ID; the full runtime envelope's instance_id
+    # is allocated by compilation, not stored inside the editable configuration.
+    assert [n["id"] for n in reopened["nodes"]] == [n["id"] for n in initial["nodes"]]
+    copied = configured.post("/solutions", json={"name": "Independent copy",
+        "nodes": deepcopy(reopened["nodes"]), "edges": []})
+    assert copied.status_code == 200, copied.text
+    copy = configured.get(f"/solutions/{copied.json()['id']}").json()
+    assert copy["id"] != reopened["id"] and copy["nodes"] == reopened["nodes"]
+    compiled = configured.post("/workflows/compile", json=workflow(copy))
+    assert compiled.status_code == 200, compiled.text
+    assert [v["parameters"]["seed"] for v in compiled.json()["task_configurations"].values()] == [42, 43]
+
+
 def test_duplicate_compilation_downstream_and_legacy(configured):
     saved = configured.post("/solutions", json={"name": "Repeated", "nodes": [node("first"), node("second", 43)],
         "edges": [{"id": "edge", "source": "first", "target": "second"}]}).json()
