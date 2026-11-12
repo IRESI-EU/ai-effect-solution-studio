@@ -324,6 +324,30 @@ def test_other_owner_cannot_read_apply_or_save(catalogue):
     finally:app.dependency_overrides.pop(pilot_user)
 
 
+@pytest.mark.parametrize("outcome", ["clarification_needed", "no_supported_match"])
+def test_discovery_nonrecommendation_preserves_existing_pending_copy(catalogue, outcome):
+    q=catalogue;_,draft=create(q);base=f'/design-ai/drafts/{draft["id"]}'
+    before=q["client"].get(base).json()
+    q["provider"].turn=AssistantTurn(message="Labelled offline response",template_key=None,expected_revision=None,edits=[],
+        discovery={"outcome":outcome,**({"question":"Which observations should be analyzed?"} if outcome=="clarification_needed" else {})})
+    response=q["client"].post("/design-ai/chat",json={"message":"Analyze my data."})
+    assert response.status_code==200
+    assert response.json()["recommendation"] is None and response.json()["draft"] is None
+    assert q["client"].get(base).json()==before
+    assert q["db"].query(DesignDraft).count()==1 and q["db"].query(Solution).count()==0
+
+
+def test_withdrawn_contract_rejects_apply_and_preserves_full_proposal(catalogue):
+    q=catalogue;_,draft=create(q);base=f'/design-ai/drafts/{draft["id"]}'
+    stored=q["db"].get(DesignDraft,draft["id"]);before=deepcopy(stored.state)
+    q["contracts"][1].status="withdrawn";q["db"].commit()
+    response=q["client"].post(base+"/apply",json={"revision":0,"proposal_id":draft["pending"]["id"]})
+    assert response.status_code in {409,422}
+    q["db"].expire_all();stored=q["db"].get(DesignDraft,draft["id"])
+    assert stored.revision==0 and stored.state==before
+    assert q["db"].query(Solution).count()==0
+
+
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), float("-inf")])
 def test_nonfinite_settings_are_rejected_before_fingerprinting(value):
     from pydantic import ValidationError

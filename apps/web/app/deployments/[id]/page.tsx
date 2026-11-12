@@ -90,6 +90,7 @@ export default function DeploymentDetailPage({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          workflow_id: workflowId,
           protocol: ref.protocol,
           uri: ref.uri,
           format: ref.format,

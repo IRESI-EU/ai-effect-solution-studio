@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db import get_db
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, get_optional_user
 from app.models.user import User
 from app.schemas.design_ai import ApplyRequest, AssistantTurn, ChatRequest, GuidedSettingsRequest, RevisionRequest, StartRequest
 from app.services import design_ai as service
@@ -19,8 +19,17 @@ from app.services.design_ai_provider import Provider, configured, get_provider, 
 router = APIRouter(prefix="/design-ai", tags=["design-ai"])
 
 
+def require_reviewer(user):
+    if settings.design_ai_restricted_beta:
+        allowed = {value.strip() for value in settings.design_ai_reviewer_ids.split(",") if value.strip()}
+        if (not user or user.status != "active" or user.id not in allowed
+                or user.role not in {"solution_designer", "node_manager", "platform_admin"}):
+            raise HTTPException(403, "Design with AI is restricted to approved reviewers")
+
+
 def pilot_user(request: Request, user: User = Depends(get_current_user)):
     service.enabled()
+    require_reviewer(user)
     if user.status != "active" or user.role not in {"solution_designer", "node_manager", "platform_admin"}:
         raise HTTPException(403, "Active design account required")
     # Cookie-authenticated writes must originate from this application (works behind Next's rewrite).
@@ -30,12 +39,19 @@ def pilot_user(request: Request, user: User = Depends(get_current_user)):
 
 
 @router.get("/config")
-def configuration(provider: Provider = Depends(get_provider)):
+def configuration(provider: Provider = Depends(get_provider), user: User | None = Depends(get_optional_user)):
+    require_reviewer(user)
     result = {"enabled": settings.design_ai_enabled, "provider_configured": settings.design_ai_enabled and configured()}
     if settings.design_ai_enabled:
         result.update(provider_name=getattr(provider, "name", "Test provider"),
                       provider_mode=getattr(provider, "mode", "test"), model=settings.design_ai_model or None)
-        if settings.design_ai_acceptance_budget_file:
+        from app.services.allowance_client import Client, requested
+        if requested(settings):
+            try:result["test_allowance"]=Client(settings).availability()
+            except HTTPException:
+                result["test_allowance"]={"can_request":False,"blocked_reason":"accounting_unavailable",
+                    "message":"AI messages paused: shared accounting is unavailable. Do not retry or use a local allowance."}
+        elif settings.design_ai_acceptance_budget_file:
             from app.services.design_ai_budget import Budget
             try:
                 result["test_allowance"] = Budget(settings.design_ai_acceptance_budget_file, task_limit_file=settings.design_ai_acceptance_task_limit_file).availability()

@@ -1,0 +1,165 @@
+{
+  "inspected": "2026-11-11",
+  "source_repository": "https://github.com/paulban/ai-effect-wp3",
+  "source_reference_commit": "ba598b2459f9986dac4e37dcc5d7d3298f25dc3a",
+  "file_matches": [
+    {
+      "file": "/app/common/synth_operations.py",
+      "git_blob": "1b8db57382e42f4828ecd4762568cedf9b87fca4",
+      "deployed_git_blob": "1b8db57382e42f4828ecd4762568cedf9b87fca4",
+      "deployed_sha256": "2aeca247dd8cfd4bbdd40bf3801622da98dafb6ecff7b9f74cad43eec38cb494",
+      "exact_git_match": true
+    },
+    {
+      "file": "/app/common/benchmark_operations.py",
+      "git_blob": "af474b8daa037b7ffa465e532bf8874395b2b060",
+      "deployed_git_blob": "af474b8daa037b7ffa465e532bf8874395b2b060",
+      "deployed_sha256": "9af6479491881b2c009958bebad39a6d40841c90681d65543181aab6f92ce45d",
+      "exact_git_match": true
+    },
+    {
+      "file": "/app/proto/data_synthesizer.proto",
+      "git_blob": "b7289e6e759594e7f4b9e2983587683a05105887",
+      "deployed_git_blob": "b7289e6e759594e7f4b9e2983587683a05105887",
+      "deployed_sha256": "4e227128f92b73f32c176ec8923fa0871b1f09d43dd2b1fadc33e84ec0c68596",
+      "exact_git_match": true
+    },
+    {
+      "file": "/app/benchmarking/proto/benchmarking.proto",
+      "git_blob": "3e4c21c01f4920bf82c8dcf97430232387996e30",
+      "deployed_git_blob": "3e4c21c01f4920bf82c8dcf97430232387996e30",
+      "deployed_sha256": "01653c997c47b0677a41318c76523e787d0681b02521b13efe8e887628e29a50",
+      "exact_git_match": true
+    }
+  ],
+  "whole_image_commit_verified": false,
+  "runtimes": [
+    {
+      "name": "nl-grid-synth-service",
+      "image_identity": "sha256:03bf050b03b4e5d7017cc4ea6e68b64305be191e352294c7d339c255de40d38b",
+      "container_identity": "93efc744c0a61686d98252c354c24d4d6410ace013bf2e1db937e52224603402",
+      "declared_repository_tags": [
+        "paulban/aieffect-dutchnode-datasynth:latest"
+      ],
+      "registry_digest_available": false
+    },
+    {
+      "name": "nl-benchmark-runner",
+      "image_identity": "sha256:b13c7869698bc5c71c73ffcebdeb53308aff52a1f1c3d635e8f677bf2e3c368e",
+      "container_identity": "24f9b6610b0cda47e0411647dc1fd80c76d01b548c64d9336e72f478e598d093",
+      "declared_repository_tags": [
+        "paulban/aieffect-dutchnode-benchmarking:latest"
+      ],
+      "registry_digest_available": false
+    }
+  ],
+  "uploaded_protos": [
+    {
+      "file": "benchmarking1.proto",
+      "sha256": "4ee7d6a28b2c65140847e580c99c5b58464372c77036dedea30e6ca012dce9fc",
+      "request_and_response_fields": 0
+    },
+    {
+      "file": "data_synthesizer1.proto",
+      "sha256": "831fd3cb995fb62e096e49ccdc666921da2e42150b2ecffb72bc99e47857f3c7",
+      "request_and_response_fields": 0
+    }
+  ],
+  "registrations": [
+    {
+      "id": "svc-imported-grid-synth-service-configureandsynthesize",
+      "declared_image": "paulban/aieffect-dutchnode-datasynth:latest",
+      "operation_name": "ConfigureAndSynthesize",
+      "source_reference": null
+    },
+    {
+      "id": "svc-imported-benchmark-runner-runbenchmark",
+      "declared_image": "paulban/aieffect-dutchnode-benchmarking:latest",
+      "operation_name": "RunBenchmark",
+      "source_reference": null
+    },
+    {
+      "id": "pkg-benchmarking1-cef41fb569",
+      "declared_image": "ghcr.io/ai-effect/dutch-node-benchmarking:latest",
+      "operation_name": "RunBenchmark",
+      "source_reference": "package:dutch-node-benchmarking.zip"
+    },
+    {
+      "id": "pkg-data-synthesizer1-afa8ed26ac",
+      "declared_image": "ghcr.io/ai-effect/dutch-node-data-synthesizer:latest",
+      "operation_name": "ConfigureAndSynthesize",
+      "source_reference": "package:dutch-node-data-synthesizer.zip"
+    }
+  ],
+  "calls": {
+    "model": 0,
+    "runtime_operations": 0,
+    "readiness_probes": 0,
+    "production_contract_writes": 0
+  },
+  "additional_source_checks": [
+    {
+      "repository_path": "use-cases/dutch_node/data_synthesizer/proto/data_synthesizer.proto",
+      "deployed_file": "/app/proto/data_synthesizer.proto",
+      "deployed_sha256": "4e227128f92b73f32c176ec8923fa0871b1f09d43dd2b1fadc33e84ec0c68596",
+      "git_blob_sha1": "b7289e6e759594e7f4b9e2983587683a05105887",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/data_synthesizer/common/synth_operations.py",
+      "deployed_file": "/app/common/synth_operations.py",
+      "deployed_sha256": "2aeca247dd8cfd4bbdd40bf3801622da98dafb6ecff7b9f74cad43eec38cb494",
+      "git_blob_sha1": "1b8db57382e42f4828ecd4762568cedf9b87fca4",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/data_synthesizer/common/control_interface.py",
+      "deployed_file": "/app/common/control_interface.py",
+      "deployed_sha256": "3c93aba267e37247057a360a88730a0f145be6d649149222f2a849bbf29f368e",
+      "git_blob_sha1": "1580dbf815a2ca5a7635f028e29dfe6d5bbe53c2",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/data_synthesizer/main.py",
+      "deployed_file": "/app/main.py",
+      "deployed_sha256": "69e65bfded03d18d86fcc3f16024cf8c60ab87129f31cf3560785cbf515dfa92",
+      "git_blob_sha1": "62e39d4c6f48bace6dffa5dbd0bb8ca571fbb09f",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/benchmarking/proto/benchmarking.proto",
+      "deployed_file": "/app/benchmarking/proto/benchmarking.proto",
+      "deployed_sha256": "01653c997c47b0677a41318c76523e787d0681b02521b13efe8e887628e29a50",
+      "git_blob_sha1": "3e4c21c01f4920bf82c8dcf97430232387996e30",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/data_synthesizer/proto/data_synthesizer.proto",
+      "deployed_file": "/app/data_synthesizer/proto/data_synthesizer.proto",
+      "deployed_sha256": "4e227128f92b73f32c176ec8923fa0871b1f09d43dd2b1fadc33e84ec0c68596",
+      "git_blob_sha1": "b7289e6e759594e7f4b9e2983587683a05105887",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/benchmarking/common/benchmark_operations.py",
+      "deployed_file": "/app/common/benchmark_operations.py",
+      "deployed_sha256": "9af6479491881b2c009958bebad39a6d40841c90681d65543181aab6f92ce45d",
+      "git_blob_sha1": "af474b8daa037b7ffa465e532bf8874395b2b060",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/benchmarking/common/control_interface.py",
+      "deployed_file": "/app/common/control_interface.py",
+      "deployed_sha256": "9d9b21970032dec67e409c2ad372537280ee04101d2c29a9962565e54af5e67f",
+      "git_blob_sha1": "7e6ee9fe5c6dd2b3294565fdb24861ea13e4e8a8",
+      "exact_git_match": true
+    },
+    {
+      "repository_path": "use-cases/dutch_node/benchmarking/main.py",
+      "deployed_file": "/app/main.py",
+      "deployed_sha256": "d084186ee8a7d6c7caceae2c5967cce41fde83fce8aab7ce036ed97140982499",
+      "git_blob_sha1": "ae89f9dc3404149348210356ee792704189feeed",
+      "exact_git_match": true
+    }
+  ]
+}

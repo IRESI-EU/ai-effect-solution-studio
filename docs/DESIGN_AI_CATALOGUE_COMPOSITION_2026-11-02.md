@@ -1,5 +1,7 @@
 # New two-operation catalogue designs
 
+> 10 November conversational integration follow-up: [normal journey, offline checks and locked provider proposal](DESIGN_AI_CONVERSATIONAL_ACCEPTANCE_2026-11-10.md). The normal catalogue/API is unavailable; no current real compatible pair or genuine provider pass is claimed. Earlier owner observations below remain unchanged.
+
 Bounded AIE-38 review milestone, stacked on PR #14 at `f36f8fdfcfb95576d948fea2971907ad4d433e3a`. Tested implementation: `6efa943b0ce4bd76f372815efc008f43460e823d`. This is a design milestone. It adds no execution qualification, runtime adapter or paid acceptance. Historical discovery, usability and live-acceptance reports remain unchanged.
 
 ## Before and after

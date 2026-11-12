@@ -128,6 +128,8 @@ class Budget:
             raise HTTPException(422, "Acceptance input/output reservation limit exceeded")
         with sqlite3.connect(self.path, timeout=5) as db:
             db.execute("BEGIN IMMEDIATE")
+            from app.services.shared_allowance import legacy_write_guard
+            legacy_write_guard(db)
             closed = db.execute("SELECT closed FROM batch WHERE id=1").fetchone()[0]
             limit, max_calls = limits(db)
             count, held = db.execute("SELECT COUNT(*), COALESCE(SUM(held),0) FROM requests").fetchone()
@@ -151,6 +153,9 @@ class Budget:
         # reads. This upper estimate also covers mixed/undisclosed cache writes.
         upper_cost = input_tokens * 125 + output_tokens * 500
         with sqlite3.connect(self.path) as db:
+            db.execute("BEGIN IMMEDIATE")
+            from app.services.shared_allowance import legacy_write_guard
+            legacy_write_guard(db)
             db.execute("UPDATE requests SET held=?, usage=?, status=?, response_id=? WHERE id=?",
                        (max(upper_cost, RESERVATION) if input_tokens > MAX_INPUT or output_tokens > MAX_OUTPUT else upper_cost,
                         json.dumps(usage), payload.get("status", "received"), payload.get("id"), request_id))
@@ -165,10 +170,16 @@ class Budget:
     def failed(self, request_id, status):
         # A timeout/cancellation may still be billed: keep its full reservation.
         with sqlite3.connect(self.path) as db:
+            db.execute("BEGIN IMMEDIATE")
+            from app.services.shared_allowance import legacy_write_guard
+            legacy_write_guard(db)
             db.execute("UPDATE requests SET status=? WHERE id=? AND usage IS NULL AND status='reserved'", (status, request_id))
 
     def close(self):
         with sqlite3.connect(self.path) as db:
+            db.execute("BEGIN IMMEDIATE")
+            from app.services.shared_allowance import legacy_write_guard
+            legacy_write_guard(db)
             db.execute("UPDATE batch SET closed=1 WHERE id=1")
 
     def report(self):

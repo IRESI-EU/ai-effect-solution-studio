@@ -11,10 +11,12 @@ import httpx
 from harness import ROOT, LABEL, PROMPT, build_app, deny_network
 
 
-def prepare(profile):
+def prepare(profile, review="workspace"):
     profile = profile.resolve(strict=True)
-    record = profile / "prepared-workspace-review-20261110.json"
-    entry = ROOT / "apps/web/public/offline-workspace-review.html"
+    if review not in {"workspace", "conversation"}:
+        raise ValueError("Use a named offline engineering review")
+    record = profile / f"prepared-{review}-review-20261110.json"
+    entry = ROOT / f"apps/web/public/offline-{review}-review.html"
     if record.exists() or entry.exists():
         raise SystemExit("Engineering entry already prepared; preserve it, do not reset/replay")
     config = httpx.get("http://127.0.0.1:28187/design-ai/config",timeout=3,trust_env=False).json()
@@ -36,7 +38,7 @@ def prepare(profile):
     payload=json.dumps(conversation).replace("<","\\u003c")
     entry.write_text('<!doctype html><meta charset="utf-8"><title>Offline workspace review</title><p>'+LABEL+'</p>'
         '<p id="status">Opening the existing application…</p><script>(async()=>{const r=await fetch("/api/auth/me",{cache:"no-store"});'
-        'if(!r.ok){location.replace("/login?next=/offline-workspace-review.html");return;}const u=await r.json();'
+        f'if(!r.ok){{location.replace("/login?next=/offline-{review}-review.html");return;}}const u=await r.json();'
         'if(u.id!=="controls-agent"){document.getElementById("status").textContent="Sign in with the dedicated engineering account. Your existing design is unchanged.";return;}'
         'localStorage.setItem("design-ai-discovery:controls-agent",JSON.stringify('+payload+'));location.replace("/design-ai");})();</script>',encoding="utf-8")
     print("Prepared a distinct server-issued engineering recommendation; no draft created and no existing recommendation changed")
@@ -45,4 +47,6 @@ def prepare(profile):
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile",type=Path,required=True)
-    prepare(parser.parse_args().profile)
+    parser.add_argument("--review",choices=("workspace","conversation"),default="workspace")
+    args=parser.parse_args()
+    prepare(args.profile,args.review)

@@ -53,7 +53,6 @@ from app.schemas.solution import (
 )
 from app.schemas.workflow_submit import WorkflowSubmitRequest
 from app.schemas.wp3_import import WP3ImportRequest
-from app.services.data_reference_service import preview_data_reference
 from app.services.orchestrator_adapter import (
     get_workflow_status,
     get_workflow_tasks,
@@ -172,9 +171,11 @@ def admin_import_wp3_package(
 @app.post("/data-references/preview")
 def preview_data_reference_endpoint(
     payload: DataReferencePreviewRequest,
-    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    return preview_data_reference(payload.protocol, payload.uri, payload.task_id)
+    from app.services.owned_artifact_preview import preview
+    return preview(payload, db, user)
 
 
 # ---------------------------------------------------------------------
@@ -1420,6 +1421,14 @@ def create_deployment(
         if not can_manage_owned_record(user, existing.created_by_user_id):
             raise HTTPException(status_code=403, detail="Deployment belongs to another user")
         return existing
+
+    # A client-supplied workflow ID must never confer access to an unregistered
+    # runtime execution. Normal submission already records identity atomically.
+    submission = db.query(ExecutionSubmission).filter(ExecutionSubmission.workflow_id == deployment.workflow_id).first()
+    if (submission is None or submission.phase != "submitted" or submission.owner_user_id != user.id
+            or submission.solution_id != deployment.solution_id):
+        raise HTTPException(409, "A matching server-recorded submission is required; legacy ownership is not inferred")
+    execution_submission.view(submission)
 
     db_deployment = Deployment(
         id=str(uuid4()),

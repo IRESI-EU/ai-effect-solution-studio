@@ -1,5 +1,7 @@
 # Design with AI workspace review
 
+> Separate subsequent [conversational integration review](DESIGN_AI_CONVERSATIONAL_ACCEPTANCE_2026-11-10.md): retained layout, modest readability/access-state fixes, a separate engineering copy and focused checks. This does not replace the owner observations or original screenshots below.
+
 Starting source: verified draft PR #15, `5d9c398cad1a0944f3fe61edc1da90a832341e11`. Implementation: **`66114c6fe3b8183dd890ecc1aeb7464ba92c0a60`**. This focused draft stacks on PR #15 without changing the earlier stack or backend composition scope.
 
 ## Owner acceptance and unresolved feedback

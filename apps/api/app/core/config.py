@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     bootstrap_admin_name: str = "Platform Administrator"
     service_contract_path: str = "/service-contracts"
     design_ai_enabled: bool = False
+    # Opt-in restricted release: exact existing user IDs, with no admin bypass.
+    design_ai_restricted_beta: bool = False
+    design_ai_reviewer_ids: str = ""
     # Explicitly shared, operator-selected templates; never inferred by an LLM.
     design_ai_templates: str = "{}"
     openai_api_key: str = ""
@@ -23,6 +26,14 @@ class Settings(BaseSettings):
     design_ai_acceptance_budget_file: str = ""
     # Optional immutable task ceiling, accounted in the same existing ledger.
     design_ai_acceptance_task_limit_file: str = ""
+    # Separate, explicit shared-authority scope. Never a local-budget fallback.
+    design_ai_budget_authority_url: str = ""
+    design_ai_budget_authority_socket: str = ""
+    design_ai_budget_authority_token: str = ""
+    design_ai_budget_authority_id: str = ""
+    design_ai_budget_scope: str = ""
+    design_ai_budget_consumer: str = ""
+    design_ai_budget_environment: str = ""
     design_ai_timeout_seconds: int = 40
     design_ai_context_chars: int = 48000
     design_ai_tool_limit: int = 8

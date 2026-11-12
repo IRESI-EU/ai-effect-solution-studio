@@ -1,0 +1,82 @@
+{
+  "proposal_schema": "dutch-production-contract-draft/1",
+  "proposal_version": "0.1.0-draft.1",
+  "status": "draft-unconfirmed",
+  "activation_allowed": false,
+  "owner_confirmation": null,
+  "service_id": "svc-imported-benchmark-runner-runbenchmark",
+  "proposed_contract": {
+    "operation_identity": "urn:aieffect:proposal:nl:imported:RunBenchmark",
+    "runtime_operation_name": "RunBenchmark",
+    "contract_version": "0.1.0-draft.1",
+    "schema_version": "1.0",
+    "source_kind": "manual",
+    "source_reference": "https://github.com/paulban/ai-effect-wp3/blob/ba598b2459f9986dac4e37dcc5d7d3298f25dc3a/use-cases/dutch_node/benchmarking/common/benchmark_operations.py",
+    "definition": {
+      "operation_role": "analyzer",
+      "binding_transport": null,
+      "inputs": [
+        {
+          "name": "upstream_grid_reference",
+          "semantic_concept": "urn:aieffect:proposal:nl:latest-grid-reference",
+          "value_representation": "data_reference",
+          "data_reference_protocols": [
+            "grpc"
+          ],
+          "content_types": [],
+          "schema_ref": "urn:sha256:4e227128f92b73f32c176ec8923fa0871b1f09d43dd2b1fadc33e84ec0c68596:dutch.data_synthesizer.GetGridDataResponse",
+          "required": true,
+          "source_requirement": "upstream_operation",
+          "min_cardinality": 1,
+          "max_cardinality": 1,
+          "compatibility_notes": [
+            "PROPOSED bounded profile only: one upstream grpc reference and built-in benchmark defaults, no extra configuration/algorithm input. General endpoint also accepts inline/HTTP JSON and multiple references. Owner must approve this narrower profile.",
+            "Fetches DataSynthesizerService.GetGridData with an empty request. Same-task/grid association and immutable retrieval are not guaranteed."
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "benchmark_service_reference",
+          "semantic_concept": "urn:aieffect:proposal:nl:benchmark-result-reference",
+          "value_representation": "data_reference",
+          "data_reference_protocols": [
+            "grpc"
+          ],
+          "content_types": [],
+          "schema_ref": "urn:sha256:01653c997c47b0677a41318c76523e787d0681b02521b13efe8e887628e29a50:dutch.benchmarking.GetBenchmarkResultResponse",
+          "min_cardinality": 1,
+          "max_cardinality": 1,
+          "compatibility_notes": [
+            "Observed format=GetBenchmarkResult; content type and per-task immutable association remain unconfirmed."
+          ]
+        }
+      ],
+      "execution_parameters": null,
+      "compatibility_notes": [
+        "Owner review draft only. Proposed identifiers/version are not existing active pins or owner attestation.",
+        "binding_transport stays null: whole-output-v1 and settings transport have not been owner-confirmed.",
+        "No captured_grid or local qualification wrapper semantics have been imported.",
+        "HTTP control-plane profile, not direct gRPC request forwarding. Prototype structure and control reference flow are distinct."
+      ]
+    }
+  },
+  "known_unknowns": [
+    "Owner-approved canonical identity/version and profile restrictions",
+    "Source-approved output content type and precise binding declaration",
+    "Seed-43 settings delivery through the existing composer",
+    "Task-specific immutable input/result association"
+  ],
+  "observed_configuration": {
+    "transport": "optional inline/HTTP JSON plus required nonempty inputs",
+    "defaults": {
+      "benchmark.max_steps": 200,
+      "benchmark.env_name": "synthetic-grid-v0",
+      "benchmark.time_series_ids": [
+        0
+      ],
+      "algorithm": "bundled algorithms/algorithm_template.py"
+    },
+    "seed_43": "Not a benchmark setting"
+  }
+}

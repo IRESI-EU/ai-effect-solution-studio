@@ -1,0 +1,37 @@
+{
+  "proposal_schema": "dutch-production-contract-draft/1",
+  "proposal_version": "0.1.0-draft.1",
+  "status": "draft-unconfirmed",
+  "activation_allowed": false,
+  "owner_confirmation": null,
+  "service_id": "pkg-data-synthesizer1-afa8ed26ac",
+  "proposed_contract": {
+    "operation_identity": "urn:aieffect:proposal:nl:package:ConfigureAndSynthesize",
+    "runtime_operation_name": "ConfigureAndSynthesize",
+    "contract_version": "0.1.0-draft.1",
+    "schema_version": "1.0",
+    "source_kind": "manual",
+    "source_reference": "urn:sha256:afa8ed26ac696f6f2a212b29c8e0d2ce29b2df82a38ac67756ef47f2a621f87b",
+    "definition": {
+      "operation_role": "source",
+      "binding_transport": null,
+      "inputs": [],
+      "outputs": [],
+      "execution_parameters": null,
+      "compatibility_notes": [
+        "Owner review draft only. Proposed identifiers/version are not existing active pins or owner attestation.",
+        "binding_transport stays null: whole-output-v1 and settings transport have not been owner-confirmed.",
+        "No captured_grid or local qualification wrapper semantics have been imported.",
+        "Uploaded protobuf request/response are empty; real HTTP API/settings/outputs and package source mapping are unknown."
+      ]
+    }
+  },
+  "known_unknowns": [
+    "Owner-approved canonical identity/version and profile restrictions",
+    "Source-approved output content type and precise binding declaration",
+    "Seed-43 settings delivery through the existing composer",
+    "Task-specific immutable input/result association",
+    "Source repository/commit and build pipeline for the declared GHCR image",
+    "Complete package message schemas and match to the running Paulban endpoint"
+  ]
+}

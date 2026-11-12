@@ -1,0 +1,32 @@
+{
+  "status": "unconfirmed-review-only",
+  "activation_allowed": false,
+  "owner_confirmation": null,
+  "capability": {
+    "capability_schema_version": "1.0",
+    "transports": [
+      "http-parameters-v1"
+    ],
+    "operations": [
+      {
+        "operation_name": "ConfigureAndSynthesize",
+        "operation_identity": "urn:aieffect:proposal:nl:imported:ConfigureAndSynthesize",
+        "contract_version": "0.2.0-draft.1",
+        "execution_parameters": {
+          "schema_version": "1.0",
+          "transport": "http-parameters-v1",
+          "properties": {
+            "seed": {
+              "type": "integer",
+              "title": "Random seed",
+              "description": "Nonnegative seed within signed-int32 storage; scientific suitability is unverified.",
+              "minimum": 0,
+              "maximum": 2147483647,
+              "default": 42
+            }
+          }
+        }
+      }
+    ]
+  }
+}
