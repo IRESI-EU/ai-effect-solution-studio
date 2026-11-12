@@ -1,6 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { activeDraftId, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation, recommendationCreation } from "./session.ts";
+import { activeDraftId, activeConversationId, conversationUrl, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation, recommendationCreation } from "./session.ts";
+
+test("fresh conversation URLs isolate discovery and preserve accepted work and legacy history", () => {
+  const first="11111111-1111-4111-8111-111111111111", second="22222222-2222-4222-8222-222222222222";
+  const storage=new Map<string,string>();
+  const legacy=conversationKey("designer",null), saved=conversationKey("designer","accepted-draft");
+  storage.set(legacy,"earlier discovery");storage.set(saved,"accepted conversation");
+  storage.set(conversationKey("designer",null,first),"unsent participant question");
+  const url=new URL(conversationUrl(second),"http://127.0.0.1:23121");
+  assert.equal(activeDraftId(url.searchParams),null);
+  assert.equal(activeConversationId(url.searchParams),second);
+  assert.equal(storage.get(conversationKey("designer",null,second)),undefined);
+  assert.equal(storage.get(conversationKey("designer",null,first)),"unsent participant question");
+  assert.equal(storage.get(legacy),"earlier discovery");
+  assert.equal(storage.get(saved),"accepted conversation");
+  assert.equal(conversationKey("designer","accepted-draft",second),saved);
+  assert.notEqual(conversationKey("other",null,second),conversationKey("designer",null,second));
+  for(const invalid of ["", "https://other.invalid", "../draft", "not-a-uuid"]) {
+    assert.equal(activeConversationId(new URLSearchParams({conversationId:invalid})),null);
+    assert.throws(()=>conversationUrl(invalid));
+  }
+});
 
 test("ordinary navigation never selects remembered work; explicit draft links survive refresh", () => {
   assert.equal(activeDraftId(new URLSearchParams()), null);

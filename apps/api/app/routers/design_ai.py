@@ -20,6 +20,12 @@ router = APIRouter(prefix="/design-ai", tags=["design-ai"])
 
 
 def require_reviewer(user):
+    if settings.design_ai_local_pilot:
+        from app.services.qualified_demo import profile_enabled
+        from app.services.allowance_client import requested
+        reviewers = {value.strip() for value in settings.design_ai_reviewer_ids.split(",") if value.strip()}
+        if not settings.design_ai_restricted_beta or len(reviewers) != 1 or not profile_enabled() or not requested(settings):
+            raise HTTPException(503, "Local pilot requires its qualified profile, one existing reviewer and exclusive shared accounting")
     if settings.design_ai_restricted_beta:
         allowed = {value.strip() for value in settings.design_ai_reviewer_ids.split(",") if value.strip()}
         if (not user or user.status != "active" or user.id not in allowed
@@ -42,6 +48,8 @@ def pilot_user(request: Request, user: User = Depends(get_current_user)):
 def configuration(provider: Provider = Depends(get_provider), user: User | None = Depends(get_optional_user)):
     require_reviewer(user)
     result = {"enabled": settings.design_ai_enabled, "provider_configured": settings.design_ai_enabled and configured()}
+    if settings.design_ai_local_pilot:
+        result["pilot_notice"] = "Restricted local design-only pilot · Supervised use through one existing reviewer account. Saving does not execute a workflow."
     if settings.design_ai_enabled:
         result.update(provider_name=getattr(provider, "name", "Test provider"),
                       provider_mode=getattr(provider, "mode", "test"), model=settings.design_ai_model or None)
