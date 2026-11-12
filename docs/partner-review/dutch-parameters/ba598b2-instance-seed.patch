@@ -1,0 +1,824 @@
+diff --git a/use-cases/dutch_node/data_synthesizer/.gitattributes b/use-cases/dutch_node/data_synthesizer/.gitattributes
+new file mode 100644
+index 0000000000000000000000000000000000000000..5076d3c606fd00f338cca79a5bcdc70d54def07b
+--- /dev/null
++++ b/use-cases/dutch_node/data_synthesizer/.gitattributes
+@@ -0,0 +1 @@
++common/parameter_contract.py text eol=lf
+diff --git a/use-cases/dutch_node/data_synthesizer/INSTANCE_PARAMETERS.md b/use-cases/dutch_node/data_synthesizer/INSTANCE_PARAMETERS.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..c60aeac63aba763363f1e957d189d025d8d2b670
+--- /dev/null
++++ b/use-cases/dutch_node/data_synthesizer/INSTANCE_PARAMETERS.md
+@@ -0,0 +1,163 @@
++# ConfigureAndSynthesize instance parameters — owner review draft
++
++Baseline: paulban/ai-effect-wp3 **ba598b2459f9986dac4e37dcc5d7d3298f25dc3a**.
++Proposed target: the source-backed imported Dutch generator family. This is not
++an owner-approved production selection or activated registry contract.
++
++The patch implements the existing **http-parameters-v1** configuration envelope.
++Its validator is the exact portable artifact used by maintained WP3
++**0221b7ecd4a2d5f072de640350ebc599df22131a**, SHA-256
++**1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa**.
++Provenance is in parameter_contract_provenance.json. No second transport,
++orchestrator patch, adapter framework or service-name map is introduced.
++
++## Requests and capability
++
++Before: the deployed ExecuteRequest has no configuration field, so this JSON
++override is ignored by Pydantic and the operation uses default seed 42:
++
++~~~json
++{
++  "method": "ConfigureAndSynthesize",
++  "workflow_id": "example-only-not-submitted",
++  "task_id": "example-generator",
++  "inputs": [],
++  "configuration": {
++    "contract_id": "unconfirmed-review-contract",
++    "contract_version": "0.2.0-draft.1",
++    "operation_identity": "urn:aieffect:proposal:nl:imported:ConfigureAndSynthesize",
++    "schema_version": "1.0",
++    "parameters": {"seed": 43},
++    "instance_id": "review-generator-instance"
++  }
++}
++~~~
++
++After: the **same request shape**, issued only after normal capability/registry
++review, validates the envelope and delivers 43 to InputConfigurator(seed=43)
++and PowerGridGenerator(seed=43) through the existing combined handler.
++These example IDs are not production IDs or approval to submit an experiment.
++contract_id is the portal's registry-row reference; the established runtime
++handshake matches operation identity/version and parameter schema, not a local
++copy of the registry. No production contract row is created by this patch.
++
++GET /control/capabilities returns capability_schema_version=1.0,
++transports=[http-parameters-v1] and just ConfigureAndSynthesize with proposed
++operation identity above, contract version **0.2.0-draft.1** and:
++
++~~~json
++{
++  "schema_version": "1.0",
++  "transport": "http-parameters-v1",
++  "properties": {
++    "seed": {
++      "type": "integer",
++      "title": "Random seed",
++      "description": "Nonnegative seed within signed-int32 storage; scientific suitability is unverified.",
++      "minimum": 0, "maximum": 2147483647, "default": 42
++    }
++  }
++}
++~~~
++
++ConfigureGrid and SynthesizeGrid do not advertise this new capability.
++Benchmark behavior and declarations are unchanged. No consumption-evidence
++protocol, whole-output compatibility or scientific qualification is claimed.
++
++As in maintained WP3, the configuration envelope contains already validated
++**effective** values. With no configuration field, default seed 42 is retained.
++For a configured default, the producer sends parameters={seed:42}; an empty
++parameters object is rejected rather than deviating from the existing handshake.
++A bare top-level parameters object (including null) is explicitly rejected,
++not treated as another way to bypass identity/version checks.
++
++## Validation and legacy behavior
++
++- Only JSON integers in the declared range are accepted: bool, string, float
++  (including 43.0), null, negatives, overflow and unknown settings fail.
++- Envelope schema/contract/operation mismatches, unsupported transport/schema
++  declarations and unknown/missing envelope fields fail before algorithm calls.
++- A combined legacy inline configuration must be one well-formed base64 JSON
++  object with unique keys and known existing configuration fields. Invalid
++  seed values, malformed/non-inline/multiple inputs and duplicate keys are
++  explicit errors, not defaults.
++- With an envelope, legacy inline configuration may still supply topology,
++  loading and reference-system fields. **Any inline seed plus envelope seed
++  is rejected, even if equal**: there must be exactly one explicit seed source.
++  Other legacy configuration semantics are unchanged; this patch does not
++  create a complete validation contract for all topology/physics inputs.
++- Valid legacy inline calls and unconfigured ConfigureGrid/SynthesizeGrid remain
++  compatible. Combined-operation HTTP validation errors return 422 without
++  replacing previous task status/data or config/grid caches.
++- Direct gRPC positive seed delivery remains unchanged. Negative seeds now
++  explicitly return INVALID_ARGUMENT before any generation/cache mutation.
++  An omitted or zero proto3 seed still selects default 42, because the existing
++  scalar has no presence distinction. No protobuf definition was changed.
++  HTTP can explicitly select zero; owners must confirm this documented interface
++  difference before approving the contract.
++
++## Bounds provenance and limits of the evidence
++
++GridSynthesisRequest, GridSynthesisConfig and GridData use signed **int32** seed
++fields in this baseline's proto/data_synthesizer.proto. The retained local
++baseline dependency image contains powergrid_synth **0.1.1**, source commit
++**b36740438a95db60d30f3681daa72a26e1d2dd73** of
++TU-Delft-AI-Energy-Lab/grid-synthesizer. Inspection of installed source shows:
++
++- InputConfigurator.__init__: numpy.random.default_rng(seed).
++- PowerGridGenerator.__init__: random.seed(seed) and numpy.random.seed(seed).
++
++The [NumPy legacy RNG contract](https://numpy.org/doc/stable/reference/random/legacy.html)
++allows scalar seeds from 0 through 2**32-1; signed-int32 storage narrows the
++nonnegative intersection to **0 through 2,147,483,647**. See also the
++[protobuf scalar/default-presence rules](https://protobuf.dev/programming-guides/proto3/).
++This is a proposed representational bound, not an assertion that every seed
++produces a valid, convergent or scientifically acceptable network. No [42,43]
++enum was copied. Dependency provenance is specific to that retained test image;
++the partner's Dockerfile currently has floating base/package inputs, so it does
++not establish the library revision inside every deployed production image.
++The owner must confirm actual deployed dependency identity and supported seed
++semantics. Remote library files were not retrievable through the connector:
++the commit and constructor calls above came from installed distribution
++metadata/source, not a fresh partner attestation.
++
++## Focused checks
++
++Run with existing service dependencies, without starting main.py:
++
++~~~text
++PYTHONDONTWRITEBYTECODE=1 MPLCONFIGDIR=/tmp/mpl python -m unittest discover -s tests/unit -v
++~~~
++
++The suite uses the actual FastAPI routes, Pydantic envelope, combined and
++individual handlers, actual generated protobufs and direct in-process gRPC
++servicer calls. InputConfigurator, PowerGridGenerator, every physics stage,
++pandapower conversion and the inter-service fetch are narrow test doubles.
++Tests forbid socket connections, gRPC channels and HTTP fetches; the recorded
++run also used Docker --network none, a read-only checkout and disposable tmpfs.
++No new service image or dependency installation is required for that check.
++Assertions verify constructor arguments, effective configuration and synthetic
++protobuf propagation only. The tests' completed mock response is not a real
++algorithm result, workflow execution, qualification or independent usability.
++
++## Deliberately unresolved
++
++GetGridConfig/GetGridData still expose process-wide latest caches through empty
++requests. The combined path still retrieves configuration through its existing
++gRPC reference; concurrent calls can race. This patch does **not** establish
++task-specific snapshots, immutable same-grid benchmark association or safe
++concurrent execution. No benchmark, protobuf, output-binding or portal/runtime
++guard was changed. Newly composed execution must remain disabled.
++
++## Dutch-owner decisions
++
++- [ ] Select the source-backed imported family or supply an authoritative
++  alternative; no production selection is implied by this review.
++- [ ] Confirm deployed generator/library identities, seed semantics and bounds,
++  including HTTP zero versus omitted/zero direct-gRPC behavior.
++- [ ] Approve the existing envelope/capability protocol and proposed identity/
++  version, effective-default rules, strict rejection and dual-source policy.
++- [ ] Review tests and patch against the exact baseline; coordinate any partner
++  publication/deployment separately. This patch is not pushed to the partner.
++- [ ] Keep contract activation and composed execution blocked until the remaining
++  owner/review/immutable-association/runtime gates are separately satisfied.
+diff --git a/use-cases/dutch_node/data_synthesizer/common/control_interface.py b/use-cases/dutch_node/data_synthesizer/common/control_interface.py
+index 1580dbf815a2ca5a7635f028e29dfe6d5bbe53c2..6326901e1986e7f8fd0ffa686306dabdcebc9999 100644
+--- a/use-cases/dutch_node/data_synthesizer/common/control_interface.py
++++ b/use-cases/dutch_node/data_synthesizer/common/control_interface.py
+@@ -24,7 +24,9 @@ from typing import Callable
+ import uvicorn
+ from fastapi import APIRouter, FastAPI, HTTPException, Response
+ from fastapi.responses import RedirectResponse
+-from pydantic import BaseModel
++from pydantic import BaseModel, ConfigDict, model_validator
++
++from .instance_parameters import capabilities, validate_request
+ 
+ from .task_manager import task_manager
+ 
+@@ -50,10 +52,19 @@ class DataReference(BaseModel):
+ class ExecuteRequest(BaseModel):
+     """Execute request from orchestrator."""
+ 
++    model_config = ConfigDict(extra="forbid")
++
+     method: str
+     workflow_id: str
+     task_id: str
+     inputs: list[dict] = []
++    configuration: dict | None = None
++    parameters: dict | None = None
++
++    @model_validator(mode="after")
++    def supported_configuration(self):
++        validate_request(self)
++        return self
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -106,6 +117,10 @@ def create_control_router(
+     """
+     router = APIRouter()
+ 
++    @router.get("/capabilities")
++    def parameter_capabilities():
++        return capabilities(execute_handlers)
++
+     @router.post("/execute", response_model=ExecuteResponse)
+     def execute(request: ExecuteRequest) -> ExecuteResponse:
+         logger.info(f"Execute: method={request.method}, task={request.task_id}")
+@@ -129,6 +144,10 @@ def create_control_router(
+             )
+             response.task_id = request.task_id
+             return response
++        except ValueError as e:
++            # Reject malformed/ambiguous configuration before registering a
++            # result or replacing previously recorded task state.
++            raise HTTPException(status_code=422, detail=str(e)) from e
+         except Exception as e:
+             logger.error(f"Execute failed: {e}")
+             task_manager.register(request.task_id, status="failed", error=str(e))
+diff --git a/use-cases/dutch_node/data_synthesizer/common/instance_parameters.py b/use-cases/dutch_node/data_synthesizer/common/instance_parameters.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..04d55b53205cf961a6198a3044b658059fef470f
+--- /dev/null
++++ b/use-cases/dutch_node/data_synthesizer/common/instance_parameters.py
+@@ -0,0 +1,53 @@
++"""Proposed generator capability using the maintained http-parameters-v1 protocol.
++
++The identity/version are review drafts, not active production registry authority.
++Only ConfigureAndSynthesize implements this capability.
++"""
++from copy import deepcopy
++
++from .parameter_contract import effective_parameters, match_wrapper_configuration
++
++OPERATION_IDENTITY = "urn:aieffect:proposal:nl:imported:ConfigureAndSynthesize"
++CONTRACT_VERSION = "0.2.0-draft.1"
++# Intersection of nonnegative NumPy RandomState seed range and signed int32
++# GridSynthesisConfig/GridData fields. See INSTANCE_PARAMETERS.md for provenance.
++SEED_SPEC = {
++    "type": "integer", "title": "Random seed",
++    "description": "Nonnegative seed within signed-int32 storage; scientific suitability is unverified.",
++    "minimum": 0, "maximum": 2**31 - 1, "default": 42,
++}
++EXECUTION_PARAMETERS = {
++    "schema_version": "1.0",
++    "transport": "http-parameters-v1",
++    "properties": {"seed": SEED_SPEC},
++}
++
++
++def capabilities(methods):
++    operations = []
++    if "ConfigureAndSynthesize" in methods:
++        operations.append({
++            "operation_name": "ConfigureAndSynthesize",
++            "operation_identity": OPERATION_IDENTITY,
++            "contract_version": CONTRACT_VERSION,
++            "execution_parameters": deepcopy(EXECUTION_PARAMETERS),
++        })
++    return {"capability_schema_version": "1.0",
++            "transports": ["http-parameters-v1"] if operations else [],
++            "operations": operations}
++
++
++def validate_request(request):
++    # The maintained WP3 client omits both fields for ordinary legacy requests.
++    # A bare parameters object is not a validated configuration envelope.
++    if "parameters" in request.model_fields_set:
++        raise ValueError("Use the supported configuration envelope, not bare parameters")
++    if "configuration" in request.model_fields_set:
++        match_wrapper_configuration(
++            request.method, request.configuration,
++            capabilities(["ConfigureAndSynthesize"]),
++        )
++
++
++def validate_seed(value):
++    return effective_parameters(EXECUTION_PARAMETERS, {"seed": value})["seed"]
+diff --git a/use-cases/dutch_node/data_synthesizer/common/parameter_contract.py b/use-cases/dutch_node/data_synthesizer/common/parameter_contract.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e8e700b0f168a9c57dd0137979dbf2dec275ee6d
+--- /dev/null
++++ b/use-cases/dutch_node/data_synthesizer/common/parameter_contract.py
+@@ -0,0 +1,119 @@
++"""Portable parameter validation shared by Studio and isolated node wrappers.
++
++No paths, deployment commands, environment variables or secrets are interpreted.
++"""
++from copy import deepcopy
++import math
++import hashlib
++import json
++
++
++def effective_parameters(definition, requested):
++    if not isinstance(requested, dict):
++        raise ValueError("Parameters must be a JSON object; null is not supported")
++    properties = definition.get("properties", {})
++    unknown = set(requested) - set(properties)
++    if unknown:
++        raise ValueError("Unsupported parameters: " + ", ".join(sorted(unknown)))
++    result = {}
++    for name, spec in properties.items():
++        if name in requested:
++            value = requested[name]
++        elif "default" in spec:
++            value = deepcopy(spec["default"])
++        elif spec.get("required"):
++            raise ValueError(f"{name}: a value is required")
++        else:
++            continue
++        kind = spec["type"]
++        valid = ((kind == "integer" and type(value) is int)
++                 or (kind == "number" and type(value) in (int, float) and math.isfinite(value))
++                 or (kind == "boolean" and type(value) is bool)
++                 or (kind == "string" and type(value) is str))
++        if not valid:
++            raise ValueError(f"{name}: expected {kind}; null is not supported")
++        if "enum" in spec and value not in spec["enum"]:
++            raise ValueError(f"{name}: choose one of {spec['enum']}")
++        if kind in ("integer", "number"):
++            if spec.get("minimum") is not None and value < spec["minimum"]:
++                raise ValueError(f"{name}: minimum is {spec['minimum']}")
++            if spec.get("maximum") is not None and value > spec["maximum"]:
++                raise ValueError(f"{name}: maximum is {spec['maximum']}")
++        result[name] = deepcopy(value)
++    return result
++
++
++TRANSPORT = "http-parameters-v1"
++CAPABILITY_SCHEMA = "1.0"
++
++
++def parameter_contract_digest(definition):
++    """Stable digest for the registry export, including labels and constraints.
++
++    Stored Pydantic defaults and JSON numeric spelling do not create a second
++    contract identity. Explicit null defaults remain invalid, not omitted.
++    """
++    if (not isinstance(definition, dict) or definition.get("schema_version") != "1.0"
++            or definition.get("transport") != TRANSPORT or not isinstance(definition.get("properties"), dict)
++            or set(definition) - {"schema_version", "transport", "properties"}):
++        raise ValueError("Unsupported execution parameter contract/protocol version")
++    properties = {}
++    for name, original in definition["properties"].items():
++        if not isinstance(original, dict):
++            raise ValueError("Malformed parameter definition")
++        spec = {k: deepcopy(v) for k, v in original.items() if v is not None or k == "default"}
++        if spec.get("required") is False:
++            spec.pop("required")
++        if spec.get("type") not in {"integer", "number", "boolean", "string"}:
++            raise ValueError("Unsupported parameter type")
++        for bound in ("minimum", "maximum"):
++            if bound in spec:
++                value = spec[bound]
++                if type(value) not in (int, float) or not math.isfinite(value):
++                    raise ValueError("Parameter bounds must be finite numbers")
++                if value == int(value):
++                    spec[bound] = int(value)
++        for value in ([spec["default"]] if "default" in spec else []) + spec.get("enum", []):
++            effective_parameters({"properties": {name: spec}}, {name: value})
++        properties[name] = spec
++    canonical = {"schema_version": "1.0", "transport": TRANSPORT, "properties": properties}
++    return hashlib.sha256(json.dumps(canonical, sort_keys=True, ensure_ascii=False, allow_nan=False,
++                                     separators=(",", ":")).encode()).hexdigest()
++
++
++def validate_configuration_envelope(configuration):
++    keys = {"contract_id", "contract_version", "operation_identity", "schema_version", "parameters", "instance_id"}
++    if not isinstance(configuration, dict) or set(configuration) != keys:
++        raise ValueError("Unsupported instance configuration envelope")
++    if configuration["schema_version"] != "1.0":
++        raise ValueError("Unsupported parameter schema version")
++    for key in keys - {"parameters"}:
++        if not isinstance(configuration[key], str) or not configuration[key].strip() or len(configuration[key]) > 300:
++            raise ValueError(f"Invalid configuration {key}")
++    if not isinstance(configuration["parameters"], dict):
++        raise ValueError("Parameters must be a JSON object")
++    json.dumps(configuration, allow_nan=False)
++    return deepcopy(configuration)
++
++
++def match_wrapper_configuration(method, configuration, capability):
++    """Generic protocol negotiation; no Dutch/Danish definitions live here."""
++    configuration = validate_configuration_envelope(configuration)
++    if (not isinstance(capability, dict) or capability.get("capability_schema_version") != CAPABILITY_SCHEMA
++            or not isinstance(capability.get("transports"), list)
++            or TRANSPORT not in capability["transports"]
++            or not isinstance(capability.get("operations"), list)):
++        raise ValueError("Wrapper does not declare a supported configuration protocol")
++    matches = [op for op in capability.get("operations", []) if isinstance(op, dict)
++               and op.get("operation_name") == method
++               and op.get("operation_identity") == configuration["operation_identity"]
++               and op.get("contract_version") == configuration["contract_version"]]
++    if len(matches) != 1:
++        raise ValueError("Wrapper operation/contract version is incompatible or ambiguous")
++    definition = matches[0].get("execution_parameters")
++    digest = parameter_contract_digest(definition)
++    effective = effective_parameters(definition, configuration["parameters"])
++    if effective != configuration["parameters"]:
++        raise ValueError("Submitted parameters must already contain validated effective values")
++    return {"operation_identity": configuration["operation_identity"], "contract_version": configuration["contract_version"],
++            "schema_version": "1.0", "parameter_contract_sha256": digest}
+diff --git a/use-cases/dutch_node/data_synthesizer/common/synth_operations.py b/use-cases/dutch_node/data_synthesizer/common/synth_operations.py
+index 1b8db57382e42f4828ecd4762568cedf9b87fca4..7c50207c52793050cde8e509f055bbad63822441 100644
+--- a/use-cases/dutch_node/data_synthesizer/common/synth_operations.py
++++ b/use-cases/dutch_node/data_synthesizer/common/synth_operations.py
+@@ -56,6 +56,7 @@ from .control_interface import (
+ )
+ from .proto_runtime import ensure_generated
+ from .task_manager import get_task_manager
++from .instance_parameters import validate_request, validate_seed
+ 
+ logger = logging.getLogger(__name__)
+ 
+@@ -108,6 +109,13 @@ class DataSynthesizerServicer(data_synthesizer_pb2_grpc.DataSynthesizerServiceSe
+     def ConfigureAndSynthesize(self, request, context):
+         params: dict[str, Any] = {}
+ 
++        if request.seed < 0:
++            context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
++            context.set_details("seed: minimum is 0; omitted proto3 seed retains default 42")
++            return data_synthesizer_pb2.GetGridDataResponse(
++                success=False, message="seed: minimum is 0"
++            )
++
+         if request.level_specs:
+             params["level_specs"] = [
+                 {
+@@ -794,6 +802,54 @@ def execute_SynthesizeGrid(request: ExecuteRequest) -> ExecuteResponse:
+         return ExecuteResponse(status="failed", error=str(e))
+ 
+ 
++def _combined_configuration_request(request: ExecuteRequest) -> ExecuteRequest:
++    """Validate all seed sources before configuration, generation or cache writes."""
++    validate_request(request)
++    params = {}
++    if request.inputs:
++        if len(request.inputs) != 1 or request.inputs[0].get("protocol") != "inline":
++            raise ValueError("ConfigureAndSynthesize accepts at most one inline configuration")
++
++        def unique_keys(pairs):
++            result = {}
++            for key, value in pairs:
++                if key in result:
++                    raise ValueError("Duplicate inline configuration key: " + key)
++                result[key] = value
++            return result
++
++        try:
++            raw = base64.b64decode(request.inputs[0].get("uri", ""), validate=True)
++            params = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_keys)
++        except (ValueError, TypeError, UnicodeError) as exc:
++            raise ValueError("Invalid inline configuration: " + str(exc)) from exc
++        if not isinstance(params, dict):
++            raise ValueError("Inline configuration must be a JSON object")
++        unknown = set(params) - {
++            "level_specs", "connection_specs", "seed", "loading_level", "ref_sys_id"
++        }
++        if unknown:
++            raise ValueError("Unsupported inline settings: " + ", ".join(sorted(unknown)))
++        if "seed" in params:
++            validate_seed(params["seed"])
++
++    if request.configuration is not None:
++        if "seed" in params:
++            raise ValueError(
++                "Seed supplied by both inline configuration and configuration envelope; "
++                "supply it exactly once, even when the values agree"
++            )
++        params["seed"] = request.configuration["parameters"]["seed"]
++
++    # Pass the validated seed into the existing ConfigureGrid -> SynthesizeGrid
++    # path. The unimplemented individual operations receive no new envelope.
++    return ExecuteRequest(
++        method="ConfigureGrid", workflow_id=request.workflow_id, task_id=request.task_id,
++        inputs=[{"protocol": "inline", "format": "json",
++                 "uri": base64.b64encode(json.dumps(params).encode("utf-8")).decode("ascii")}],
++    )
++
++
+ def execute_ConfigureAndSynthesize(request: ExecuteRequest) -> ExecuteResponse:
+     """Run ConfigureGrid and SynthesizeGrid in one control-plane operation.
+ 
+@@ -802,7 +858,8 @@ def execute_ConfigureAndSynthesize(request: ExecuteRequest) -> ExecuteResponse:
+     It preserves existing behavior by running ConfigureGrid first and then
+     invoking SynthesizeGrid with the generated gRPC data reference.
+     """
+-    configure_response = execute_ConfigureGrid(request)
++    validated_request = _combined_configuration_request(request)
++    configure_response = execute_ConfigureGrid(validated_request)
+     if configure_response.status != "complete" or configure_response.output is None:
+         return ExecuteResponse(
+             status="failed",
+diff --git a/use-cases/dutch_node/data_synthesizer/parameter_contract_provenance.json b/use-cases/dutch_node/data_synthesizer/parameter_contract_provenance.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..faa22421834538451c3115efc289ee45e55c1ce4
+--- /dev/null
++++ b/use-cases/dutch_node/data_synthesizer/parameter_contract_provenance.json
+@@ -0,0 +1,10 @@
++{
++  "owner": "Solution Studio Operation Contract Registry",
++  "source_repository": "IRESI-EU/ai-effect-solution-studio",
++  "source_commit": "0b8ae6afa2cc4fc933dfa1a50ae0cbc4178d9c07",
++  "source": "apps/api/app/services/parameter_values.py",
++  "maintained_wp3_commit": "0221b7ecd4a2d5f072de640350ebc599df22131a",
++  "validator_version": "1.0",
++  "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
++  "note": "Exact shared release artifact; do not edit independently. No runtime profile or operation map imported."
++}
+diff --git a/use-cases/dutch_node/data_synthesizer/tests/unit/test_instance_parameters.py b/use-cases/dutch_node/data_synthesizer/tests/unit/test_instance_parameters.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..d2df3978a8d57d652b1b377a04b1666085dfb9d8
+--- /dev/null
++++ b/use-cases/dutch_node/data_synthesizer/tests/unit/test_instance_parameters.py
+@@ -0,0 +1,294 @@
++"""Argument-delivery tests only: no algorithm, workflow, server or network.
++
++Run with the service's existing dependencies:
++  python -m unittest discover -s tests/unit -v
++All synthesis/physics constructors and inter-service I/O are replaced below.
++"""
++import base64
++import hashlib
++import json
++from pathlib import Path
++import unittest
++from unittest.mock import Mock, patch
++
++import grpc
++import networkx as nx
++from fastapi.testclient import TestClient
++from pydantic import ValidationError
++
++from common import control_interface as control
++from common import synth_operations as ops
++from common.instance_parameters import (
++    CONTRACT_VERSION, EXECUTION_PARAMETERS, OPERATION_IDENTITY, capabilities,
++)
++from common.parameter_contract import match_wrapper_configuration
++from common.task_manager import TaskManager
++
++
++def envelope(seed=43):
++    return {
++        "contract_id": "unconfirmed-review-contract",
++        "contract_version": CONTRACT_VERSION,
++        "operation_identity": OPERATION_IDENTITY,
++        "schema_version": "1.0",
++        "parameters": {"seed": seed},
++        "instance_id": "review-generator-instance",
++    }
++
++
++def inline(value):
++    return {"protocol": "inline", "format": "json",
++            "uri": base64.b64encode(json.dumps(value).encode()).decode()}
++
++
++class InstanceParameterDelivery(unittest.TestCase):
++    def setUp(self):
++        self.manager = TaskManager()
++        self.manager.register("protected-task", "complete", output="preserved-output")
++        self.manager.store_data("protected-task", "preserved-data", "text")
++        self.old_config = ops._cached_config_response
++        self.old_grid = ops._cached_grid_response
++        self.addCleanup(setattr, ops, "_cached_config_response", self.old_config)
++        self.addCleanup(setattr, ops, "_cached_grid_response", self.old_grid)
++        self.original_config = ops.data_synthesizer_pb2.GetGridConfigResponse(
++            success=True, message="preserved configuration")
++        self.original_grid = ops.data_synthesizer_pb2.GetGridDataResponse(
++            success=True, message="preserved grid")
++        ops._cached_config_response = self.original_config
++        ops._cached_grid_response = self.original_grid
++
++        def replace(target, **kwargs):
++            p = patch(target, **kwargs)
++            self.addCleanup(p.stop)
++            return p.start()
++
++        replace("common.control_interface.task_manager", new=self.manager)
++        replace("common.synth_operations.get_task_manager", return_value=self.manager)
++        self.configurator = replace("common.synth_operations.InputConfigurator")
++        self.configurator.return_value.create_params.return_value = {
++            "degrees_by_level": [[1, 1]], "diameters_by_level": [1],
++            "transformer_degrees": {},
++        }
++        self.generator = replace("common.synth_operations.PowerGridGenerator")
++        self.generator.return_value.generate_grid.return_value = nx.Graph([(0, 1)])
++        for name in ("BusTypeAllocator", "CapacityAllocator", "LoadAllocator",
++                     "GenerationDispatcher", "TransmissionLineAllocator"):
++            replace("common.synth_operations." + name)
++        replace("common.synth_operations._grid_to_pandapower_json",
++                return_value="SYNTHETIC TEST DOUBLE ONLY; not a power grid result")
++        self.fetch = replace("common.synth_operations._fetch_grid_config_from_upstream",
++                             side_effect=lambda uri: ops._cached_config_response)
++        for target in ("socket.create_connection", "socket.socket.connect",
++                       "grpc.insecure_channel", "httpx.get"):
++            replace(target, side_effect=AssertionError("Network is disabled in unit tests"))
++        self.client = TestClient(control.create_app(ops.synth_handlers))
++        self.addCleanup(self.client.close)
++
++    def post(self, **changes):
++        body = {"method": "ConfigureAndSynthesize", "workflow_id": "unit-only",
++                "task_id": "protected-task", "inputs": []}
++        body.update(changes)
++        return self.client.post("/control/execute", json=body)
++
++    def assert_delivered(self, response, seed):
++        self.assertEqual(response.status_code, 200, response.text)
++        self.assertEqual(response.json()["status"], "complete")
++        self.configurator.assert_called_once_with(seed=seed)
++        self.generator.assert_called_once_with(seed=seed)
++        self.configurator.return_value.create_params.assert_called_once()
++        self.generator.return_value.generate_grid.assert_called_once()
++        self.assertEqual(ops._cached_config_response.config.seed, seed)
++        self.assertEqual(ops._cached_grid_response.grid_data.seed, seed)
++        self.assertEqual(ops._cached_grid_response.grid_data.source_config.seed, seed)
++
++    def assert_untouched(self, response):
++        self.assertEqual(response.status_code, 422, response.text)
++        self.configurator.assert_not_called()
++        self.generator.assert_not_called()
++        self.fetch.assert_not_called()
++        self.assertIs(ops._cached_config_response, self.original_config)
++        self.assertIs(ops._cached_grid_response, self.original_grid)
++        self.assertEqual(self.manager.get_status("protected-task"),
++                         {"status": "complete", "output": "preserved-output",
++                          "error": None, "progress": 0})
++        self.assertEqual(self.manager.get_data("protected-task"), ("preserved-data", "text"))
++
++    def test_omitted_override_delivers_default_42(self):
++        self.assert_delivered(self.post(), 42)
++
++    def test_seedless_legacy_inline_retains_default_42(self):
++        self.assert_delivered(self.post(inputs=[inline({})]), 42)
++
++    def test_valid_envelope_delivers_43_through_actual_control_handlers(self):
++        self.assert_delivered(self.post(configuration=envelope()), 43)
++
++    def test_explicit_effective_default_is_accepted(self):
++        self.assert_delivered(self.post(configuration=envelope(42)), 42)
++
++    def test_zero_is_valid_http_seed_without_coercion(self):
++        self.assert_delivered(self.post(configuration=envelope(0)), 0)
++
++    def test_signed_int32_upper_bound_is_forwarded(self):
++        self.assert_delivered(self.post(configuration=envelope(2**31 - 1)), 2**31 - 1)
++
++    def test_invalid_seed_values_reject_before_mutation(self):
++        for value in (True, False, "43", 43.0, 43.5, None, -1, 2**31, [], {}):
++            with self.subTest(value=value):
++                self.assert_untouched(self.post(configuration=envelope(value)))
++
++    def test_unknown_or_missing_effective_parameters_reject(self):
++        for values in ({}, {"seed": 43, "unknown": 1}, None, ["seed", 43]):
++            with self.subTest(parameters=values):
++                config = envelope()
++                config["parameters"] = values
++                self.assert_untouched(self.post(configuration=config))
++
++    def test_envelope_version_identity_and_shape_reject(self):
++        changes = [
++            {"schema_version": "2.0"}, {"schema_version": 1},
++            {"contract_version": "1.0.0"}, {"operation_identity": "wrong-operation"},
++            {"transport": "http-parameters-v2"}, {"instance_id": ""},
++            {"contract_id": ""}, {"parameters": {"seed": 43}, "extra": 1},
++        ]
++        for changeset in changes:
++            with self.subTest(changes=changeset):
++                self.assert_untouched(self.post(configuration={**envelope(), **changeset}))
++        missing = envelope()
++        del missing["contract_version"]
++        self.assert_untouched(self.post(configuration=missing))
++        self.assert_untouched(self.post(configuration=None))
++
++    def test_bare_parameters_are_not_a_second_transport(self):
++        self.assert_untouched(self.post(parameters={"seed": 43}))
++        self.assert_untouched(self.post(parameters=None))
++        self.assert_untouched(self.post(parameters={"seed": 43}, configuration=envelope()))
++
++    def test_dual_seed_sources_reject_even_if_equal(self):
++        for seed in (42, 43):
++            with self.subTest(inline_seed=seed):
++                response = self.post(inputs=[inline({"seed": seed})], configuration=envelope())
++                self.assert_untouched(response)
++                self.assertIn("supply it exactly once", response.text)
++
++    def test_envelope_and_seedless_valid_inline_combine(self):
++        values = {"level_specs": [{"n": 2, "avg_k": 1, "diam": 1, "dist_type": "dgln"}],
++                  "connection_specs": {}, "loading_level": "L", "ref_sys_id": 2}
++        self.assert_delivered(self.post(inputs=[inline(values)], configuration=envelope()), 43)
++        self.configurator.return_value.create_params.assert_called_once_with(
++            values["level_specs"], {})
++        self.assertEqual(ops._cached_grid_response.grid_data.loading_level, "L")
++        self.assertEqual(ops._cached_grid_response.grid_data.ref_sys_id, 2)
++
++    def test_valid_legacy_inline_remains_compatible(self):
++        self.assert_delivered(self.post(inputs=[inline({"seed": 73})]), 73)
++
++    def test_legacy_individual_control_operations_remain_compatible(self):
++        configured = self.post(method="ConfigureGrid", inputs=[inline({"seed": 73})])
++        self.assertEqual(configured.json()["status"], "complete")
++        self.generator.assert_not_called()
++        synthesized = self.post(method="SynthesizeGrid",
++                                inputs=[configured.json()["output"]])
++        self.assert_delivered(synthesized, 73)
++
++    def test_invalid_or_ambiguous_inline_never_falls_back(self):
++        bad = [
++            [inline({"seed": "43"})], [inline({"seed": True})],
++            [inline({"seed": -1})], [inline({"seed": 2**31})],
++            [inline({"unknown": 43})], [inline([])], [inline(None)],
++            [{"protocol": "inline", "uri": "invalid base64!", "format": "json"}],
++            [{"protocol": "grpc", "uri": "never-connect", "format": "GetGridConfig"}],
++            [inline({}), inline({"seed": 43})],
++            [{"protocol": "inline", "format": "json",
++              "uri": base64.b64encode(b'{"seed":42,"seed":43}').decode()}],
++        ]
++        for inputs in bad:
++            with self.subTest(inputs=inputs):
++                self.assert_untouched(self.post(inputs=inputs))
++
++    def test_valid_direct_grpc_call_preserves_positive_seed(self):
++        context = Mock()
++        result = ops.DataSynthesizerServicer().ConfigureAndSynthesize(
++            ops.data_synthesizer_pb2.GridSynthesisRequest(seed=73), context)
++        self.assertTrue(result.success)
++        self.configurator.assert_called_once_with(seed=73)
++        self.generator.assert_called_once_with(seed=73)
++        self.assertEqual(result.grid_data.seed, 73)
++        context.set_code.assert_not_called()
++
++    def test_omitted_direct_grpc_seed_preserves_42(self):
++        result = ops.DataSynthesizerServicer().ConfigureAndSynthesize(
++            ops.data_synthesizer_pb2.GridSynthesisRequest(), Mock())
++        self.assertTrue(result.success)
++        self.configurator.assert_called_once_with(seed=42)
++        self.generator.assert_called_once_with(seed=42)
++
++    def test_explicit_direct_grpc_zero_keeps_existing_default_semantics(self):
++        result = ops.DataSynthesizerServicer().ConfigureAndSynthesize(
++            ops.data_synthesizer_pb2.GridSynthesisRequest(seed=0), Mock())
++        self.assertTrue(result.success)
++        self.configurator.assert_called_once_with(seed=42)
++        self.generator.assert_called_once_with(seed=42)
++
++    def test_negative_direct_grpc_seed_rejects_without_defaults(self):
++        context = Mock()
++        result = ops.DataSynthesizerServicer().ConfigureAndSynthesize(
++            ops.data_synthesizer_pb2.GridSynthesisRequest(seed=-1), context)
++        self.assertFalse(result.success)
++        context.set_code.assert_called_once_with(grpc.StatusCode.INVALID_ARGUMENT)
++        self.configurator.assert_not_called()
++        self.generator.assert_not_called()
++        self.assertIs(ops._cached_config_response, self.original_config)
++        self.assertIs(ops._cached_grid_response, self.original_grid)
++
++    def test_capabilities_match_only_the_implemented_operation(self):
++        cap = self.client.get("/control/capabilities").json()
++        self.assertEqual(cap["transports"], ["http-parameters-v1"])
++        self.assertEqual([v["operation_name"] for v in cap["operations"]],
++                         ["ConfigureAndSynthesize"])
++        self.assertEqual(cap["operations"][0]["execution_parameters"], EXECUTION_PARAMETERS)
++        self.assertNotIn("enum", EXECUTION_PARAMETERS["properties"]["seed"])
++        self.assertEqual(EXECUTION_PARAMETERS["properties"]["seed"]["default"], ops.DEFAULT_SEED)
++        match_wrapper_configuration("ConfigureAndSynthesize", envelope(), cap)
++        self.assertEqual(capabilities(["ConfigureGrid"])["operations"], [])
++        for method in ("ConfigureGrid", "SynthesizeGrid"):
++            with self.subTest(method=method):
++                self.assert_untouched(self.post(method=method, configuration=envelope()))
++
++    def test_unsupported_capability_protocol_and_version_do_not_negotiate(self):
++        good = capabilities(["ConfigureAndSynthesize"])
++        for changes in ({"capability_schema_version": "2.0"},
++                        {"transports": ["http-parameters-v2"]}):
++            with self.subTest(changes=changes), self.assertRaises(ValueError):
++                match_wrapper_configuration("ConfigureAndSynthesize", envelope(), {**good, **changes})
++        changed = envelope()
++        changed["contract_version"] = "0.1.0-draft.1"
++        with self.assertRaises(ValueError):
++            match_wrapper_configuration("ConfigureAndSynthesize", changed, good)
++        self.configurator.assert_not_called()
++        self.generator.assert_not_called()
++
++    def test_direct_handler_rechecks_validation_before_algorithms(self):
++        request = control.ExecuteRequest(method="ConfigureAndSynthesize",
++                                         workflow_id="unit", task_id="protected-task")
++        request.configuration = envelope(True)
++        with self.assertRaises(ValueError):
++            ops.execute_ConfigureAndSynthesize(request)
++        self.configurator.assert_not_called()
++        self.generator.assert_not_called()
++        self.assertIs(ops._cached_grid_response, self.original_grid)
++
++    def test_direct_model_validation_is_strict_too(self):
++        for value in (True, "43", 43.5):
++            with self.subTest(value=value), self.assertRaises(ValidationError):
++                control.ExecuteRequest(method="ConfigureAndSynthesize",
++                    workflow_id="unit", task_id="unit", configuration=envelope(value))
++
++    def test_validator_is_exactly_the_recorded_shared_artifact(self):
++        root = Path(__file__).resolve().parents[2]
++        provenance = json.loads((root / "parameter_contract_provenance.json").read_text())
++        self.assertEqual(hashlib.sha256((root / "common/parameter_contract.py").read_bytes()).hexdigest(),
++                         provenance["sha256"])
++
++
++if __name__ == "__main__":
++    unittest.main()

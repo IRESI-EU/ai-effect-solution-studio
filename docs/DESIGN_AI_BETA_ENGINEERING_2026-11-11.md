@@ -97,3 +97,12 @@ Production/source inspection was read-only. The failed temporary credential was 
 | Remaining implementation/release gaps | Partner setting-delivery and immutable-grid changes are not implemented; private cross-environment accounting transport is not provisioned/qualified. No known failing focused accounting regression. |
 
 Target remains https://platform.ai-effect.eu/design-ai **after** gates pass; no beta access is enabled. Independent human usability, genuine model interpretation for the production pair and production compatibility remain unverified.
+
+
+## 12 November follow-up: implemented partner seed-delivery patch
+
+The [concrete Dutch owner-review package](partner-review/dutch-parameters/README.md) now supplies actual generator control/handler code and 24 focused passing tests against partner baseline **ba598b2459f9986dac4e37dcc5d7d3298f25dc3a**. Local-only partner head **c08c86aa09a577915cec5d868c7deef73ec408ad** is exported as a cumulative reproducible patch, with exact-baseline replay/tree verification, before/after request, unconfirmed 0.2.0-draft.1 contract/capability proposals and owner checklist. No partner push or PR occurred.
+
+The previously missing strict parameter-delivery implementation is prepared for review: exact maintained configuration envelope and shared validator, seed type/bounds/version checks, no silent invalid-setting defaults, explicit dual-source rejection, default 42, and valid 43 observed at both constructor call sites with algorithm doubles. Registry schema/digest round-trip passes. No real algorithm or new workflow ran; latest-cache association and safe concurrency are deliberately unresolved. Production still runs its prior implementation; partner approval/deployment and all other release gates above remain unmet.
+
+Portal application/migration source and existing candidate images remain unchanged. No contract activation, provider/allowance policy change, paid request, grant, saved-design edit, account change, deployment, merge or tracker update occurred. Shared allowance remains **13/13**. The original 11 November findings and earlier acceptance failures remain historical evidence.

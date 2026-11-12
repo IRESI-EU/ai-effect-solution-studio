@@ -1,0 +1,16 @@
+{
+  "method": "ConfigureAndSynthesize",
+  "workflow_id": "example-only-not-submitted",
+  "task_id": "example-generator",
+  "inputs": [],
+  "configuration": {
+    "contract_id": "unconfirmed-review-contract",
+    "contract_version": "0.2.0-draft.1",
+    "operation_identity": "urn:aieffect:proposal:nl:imported:ConfigureAndSynthesize",
+    "schema_version": "1.0",
+    "parameters": {
+      "seed": 43
+    },
+    "instance_id": "review-generator-instance"
+  }
+}

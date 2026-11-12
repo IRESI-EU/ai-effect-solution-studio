@@ -1,0 +1,94 @@
+{
+  "partner_repository": "paulban/ai-effect-wp3",
+  "baseline": "ba598b2459f9986dac4e37dcc5d7d3298f25dc3a",
+  "local_only_patch_commit": "c08c86aa09a577915cec5d868c7deef73ec408ad",
+  "partner_pushes": 0,
+  "partner_prs_opened": 0,
+  "changed_paths": [
+    "use-cases/dutch_node/data_synthesizer/.gitattributes",
+    "use-cases/dutch_node/data_synthesizer/INSTANCE_PARAMETERS.md",
+    "use-cases/dutch_node/data_synthesizer/common/control_interface.py",
+    "use-cases/dutch_node/data_synthesizer/common/instance_parameters.py",
+    "use-cases/dutch_node/data_synthesizer/common/parameter_contract.py",
+    "use-cases/dutch_node/data_synthesizer/common/synth_operations.py",
+    "use-cases/dutch_node/data_synthesizer/parameter_contract_provenance.json",
+    "use-cases/dutch_node/data_synthesizer/tests/unit/test_instance_parameters.py"
+  ],
+  "patch_sha256": "50053dc76cdef523ef3b5375c2e795f12063bc088ebb6af07d65194b3e26b960",
+  "git_apply_cached_check": "passed against exact baseline",
+  "replayed_tree_sha1": "a4fa39166c8750517b623ddc35ec36910f77700d",
+  "replayed_tree_matches_local_patch_commit": true,
+  "tests": {
+    "tests": 24,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "algorithm_test_doubles": true,
+    "network": "none",
+    "capabilities": {
+      "capability_schema_version": "1.0",
+      "transports": [
+        "http-parameters-v1"
+      ],
+      "operations": [
+        {
+          "operation_name": "ConfigureAndSynthesize",
+          "operation_identity": "urn:aieffect:proposal:nl:imported:ConfigureAndSynthesize",
+          "contract_version": "0.2.0-draft.1",
+          "execution_parameters": {
+            "schema_version": "1.0",
+            "transport": "http-parameters-v1",
+            "properties": {
+              "seed": {
+                "type": "integer",
+                "title": "Random seed",
+                "description": "Nonnegative seed within signed-int32 storage; scientific suitability is unverified.",
+                "minimum": 0,
+                "maximum": 2147483647,
+                "default": 42
+              }
+            }
+          }
+        }
+      ]
+    },
+    "python": "3.10.22",
+    "numpy": "2.2.6",
+    "library": {
+      "name": "powergrid_synth",
+      "version": "0.1.1",
+      "source_commit": "b36740438a95db60d30f3681daa72a26e1d2dd73",
+      "constructors": {
+        "InputConfigurator": {
+          "file_sha256": "3f3a75504fcb57ea3a3d29f5076b59bef48d7614570d521f45bdb6d3ef661f9f",
+          "constructor_source": "    def __init__(self, seed: Optional[int] = None):\n        self.rng = np.random.default_rng(seed)\n        self.optimizer = DegreeDistributionOptimizer(verbose=False)\n"
+        },
+        "PowerGridGenerator": {
+          "file_sha256": "62f3b5a82a4b5e4949797b3c40b48dc05bd48e1c4e4f7fb40c63bda6c73cf7bf",
+          "constructor_source": "    def __init__(self, seed: Optional[int] = None):\n        if seed is not None:\n            import random\n            random.seed(seed)\n            np.random.seed(seed)\n            \n        self.preprocessor = Preprocessor()\n        self.edge_creator = EdgeCreator()\n        self.transformer_connector = TransformerConnector()\n"
+        }
+      }
+    },
+    "retained_dependency_image": "sha256:f14731e7c4bf273561ad02ab2a42895069543b7b6e0f0ffa2dec4fb56599b992"
+  },
+  "contract_proposal_schema": "OperationContractWrite passed",
+  "registry_round_trip_parameter_digest": "f152f6ffd8b84b32f42b7ba9ac0daf8b1076de6bb6ad63f68b7a5df16fdca9bc",
+  "registry_round_trip_matches_runtime_capability": true,
+  "unit_log_sha256": "b4bb03e3095d72642d75398b7f2391524028b792891e7cd0e29426ec00408464",
+  "instructions": "No AGENTS.md or CLAUDE.md in baseline tree; root README and existing generator/network pipeline tests inspected, not executed.",
+  "pre_final_findings": [
+    "Initial contract schema validation rejected missing title/description metadata; capability definition and documentation corrected before final 24-test run and registry digest round-trip. Intermediate test runs overlap, not summed.",
+    "Windows Git without core.longpaths reported false bytecode changes; per-command long-path support confirmed bytecode unchanged."
+  ],
+  "preserved": {
+    "benchmark_files_unchanged": true,
+    "protobuf_unchanged": true,
+    "portal_runtime_source_unchanged": true,
+    "composed_execution": "disabled",
+    "real_algorithms": 0,
+    "workflows": 0,
+    "provider_requests": 0,
+    "allowance_amendments": 0,
+    "production_changes": 0
+  }
+}

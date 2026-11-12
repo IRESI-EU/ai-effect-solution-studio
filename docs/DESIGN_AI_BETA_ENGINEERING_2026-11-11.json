@@ -128,5 +128,17 @@
     "Genuine bounded acceptance after all applicable prerequisites; no request yet",
     "Partner immutable grid association before future runtime claims"
   ],
-  "evidence_report": "DESIGN_AI_BETA_ENGINEERING_2026-11-11.md"
+  "evidence_report": "DESIGN_AI_BETA_ENGINEERING_2026-11-11.md",
+  "followups": [
+    {
+      "date": "2026-11-12",
+      "package": "partner-review/dutch-parameters/README.md",
+      "evidence": "partner-review/dutch-parameters/verification.json",
+      "partner_patch_head": "c08c86aa09a577915cec5d868c7deef73ec408ad",
+      "strict_parameter_delivery": "implemented locally; 24 tests pass using algorithm doubles",
+      "partner_publication": false,
+      "production_changed": false,
+      "historical_fields_above_unchanged": true
+    }
+  ]
 }

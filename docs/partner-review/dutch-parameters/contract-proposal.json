@@ -1,0 +1,94 @@
+{
+  "proposal_schema": "dutch-production-contract-draft/1",
+  "proposal_version": "0.2.0-draft.1",
+  "status": "draft-unconfirmed",
+  "activation_allowed": false,
+  "owner_confirmation": null,
+  "service_id": "svc-imported-grid-synth-service-configureandsynthesize",
+  "proposed_contract": {
+    "operation_identity": "urn:aieffect:proposal:nl:imported:ConfigureAndSynthesize",
+    "runtime_operation_name": "ConfigureAndSynthesize",
+    "contract_version": "0.2.0-draft.1",
+    "schema_version": "1.0",
+    "source_kind": "manual",
+    "source_reference": "portal-review:docs/partner-review/dutch-parameters/ba598b2-instance-seed.patch; partner-baseline:ba598b2459f9986dac4e37dcc5d7d3298f25dc3a",
+    "definition": {
+      "operation_role": "source",
+      "binding_transport": null,
+      "inputs": [
+        {
+          "name": "configuration",
+          "semantic_concept": "urn:aieffect:proposal:nl:grid-synthesis-config",
+          "value_representation": "data_reference",
+          "data_reference_protocols": [
+            "inline"
+          ],
+          "content_types": [
+            "application/json"
+          ],
+          "schema_ref": "urn:aieffect:proposal:nl:inline-grid-configuration:0.1.0-draft.1",
+          "required": false,
+          "source_requirement": "workflow_input",
+          "min_cardinality": 0,
+          "max_cardinality": 1,
+          "compatibility_notes": [
+            "Observed HTTP control input: first inline base64 JSON reference; no input uses source defaults. Seed is not a http-parameters-v1 instance setting. Supported numeric limits require owner confirmation."
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "grid_service_reference",
+          "semantic_concept": "urn:aieffect:proposal:nl:latest-grid-reference",
+          "value_representation": "data_reference",
+          "data_reference_protocols": [
+            "grpc"
+          ],
+          "content_types": [],
+          "schema_ref": "urn:sha256:4e227128f92b73f32c176ec8923fa0871b1f09d43dd2b1fadc33e84ec0c68596:dutch.data_synthesizer.GetGridDataResponse",
+          "min_cardinality": 1,
+          "max_cardinality": 1,
+          "compatibility_notes": [
+            "Observed format=GetGridData. Content type is not declared in the DataReference; empty pending owner confirmation. Resolves a shared latest-grid cache, not a task-specific immutable capture."
+          ]
+        }
+      ],
+      "execution_parameters": {
+        "schema_version": "1.0",
+        "transport": "http-parameters-v1",
+        "properties": {
+          "seed": {
+            "type": "integer",
+            "title": "Random seed",
+            "description": "Nonnegative seed within signed-int32 storage; scientific suitability is unverified.",
+            "minimum": 0,
+            "maximum": 2147483647,
+            "default": 42
+          }
+        }
+      },
+      "compatibility_notes": [
+        "Unconfirmed proposal for the local-only partner patch, not current deployed behavior or owner-approved active pins.",
+        "http-parameters-v1 is implemented/tested for ConfigureAndSynthesize only, using the maintained exact shared validator.",
+        "binding_transport stays null; whole-output schema/content type and immutable task association remain unresolved.",
+        "HTTP seed range 0..2147483647 is representational, not scientific qualification. Proto3 omitted/zero direct-gRPC seed retains 42.",
+        "No benchmark change, captured_grid slot, runtime grant or local qualification semantics imported."
+      ]
+    }
+  },
+  "known_unknowns": [
+    "Owner family selection, canonical identity/version and strict seed semantics approval",
+    "Owner confirmation of actual deployed synthesizer library revision/bounds",
+    "Later deployment and negotiation of this reviewed parameter patch; current production unchanged",
+    "Source-approved output content type and precise binding declaration",
+    "Task-specific immutable input/result association and safe concurrent execution"
+  ],
+  "proposed_configuration": {
+    "transport": "http-parameters-v1 configuration envelope",
+    "seed_default": 42,
+    "seed_minimum": 0,
+    "seed_maximum": 2147483647,
+    "dual_sources": "reject inline seed plus envelope seed even if equal",
+    "evidence": "Constructor argument delivery to test doubles only; no algorithm/scientific execution"
+  }
+}
