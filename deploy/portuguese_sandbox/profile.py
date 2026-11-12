@@ -61,7 +61,7 @@ def prepare(directory, adapter):
     services['web'].update(environment={'INTERNAL_API_URL':'http://api:8080','HOSTNAME':'0.0.0.0','PORT':'3000'},
         ports=['127.0.0.1:23124:3000'],networks=['private','browser'],read_only=True,tmpfs=['/tmp:rw,size=64m','/app/apps/web/.next/cache:rw,size=64m'])
     services['bootstrap']=svc(API)
-    services['bootstrap'].update(profiles=['operator'],environment=apienv,entrypoint=['python','/review/bootstrap.py'],volumes=[private,review])
+    services['bootstrap'].update(profiles=['operator'],environment={**apienv,'PYTHONPATH':'/app'},entrypoint=['python','/review/bootstrap.py'],volumes=[private,review])
     services['initialize']=svc(API)
     services['initialize'].update(profiles=['operator'],user='0:0',entrypoint=['python','-c',
         "from pathlib import Path; import os; p=Path('/state'); assert not list(p.iterdir()), 'Adapter volume must be fresh'; (p/'dataset.csv').write_bytes(Path('/private/dataset.csv').read_bytes()); os.chown(p,10001,10001); os.chown(p/'dataset.csv',10001,10001)"],
