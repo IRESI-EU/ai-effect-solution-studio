@@ -1,0 +1,119 @@
+{
+  "status": "LOCAL PILOT READY",
+  "source_checkpoint": "9e21d1b0ba17e1d122c08dd155dd66d348eafbd8",
+  "baseline": "94c28277a60cc18d3e2095455844cde36afae463",
+  "draft_pr": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/20",
+  "normal_url": "http://127.0.0.1:23121/design-ai",
+  "prepared_empty_conversation_url": "http://127.0.0.1:23121/design-ai?conversationId=540a54f5-fce9-48c6-9741-d2fb5049a060",
+  "served_components": [
+    {
+      "role": "api",
+      "source": "9e21d1b0ba17e1d122c08dd155dd66d348eafbd8",
+      "image": "sha256:d8b3673a30168239dfdf5de5518cb7f628cace897128635b52424da2943c60d4",
+      "verified_python_files": 68
+    },
+    {
+      "role": "web",
+      "source": "9e21d1b0ba17e1d122c08dd155dd66d348eafbd8",
+      "image": "sha256:75a5374bdb6f0e08a810ebdd564b1640649fcd65ffe4b843b71588e8b25f197e",
+      "build_id": "osSD-WxNhHuZ2gPiGZGCo"
+    }
+  ],
+  "build_inputs": [
+    "sha256:8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1",
+    "sha256:2c9ec04228b8e223d8fcd6adf86188b5a591e814c43eb25317ac95d33a20c36a",
+    "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  ],
+  "platform": "linux/amd64",
+  "build_context_sha256": "915ff2d33abb6590b5c0099499cc5dc3aca34d26f1c9f99a284f020ada6b502e",
+  "pilot": {
+    "reviewer_id": "aie37-designer",
+    "login_identifier": "aie37-designer@example.test",
+    "authorization_model": "single existing account, privately supervised participants; not multi-user authorization acceptance",
+    "environment": "retained-normal-local-aie37",
+    "consumer": "normal-aie37-api-reviewer-aie37-designer",
+    "database_scope": "75477913d69304c5a5f0f79e13bfb79438f3c24c51d7ad5fa7bdb66fd4f4d071",
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "processing": "Standard",
+    "max_output_tokens": 2000,
+    "framed_input_ceiling": 32000,
+    "context_chars": 16000,
+    "cache_ttl": "30m",
+    "automatic_retries": 0,
+    "fallback": false,
+    "provider_connected": true,
+    "execution_grants_empty": true,
+    "new_composition_execution": "blocked",
+    "initial_suggested_sends_per_participant": 2
+  },
+  "amendment": {
+    "before_calls": 15,
+    "after_calls": 25,
+    "scope": "local-pilot-20261112",
+    "scope_max_calls": 10,
+    "scope_lifetime_reservations_nano": 50000000,
+    "per_request_nano": 5000000,
+    "global_limit_nano": 100000000,
+    "at": "2026-11-12T15:04:57.647512+00:00",
+    "action": "activate_beta",
+    "actor": "Codex acting for the workspace owner",
+    "authorization_ref": "Owner explicit supervised LOCAL pilot 2026-11-12 from PR19@94c28277a60cc18d3e2095455844cde36afae463; 15-to-25 only; existing reviewer aie37-designer; no execution or Codex provider requests",
+    "acceptance_evidence": "PR19@94c28277a60cc18d3e2095455844cde36afae463 docs/LOCAL_COMPOSITION_ACCEPTANCE_2026-11-12.json SHA256 b2637fa6d5119f653d1550b2179b00a8d25be3fe21e378c9f23b2eac44d0efc0; Case A PASS and Case B PASS; genuine settled permits 14 and 15 verified"
+  },
+  "accounting_at_handoff": {
+    "shared_count": 15,
+    "shared_limit": 25,
+    "scope_count": 0,
+    "scope_calls_remaining": 10,
+    "scope_lifetime_reservations_nano": 0,
+    "shared_conservative_accounted_nano": 5228875,
+    "shared_remaining_nano": 94771125,
+    "outstanding_reservations": 0,
+    "codex_provider_requests": 0,
+    "new_spend_nano": 0,
+    "all_15_usage_records_unchanged": true,
+    "ledger_sha256": "7f2145af981e3904e1382a38fa28edd3469d544efe31d0153bf912ab589ae147",
+    "audit_head": "068f0a8ec8b235f8cad7d3ba91fe62df5def686658c6f3c4cd983ff8f6921af2"
+  },
+  "agent_checks": {
+    "focused_backend_passed": 82,
+    "host_frontend_passed": 14,
+    "packaged_frontend_passed": 15,
+    "host_typecheck": "passed",
+    "packaged_build_typecheck": "passed",
+    "api_web_offline_build": "passed",
+    "fresh_normal_conversation_ui": "empty; no inherited messages, proposal or draft",
+    "accepted_conversation_ui": "preserved",
+    "accepted_design_and_all_existing_db_rows": "unchanged",
+    "all_capture_hashes_unchanged": 36,
+    "draft_count_unchanged": 4,
+    "current_catalogue_pair": "pair-a5c5793a07b3017820d63c7a",
+    "catalogue_revision": "26add1b21313352f06577e801fb4178c012cd3b4ed7f3d0505d5e7401a10a0db",
+    "actual_template_policy": "unchanged",
+    "only_authorized_existing_reviewer": true,
+    "other_existing_accounts_denied": 1,
+    "accounting_denial_checks": "offline synthetic ledgers/SDK doubles; missing/failed TLS, exhausted counts and scopes deny dispatch before model construction",
+    "new_composition_execution_denial": "focused offline regression; no real submission",
+    "actual_listeners": "23121/28185/28205 all 127.0.0.1",
+    "new_workflows": 0,
+    "no_paid_smoke_request": true
+  },
+  "backup": {
+    "bytes": 46511,
+    "sha256": "de913de66116fa1a4f4f78891054c5788165d2598b83b8c25cbb8e645e5d06a3",
+    "restore_listing_verified": true
+  },
+  "rollback_images_retained": {
+    "api": "sha256:dd79cf9a36ac9b81b97c20eee17d5b08e9e404aa98934a3adf2b1036afcc77d4",
+    "web": "sha256:fba983fef01d461e79db22444c34c76b9737df84365d200972085672a4052614"
+  },
+  "human_observations": {
+    "status": "prepared; awaiting human sessions",
+    "P1": null,
+    "P2": null,
+    "P3_optional": null
+  },
+  "production": "not changed; owner/review/contract/licensing/hosted-architecture/migration gates remain separate"
+}
