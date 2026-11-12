@@ -9,7 +9,7 @@ import "@xyflow/react/dist/style.css";
 import { useAuth } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
 import { allowanceFromError, type TestAllowance } from "./allowance";
-import { activeDraftId, conversationKey, conversationForCopy, draftUrl, readConversation, readRecommendation, recommendationCreation, type Message, type Activity, type Recommendation } from "./session";
+import { activeDraftId, activeConversationId, conversationUrl, conversationKey, conversationForCopy, draftUrl, readConversation, readRecommendation, recommendationCreation, type Message, type Activity, type Recommendation } from "./session";
 import "./workspace.css";
 import WorkspaceViewport from "./workspace-viewport";
 import ReviewDialog from "../../components/review-dialog";
@@ -26,7 +26,7 @@ type InstanceSettings = { node_id: string; label: string; resolution: string; li
 type Draft = { id: string; guided_experiment?: string; revision: number; template_key?: string; design: Design; instance_settings?: InstanceSettings[]; validation: Validation; dirty: boolean; saved_solution_id: string | null; can_undo: boolean; reference_note: string; source: { revision: string; kind?: string }; pending: { id: string; design: Design; turn: { edits: { kind: string; value: string; node_id: string | null }[] }; composition_review?: CompositionReviewData; parameter_review?: ParameterReview; structural_review?: StructuralReviewData; validation: Validation } | null };
 type Template = { key: string; label: string; description?: string; available: boolean; guided_available?: boolean; qualified_experiment?: boolean; editing_scope?: string; reason?: string; operations?: string[] };
 type ResumeDraft = { id: string; name: string; updated_at: string; dirty: boolean; saved_solution_id: string | null; pending_changes: boolean; seed: number | null };
-type SwitchTarget = { kind: "start"; key: string; carryDiscovery?: boolean } | { kind: "resume"; id: string } | { kind: "home" };
+type SwitchTarget = { kind: "start"; key: string; carryDiscovery?: boolean } | { kind: "resume" | "conversation"; id: string } | { kind: "home" };
 type CatalogueService = { id: string; name: string; description: string; operation_name: string; status: string; version: string };
 
 function appliedSeed(draft: Draft | null) {
@@ -71,14 +71,15 @@ function DesignAIRoute() {
   const params = useSearchParams();
   const { user } = useAuth();
   const draftId = activeDraftId(params);
+  const conversationId = draftId ? null : activeConversationId(params);
   // Remount all draft/conversation state together, including on same-page navigation.
-  return <DesignWorkspace key={`${user?.id || "signed-out"}:${draftId || "start"}`} draftId={draftId} />;
+  return <DesignWorkspace key={`${user?.id || "signed-out"}:${draftId || conversationId || "start"}`} draftId={draftId} conversationId={conversationId} />;
 }
 
-function DesignWorkspace({ draftId }: { draftId: string | null }) {
+function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; conversationId: string | null }) {
   const { user } = useAuth();
   const router = useRouter();
-  const [config, setConfig] = useState<{ enabled: boolean; provider_configured: boolean; provider_name?: string; provider_mode?: string; model?: string | null; test_allowance?: TestAllowance } | null>(null);
+  const [config, setConfig] = useState<{ enabled: boolean; provider_configured: boolean; provider_name?: string; provider_mode?: string; model?: string | null; pilot_notice?: string; test_allowance?: TestAllowance } | null>(null);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [resumeDrafts, setResumeDrafts] = useState<ResumeDraft[]>([]);
@@ -108,7 +109,7 @@ function DesignWorkspace({ draftId }: { draftId: string | null }) {
   const controller = useRef<AbortController | null>(null);
   const inFlight = useRef(false);
   const chatEnd = useRef<HTMLDivElement | null>(null);
-  const sessionKey = user ? conversationKey(user.id, draftId) : null;
+  const sessionKey = user ? conversationKey(user.id, draftId, conversationId) : null;
   const allowance = config?.test_allowance;
   const allowancePaused = !!allowance && !allowance.can_request;
   const chatEnabled = !!config?.provider_configured && !allowancePaused;
@@ -183,7 +184,7 @@ function DesignWorkspace({ draftId }: { draftId: string | null }) {
         catch { /* Draft creation remains usable when browser storage is unavailable. */ }
         router.push(draftUrl(value.id));
       });
-    } else router.push(target.kind === "home" ? "/design-ai" : draftUrl(target.id));
+    } else router.push(target.kind === "home" ? "/design-ai" : target.kind === "conversation" ? conversationUrl(target.id) : draftUrl(target.id));
   }
 
   function requestSwitch(target: SwitchTarget) {
@@ -244,6 +245,7 @@ function DesignWorkspace({ draftId }: { draftId: string | null }) {
     <header className="ai-toolbar">
       <div className="ai-workspace-name"><Sparkles size={19}/><div><h1>Design with AI</h1><p title={draft?.design.name}>{draft?.design.name || "New workflow"}</p></div><span className={`ai-stage ${stage.startsWith("Applied") ? "applied" : stage.toLowerCase()}`} role="status">{stage}</span></div>
       <div className="ai-toolbar-actions">
+        <button disabled={!!busy} onClick={() => requestSwitch({kind:"conversation",id:crypto.randomUUID()})}>New conversation</button>
         {draft && <><button disabled={!!busy || !draft.can_undo} onClick={() => action("Undoing", async () => {setDraft(await api(`/drafts/${draft.id}/undo`, {revision:draft.revision}));setShowProposed(false);setSelectedId(null);})}><Undo2 size={15}/>Undo</button>
           <button className="ai-primary" disabled={!!busy || !!draft.pending || !draft.dirty || !draft.validation.valid} onClick={() => action("Saving",async () => {const value=await api(`/drafts/${draft.id}/save`,{revision:draft.revision});setDraft(value.draft);setActivity(current=>[...current,...value.activity].slice(-60));})}><Save size={15}/>Save draft</button>
           {draft.saved_solution_id && !draft.dirty && <Link href={`/builder?solutionId=${encodeURIComponent(draft.saved_solution_id)}`}>Advanced Builder <ArrowRight size={13}/></Link>}
@@ -251,6 +253,7 @@ function DesignWorkspace({ draftId }: { draftId: string | null }) {
         <button onClick={() => setTechnical(true)}>Technical details</button>
       </div>
     </header>
+    {config.pilot_notice && <p className="ai-muted" role="status">{config.pilot_notice}</p>}
     <div className="ai-workspace-status">
       {config.provider_mode === "test" ? <span>Prepared synthetic proposal. No live AI or execution.</span> : <span>{composed ? "Design only · execution unavailable" : "Saving does not execute a workflow"}</span>}
       <span>{composed ? "Runtime unverified" : !chatEnabled ? allowancePaused ? "AI messages paused" : "AI disconnected" : "Manual AI messages enabled"}</span>

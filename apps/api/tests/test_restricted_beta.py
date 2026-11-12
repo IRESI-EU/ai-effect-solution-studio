@@ -49,6 +49,37 @@ def test_beta_flag_defaults_preserve_existing_disabled_mode_config(environment):
     assert environment.get("/design-ai/config").status_code == 200
 
 
+@pytest.mark.parametrize("failure",["not_restricted","several_reviewers","wrong_profile","missing_authority"])
+def test_local_pilot_requires_one_reviewer_qualified_profile_and_shared_accounting(environment,monkeypatch,provider,failure):
+    from app.services import qualified_demo
+    monkeypatch.setattr(settings,"design_ai_local_pilot",True)
+    monkeypatch.setattr(settings,"design_ai_restricted_beta",failure!="not_restricted")
+    monkeypatch.setattr(settings,"design_ai_reviewer_ids","designer,other" if failure=="several_reviewers" else "designer")
+    monkeypatch.setattr(qualified_demo,"profile_enabled",lambda:failure!="wrong_profile")
+    monkeypatch.setattr(settings,"design_ai_budget_authority_url","" if failure=="missing_authority" else "http://127.0.0.1:1")
+    assert environment.get("/design-ai/config").status_code==503
+    assert environment.post("/design-ai/chat",json={"message":"Never send"}).status_code==503
+    assert provider.contexts==[]
+
+
+def test_local_pilot_notice_and_single_reviewer_guard_do_not_enable_accounting_or_provider(environment,monkeypatch,provider):
+    from app.services import qualified_demo
+    monkeypatch.setattr(settings,"design_ai_local_pilot",True)
+    monkeypatch.setattr(settings,"design_ai_restricted_beta",True)
+    monkeypatch.setattr(settings,"design_ai_reviewer_ids","designer")
+    monkeypatch.setattr(qualified_demo,"profile_enabled",lambda:True)
+    # Incomplete authority config must fail closed without attempting a connection.
+    monkeypatch.setattr(settings,"design_ai_budget_authority_url","http://127.0.0.1:1")
+    value=environment.get("/design-ai/config").json()
+    assert value["pilot_notice"].startswith("Restricted local design-only pilot")
+    assert value["provider_configured"] is False
+    assert value["test_allowance"]["blocked_reason"]=="accounting_unavailable"
+    monkeypatch.setattr(settings,"design_ai_reviewer_ids","other")
+    assert environment.get("/design-ai/config").status_code==403
+    assert environment.post("/design-ai/chat",json={"message":"Never send"}).status_code==403
+    assert provider.contexts==[]
+
+
 @pytest.mark.parametrize("ledger,task", [("",""),("unopened-ledger",""),("","unopened-checkpoint")])
 def test_beta_cannot_fall_back_to_unbudgeted_provider_calls(environment, monkeypatch, ledger, task):
     import asyncio

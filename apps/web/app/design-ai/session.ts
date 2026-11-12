@@ -21,8 +21,18 @@ export function designReturnUrl(metadata: Record<string, unknown> | null): strin
   return typeof metadata?.draft_id === "string" && metadata.draft_id ? draftUrl(metadata.draft_id) : "/design-ai";
 }
 
-export function conversationKey(ownerId: string, draftId: string | null): string {
-  return draftId === null ? `design-ai-discovery:${ownerId}` : `design-ai-conversation:${ownerId}:${draftId}`;
+export function activeConversationId(params: Pick<URLSearchParams, "get">): string | null {
+  const value = params.get("conversationId");
+  return value && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value) ? value : null;
+}
+
+export function conversationUrl(id: string): string {
+  if (activeConversationId(new URLSearchParams({conversationId:id})) !== id) throw new Error("Invalid conversation identity");
+  return `/design-ai?conversationId=${id}`;
+}
+
+export function conversationKey(ownerId: string, draftId: string | null, conversationId: string | null = null): string {
+  return draftId === null ? `design-ai-discovery:${ownerId}${conversationId ? ":" + conversationId : ""}` : `design-ai-conversation:${ownerId}:${draftId}`;
 }
 
 export function readConversation(raw: string | null, ownerId: string, draftId: string | null): Conversation | null {

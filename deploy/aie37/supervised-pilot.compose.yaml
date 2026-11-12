@@ -1,0 +1,9 @@
+# Final overlay on the existing aie37 + demo + parameterisation + accounting files.
+# No new project, service, database or execution grant. Start api/web only.
+services:
+  api:
+    environment:
+      DESIGN_AI_LOCAL_PILOT: "true"
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ""
+  web:
+    image: ${LOCAL_PILOT_WEB_IMAGE:?Verified pilot web image required}

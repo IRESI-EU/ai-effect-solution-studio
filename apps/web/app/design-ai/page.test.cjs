@@ -26,6 +26,7 @@ for (const [name, config, expected, args] of [
   ['disconnected',{provider_mode:'openai',provider_configured:false},'AI disconnected · existing controls available',[false,false,false]],
   ['allowance paused',{provider_mode:'openai',provider_configured:true,test_allowance:{can_request:false,message:'Allowance exhausted'}},'AI messages paused · existing controls available',[false,false,true]],
   ['synthetic',{provider_mode:'test',provider_configured:false},'Prepared walkthrough · chat unavailable',[true,false,false]],
+  ['local pilot',{provider_mode:'real',provider_configured:false,pilot_notice:'Restricted local design-only pilot'},'AI disconnected · existing controls available',[false,false,false]],
 ]) test(`actual page renders ${name} through promptPlaceholder without network`, () => {
   let states = 0, calls = [];
   const noop = () => null;
@@ -49,6 +50,8 @@ for (const [name, config, expected, args] of [
     assert.deepEqual(calls,[args]);
     assert.equal(html.match(/<textarea[^>]*placeholder="([^"]*)"/)?.[1],expected);
     assert.match(html,/<button[^>]*aria-label="Send request"[^>]*disabled=""/);
+    assert.match(html,/>New conversation<\/button>/);
+    assert.equal(html.includes('Restricted local design-only pilot'), name === 'local pilot');
     if (name !== 'synthetic') assert.ok(!html.includes('Prepared walkthrough'));
   } finally { global.fetch = originalFetch; }
 });
