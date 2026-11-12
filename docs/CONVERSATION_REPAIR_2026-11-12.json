@@ -1,0 +1,87 @@
+{
+  "kind": "offline-regression-and-disconnected-update-not-genuine-retest",
+  "date": "2026-11-12",
+  "base_commit": "14680bbebfb4db62c44330058f6593f26e28f7ce",
+  "draft_pr": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/21",
+  "source_and_tests_published_first": "f1e49485e37eac5a2e5963695b4a06efdd270f5c",
+  "platform": "linux/amd64",
+  "build_inputs": [
+    "sha256:8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1",
+    "sha256:2c9ec04228b8e223d8fcd6adf86188b5a591e814c43eb25317ac95d33a20c36a",
+    "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+    "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  ],
+  "build_context_sha256": "fe8339b261e9574efc4d6bc1bd516ab7ee8d7626472b24f969ac3fa37eb8022e",
+  "images": [
+    {
+      "role": "api",
+      "tag": "ai-effect-beta-candidate-api:f1e49485e37e",
+      "image_id": "sha256:a294c9a4db5ee39b6a1c24d2d385f996e2f72ec0a0a36c8657ed77139c5ae60d"
+    },
+    {
+      "role": "web",
+      "tag": "ai-effect-beta-candidate-web:f1e49485e37e",
+      "image_id": "sha256:913b314cc09a974b7dddcc1a85bc889bda599694970aed80c7b7b758e68d8eeb"
+    }
+  ],
+  "checks": {
+    "backend_focused_passed": 191,
+    "host_frontend_passed": 24,
+    "packaged_frontend_passed": 18,
+    "host_typecheck": "passed",
+    "packaged_typecheck": "passed",
+    "api_build": "passed",
+    "web_build": "passed",
+    "no_provider_request_or_workflow": true,
+    "secrets_scans": "staged and source range passed"
+  },
+  "served": {
+    "source_commit": "f1e49485e37eac5a2e5963695b4a06efdd270f5c",
+    "api_source_files_matched": 68,
+    "web_build_id": "6y7rN_AJRS7b9xNgfh1Ab",
+    "authenticated_designer": true,
+    "templates_accessible": true,
+    "six_existing_drafts_accessible": true,
+    "accepted_engineering_draft_and_solution_accessible": true,
+    "environment_unchanged": true,
+    "provider_disconnected": true,
+    "execution_grant_empty": true,
+    "first_retest_framed_input_bytes": 25869,
+    "retest_framing_ceiling": 32000,
+    "pair_id": "pair-a5c5793a07b3017820d63c7a",
+    "registered_default": 42,
+    "shared_calls": 23,
+    "shared_max_calls": 25,
+    "pilot_calls": 8,
+    "pilot_max_calls": 10,
+    "remaining_calls": 2,
+    "remaining_nano": 90570250,
+    "outstanding_reservations": 0,
+    "original_eight_response_hash_unchanged": true
+  },
+  "preservation": {
+    "response_count": 8,
+    "responses_sha256": "806c704e1803c424e87195f700059732c46c802b42ce32c8dd5ca469077fa0a2",
+    "database_backup_bytes": 47474,
+    "database_backup_sha256": "dc9e1e81c2170c723425c79ef78cb2813bc245777e4ef1eea213b26f4e26064e",
+    "table_counts": {
+      "solutions": 6,
+      "design_ai_drafts": 6,
+      "execution_submissions": 5,
+      "deployments": 4,
+      "local_dutch_executions": 4,
+      "operation_contracts": 2
+    },
+    "capture_hash_count": 36,
+    "all_rows_and_capture_hashes_identical": true,
+    "ledger_bytes_and_rows_identical": true,
+    "database_container_identical": true
+  },
+  "observer": "Agent offline checks and read-only local inspection; no independent participant retest",
+  "limitations": [
+    "Historical provider request bodies unavailable",
+    "First numeric-answer repetition not explained solely by history truncation",
+    "Offline provider doubles do not prove genuine conversation quality",
+    "No production or scientific execution compatibility verified"
+  ]
+}
