@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {"message": {"format": "%(message)s"}},
+  "handlers": {
+    "acceptance": {
+      "class": "logging.FileHandler",
+      "filename": "/acceptance-audit/provider.jsonl",
+      "formatter": "message"
+    }
+  },
+  "loggers": {
+    "design_ai.provider.audit": {
+      "level": "DEBUG",
+      "handlers": ["acceptance"],
+      "propagate": false
+    }
+  }
+}
