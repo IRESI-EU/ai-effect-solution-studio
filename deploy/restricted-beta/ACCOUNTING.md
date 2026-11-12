@@ -163,3 +163,24 @@ the applicable owner/sign-in/review/catalogue/transport/acceptance gates pass.
 
 No production account, ledger policy, service, tunnel, port, permission, provider
 request or execution grant was created by writing this implementation/runbook.
+
+## Local Docker Desktop transport
+
+For an explicitly authorized local acceptance, the canonical Windows authority
+can bind 127.0.0.1 with TLS and a private certificate whose SAN includes
+host.docker.internal. First verify Docker Desktop's host gateway reaches that
+loopback listener; never widen the listener to the LAN as a fallback.
+Mount only its public CA bundle read-only into the API and set
+DESIGN_AI_BUDGET_AUTHORITY_CA_FILE to that absolute container path, together with
+the exact HTTPS origin and audited consumer/database binding. Keep the private
+key on Windows. This optional CA setting is rejected for HTTP and Unix sockets;
+certificate/hostname verification cannot be disabled. No OS/browser trust-store
+change is needed. Missing authority, CA or transport denies dispatch.
+
+The retained qualified profile may use the exclusive authority instead of legacy
+checkpoint files, retaining its exact profile guard and template policy. This
+does not qualify newly composed designs for execution. Keep grants empty.
+Publish and test source corrections before activation. The operator commands
+above still perform the only supported amendment; a TLS preflight reserves no
+call and must not contact a provider. See the separately recorded
+[local acceptance](../../docs/LOCAL_COMPOSITION_ACCEPTANCE_2026-11-12.md).

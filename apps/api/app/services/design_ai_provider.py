@@ -139,7 +139,7 @@ class OpenAIProvider:
             raise HTTPException(503, "AI provider not configured")
         if settings.design_ai_dutch_demo:
             from app.services.qualified_demo import profile_enabled
-            if not profile_enabled() or not settings.design_ai_acceptance_budget_file or not settings.design_ai_acceptance_task_limit_file:
+            if not profile_enabled() or (not shared and (not settings.design_ai_acceptance_budget_file or not settings.design_ai_acceptance_task_limit_file)):
                 raise HTTPException(503, "The qualified demonstration requires its existing shared ledger and scoped immutable provider checkpoint")
         if settings.design_ai_acceptance_task_limit_file and not settings.design_ai_acceptance_budget_file:
             raise HTTPException(503, "Task allowance requires the existing acceptance ledger")

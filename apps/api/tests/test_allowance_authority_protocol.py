@@ -24,6 +24,7 @@ def setup(ledger,monkeypatch):
     values={"database_url":"postgresql://review_role:unused@postgres:5432/production_name",
         "design_ai_restricted_beta":True,"design_ai_reviewer_ids":"named-existing-reviewer-id",
         "design_ai_budget_authority_url":"http://127.0.0.1:1","design_ai_budget_authority_socket":"",
+        "design_ai_budget_authority_ca_file":"",
         "design_ai_budget_authority_token":TOKEN,"design_ai_budget_authority_id":"synthetic-authority-01",
         "design_ai_budget_scope":"acceptance-20261111","design_ai_budget_consumer":"review-a",
         "design_ai_budget_environment":"preproduction","design_ai_acceptance_budget_file":"",
@@ -110,10 +111,14 @@ def test_unreviewed_transport_or_embedded_credentials_are_denied(setup,monkeypat
 
 
 @pytest.mark.parametrize('mode',['valid','malformed'])
-def test_provider_uses_normal_sdk_only_after_fresh_reservation_and_settles_before_parse(setup,monkeypatch,mode):
+@pytest.mark.parametrize('qualified',[False,True])
+def test_provider_uses_normal_sdk_only_after_fresh_reservation_and_settles_before_parse(setup,monkeypatch,mode,qualified):
     path,transport,calls,server=setup
     from app.services import allowance_client
     original=allowance_client.Client
+    from app.services import qualified_demo
+    monkeypatch.setattr(settings,'design_ai_dutch_demo',qualified)
+    monkeypatch.setattr(qualified_demo,'profile_enabled',lambda:qualified)
     monkeypatch.setattr(allowance_client,'Client',lambda config:original(config,transport=transport))
     sdk=[]
     turn=AssistantTurn(message='Synthetic adapter test, not genuine acceptance',template_key=None,expected_revision=None,edits=[])
@@ -175,3 +180,76 @@ def test_normal_config_reads_authority_without_exposing_credentials(environment,
     assert value['test_allowance']['authority_id']=='synthetic-authority-01'
     assert TOKEN not in response.text and settings.openai_api_key not in response.text
     assert [row[0] for row in calls]==['/v1/status']
+
+
+@pytest.mark.parametrize("kind",["missing","corrupt","relative","http","socket"])
+def test_private_ca_configuration_fails_closed(setup,monkeypatch,tmp_path,kind):
+    path=tmp_path/"bad-ca.pem";path.write_text("invalid CA")
+    monkeypatch.setattr(settings,"design_ai_budget_authority_url","https://localhost")
+    value=str(path)
+    if kind=="missing":value=str(tmp_path/"missing.pem")
+    if kind=="relative":value="ca.pem"
+    if kind=="http":monkeypatch.setattr(settings,"design_ai_budget_authority_url","http://127.0.0.1")
+    if kind=="socket":
+        monkeypatch.setattr(settings,"design_ai_budget_authority_url","http://accounting.internal")
+        monkeypatch.setattr(settings,"design_ai_budget_authority_socket","/private/authority.sock")
+    monkeypatch.setattr(settings,"design_ai_budget_authority_ca_file",value)
+    with pytest.raises(HTTPException,match="CA unavailable"):Client(settings)
+
+
+def test_qualified_profile_guard_still_denies_wrong_profile_with_authority(setup,monkeypatch):
+    from app.services import qualified_demo
+    monkeypatch.setattr(settings,"design_ai_dutch_demo",True)
+    monkeypatch.setattr(qualified_demo,"profile_enabled",lambda:False)
+    monkeypatch.setattr(provider,"AsyncOpenAI",lambda **kw:pytest.fail("Wrong profile must not send"))
+    with pytest.raises(HTTPException,match="qualified demonstration"):
+        asyncio.run(provider.OpenAIProvider().respond({"request":"Never send"}))
+
+
+@pytest.mark.parametrize("trust",["correct","untrusted","wrong_hostname"])
+def test_real_loopback_tls_validates_ca_and_hostname_without_reserving(setup,monkeypatch,tmp_path,trust):
+    import datetime
+    import ipaddress
+    import ssl
+    import threading
+    from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes,serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from cryptography.x509.oid import NameOID
+    path,_,_,_=setup
+    key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+    name=x509.Name([x509.NameAttribute(NameOID.COMMON_NAME,"synthetic private CA")])
+    now=datetime.datetime.now(datetime.timezone.utc)
+    hosts=[x509.DNSName("wrong.invalid")] if trust=="wrong_hostname" else [x509.IPAddress(ipaddress.ip_address("127.0.0.1"))]
+    cert=(x509.CertificateBuilder().subject_name(name).issuer_name(name).public_key(key.public_key())
+        .serial_number(x509.random_serial_number()).not_valid_before(now-datetime.timedelta(minutes=1))
+        .not_valid_after(now+datetime.timedelta(days=1)).add_extension(x509.BasicConstraints(ca=True,path_length=None),critical=True)
+        .add_extension(x509.SubjectAlternativeName(hosts),critical=False).sign(key,hashes.SHA256()))
+    ca=tmp_path/"ca.pem";ca.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    pem=tmp_path/"key.pem";pem.write_bytes(key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()))
+    requests=[]
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self,*args):pass
+        def do_POST(self):
+            requests.append(self.path)
+            body=json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+            value=Authority(path).availability(self.headers["Authorization"][7:],body)
+            data=json.dumps(value).encode()
+            self.send_response(200);self.send_header("Content-Length",str(len(data)));self.end_headers();self.wfile.write(data)
+    server=ThreadingHTTPServer(("127.0.0.1",0),Handler)
+    context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);context.load_cert_chain(ca,pem)
+    server.socket=context.wrap_socket(server.socket,server_side=True)
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    monkeypatch.setattr(settings,"design_ai_budget_authority_url","https://127.0.0.1:"+str(server.server_port))
+    if trust!="untrusted":monkeypatch.setattr(settings,"design_ai_budget_authority_ca_file",str(ca))
+    try:
+        if trust=="correct":
+            assert Client(settings).availability()["request_count"]==13
+            assert requests==["/v1/status"]
+        else:
+            with pytest.raises(HTTPException,match="transport uncertain"):Client(settings).availability()
+            assert requests==[]
+        assert Authority(path).availability(TOKEN,claims())["request_count"]==13
+    finally:
+        server.shutdown();server.server_close();thread.join(timeout=3)
