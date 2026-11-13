@@ -87,3 +87,25 @@ history remain; do not restore an older database/journal over new evidence.
 No PostgreSQL schema migration is required. The original Portuguese API is not
 edited. Hosted multi-tenant authority, partner approval, scientific suitability
 and production compatibility remain outside this local verification.
+
+## Completed phase — read-only review now
+
+The sole combined attempt completed as `wf-a891cece9438` (TrainModel
+`task_030152d9`, GenerateData `task_f6c5c14e`). Scope
+`pt-chain-20261113-01` is closed and consumed. Both workers are stopped; queues
+are empty. Do not rerun prepare/snapshot/authorize/submit/start_worker or create
+a replacement scope. Exclusive attempt markers and audit records remain in the
+private records directory. No further execution is authorized by this runbook.
+
+Review the saved Builder:
+`http://127.0.0.1:23124/builder?solutionId=3cf4c4fe-36f9-4141-8bca-f6421f0b16d8`
+and completed results:
+`http://127.0.0.1:23124/deployments/wf-a891cece9438#results`.
+Sign in using the retained profile credentials.json; do not copy its password
+into reports. No operator/helper action is needed between browser review steps.
+
+The actual saved model records epochs 2 / batch size 4 / sequence length 100;
+generation consumed that same model and produced ten 100-row sequences. The
+Portal report and chain-verification.json record hashes, pins, image identities,
+the observer-outage/refresh check, preserved old jobs/designs and unchanged
+25/25 provider ledger. Read-only observation is allowed; do not dispatch again.

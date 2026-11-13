@@ -92,3 +92,101 @@ no retry, repaired-result pass, replacement workflow or substitute model.
 
 Provider disconnected; shared LLM allowance remains 25/25. No original service,
 production, merge, partner-repository or tracker changes.
+
+## Actual connected verification — 2026-11-13, separately recorded
+
+The preceding activation-boundary statement records the source checkpoint; it is
+not overwritten by this later result. The single authorized combined phase passed.
+Source/tests and integration configuration were published before dispatch:
+WP3 `30e1ac403c7434149f3ff3568843f2cc75702413`, Portal serving source
+`654f3a68481738c902e9673d2f35f9c95715a6e9`, operator/configuration checkpoint
+`1d147ffc5accb40ad4f50555ec463bbabb7b1ba1`. Exact image identities, immutable
+parameters, task associations and hashes are in
+[sanitized actual evidence](../deploy/portuguese_sandbox/chain-verification.json).
+
+- [Saved corrected Builder](http://127.0.0.1:23124/builder?solutionId=3cf4c4fe-36f9-4141-8bca-f6421f0b16d8)
+- [Completed results](http://127.0.0.1:23124/deployments/wf-a891cece9438#results)
+- Submission `a25d6868-b346-429f-a3df-238e20078eed`; workflow
+  `wf-a891cece9438`, completed at `2026-11-13T08:08:54.741967Z`.
+
+TrainModel learned from the separate authorized synthetic dataset. GenerateData
+then consumed the opaque reference to that exact newly trained model, through
+the saved model_ref → model_ref / whole-output-v1 binding. It did not reuse the
+earlier standalone model. New contracts are `pt-chain-train-v2` and
+`pt-chain-generate-v2`, both version `0.2.0`.
+
+| Instance | Requested | Validated effective | Verified observation | Outcome |
+| --- | --- | --- | --- | --- |
+| TrainModel / `task_030152d9` | epochs 2, batch_size 4 | epochs 2, batch_size 4 | Saved model: epochs 2, batch_size 4, max_sequence_len 100, sample_len 1 | Completed |
+| GenerateData / `task_f6c5c14e` | number_of_examples 10 | number_of_examples 10 | Ten example markers, each 100 CSV observations; 1000 data rows total | Completed |
+
+The pinned implementation clamps batch size to the available training-sequence
+count. Four sequences are available here, so requested 4 and observed 4 agree;
+this does not establish that every requested batch size is consumed unchanged.
+The model hash observed before generation, captured by both tasks and rehashed
+on inspection is
+`408519959182447598e94fe0e997d8ea5f1589b0f917e802dc6c2b67898f366e`.
+The generated CSV SHA-256 is
+`f8b2ca463392571f573a899eabd414b7ee07101521782cfd3cfdca27e31d3d57`.
+The training JSON reference SHA-256 is
+`a6bb82d518da9cdc1dc47f5bcdc5529211808e029c5e2ea53a81dc3adb486d26`.
+
+### Agent checks and preservation
+
+The agent exercised epochs/batch/count edits to 1/6/20, Save and reload in the
+actual Builder; the binding and pins survived. It then restored and saved the
+approved 2/4/10 values, reloaded and passed normal Validate design. Normal
+compile/runtime-preflight, actual CPU 2/RAM 3 GiB limits, empty queues and the
+absence of other nonterminal workflows were frozen before dispatch.
+
+Exactly one new submission, one TrainModel and one GenerateData ran, with no
+retry or substitute model. New journal scope `pt-chain-20261113-01` records
+create/bind/reservation/close events attributable to
+`as-via-Codex/user-authorized-20261113`. It is now **closed**. The targeted worker
+exited 0; both targeted and legacy workers are stopped and queue lengths are zero.
+The original one-training/two-generation scope remains exhausted; journal totals
+are three original jobs plus two new jobs, all completed.
+
+All three original saved designs, including the failed owner design, compare
+equal to their pre-update responses. The three old journal rows and standalone
+model mapping compare equal. The old model SHA and both CSV hashes were checked
+again against their original records. A consistent pre-update PostgreSQL dump,
+private compose backup, frozen request and signed captures remain local.
+Provider settings remain disconnected; no shared ledger is attached to this
+profile. The shared ledger is byte-identical at 25/25 with zero outstanding
+reservations; no provider request or ledger change occurred.
+
+Refreshed results display each instance's requested/effective/consumed settings,
+the producer model association and CSV counts. This also passed while the new
+read-only model observer was stopped: the portal revalidated recorded terminal
+captures and current artifact bytes without contacting it. The observer was
+then restored; no worker or algorithm was restarted.
+
+![Actual refreshed connected results](screenshots/portuguese-chain-results-20261113.png)
+
+These are agent observations, not independent participant usability results.
+The focused offline tests listed above use protocol/loader doubles; this section
+records the separate real local algorithm executions. No unrelated full test
+inventory was repeated for the final evidence-only checkpoint.
+
+### Browser-only owner review
+
+Sign in at `http://127.0.0.1:23124/login` as
+`pt-sandbox-designer@example.test`, using the existing private
+`local-backups/portuguese-sandbox-20261112/profile/credentials.json` in the
+original checkout. Do not publish that file or its password.
+
+1. Open the saved Builder above; review the two processing steps and saved
+   TrainModel → GenerateData model-reference connection.
+2. Select each step to inspect the saved 2/4/10 settings; no editing is needed.
+3. Open the results URL and inspect requested, effective and consumed settings,
+   verified producer association and 10 × 100 observation counts.
+4. Refresh results; the same historical evidence remains available. Do not
+   select Prepare & deploy or confirm another execution.
+
+This is a platform-controlled experimental sidecar, not partner-native support.
+Partner approval, hosted distribution/compatibility, multi-tenant model authority
+and scientific quality remain unverified. ApplyFunction remains unavailable.
+Original 0.1 jobs retain their actual settings/results but receive no fabricated
+v2 consumption evidence. Production, all earlier demonstrations and the failed
+owner design remain unchanged.
