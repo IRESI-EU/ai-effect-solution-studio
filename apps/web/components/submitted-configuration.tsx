@@ -48,12 +48,14 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
           <details><summary>Execution identifiers</summary><p style={{ overflowWrap: "anywhere" }}>Instance {node.instance_id} · Task {node.task_id}</p></details>
           {noEditableSettings ? <>
             <p>This operation has no editable settings.</p>
-            {node.input_bindings.length > 0 && <p>Data input: {input.label} — {input.message}</p>}
           </> : <>
           <p>Requested overrides: {requested != null ? <code>{JSON.stringify(requested)}</code> : "Not recorded"}</p>
           <p>Validated effective settings: {effective != null ? <code>{JSON.stringify(effective)}</code> : "Legacy caller — service defaults were not recorded as instance parameters"}</p>
           <p>Algorithm consumed: {consumed != null ? <>Verified — <code>{JSON.stringify(consumed)}</code></> : <>{parameters.label} — {parameters.message}</>}</p>
           </>}
+          {node.input_bindings.length > 0 && <p>Data input: {input.label} — {input.message}</p>}
+          {proof?.state === "available" && proof.summary?.generated_examples != null && <p>Generated sequences: {proof.summary.generated_examples} · Observations per sequence: {proof.summary.observations_per_example} · CSV rows: {proof.summary.csv_rows}</p>}
+          {proof?.state === "available" && proof.model_binding && <p>Model association: TrainModel task {proof.model_binding.producer_task_id} in this workflow. Model SHA-256: <code>{proof.model_binding.model_sha256}</code></p>}
           {proof?.summary?.topology_count != null && <p>Topologies generated: {proof.summary.topology_count}</p>}
           {proof?.state === "available" && <details><summary>Evidence details</summary><p>{proof.instrumentation}</p><p style={{ overflowWrap: "anywhere" }}>Output SHA-256: {proof.output_sha256}</p></details>}
         </div>;

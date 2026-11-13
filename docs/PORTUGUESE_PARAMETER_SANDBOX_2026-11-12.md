@@ -96,6 +96,11 @@ rendered screenshots remain private in the original checkout's
 local-backups/portuguese-sandbox-20261112 directory. Raw data/models/databases and
 private configuration are excluded from Git and build contexts.
 
+The next, separately authorized connected-workflow milestone is recorded in
+PORTUGUESE_CHAINED_WORKFLOW_2026-11-13.md. It preserves this three-job proof and
+its exhausted authorization; it does not reinterpret the standalone proof as a
+qualified TrainModel-to-GenerateData handoff.
+
 The initial resource manifest inherited an older retained WP3 image identity.
 A source parity check rejected that image before any dispatch. A separate exact
 source layer c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589

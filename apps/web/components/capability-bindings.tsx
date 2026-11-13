@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import ReviewDialog from "./review-dialog";
 import type { Node, Edge } from "@xyflow/react";
-import { bindingSignature, connectionState, connectionSummary, stepLabel, type Binding, type Contract, type Pin } from "../lib/connection-review";
+import { bindingSignature, connectionState, connectionSummary, publishedConnection, stepLabel, type Binding, type Contract, type Pin } from "../lib/connection-review";
 
 export default function CapabilityBindings({ nodes, edges, onBind, saved, checked, selectedEdgeId }: {
   nodes: Node[]; edges: Edge[]; saved: Record<string, string>; checked: Record<string, string>; selectedEdgeId: string | null;
@@ -39,12 +39,12 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
       const state = connectionState({ binding, source, target, sourcePin: a.data.operation_contract as Pin | undefined,
         targetPin: b.data.operation_contract as Pin | undefined, loaded, signature: bindingSignature(nodes, edge),
         savedSignature: saved[edge.id], checkedSignature: checked[edge.id] });
-      const supported = source?.definition.binding_transport === "whole-output-v1" && target?.definition.binding_transport === "whole-output-v1"
-        && source.definition.outputs.length === 1 && target.definition.inputs.length === 1;
+      const support = publishedConnection(source, target);
+      const supported = support.supported;
       const output = source?.definition.outputs.find(s => s.name === binding?.source_slot) || source?.definition.outputs[0];
       const input = target?.definition.inputs.find(s => s.name === binding?.target_slot) || target?.definition.inputs[0];
-      const setup = supported && output && input ? <button type="button" onClick={() => onBind(edge.id, source, target, output.name, input.name)}>Use published connection</button> :
-        <p>Published connection setup is unavailable. Ask the service owner to review its contract.</p>;
+      const setup = supported && source && target && output && input ? <button type="button" onClick={() => onBind(edge.id, source, target, output.name, input.name)}>Use published connection</button> :
+        <p>{support.reason}</p>;
       return <article key={edge.id} className={`connection-card ${selectedEdgeId === edge.id ? "is-selected" : ""}`}>
         <p className="connection-sentence">{connectionSummary(stepLabel(a), stepLabel(b), binding)}</p>
         <p className="connection-state"><span>{state.persistence}</span>{state.attention && <span className="connection-attention">{state.check}</span>}</p>
@@ -67,7 +67,7 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
           </section>
           {binding ? <details><summary>Edit connection</summary><p>This explicit action selects current published pins and slots. Review changes before Save; compatibility must be checked again.</p>{setup}</details> : setup}
         </ReviewDialog>
-        {!binding && supported && <p>Open the connection details to set up its binding.</p>}
+        {!binding && <p>{support.reason}</p>}
       </article>;
     })}
   </section>;

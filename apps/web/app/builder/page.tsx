@@ -498,8 +498,10 @@ function BuilderContent() {
 
       if (edge.data?.binding) {
         notices.push(`Connection: ${sourceService.name} to ${targetService.name} will be checked against pinned operation contracts.`);
+      } else if (nodes.find(node => node.id === edge.source)?.data.operation_contract && nodes.find(node => node.id === edge.target)?.data.operation_contract) {
+        notices.push(`Connection: ${sourceService.name} → ${targetService.name} needs an explicit published binding. The compiler will identify its required input slot.`);
       } else if (sourceService.output_type !== targetService.input_type) {
-        blockers.push(`Blocked: ${sourceService.name} to ${targetService.name} has different catalogue interface labels. Choose a verified data connection or review the services with their owner.`);
+        blockers.push(`Blocked: ${sourceService.name} → ${targetService.name} has no verified output-to-input binding (${sourceService.output_type} → ${targetService.input_type}). Select the required published connection or review the contract versions with their owner.`);
       } else {
         notices.push(`Unverified: ${sourceService.name} to ${targetService.name} has no explicit semantic binding.`);
       }
@@ -954,7 +956,7 @@ function BuilderContent() {
           <div
             className="builder-canvas-header"
           >
-            <div><span>Visual workflow</span><strong>Workflow canvas</strong></div>
+            <div><span>Visual workflow</span><strong>Workflow canvas</strong><small>{review.steps.length} processing operations · {nodes.length - review.steps.length} input/output nodes</small></div>
             <div className="builder-canvas-legend"><i /> Service <i /> Connection</div>
           </div>
 

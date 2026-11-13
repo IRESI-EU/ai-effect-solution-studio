@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     local_dutch_capture_runtime: str = ""
     # Separate disposable AIE-18 proof only; never enabled by default.
     aie18_evidence_root: str = ""
+    # Opt-in read-only experimental Portuguese capture; never a Dutch profile.
+    portuguese_evidence_root: str = ""
+    portuguese_model_root: str = ""
+    portuguese_evidence_owner_id: str = ""
     # A separate local qualification database/network, never the guarded demos.
     aie37_qualification: bool = False
     # Additive, opt-in journey on the existing isolated AIE-37 catalogue/runtime.
