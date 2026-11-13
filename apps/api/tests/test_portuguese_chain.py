@@ -130,3 +130,56 @@ def test_wrong_owner_cannot_read_or_copy_private_design(chained):
         app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
         assert client.get("/solutions/"+saved["id"]).status_code==403
     app.dependency_overrides.pop(get_current_user)
+
+
+def training_profile(monkeypatch):
+    from app.core.config import settings
+    # Only profile identity is mocked; database I/O remains disposable SQLite.
+    monkeypatch.setattr(settings,"database_url","postgresql://test@offline/pt_parameter_sandbox")
+    monkeypatch.setattr(settings,"portuguese_evidence_owner_id","designer")
+    monkeypatch.setattr(settings,"portuguese_training_dataset_ref","approved-data")
+
+
+def test_training_choice_is_authenticated_owner_profile_scoped_and_minimal(chained,monkeypatch):
+    client,_=chained;training_profile(monkeypatch)
+    assert client.get("/workflows/training-input").json()=={"dataset":{"label":"Sandbox test dataset","dataset_ref":"approved-data"}}
+    from app.main import app
+    from app.dependencies.auth import get_current_user
+    from app.models.user import User
+    with SessionLocal() as db:
+        app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
+        assert client.get("/workflows/training-input").json()=={"dataset":None}
+    app.dependency_overrides.pop(get_current_user)
+    from app.core.config import settings
+    monkeypatch.setattr(settings,"database_url","postgresql://test@offline/production")
+    assert client.get("/workflows/training-input").json()=={"dataset":None}
+    client.cookies.clear()
+    assert client.get("/workflows/training-input").status_code==401
+
+
+@pytest.mark.parametrize("input",[None,{}, {"dataset_ref":"unknown"}, {"dataset_ref":"/private/training.csv"}, {"dataset_ref":"approved-data","user_id":"client-selected"}])
+def test_unapproved_training_input_fails_normal_compile(chained,monkeypatch,input):
+    client,payload=chained;training_profile(monkeypatch)
+    saved=client.post("/solutions",json=payload).json()
+    request=workflow(saved);request["run_input"]=input
+    response=client.post("/workflows/compile",json=request)
+    assert response.status_code==422,response.text
+
+
+def test_fresh_design_input_can_be_saved_reloaded_copied_and_validated(chained,monkeypatch):
+    client,payload=chained;training_profile(monkeypatch)
+    payload["design_metadata"]=None
+    first=client.post("/solutions",json=payload);assert first.status_code==200,first.text
+    saved=first.json();assert saved["design_metadata"] is None
+    metadata={"run_input":{"dataset_ref":"approved-data"}}
+    update=client.put("/solutions/"+saved["id"],json={"expected_updated_at":saved["updated_at"],"design_metadata":metadata})
+    assert update.status_code==200,update.text
+    reloaded=client.get("/solutions/"+saved["id"]).json()
+    assert reloaded["design_metadata"]==metadata and reloaded["edges"]==payload["edges"]
+    for current,original in zip(reloaded["nodes"],payload["nodes"]):
+        assert current["data"]["configuration"]==original["data"]["configuration"]
+        assert current["data"]["operation_contract"]==original["data"]["operation_contract"]
+    copy=client.post("/solutions",json={k:deepcopy(reloaded[k]) for k in ("name","nodes","edges","design_metadata")})
+    assert copy.status_code==200 and copy.json()["design_metadata"]==metadata
+    request=workflow(reloaded);request["run_input"]=reloaded["design_metadata"]["run_input"]
+    assert client.post("/workflows/compile",json=request).status_code==200

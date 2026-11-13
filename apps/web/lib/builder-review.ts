@@ -33,7 +33,7 @@ function canonical(value: unknown): unknown {
 }
 export function designFingerprint(name: string, nodes: GraphNode[], edges: GraphEdge[], runInput?: unknown) {
   const clean = (value: Record<string, unknown>, ignored: string[]) => Object.fromEntries(Object.entries(value).filter(([key]) => !ignored.includes(key)));
-  return JSON.stringify(canonical({ name, runInput, nodes: nodes.map(n => clean(n, ["selected", "dragging", "measured", "width", "height", "resizing", "positionAbsolute"])),
+  return JSON.stringify(canonical({ name, runInput: normalizeRunInput(runInput), nodes: nodes.map(n => clean(n, ["selected", "dragging", "measured", "width", "height", "resizing", "positionAbsolute"])),
     edges: edges.map(e => clean(e, ["selected"])) }));
 }
 export function offlineReview(config?: { provider_mode?: string; provider_name?: string } | null, environment = "") {
@@ -57,5 +57,19 @@ export function nextReviewAction(state: { steps: number; dirty: boolean; design:
 export function reviewInput(mode: "prompt" | "json", text: string): unknown {
   if (!text.trim()) return null;
   if (mode === "prompt") return {prompt:text.trim()};
-  try { return JSON.parse(text); } catch { return {unparsed_input:text, mode}; }
+  try { return normalizeRunInput(JSON.parse(text)); } catch { return {unparsed_input:text, mode}; }
+}
+
+export function normalizeRunInput(value: unknown): unknown {
+  return value == null || (typeof value === "object" && !Array.isArray(value) && !Object.keys(value).length) ? null : value;
+}
+
+export function withRunInput(metadata: Record<string, unknown> | null, input: unknown) {
+  const value = normalizeRunInput(input);
+  return metadata || value !== null ? {...metadata, run_input: value} : null;
+}
+
+export function trainingInputMessage(required: boolean, input: unknown) {
+  return required && !(input && typeof input === "object" && "dataset_ref" in input && typeof input.dataset_ref === "string" && input.dataset_ref.trim())
+    ? "Select a training CSV before validating." : "";
 }

@@ -1,7 +1,7 @@
 /** Presentation only. The registry/compiler remains the compatibility authority. */
 export type Pin = { contract_id: string; contract_version: string };
 export type Binding = { source_slot: string; target_slot: string };
-export type Slot = { name: string; schema_ref?: string; semantic_concept?: string; data_reference_protocols?: string[]; content_types?: string[]; value_representation?: string; source_requirement?: string; min_cardinality?: number; max_cardinality?: number };
+export type Slot = { name: string; required?: boolean; schema_ref?: string; semantic_concept?: string; data_reference_protocols?: string[]; content_types?: string[]; value_representation?: string; source_requirement?: string; min_cardinality?: number; max_cardinality?: number };
 export type Contract = { id: string; contract_version: string; definition: { binding_transport?: string; inputs: Slot[]; outputs: Slot[] } };
 export type ReviewNode = { id: string; data: { label?: unknown; service?: unknown; operation_contract?: unknown } };
 export type ReviewEdge = { id: string; source: string; target: string; data?: Record<string, unknown> };

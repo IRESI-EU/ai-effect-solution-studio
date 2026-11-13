@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     portuguese_evidence_root: str = ""
     portuguese_model_root: str = ""
     portuguese_evidence_owner_id: str = ""
+    portuguese_training_dataset_ref: str = ""
     # A separate local qualification database/network, never the guarded demos.
     aie37_qualification: bool = False
     # Additive, opt-in journey on the existing isolated AIE-37 catalogue/runtime.

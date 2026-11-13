@@ -190,3 +190,6 @@ and scientific quality remain unverified. ApplyFunction remains unavailable.
 Original 0.1 jobs retain their actual settings/results but receive no fabricated
 v2 consumption evidence. Production, all earlier demonstrations and the failed
 owner design remain unchanged.
+
+The subsequent design-only [fresh Builder input follow-up](PORTUGUESE_BUILDER_INPUT_2026-11-13.md)
+addresses manual assembly and input persistence without repeating this execution.

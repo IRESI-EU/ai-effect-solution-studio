@@ -109,3 +109,26 @@ generation consumed that same model and produced ten 100-row sequences. The
 Portal report and chain-verification.json record hashes, pins, image identities,
 the observer-outage/refresh check, preserved old jobs/designs and unchanged
 25/25 provider ledger. Read-only observation is allowed; do not dispatch again.
+
+## Portal-only manual Builder input update
+
+Build the committed Portal source with the existing
+deploy/restricted-beta/build_candidate.py --roles api web --records <private-build-records>.
+This exports tracked source only, uses retained pinned dependencies without
+network downloads, records image IDs and starts nothing. Preserve previous API
+and web images, and privately back up compose.private.json before changing pins.
+
+In this same profile only, set API PORTUGUESE_TRAINING_DATASET_REF to the existing
+private policy.json dataset_ref. Keep PORTUGUESE_EVIDENCE_OWNER_ID and the existing
+pt_parameter_sandbox database identity. This exposes only an authenticated label
+and reference; no file path or additional dataset service is introduced. Keep
+all other environment values, mounts, runtime images and worker states unchanged.
+
+Replace only services.api.image and services.web.image with the recorded new
+content-addressed images, then run:
+docker --context desktop-linux compose -f <private-compose> up -d --no-deps --no-build --pull never api web
+
+For rollback, stop only api/web, restore their previous image pins and the prior
+API environment from the private compose backup, then run the same api/web-only
+command. Retain the database and volumes; no migration, bootstrap, worker start,
+workflow submission or execution is part of this update or browser acceptance.

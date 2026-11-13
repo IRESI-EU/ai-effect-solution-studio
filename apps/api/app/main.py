@@ -671,6 +671,12 @@ def compile_workflow(
     return compile_to_wp3_payload(workflow, db)
 
 
+@app.get("/workflows/training-input")
+def builder_training_input(user: User = Depends(get_current_user)):
+    from app.services.capability_bindings import sandbox_training_input
+    return {"dataset": sandbox_training_input(user.id)}
+
+
 @app.post("/workflows/runtime-preflight")
 def runtime_preflight_endpoint(
     workflow: WorkflowSubmitRequest,

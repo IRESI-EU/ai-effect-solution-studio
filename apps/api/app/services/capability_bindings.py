@@ -25,6 +25,17 @@ def explicit(workflow):
         "binding" in e.model_fields_set for e in workflow.edges)
 
 
+def sandbox_training_input(user_id=None):
+    """Only the retained sandbox's configured opaque input, never its private path."""
+    from app.core.config import settings
+    from sqlalchemy.engine import make_url
+    if (make_url(settings.database_url).database != "pt_parameter_sandbox"
+        or not settings.portuguese_evidence_owner_id or not settings.portuguese_training_dataset_ref
+        or (user_id is not None and user_id != settings.portuguese_evidence_owner_id)):
+        return None
+    return {"label": "Sandbox test dataset", "dataset_ref": settings.portuguese_training_dataset_ref}
+
+
 def validate(workflow, db, *, require_run_input=True):
     pins, definitions, snapshots = {}, {}, {}
     for node in workflow.nodes:
@@ -135,6 +146,11 @@ def validate(workflow, db, *, require_run_input=True):
             raise HTTPException(422, f"{pins[key].runtime_operation_name}: connect required {', '.join(s['name'] for s in slots if s['required'])} from its upstream producer before saving or executing.")
         if root_input and not incoming.get(key) and require_run_input and workflow.run_input is None and any(s["required"] for s in slots):
             raise HTTPException(422, f"{pins[key].runtime_operation_name}: provide the separate required {', '.join(s['name'] for s in slots if s['required'])} workflow input.")
+        choice = sandbox_training_input()
+        if (require_run_input and choice and root_input and not incoming.get(key)
+            and any(s["name"] == "dataset_ref" and s["required"] for s in slots)
+            and workflow.run_input != {"dataset_ref": choice["dataset_ref"]}):
+            raise HTTPException(422, "Select the authorized sandbox training CSV before validating.")
         if workflow.run_input is not None and not incoming.get(key) and not root_input:
             raise HTTPException(422, f"{key}: workflow input is not supported by this qualified contract; use instance settings.")
     return {"status": "verified" if pins else "unqualified", "contracts": snapshots, "bindings": bindings,
