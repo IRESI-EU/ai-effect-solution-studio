@@ -15,6 +15,9 @@ def sha(value):
 
 
 def load(row, db=None):
+    if settings.portuguese_evidence_root:
+        from app.services import portuguese_evidence
+        return portuguese_evidence.load(row, db)
     if settings.aie37_qualification:
         return load_qualification(row, db)
     if not settings.aie18_evidence_root:

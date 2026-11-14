@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "acceptance_date": "2026-11-14",
+  "scope": "fresh manual Builder assembly; design only; no execution",
+  "design_id": "e0814ad1-3d96-453b-96e7-ae0124bb43b4",
+  "builder_url": "http://127.0.0.1:23124/builder?solutionId=e0814ad1-3d96-453b-96e7-ae0124bb43b4",
+  "creation_path": "Empty /builder \u2192 visible palette \u2192 canvas handle connections \u2192 Use published connection \u2192 Training CSV selection \u2192 inspector edits \u2192 Save \u2192 refresh \u2192 Validate design",
+  "prepopulation": "none: no preparation helper or direct API design write",
+  "api_source_commit": "04682b5b1397d3c91904ada9898101b3f4adc7de",
+  "web_source_commit": "905e5e29740904b9723035faa6ffdfc2dfce580c",
+  "images": {
+    "api": "sha256:8139fef6a80a194b242085cdb9122ea6ac1259a3c8c9c3a780f4164a8d168872",
+    "web": "sha256:b6c76b978d9e2edab677e2316e960a76cf65a8eb7349d177854955f289090cd2"
+  },
+  "rollback_images": {
+    "api": "sha256:df91c2367e477b607fd8378866b95d976a7b42730ca76662ccfc4250fb5d3ca0",
+    "web": "sha256:cd8d0324474bab93f3afdce6539d98549e3ea5297e49055b8cfa98fa200a3fe2"
+  },
+  "training_input": {
+    "label": "Sandbox test dataset",
+    "dataset_ref": "pt-approved-synthetic-data"
+  },
+  "instances": [
+    {
+      "instance_id": "service-pt-experimental-chain-TrainModel-48e234c4-54e6-4481-91d5-014bb5e20d3e",
+      "service_id": "pt-experimental-chain-TrainModel",
+      "operation": "TrainModel",
+      "configuration": {
+        "parameters": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "contract_id": "pt-chain-train-v2",
+        "contract_version": "0.2.0"
+      },
+      "contract_pin": {
+        "contract_id": "pt-chain-train-v2",
+        "contract_version": "0.2.0"
+      }
+    },
+    {
+      "instance_id": "service-pt-experimental-chain-GenerateData-01770136-24a2-491b-96a3-d77532fbc4f6",
+      "service_id": "pt-experimental-chain-GenerateData",
+      "operation": "GenerateData",
+      "configuration": {
+        "parameters": {
+          "number_of_examples": 10
+        },
+        "contract_id": "pt-chain-generate-v2",
+        "contract_version": "0.2.0"
+      },
+      "contract_pin": {
+        "contract_id": "pt-chain-generate-v2",
+        "contract_version": "0.2.0"
+      }
+    }
+  ],
+  "binding": {
+    "id": "xy-edge__service-pt-experimental-chain-TrainModel-48e234c4-54e6-4481-91d5-014bb5e20d3e-service-pt-experimental-chain-GenerateData-01770136-24a2-491b-96a3-d77532fbc4f6",
+    "data": {
+      "binding": {
+        "source_slot": "model_ref",
+        "target_slot": "model_ref"
+      }
+    },
+    "source": "service-pt-experimental-chain-TrainModel-48e234c4-54e6-4481-91d5-014bb5e20d3e",
+    "target": "service-pt-experimental-chain-GenerateData-01770136-24a2-491b-96a3-d77532fbc4f6"
+  },
+  "outcome": {
+    "save": "passed",
+    "first_save_url": "contains new owned solution ID",
+    "refresh": "retained input, explicit 2/4/10 overrides, pins and binding",
+    "validate_design": "Checked successfully",
+    "clear_csv": "Unsaved changes; compatibility Not checked; Select a training CSV before validating.",
+    "restore_csv": "original saved state retained, revalidation required and passed"
+  },
+  "checks": {
+    "backend": 41,
+    "frontend_helpers": 19,
+    "typecheck": "passed",
+    "api_build": "passed",
+    "web_build": "passed",
+    "staged_secret_scans": "passed"
+  },
+  "preservation": {
+    "protected_designs_unchanged": 5,
+    "journal_unchanged": true,
+    "jobs": 5,
+    "authorization_state": "closed",
+    "queues_unchanged": true,
+    "workers": "stopped",
+    "ledger_unchanged": true,
+    "ledger_count_limit": "25/25",
+    "runtime_configuration_unchanged": true
+  },
+  "new_workflow_submissions": 0,
+  "new_algorithm_executions": 0,
+  "provider_requests": 0,
+  "grants_added": 0,
+  "observations": "Agent browser acceptance only; no independent participant observation",
+  "limitations": [
+    "sandbox test input only; no uploads or general dataset catalogue",
+    "runtime readiness/execution intentionally not checked in this milestone",
+    "PostgreSQL concurrency and hosted production compatibility not established by SQLite checks"
+  ]
+}

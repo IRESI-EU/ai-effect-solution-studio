@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput } from "./builder-review.ts";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, withRunInput, trainingInputMessage } from "./builder-review.ts";
 
 const producer = {id:"p", position:{x:20,y:40}, data:{label:"Stored producer",service:{id:"service-p",name:"Generate sample images"},configuration:{parameters:{seed:42}},operation_contract:{contract_id:"p-pin",contract_version:"1"}}};
 const consumer = {id:"c",position:{x:400,y:40},data:{service:{id:"service-c",name:"Score images"}}};
@@ -72,4 +72,37 @@ test("saved run input participates in dirty state without treating JSON formatti
   assert.equal(reviewInput("json",""),null);
   assert.deepEqual(reviewInput("prompt"," make a grid "),{prompt:"make a grid"});
   assert.deepEqual(reviewInput("json","invalid"),{unparsed_input:"invalid",mode:"json"});
+});
+
+test("fresh null metadata persists input; Save/reload/copy retains binding, pins and authority",()=>{
+  const input={dataset_ref:"sandbox-test"};
+  const metadata=withRunInput(null,input);
+  assert.deepEqual(metadata,{run_input:input});
+  const draft={name:"Manual",nodes,edges,design_metadata:metadata};
+  const reloaded=JSON.parse(JSON.stringify(draft));
+  assert.equal(designFingerprint(draft.name,nodes,edges,input),designFingerprint(reloaded.name,reloaded.nodes,reloaded.edges,reloaded.design_metadata.run_input));
+  assert.deepEqual(reloaded.edges,edges);
+  assert.deepEqual(reloaded.nodes,nodes);
+  const authority={source:{kind:"catalogue_composed"},execution_policy:"design_only_catalogue_pair",draft_id:"original"};
+  assert.deepEqual(withRunInput(authority,input),{...authority,run_input:input});
+  assert.deepEqual(authority,{source:{kind:"catalogue_composed"},execution_policy:"design_only_catalogue_pair",draft_id:"original"});
+});
+
+test("workflow input changes are dirty for fresh designs and empty forms normalize equally",()=>{
+  const empty=designFingerprint("Manual",nodes,edges);
+  for (const input of [undefined,null,{},reviewInput("prompt","  "),reviewInput("json","{}")])
+    assert.equal(designFingerprint("Manual",nodes,edges,input),empty);
+  const selected=reviewInput("json",'{"dataset_ref":"approved"}');
+  assert.notEqual(designFingerprint("Manual",nodes,edges,selected),empty);
+  assert.equal(nextReviewAction({...state,dirty:true,design:"valid"}),"save");
+  assert.equal(nextReviewAction({...state,design:null}),"validate");
+  assert.equal(withRunInput(null,{}),null);
+  assert.deepEqual(withRunInput({draft_id:"protected"},undefined),{draft_id:"protected",run_input:null});
+});
+
+test("missing training input has an actionable instruction instead of only a compiler error",()=>{
+  for (const input of [null,{}, {dataset_ref:""},{dataset_ref:"   "}])
+    assert.equal(trainingInputMessage(true,input),"Select a training CSV before validating.");
+  assert.equal(trainingInputMessage(true,{dataset_ref:"approved"}),"");
+  assert.equal(trainingInputMessage(false,null),"");
 });

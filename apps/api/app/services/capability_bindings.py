@@ -25,7 +25,49 @@ def explicit(workflow):
         "binding" in e.model_fields_set for e in workflow.edges)
 
 
-def validate(workflow, db):
+def sandbox_profile_enabled():
+    from app.core.config import settings
+    from sqlalchemy.engine import make_url
+    return (make_url(settings.database_url).database == "pt_parameter_sandbox"
+            and bool(settings.portuguese_evidence_owner_id))
+
+
+def sandbox_execution_policy():
+    if not sandbox_profile_enabled():
+        return None
+    return {"available": False, "message": "This sandbox is available only for inspection. New workflow submissions are disabled; execution requires separate operator authorization and targeted processing of an existing request."}
+
+
+def require_sandbox_execution_allowed():
+    policy = sandbox_execution_policy()
+    if policy:
+        raise HTTPException(409, {"message": policy["message"], "execution_state": "inspection_only"})
+
+
+def sandbox_workflow_status(workflow, tasks):
+    """WP3's start/enqueue status is not evidence that a task was claimed."""
+    if not sandbox_profile_enabled() or workflow.get("status") != "running":
+        return workflow
+    states = [t.get("status") for t in tasks]
+    if states and all(state == "pending" for state in states):
+        return {**workflow, "reported_status": "running", "status": "queued",
+                "execution_detail": "Accepted and queued; no task has been claimed. Processing requires the operator-controlled targeted worker and an active authorization."}
+    if "running" in states:
+        return {**workflow, "execution_detail": "A worker has claimed a task. This status alone does not verify algorithm completion or output consumption."}
+    return {**workflow, "reported_status": "running", "status": "unknown",
+            "execution_detail": "Active execution is not established by the current task states. Inspect the task history; do not resubmit."}
+
+
+def sandbox_training_input(user_id=None):
+    """Only the retained sandbox's configured opaque input, never its private path."""
+    from app.core.config import settings
+    if (not sandbox_profile_enabled() or not settings.portuguese_training_dataset_ref
+        or (user_id is not None and user_id != settings.portuguese_evidence_owner_id)):
+        return None
+    return {"label": "Sandbox test dataset", "dataset_ref": settings.portuguese_training_dataset_ref}
+
+
+def validate(workflow, db, *, require_run_input=True):
     pins, definitions, snapshots = {}, {}, {}
     for node in workflow.nodes:
         active = None
@@ -65,19 +107,35 @@ def validate(workflow, db):
     for edge in workflow.edges:
         pair = (edge.source, edge.target)
         if edge.source not in pins and edge.target not in pins and edge.binding is None:
+            # A declared workflow-only input cannot become an upstream input by
+            # omitting pins. Leave undeclared legacy connections unchanged.
+            target_node = next((n for n in workflow.nodes if n.node_id == edge.target), None)
+            target_contract = db.query(OperationContract).filter(
+                OperationContract.service_id == target_node.service_id,
+                OperationContract.status == "active").first() if db is not None and target_node else None
+            if target_contract and any(s.get("required") and s.get("source_requirement") == "workflow_input"
+                                       for s in target_contract.definition.get("inputs", [])):
+                slots = ", ".join(s["name"] for s in target_contract.definition["inputs"] if s.get("required"))
+                source_node = next((n for n in workflow.nodes if n.node_id == edge.source), None)
+                source_service = db.get(Service, source_node.service_id) if source_node and source_node.service_id else None
+                source_name = source_service.operation_name if source_service else edge.source
+                raise HTTPException(422, f"{source_name} → {target_contract.runtime_operation_name}: {target_contract.runtime_operation_name} requires {slots} from workflow input, not an upstream operation. No compatible binding is declared by these contract versions.")
             continue  # Existing supported unqualified designs remain explicit legacy paths.
         if pair in seen or edge.source == edge.target:
             raise HTTPException(422, "Qualified connections must be unique and cannot connect an instance to itself.")
         seen.add(pair)
         if edge.source not in pins or edge.target not in pins or edge.binding is None:
-            raise HTTPException(422, f"{edge.source} → {edge.target}: select explicit slots and pin both operation contracts.")
+            source_name = pins[edge.source].runtime_operation_name if edge.source in pins else edge.source
+            target_name = pins[edge.target].runtime_operation_name if edge.target in pins else edge.target
+            slots = ", ".join(s["name"] for s in definitions.get(edge.target, {}).get("inputs", []) if s.get("required"))
+            raise HTTPException(422, f"{source_name} → {target_name}: select the required {slots or 'input'} connection slots and pin both operation contracts.")
         outputs, inputs = definitions[edge.source]["outputs"], definitions[edge.target]["inputs"]
         output = next((s for s in outputs if s["name"] == edge.binding.source_slot), None)
         target = next((s for s in inputs if s["name"] == edge.binding.target_slot), None)
         if not output or not target:
             raise HTTPException(422, "The selected output or input slot is unknown; review this connection.")
         if target["source_requirement"] not in ("upstream_operation", "upstream_or_workflow_input"):
-            raise HTTPException(422, f"{edge.target}: this slot does not accept an upstream operation.")
+            raise HTTPException(422, f"{pins[edge.source].runtime_operation_name} → {pins[edge.target].runtime_operation_name}: {target['name']} requires separate workflow input and does not accept this upstream output. Reverse the connection only when the published output/input contracts support it.")
         fields = ("semantic_concept", "schema_ref", "value_representation")
         if (any(not output.get(k) or output.get(k) != target.get(k) for k in fields)
                 or output["value_representation"] != "data_reference"
@@ -114,9 +172,17 @@ def validate(workflow, db):
             visit(key)
     for key, definition in definitions.items():
         slots = definition["inputs"]
-        if any(s["required"] for s in slots) and not incoming.get(key):
-            raise HTTPException(422, f"{key}: connect its required input before saving or executing.")
-        if workflow.run_input is not None and not incoming.get(key):
+        root_input = slots and all(s["source_requirement"] in ("workflow_input", "upstream_or_workflow_input") for s in slots)
+        if any(s["required"] for s in slots) and not incoming.get(key) and not root_input:
+            raise HTTPException(422, f"{pins[key].runtime_operation_name}: connect required {', '.join(s['name'] for s in slots if s['required'])} from its upstream producer before saving or executing.")
+        if root_input and not incoming.get(key) and require_run_input and workflow.run_input is None and any(s["required"] for s in slots):
+            raise HTTPException(422, f"{pins[key].runtime_operation_name}: provide the separate required {', '.join(s['name'] for s in slots if s['required'])} workflow input.")
+        choice = sandbox_training_input()
+        if (require_run_input and choice and root_input and not incoming.get(key)
+            and any(s["name"] == "dataset_ref" and s["required"] for s in slots)
+            and workflow.run_input != {"dataset_ref": choice["dataset_ref"]}):
+            raise HTTPException(422, "Select the authorized sandbox training CSV before validating.")
+        if workflow.run_input is not None and not incoming.get(key) and not root_input:
             raise HTTPException(422, f"{key}: workflow input is not supported by this qualified contract; use instance settings.")
     return {"status": "verified" if pins else "unqualified", "contracts": snapshots, "bindings": bindings,
             "message": "Explicit schema and slot compatibility verified." if pins else
@@ -141,4 +207,4 @@ def validate_builder(nodes, edges, db):
         raise HTTPException(422, "Invalid operation contract pin or slot binding.") from None
     if explicit(workflow) and any(e.get("sourceHandle") or e.get("targetHandle") for e in edges):
         raise HTTPException(422, "Use the verified connection slots; canvas handle projection is not supported.")
-    return validate(workflow, db)
+    return validate(workflow, db, require_run_input=False)

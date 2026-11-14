@@ -1,0 +1,164 @@
+# Connected Portuguese phase — existing-profile operator runbook
+
+This is an additive update of ai-effect-pt-parameters, not a new profile.
+The original three jobs and old one-training/two-generation scope stay exhausted.
+Do not rerun the initial profile initializer or bootstrap.
+
+Source checkpoint: Portal 654f3a68481738c902e9673d2f35f9c95715a6e9;
+maintained WP3 30e1ac403c7434149f3ff3568843f2cc75702413.
+The exact image IDs are constants in apply_chain_profile.py and were built
+offline with retained pinned inputs. Original ML/PG/Redis/orchestrator images
+and volumes remain unchanged; the targeted worker has a separate image.
+Previous API/web/adapter images are retained as rollback inputs. The private
+records include a consistent PostgreSQL dump, original owner designs/validation,
+old journal records and the original private compose configuration.
+
+## Operator paths
+From the original checkout:
+- Existing profile: local-backups/portuguese-sandbox-20261112/profile
+- New private records: local-backups/portuguese-chain-20261113
+- Review checkout: local-backups/portuguese-portal
+- Existing designer/password: existing profile credentials.json (never print).
+
+Use the installed original-checkout .venv/Scripts/python.exe. No dependency
+downloads, production, staging, provider or ledger activation is involved.
+Set PT_SANDBOX_PROFILE and PT_SANDBOX_RECORDS to those absolute paths.
+Set $cfg to the existing profile's compose.private.json.
+
+## Reviewed update before dispatch
+1. apply_chain_profile.py --profile $env:PT_SANDBOX_PROFILE --records $env:PT_SANDBOX_RECORDS
+   verifies isolation/provider/resource guards, backs up private compose and
+   updates only API/web/adapter plus read-only observer/operator roles. It starts
+   nothing and refuses repeated application. It leaves the old worker untouched.
+2. docker --context desktop-linux compose -f $cfg run --rm --no-deps --entrypoint python bootstrap /review/register_chain.py
+   adds separate v0.2 services/contracts; it refuses to mutate existing IDs.
+3. docker --context desktop-linux compose -f $cfg up -d --no-build --pull never model-observer pt-adapter api web
+   leaves database, Redis, original ML API, orchestrator and all other profiles
+   intact. Check login, genuine capability versions/I/O digests, old results,
+   owner-design preservation and provider disconnection.
+4. python deploy/portuguese_sandbox/chain_review.py prepare
+   creates only one separate correctly bound saved review copy through the
+   normal authorized application routes. It never modifies the owner failure.
+5. Inspect in Builder, edit/save/reload settings without executing, then restore
+   the approved epochs 2 / batch size 4 / count 10 and required model_ref binding.
+
+## Single authorized combined attempt
+Publish source/tests/configuration before these explicit steps:
+1. chain_review.py snapshot freezes exact final design, normal compile/readiness,
+   root dataset reference, contract pins, current component/image/resource
+   identities and queue state. It writes the new authorization policy.
+2. chain_review.py authorize invokes the supported journal create operator.
+   No legacy limit, record, model reference or checkpoint is reset or increased.
+3. chain_review.py submit sends exactly one normal application workflow request,
+   records the response and binds the authorization to that workflow once.
+   Its pre-dispatch marker survives any unknown response. Never retry.
+4. chain_review.py start_worker starts a separate one-shot worker_cli container
+   for that exact workflow only. The daemon stays stopped. No owner-created or
+   other workflow queue is processed.
+5. chain_review.py observe reads only owned status/tasks/immutable submission
+   and authenticated artifact evidence. Stop on failed/uncertain outcome; do not
+   repair a response, reuse a model or send another workflow.
+6. After both tasks complete and all proof validates, chain_review.py close
+   requires the targeted worker stopped and queues empty, then closes the new
+   scope through the supported operator. Retain its journal/audit/events/logs.
+
+On failure: keep the consumed submission/worker markers and actual records.
+Gracefully stop only the targeted worker if needed, use the journal operator to
+close the new scope without claiming success, and report the exact failure.
+No replacement grant, second submission or execution retry is authorized.
+
+## Historical browser review / shutdown
+The final report supplies the saved combined Builder and results URLs. Browser
+review is read-only and requires no new execution or helper. The evidence reader
+uses only read-only journal/model/output mounts, validates signed versioned
+records and current hashes, and does not contact a live runtime to make claims.
+
+For ordinary restart, start only retained postgres/redis first, wait for
+pg_isready, then start ml/orchestrator/pt-adapter/api/web/model-observer as needed.
+Never start worker or chain-worker for review. New scope must remain closed.
+Shutdown: docker --context desktop-linux compose -f $cfg stop
+Never down -v, rerun bootstrap, remove volumes, reset the journal or touch ledgers.
+The one-shot worker container/logs are retained, not recreated for inspection.
+
+Rollback stops this isolated profile's changed components, restores the private
+compose backup and retained old API/web/adapter pins, then starts only safe
+components with the same database/volumes. Additive registry versions and journal
+history remain; do not restore an older database/journal over new evidence.
+No PostgreSQL schema migration is required. The original Portuguese API is not
+edited. Hosted multi-tenant authority, partner approval, scientific suitability
+and production compatibility remain outside this local verification.
+
+## Completed phase — read-only review now
+
+The sole combined attempt completed as `wf-a891cece9438` (TrainModel
+`task_030152d9`, GenerateData `task_f6c5c14e`). Scope
+`pt-chain-20261113-01` is closed and consumed. Both workers are stopped; queues
+are empty. Do not rerun prepare/snapshot/authorize/submit/start_worker or create
+a replacement scope. Exclusive attempt markers and audit records remain in the
+private records directory. No further execution is authorized by this runbook.
+
+Review the saved Builder:
+`http://127.0.0.1:23124/builder?solutionId=3cf4c4fe-36f9-4141-8bca-f6421f0b16d8`
+and completed results:
+`http://127.0.0.1:23124/deployments/wf-a891cece9438#results`.
+Sign in using the retained profile credentials.json; do not copy its password
+into reports. No operator/helper action is needed between browser review steps.
+
+The actual saved model records epochs 2 / batch size 4 / sequence length 100;
+generation consumed that same model and produced ten 100-row sequences. The
+Portal report and chain-verification.json record hashes, pins, image identities,
+the observer-outage/refresh check, preserved old jobs/designs and unchanged
+25/25 provider ledger. Read-only observation is allowed; do not dispatch again.
+
+## Portal-only manual Builder input update
+
+Build the committed Portal source with the existing
+deploy/restricted-beta/build_candidate.py --roles api web --records <private-build-records>.
+This exports tracked source only, uses retained pinned dependencies without
+network downloads, records image IDs and starts nothing. Preserve previous API
+and web images, and privately back up compose.private.json before changing pins.
+
+In this same profile only, set API PORTUGUESE_TRAINING_DATASET_REF to the existing
+private policy.json dataset_ref. Keep PORTUGUESE_EVIDENCE_OWNER_ID and the existing
+pt_parameter_sandbox database identity. This exposes only an authenticated label
+and reference; no file path or additional dataset service is introduced. Keep
+all other environment values, mounts, runtime images and worker states unchanged.
+
+Replace only services.api.image and services.web.image with the recorded new
+content-addressed images, then run:
+docker --context desktop-linux compose -f <private-compose> up -d --no-deps --no-build --pull never api web
+
+For rollback, stop only api/web, restore their previous image pins and the prior
+API environment from the private compose backup, then run the same api/web-only
+command. Retain the database and volumes; no migration, bootstrap, worker start,
+workflow submission or execution is part of this update or browser acceptance.
+
+Verified manual review copy (assembled from empty Builder, no preparation helper):
+http://127.0.0.1:23124/builder?solutionId=e0814ad1-3d96-453b-96e7-ae0124bb43b4
+Save → refresh → Validate passed on 2026-11-14. API serving source 04682b5b1397d3c91904ada9898101b3f4adc7de;
+web serving source 905e5e29740904b9723035faa6ffdfc2dfce580c. Exact new/rollback
+image IDs are recorded in manual-builder-verification.json. Private pre-update
+compose and consistent database backup are in the original checkout's
+local-backups/portuguese-builder-20261113. Preserve them; never restore an older
+database over the completed execution or this new saved design.
+
+## Owner request recovery and inspection-only policy — 2026-11-14
+
+The existing owner workflow wf-375a888b8976 was accepted with pending tasks while
+workers were stopped and the earlier scope closed. It was recovered in place,
+without another submission, using the supported create/bind operator and a new
+attributable exact-workflow scope after verifying no dispatch had started.
+One training and one generation completed with immutable effective 1/4/10
+settings. Scope pt-owner-recovery-20261114-01 is now closed; its named worker is
+retained exited 0 and queues are empty. Do not repeat or recreate this scope.
+
+Portal readiness/new-submission routes are now inspection-only for this exact
+sandbox. Healthy services and design compatibility do not override this boundary.
+The browser explains this policy; existing results and Validate design remain
+available. Any future existing-request recovery needs separate user authorization,
+immutable snapshot/owner/task/queue checks, supported journal create/bind, a unique
+targeted worker and close after terminal reconciliation. Never reset prior scopes,
+flush queues, start the general daemon or automatically retry uncertain work.
+
+See docs/PORTUGUESE_OWNER_RECOVERY_2026-11-14.md and
+owner-recovery-verification.json for the exact identity, counts and artifact proof.

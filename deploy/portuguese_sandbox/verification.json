@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "scope": "platform-controlled experimental Portuguese parameter sandbox; not partner approval",
+  "portal_serving_revision": "654b10754a7785fa3d650a4c543d3144b72b88df",
+  "adapter_serving_revision": "be8722c01dc41b26b083302531e4a780bdec8598",
+  "wp3_packaging_revision": "a8b529ea25bcfd6a16dbb77ebc893a2b0b22ab77",
+  "wp3_runtime_source_parity_base": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+  "portable_validator_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
+  "focused_tests": {
+    "wp3_runtime": 30,
+    "portal_parameters_and_compatibility": 32,
+    "profile_isolation": 1
+  },
+  "live_cases": [
+    {
+      "case": "train",
+      "workflow_id": "wf-dc54e79834df",
+      "submission_id": "7a4b7750-d96e-4c46-ba6a-d8e75a0c799a",
+      "workflow_status": "completed",
+      "task_states": [
+        {
+          "task_id": "task_3dd0e29e",
+          "node_key": "pt-TrainModel:TrainModel",
+          "status": "completed"
+        }
+      ],
+      "instance_id": "pt-step",
+      "requested": {
+        "epochs": 1,
+        "batch_size": 4
+      },
+      "effective": {
+        "epochs": 1,
+        "batch_size": 4
+      },
+      "canonical_parameter_definition_sha256": "82d8d1a734f4e181d2695ddbdcec2d77d9272aab43d6e806ef630fb28159ceef",
+      "request_snapshot_sha256": "0ea988181c51a01aaeae1f04fe7d995611edf2200ea73bcaca604d0144211a08",
+      "upstream_completion": true,
+      "artifact_sha256": "25b840a5647d949f0c2ccb44c98a7a579f70032ed104d690d33fea1f741342d6",
+      "artifact_bytes": 39,
+      "results_url": "http://127.0.0.1:23124/deployments/wf-dc54e79834df#results",
+      "verified_saved_model_configuration": {
+        "epochs": 1,
+        "batch_size": 4,
+        "max_sequence_len": 100,
+        "sample_len": 1
+      },
+      "model_sha256": "9d7af5049b4e59daf14aca1e74d50419a88c10a71ca4076a347407932ca63f22",
+      "completion_basis": "Synchronous HTTP 200 after save and model listing; progress counters alone are not completion"
+    },
+    {
+      "case": "generate10",
+      "workflow_id": "wf-5d9b6ad6aa23",
+      "submission_id": "8e078700-b417-4ae6-a9ea-6219a0ba4e59",
+      "workflow_status": "completed",
+      "task_states": [
+        {
+          "task_id": "task_99dffd11",
+          "node_key": "pt-GenerateData:GenerateData",
+          "status": "completed"
+        }
+      ],
+      "instance_id": "pt-step",
+      "requested": {
+        "number_of_examples": 10
+      },
+      "effective": {
+        "number_of_examples": 10
+      },
+      "canonical_parameter_definition_sha256": "9e4e6e968ec15a295ad5f635499d592e984bf7a792ef1e0bbf033309517e62b3",
+      "request_snapshot_sha256": "e0ed13cc2755f9b545eba61abaab9fd1c5675cff3503e6416d0f8e783fb78add",
+      "upstream_completion": true,
+      "artifact_sha256": "becaca408f6a7a2f153575fa75a1737e0e57a7414f1b4ee1d620024924127fab",
+      "artifact_bytes": 41807,
+      "results_url": "http://127.0.0.1:23124/deployments/wf-5d9b6ad6aa23#results",
+      "verified_consumed_count": 10,
+      "csv_rows": 1000,
+      "rows_per_example": 100,
+      "unauthenticated_download_denied": true,
+      "immutable_submission_unchanged": true
+    },
+    {
+      "case": "generate20",
+      "workflow_id": "wf-956d17cb477d",
+      "submission_id": "a73e3cd1-631c-459b-a6a4-0e40e6c50628",
+      "workflow_status": "completed",
+      "task_states": [
+        {
+          "task_id": "task_99dffd11",
+          "node_key": "pt-GenerateData:GenerateData",
+          "status": "completed"
+        }
+      ],
+      "instance_id": "pt-step",
+      "requested": {
+        "number_of_examples": 20
+      },
+      "effective": {
+        "number_of_examples": 20
+      },
+      "canonical_parameter_definition_sha256": "9e4e6e968ec15a295ad5f635499d592e984bf7a792ef1e0bbf033309517e62b3",
+      "request_snapshot_sha256": "8abdf6ae5e58f5782f40516ea1e342fd4dc87349ba7473639a1dde36d2f9fcc5",
+      "upstream_completion": true,
+      "artifact_sha256": "30912aefb86c40546ace2d035b7f862461a4b2069c7deb90488c02217c7e8e73",
+      "artifact_bytes": 84504,
+      "results_url": "http://127.0.0.1:23124/deployments/wf-956d17cb477d#results",
+      "verified_consumed_count": 20,
+      "csv_rows": 2000,
+      "rows_per_example": 100,
+      "unauthenticated_download_denied": true,
+      "immutable_submission_unchanged": true
+    }
+  ],
+  "actual_jobs": {
+    "TrainModel": 1,
+    "GenerateData": 2
+  },
+  "automatic_retries": 0,
+  "worker_after": "stopped",
+  "queued_items_after": 0,
+  "dataset_sha256": "36c7721e9254d1abd24cf6999bb693fc6d3ccf28e377431c0562a32d6efe17a8",
+  "provider_calls": 0,
+  "shared_allowance": {
+    "max_calls": 25,
+    "usage_records": 25,
+    "outstanding_reservations": 0,
+    "ledger_sha256_before_and_after": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b"
+  },
+  "runtime_images": {
+    "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+    "redis": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+    "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "worker": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "pt-adapter": "sha256:76f7eea8d48eff6aeb3182dc755cd70d195899404c17785ce73a5766b0352bba",
+    "api": "sha256:974628a92ee14719396f4e19e0cca7a274c64e60cc09b7e37b3beabe9290da28",
+    "web": "sha256:913b314cc09a974b7dddcc1a85bc889bda599694970aed80c7b7b758e68d8eeb"
+  },
+  "c_free_gib_after": 18.7,
+  "scientific_quality_verified": false,
+  "production_compatibility_verified": false,
+  "partner_approval": false,
+  "generic_results_consumption_panel": "Unavailable; authoritative consumption evidence is the separately correlated adapter artifacts and saved model config.",
+  "historical_snapshot_note": "Initial resource manifest inherited the older retained WP3 image identity. Exact-source c0a0b19a image was separately verified against all PR3 runtime Python source bytes and pinned in published profile configuration before any dispatch; original snapshots are preserved, not rewritten."
+}

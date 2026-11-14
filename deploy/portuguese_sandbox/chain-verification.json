@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "scope": "platform-controlled experimental Portuguese connected workflow; not partner-native or owner approved",
+  "portal_serving_revision": "654f3a68481738c902e9673d2f35f9c95715a6e9",
+  "portal_integration_revision": "1d147ffc5accb40ad4f50555ec463bbabb7b1ba1",
+  "wp3_adapter_observer_worker_revision": "30e1ac403c7434149f3ff3568843f2cc75702413",
+  "portable_validator_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
+  "builder_url": "http://127.0.0.1:23124/builder?solutionId=3cf4c4fe-36f9-4141-8bca-f6421f0b16d8",
+  "results_url": "http://127.0.0.1:23124/deployments/wf-a891cece9438#results",
+  "workflow": {
+    "workflow_id": "wf-a891cece9438",
+    "status": "completed",
+    "created_at": "2026-11-13T08:08:34.712023Z",
+    "updated_at": "2026-11-13T08:08:54.741967Z",
+    "error": null
+  },
+  "submission_id": "a25d6868-b346-429f-a3df-238e20078eed",
+  "request_sha256": "bc390953d8ce4ba98ad6bb087dab923ff7cc51fef3eba07a1a1d3d921c3b229c",
+  "contract_pins": [
+    {
+      "instance_id": "pt-chain-train",
+      "task_id": "task_030152d9",
+      "operation_name": "TrainModel",
+      "configuration": {
+        "contract_id": "pt-chain-train-v2",
+        "contract_version": "0.2.0",
+        "operation_identity": "urn:aieffect:experimental:portuguese:train-model",
+        "schema_version": "1.0",
+        "parameters": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "instance_id": "pt-chain-train"
+      }
+    },
+    {
+      "instance_id": "pt-chain-generate",
+      "task_id": "task_f6c5c14e",
+      "operation_name": "GenerateData",
+      "configuration": {
+        "contract_id": "pt-chain-generate-v2",
+        "contract_version": "0.2.0",
+        "operation_identity": "urn:aieffect:experimental:portuguese:generate-data",
+        "schema_version": "1.0",
+        "parameters": {
+          "number_of_examples": 10
+        },
+        "instance_id": "pt-chain-generate"
+      }
+    }
+  ],
+  "binding": {
+    "source": "pt-chain-train",
+    "target": "pt-chain-generate",
+    "source_slot": "model_ref",
+    "target_slot": "model_ref",
+    "transport": "whole-output-v1"
+  },
+  "dataset_input": "separate authorized synthetic dataset_ref, 400 observations / four fixed-length training sequences",
+  "resources_and_images": {
+    "ml": {
+      "cpus": 2,
+      "mem_limit": "3g",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "sequence_len": 100,
+      "dataset_rows": 400
+    },
+    "images": {
+      "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+      "pt-adapter": "sha256:1305664435c30980c2649defc1a798fc2262e9ca835f8348ecbe2c43ae89034f",
+      "api": "sha256:df91c2367e477b607fd8378866b95d976a7b42730ca76662ccfc4250fb5d3ca0",
+      "web": "sha256:cd8d0324474bab93f3afdce6539d98549e3ea5297e49055b8cfa98fa200a3fe2",
+      "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "chain-worker": "sha256:985d157eb09413f52fda426d98a567cad7ffe805fdd9aeb2a34447953ed100cf"
+    }
+  },
+  "saved_model_configuration": {
+    "epochs": 2,
+    "batch_size": 4,
+    "max_sequence_len": 100,
+    "sample_len": 1
+  },
+  "evidence": {
+    "workflow_id": "wf-a891cece9438",
+    "submission_id": "a25d6868-b346-429f-a3df-238e20078eed",
+    "source": "Platform-controlled Portuguese sidecar capture v2",
+    "historical": true,
+    "observation_source": "Signed terminal adapter observation; current artifact bytes revalidated without a live runtime",
+    "state": "available",
+    "instances": [
+      {
+        "instance_id": "pt-chain-train",
+        "task_id": "task_030152d9",
+        "node_key": "pt-chain-TrainModel:TrainModel",
+        "operation_name": "TrainModel",
+        "state": "available",
+        "algorithm_consumed": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "wrapper_received": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "output_sha256": "a6bb82d518da9cdc1dc47f5bcdc5529211808e029c5e2ea53a81dc3adb486d26",
+        "summary": {
+          "training_sequences": 4,
+          "model_sha256": "408519959182447598e94fe0e997d8ea5f1589b0f917e802dc6c2b67898f366e"
+        },
+        "message": "Saved model configuration and artifact verified; batch size reflects the library's training-sequence clamp.",
+        "instrumentation": "Versioned signed experimental capture plus current model/output artifact hashes; no scientific-quality claim."
+      },
+      {
+        "instance_id": "pt-chain-generate",
+        "task_id": "task_f6c5c14e",
+        "node_key": "pt-chain-GenerateData:GenerateData",
+        "operation_name": "GenerateData",
+        "state": "available",
+        "input_binding_verified": true,
+        "model_binding": {
+          "producer_task_id": "task_030152d9",
+          "producer_workflow_id": "wf-a891cece9438",
+          "model_sha256": "408519959182447598e94fe0e997d8ea5f1589b0f917e802dc6c2b67898f366e"
+        },
+        "algorithm_consumed": {
+          "number_of_examples": 10
+        },
+        "wrapper_received": {
+          "number_of_examples": 10
+        },
+        "output_sha256": "f8b2ca463392571f573a899eabd414b7ee07101521782cfd3cfdca27e31d3d57",
+        "summary": {
+          "generated_examples": 10,
+          "csv_rows": 1000,
+          "observations_per_example": 100,
+          "model_sha256": "408519959182447598e94fe0e997d8ea5f1589b0f917e802dc6c2b67898f366e"
+        },
+        "message": "Consumed the model produced by TrainModel in this workflow; producer reference and model/output hashes revalidated.",
+        "instrumentation": "Versioned signed experimental capture plus current model/output artifact hashes; no scientific-quality claim."
+      }
+    ],
+    "limitations": "Platform-controlled experimental observation; scientific suitability, owner approval and hosted compatibility unverified."
+  },
+  "authorization": {
+    "id": "pt-chain-20261113-01",
+    "state": "closed",
+    "workflow_id": "wf-a891cece9438",
+    "policy_sha256": "3ade9a63575045d8a277b945fde0e9e9309d0bef7c87dc0a28b30867af04e74f",
+    "actor": "as-via-Codex/user-authorized-20261113",
+    "events": [
+      {
+        "action": "created",
+        "actor": "as-via-Codex/user-authorized-20261113",
+        "at": "2026-11-13T08:08:18.549952+00:00"
+      },
+      {
+        "action": "bound",
+        "actor": "as-via-Codex/user-authorized-20261113",
+        "at": "2026-11-13T08:08:35.508152+00:00"
+      },
+      {
+        "action": "reserved",
+        "actor": "runtime",
+        "at": "2026-11-13T08:08:52.631707+00:00"
+      },
+      {
+        "action": "observed",
+        "actor": "runtime",
+        "at": "2026-11-13T08:08:53.115514+00:00"
+      },
+      {
+        "action": "reserved",
+        "actor": "runtime",
+        "at": "2026-11-13T08:08:53.685543+00:00"
+      },
+      {
+        "action": "observed",
+        "actor": "runtime",
+        "at": "2026-11-13T08:08:53.811633+00:00"
+      },
+      {
+        "action": "closed",
+        "actor": "as-via-Codex/user-authorized-20261113",
+        "at": "2026-11-13T08:09:31.852640+00:00"
+      }
+    ]
+  },
+  "actual_new_executions": {
+    "workflow_submissions": 1,
+    "TrainModel": 1,
+    "GenerateData": 1,
+    "retries": 0
+  },
+  "legacy_jobs_unchanged": 3,
+  "total_jobs": 5,
+  "preservation": {
+    "preserved_solutions": 3,
+    "legacy_jobs": 3,
+    "total_jobs": 5
+  },
+  "ledger": {
+    "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b",
+    "count": 25,
+    "limit": 25,
+    "outstanding": 0,
+    "unchanged": true
+  },
+  "worker": {
+    "running": false,
+    "exit_code": 0,
+    "legacy_worker_running": false
+  },
+  "queue_lengths": [],
+  "historical_outage_check": {
+    "observer_stopped": true,
+    "evidence_available": true,
+    "browser_refreshed": true,
+    "observer_restored": true
+  },
+  "focused_offline_checks": {
+    "wp3_protocol_journal_observer": 52,
+    "portal_bindings_evidence_standalone": 51,
+    "profile_isolation": 1,
+    "web_helpers": 20,
+    "typecheck": "passed",
+    "api_and_web_build": "passed"
+  },
+  "agent_browser_checks": [
+    "saved binding retained through epochs/batch/count edits, Save and reload",
+    "final approved 2/4/10 settings compiled successfully",
+    "completed results refreshed while observer stopped; each instance independently verified"
+  ],
+  "human_observations": "No independent participant observation collected",
+  "limitations": [
+    "experimental sidecar, not original partner-native parameter support",
+    "scientific quality, hosted portability, multi-tenant authority and owner approval unverified",
+    "ApplyFunction unavailable",
+    "old v0.1 jobs retain settings but have no retroactively fabricated v2 consumption captures"
+  ]
+}

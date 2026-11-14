@@ -671,12 +671,19 @@ def compile_workflow(
     return compile_to_wp3_payload(workflow, db)
 
 
+@app.get("/workflows/training-input")
+def builder_training_input(user: User = Depends(get_current_user)):
+    from app.services.capability_bindings import sandbox_training_input, sandbox_execution_policy
+    return {"dataset": sandbox_training_input(user.id), "execution": sandbox_execution_policy()}
+
+
 @app.post("/workflows/runtime-preflight")
 def runtime_preflight_endpoint(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    capability_bindings.require_sandbox_execution_allowed()
     from app.services.catalogue_composition import require_execution_allowed
     require_execution_allowed(workflow, db, user)
     compiled = compile_to_wp3_payload(workflow, db)
@@ -696,6 +703,7 @@ def submit_workflow_to_orchestrator_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    capability_bindings.require_sandbox_execution_allowed()
     from app.services.catalogue_composition import require_execution_allowed
     require_execution_allowed(workflow, db, user)
     from app.services import execution_journey, qualified_demo
@@ -865,6 +873,7 @@ def validate_workflow(_: User = Depends(get_current_user)):
 
 @app.post("/workflows/submit")
 def submit_workflow(_: User = Depends(get_current_user)):
+    capability_bindings.require_sandbox_execution_allowed()
     return {
         "workflow_id": "demo-workflow-001",
         "status": "submitted",
@@ -873,12 +882,18 @@ def submit_workflow(_: User = Depends(get_current_user)):
 
 
 @app.get("/workflows/{workflow_id}")
-def get_workflow(workflow_id: str, _: User = Depends(get_current_user)):
+def get_workflow(workflow_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if capability_bindings.sandbox_profile_enabled():
+        authorized_deployment(db, user, workflow_id)
+        return get_workflow_status(workflow_id)
     return {"workflow_id": workflow_id, "status": "running"}
 
 
 @app.get("/workflows/{workflow_id}/tasks")
-def get_tasks(workflow_id: str, _: User = Depends(get_current_user)):
+def get_tasks(workflow_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if capability_bindings.sandbox_profile_enabled():
+        authorized_deployment(db, user, workflow_id)
+        return get_workflow_tasks(workflow_id)
     return {
         "workflow_id": workflow_id,
         "tasks": [

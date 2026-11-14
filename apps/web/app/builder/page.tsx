@@ -27,7 +27,7 @@ import InstanceParameters, { type InstanceConfiguration } from "../../components
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
 import ReviewDialog from "../../components/review-dialog";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly } from "../../lib/builder-review";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly, withRunInput, normalizeRunInput, trainingInputMessage } from "../../lib/builder-review";
 import { bindingSignature, savedBindingSignatures, stepPurpose } from "../../lib/connection-review";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
@@ -169,6 +169,8 @@ function BuilderContent() {
   const [runInputMode, setRunInputMode] = useState<"prompt" | "json">("prompt");
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
+  const [trainingInputRequired, setTrainingInputRequired] = useState(false);
+  const [inspectionMessage, setInspectionMessage] = useState("");
   const [solutionLoadError, setSolutionLoadError] = useState("");
   const [solutionSaveError, setSolutionSaveError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
@@ -212,9 +214,9 @@ function BuilderContent() {
   );
 
   const review = workflowReview(nodes, edges);
-  const dirty = savedFingerprint !== designFingerprint(solutionName, nodes, edges, designMetadata ? reviewInput(runInputMode, runInput) : undefined);
+  const dirty = savedFingerprint !== designFingerprint(solutionName, nodes, edges, reviewInput(runInputMode, runInput));
   const composedDesignOnly = catalogueDesignOnly(designMetadata);
-  const offline = composedDesignOnly || offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
+  const offline = !!inspectionMessage || composedDesignOnly || offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
   const loaded = !!user && (!solutionId || loadedSolutionScope === JSON.stringify([user.id, solutionId]));
   const reviewAction = nextReviewAction({steps: canvasServices.length, dirty, design: workflowDesignStatus, offline,
     readiness: runtimePreflight?.status, confirmationReady: deploymentConfirmationReady, submitted: !!deploymentResult?.workflow_id});
@@ -287,7 +289,7 @@ function BuilderContent() {
         savedUpdatedAtRef.current = body.updated_at;
         setSelectedEdgeId(null);
         setSavedBindings(savedBindingSignatures(body.nodes || [], body.edges || []));
-        setSavedFingerprint(designFingerprint(body.name, body.nodes || initialNodes, body.edges || [], body.design_metadata ? body.design_metadata.run_input ?? null : undefined));
+        setSavedFingerprint(designFingerprint(body.name, body.nodes || initialNodes, body.edges || [], body.design_metadata?.run_input));
         setCheckedBindings({});
         setSelectedInstanceId(null);
         setSelectedService(null);
@@ -429,10 +431,11 @@ function BuilderContent() {
     } catch {
       throw new Error("Run input must be valid JSON.");
     }
-    if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+    if (parsed === null) return undefined;
+    if (Array.isArray(parsed) || typeof parsed !== "object") {
       throw new Error("Run input must be a JSON object.");
     }
-    return parsed as Record<string, unknown>;
+    return normalizeRunInput(parsed) === null ? undefined : parsed as Record<string, unknown>;
   }
 
   async function runRuntimePreflight(payload: ReturnType<typeof buildWorkflowPayload>) {
@@ -498,8 +501,10 @@ function BuilderContent() {
 
       if (edge.data?.binding) {
         notices.push(`Connection: ${sourceService.name} to ${targetService.name} will be checked against pinned operation contracts.`);
+      } else if (nodes.find(node => node.id === edge.source)?.data.operation_contract && nodes.find(node => node.id === edge.target)?.data.operation_contract) {
+        notices.push(`Connection: ${sourceService.name} → ${targetService.name} needs an explicit published binding. The compiler will identify its required input slot.`);
       } else if (sourceService.output_type !== targetService.input_type) {
-        blockers.push(`Blocked: ${sourceService.name} to ${targetService.name} has different catalogue interface labels. Choose a verified data connection or review the services with their owner.`);
+        blockers.push(`Blocked: ${sourceService.name} → ${targetService.name} has no verified output-to-input binding (${sourceService.output_type} → ${targetService.input_type}). Select the required published connection or review the contract versions with their owner.`);
       } else {
         notices.push(`Unverified: ${sourceService.name} to ${targetService.name} has no explicit semantic binding.`);
       }
@@ -530,6 +535,8 @@ function BuilderContent() {
   async function validateWorkflow() {
     const revision = workflowRevisionRef.current;
     const result = evaluateWorkflowDesign();
+    const inputInstruction = trainingInputMessage(trainingInputRequired, reviewInput(runInputMode, runInput));
+    if (inputInstruction) { result.valid = false; result.results.unshift(`Blocked: ${inputInstruction}`); }
     const checked: Record<string, string> = {};
     if (result.valid) {
       try {
@@ -627,7 +634,7 @@ function BuilderContent() {
       nodes,
       edges,
       status: "draft",
-      design_metadata: designMetadata ? { ...designMetadata, run_input: buildRunInput() ?? null } : null,
+      design_metadata: withRunInput(designMetadata, buildRunInput()),
     };
 
     const url = currentSolutionId
@@ -647,7 +654,8 @@ function BuilderContent() {
       if (!saved.id) throw new Error("The saved solution response did not include an ID.");
 
       setSavedBindings(savedBindingSignatures(payload.nodes, payload.edges));
-      setSavedFingerprint(designFingerprint(saved.name || payload.name, payload.nodes, payload.edges, payload.design_metadata ? payload.design_metadata.run_input : undefined));
+      setSavedFingerprint(designFingerprint(saved.name || payload.name, payload.nodes, payload.edges, payload.design_metadata?.run_input));
+      setDesignMetadata(payload.design_metadata);
       setCurrentSolutionId(saved.id);
       savedUpdatedAtRef.current = saved.updated_at;
       setSolutionName(saved.name || payload.name);
@@ -671,7 +679,8 @@ function BuilderContent() {
     setSolutionSaveError("");
 
     try {
-      await persistSolution();
+      const saved = await persistSolution();
+      if (!solutionId) journeyRouter.replace(`/builder?solutionId=${encodeURIComponent(saved.id)}`);
       alert("Solution saved successfully.");
     } catch (error) {
       setSolutionSaveError(error instanceof Error ? error.message : "Failed to save solution.");
@@ -765,7 +774,7 @@ function BuilderContent() {
           {!guidedDutch && <button type="button" disabled={!loaded} onClick={() => setPaletteOpen(true)}>Add services</button>}
         </div>
       </div>
-      {offline && <section className="builder-offline-notice" role="status"><strong>OFFLINE TEST FIXTURE</strong>
+      {inspectionMessage ? <section className="builder-offline-notice" role="status"><strong>INSPECTION ONLY</strong><span>{inspectionMessage}</span></section> : offline && <section className="builder-offline-notice" role="status"><strong>OFFLINE TEST FIXTURE</strong>
         <span>Design review only. Execution is unavailable in this profile. Saving or validating does not execute this workflow.</span></section>}
       {solutionLoadError && <p role="alert">Unable to load solution design. {solutionLoadError}</p>}
       <section className="card builder-overview" aria-label="Workflow overview">
@@ -778,7 +787,11 @@ function BuilderContent() {
             <span>{index + 1}</span>{(node.data.service as Service).name}</button></li>)}
         </ol>
       <div className="builder-connections-card">
-          <CapabilityBindings nodes={nodes} edges={edges} saved={savedBindings} checked={checkedBindings} selectedEdgeId={selectedEdgeId} onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
+          <CapabilityBindings nodes={nodes} edges={edges} saved={savedBindings} checked={checkedBindings} selectedEdgeId={selectedEdgeId}
+            runInput={reviewInput(runInputMode, runInput)} onTrainingRequired={setTrainingInputRequired}
+            onExecutionPolicy={setInspectionMessage}
+            onTrainingInput={value => { setRunInputMode("json"); setRunInput(value ? JSON.stringify({dataset_ref:value}) : ""); setRunInputError(""); invalidateWorkflowResults(); }}
+            onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
             const edge = edges.find(e => e.id === edgeId);
             if (!edge) return;
             const nextNodes = nodes.map(node => {
@@ -954,7 +967,7 @@ function BuilderContent() {
           <div
             className="builder-canvas-header"
           >
-            <div><span>Visual workflow</span><strong>Workflow canvas</strong></div>
+            <div><span>Visual workflow</span><strong>Workflow canvas</strong><small>{review.steps.length} processing operations · {nodes.length - review.steps.length} input/output nodes</small></div>
             <div className="builder-canvas-legend"><i /> Service <i /> Connection</div>
           </div>
 
