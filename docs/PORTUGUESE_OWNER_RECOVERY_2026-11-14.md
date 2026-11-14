@@ -108,3 +108,40 @@ logs, model-file inventories, supported operator events and exact worker records
 Never overwrite the new journal/model/capture history with an older backup.
 Scientific quality, partner approval and hosted production compatibility remain
 unverified. No merge, production deployment, tracker or partner-repository update.
+
+## Served correction and rendered check
+
+Both retained Portal components now serve source
+`002686f04fb584d5bea2f1556d8e994405f1db45`, built offline for linux/amd64:
+
+- API `sha256:22c4994a05dce43bde2472a20f73ee27605a955a28ae6085742364ad32d672be`.
+- Web `sha256:ced615705bfc07ad59fd6489491959d9b0a3ff18a54421ad9a6df6aa37d477f6`.
+
+Only API/web were replaced, using the documented no-deps/no-build/pull-never
+update. All other service configuration and runtime images remain unchanged;
+old API/web images and private compose pins are retained for rollback. No schema
+migration or database restore occurred. Builds and staged secret scans passed.
+
+The genuine authenticated runtime-preflight route returned **HTTP 409** with
+execution_state **inspection_only**. No live submission POST was used to test
+the denial; duplicate-confirmation/no-enqueue coverage is offline and mocked at
+the side-effect boundary. Genuine and former-placeholder status aliases both
+return **completed** for this workflow through existing ownership checks.
+
+Browser inspection of the owner's existing Builder shows **INSPECTION ONLY**,
+saved input/binding and successful design compatibility, followed by **Validate
+again**, with no Prepare/Confirm action. Nothing was edited or saved during that
+inspection. Refreshed results show actual completion, effective and independently
+verified consumed settings, model association and ten 100-row sequences.
+
+![Recovered existing workflow](screenshots/portuguese-owner-recovered-20261114.png)
+
+![Inspection-only owner Builder](screenshots/portuguese-inspection-only-20261114.png)
+
+These are agent-rendered observations, not independent usability evidence.
+Maintained WP3 draft PR #4 documentation checkpoint:
+`1a6a792aa3effbfaeb979aaeaa03a7535e53e4bd`; runtime bytes remain unchanged at
+the previously qualified experimental source. No new WP3 runtime build or test
+run is claimed for that documentation-only checkpoint. Final read-back again
+confirmed all seven owner designs, five earlier jobs, old model/output hashes,
+closed scopes, stopped workers, empty queues and unchanged 25/25 ledger.

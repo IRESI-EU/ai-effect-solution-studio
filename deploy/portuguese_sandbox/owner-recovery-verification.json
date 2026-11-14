@@ -166,5 +166,43 @@
     "platform-controlled experimental sidecar, not partner-native support",
     "scientific suitability, hosted multi-tenant authority and production compatibility unverified",
     "new interactive submissions disabled; only separately authorized existing-request recovery permitted"
-  ]
+  ],
+  "correction": {
+    "serving_source": "002686f04fb584d5bea2f1556d8e994405f1db45",
+    "images": [
+      {
+        "role": "api",
+        "tag": "ai-effect-beta-candidate-api:002686f04fb5",
+        "image_id": "sha256:22c4994a05dce43bde2472a20f73ee27605a955a28ae6085742364ad32d672be"
+      },
+      {
+        "role": "web",
+        "tag": "ai-effect-beta-candidate-web:002686f04fb5",
+        "image_id": "sha256:ced615705bfc07ad59fd6489491959d9b0a3ff18a54421ad9a6df6aa37d477f6"
+      }
+    ],
+    "platform": "linux/amd64",
+    "context_sha256": "7fd2d17569dd23c7ea88ac885248398fcb7b18b8b93c73568d2d32e7ecc855f6",
+    "policy": {
+      "available": false,
+      "message": "This sandbox is available only for inspection. New workflow submissions are disabled; execution requires separate operator authorization and targeted processing of an existing request."
+    },
+    "live_preflight_http_status": 409,
+    "legacy_alias_status": "completed",
+    "new_live_submission_attempts": 0,
+    "builder_observed": [
+      "INSPECTION ONLY explanation",
+      "Saved",
+      "Checked successfully after Validate design",
+      "Validate again offered; no Prepare/Confirm"
+    ],
+    "checks": {
+      "backend": 61,
+      "frontend_helpers": 21,
+      "typecheck": "passed",
+      "api_build": "passed",
+      "web_build": "passed"
+    },
+    "maintained_wp3_documentation_commit": "1a6a792aa3effbfaeb979aaeaa03a7535e53e4bd"
+  }
 }
