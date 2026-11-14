@@ -273,6 +273,7 @@ export default function DeploymentDetailPage({
           </div>
         )}
 
+        {workflow?.execution_detail && <p role="status">{workflow.execution_detail}</p>}
         {deploymentRecord && (
           <div
             style={{

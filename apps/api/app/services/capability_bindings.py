@@ -25,12 +25,43 @@ def explicit(workflow):
         "binding" in e.model_fields_set for e in workflow.edges)
 
 
+def sandbox_profile_enabled():
+    from app.core.config import settings
+    from sqlalchemy.engine import make_url
+    return (make_url(settings.database_url).database == "pt_parameter_sandbox"
+            and bool(settings.portuguese_evidence_owner_id))
+
+
+def sandbox_execution_policy():
+    if not sandbox_profile_enabled():
+        return None
+    return {"available": False, "message": "This sandbox is available only for inspection. New workflow submissions are disabled; execution requires separate operator authorization and targeted processing of an existing request."}
+
+
+def require_sandbox_execution_allowed():
+    policy = sandbox_execution_policy()
+    if policy:
+        raise HTTPException(409, {"message": policy["message"], "execution_state": "inspection_only"})
+
+
+def sandbox_workflow_status(workflow, tasks):
+    """WP3's start/enqueue status is not evidence that a task was claimed."""
+    if not sandbox_profile_enabled() or workflow.get("status") != "running":
+        return workflow
+    states = [t.get("status") for t in tasks]
+    if states and all(state == "pending" for state in states):
+        return {**workflow, "reported_status": "running", "status": "queued",
+                "execution_detail": "Accepted and queued; no task has been claimed. Processing requires the operator-controlled targeted worker and an active authorization."}
+    if "running" in states:
+        return {**workflow, "execution_detail": "A worker has claimed a task. This status alone does not verify algorithm completion or output consumption."}
+    return {**workflow, "reported_status": "running", "status": "unknown",
+            "execution_detail": "Active execution is not established by the current task states. Inspect the task history; do not resubmit."}
+
+
 def sandbox_training_input(user_id=None):
     """Only the retained sandbox's configured opaque input, never its private path."""
     from app.core.config import settings
-    from sqlalchemy.engine import make_url
-    if (make_url(settings.database_url).database != "pt_parameter_sandbox"
-        or not settings.portuguese_evidence_owner_id or not settings.portuguese_training_dataset_ref
+    if (not sandbox_profile_enabled() or not settings.portuguese_training_dataset_ref
         or (user_id is not None and user_id != settings.portuguese_evidence_owner_id)):
         return None
     return {"label": "Sandbox test dataset", "dataset_ref": settings.portuguese_training_dataset_ref}

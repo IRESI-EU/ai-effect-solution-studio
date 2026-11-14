@@ -5,10 +5,11 @@ import type { Node, Edge } from "@xyflow/react";
 import { bindingSignature, connectionState, connectionSummary, publishedConnection, stepLabel, type Binding, type Contract, type Pin } from "../lib/connection-review";
 import { trainingInputMessage } from "../lib/builder-review";
 
-export default function CapabilityBindings({ nodes, edges, onBind, saved, checked, selectedEdgeId, runInput, onTrainingInput, onTrainingRequired }: {
+export default function CapabilityBindings({ nodes, edges, onBind, saved, checked, selectedEdgeId, runInput, onTrainingInput, onTrainingRequired, onExecutionPolicy }: {
   nodes: Node[]; edges: Edge[]; saved: Record<string, string>; checked: Record<string, string>; selectedEdgeId: string | null;
   onBind: (edgeId: string, source: Contract, target: Contract, sourceSlot: string, targetSlot: string) => void;
   runInput: unknown; onTrainingInput: (reference: string) => void; onTrainingRequired: (required: boolean) => void;
+  onExecutionPolicy: (message: string) => void;
 }) {
   const [detailsEdge, setDetailsEdge] = useState<string | null>(null);
   const [contracts, setContracts] = useState<Record<string, Contract>>({});
@@ -31,9 +32,9 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
   useEffect(() => {
     let active = true;
     fetch("/api/workflows/training-input").then(r => r.ok ? r.json() : null)
-      .then(value => { if (active) setDataset(value?.dataset || null); }).catch(() => {});
+      .then(value => { if (active) { setDataset(value?.dataset || null); onExecutionPolicy(value?.execution?.available === false ? value.execution.message : ""); } }).catch(() => {});
     return () => { active = false; };
-  }, []);
+  }, [onExecutionPolicy]);
   const trainingRequired = Object.values(contracts).some(c => c.definition.inputs.some(s => s.name === "dataset_ref" && s.required && s.source_requirement === "workflow_input"));
   useEffect(() => { onTrainingRequired(trainingRequired); }, [trainingRequired, onTrainingRequired]);
   const selectedDataset = runInput && typeof runInput === "object" && "dataset_ref" in runInput ? runInput.dataset_ref : "";

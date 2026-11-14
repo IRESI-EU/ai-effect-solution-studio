@@ -157,7 +157,7 @@ def get_workflow_status(workflow_id: str) -> dict[str, Any]:
         )
 
     try:
-        return response.json()
+        value = response.json()
     except ValueError as exc:
         raise HTTPException(
             status_code=502,
@@ -167,6 +167,14 @@ def get_workflow_status(workflow_id: str) -> dict[str, Any]:
                 "response_text": response.text,
             },
         ) from exc
+    from app.services.capability_bindings import sandbox_profile_enabled, sandbox_workflow_status
+    if sandbox_profile_enabled() and value.get("status") == "running":
+        try:
+            return sandbox_workflow_status(value, get_workflow_tasks(workflow_id)["tasks"])
+        except (HTTPException, KeyError, TypeError):
+            return {**value, "reported_status": "running", "status": "unknown",
+                    "execution_detail": "Task state is unavailable; active execution cannot be confirmed. Do not resubmit."}
+    return value
 
 
 def get_workflow_tasks(workflow_id: str) -> dict[str, Any]:

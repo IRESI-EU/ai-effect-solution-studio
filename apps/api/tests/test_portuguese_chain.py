@@ -142,17 +142,19 @@ def training_profile(monkeypatch):
 
 def test_training_choice_is_authenticated_owner_profile_scoped_and_minimal(chained,monkeypatch):
     client,_=chained;training_profile(monkeypatch)
-    assert client.get("/workflows/training-input").json()=={"dataset":{"label":"Sandbox test dataset","dataset_ref":"approved-data"}}
+    choice=client.get("/workflows/training-input").json()
+    assert choice["dataset"]=={"label":"Sandbox test dataset","dataset_ref":"approved-data"}
+    assert choice["execution"]["available"] is False and "inspection" in choice["execution"]["message"]
     from app.main import app
     from app.dependencies.auth import get_current_user
     from app.models.user import User
     with SessionLocal() as db:
         app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
-        assert client.get("/workflows/training-input").json()=={"dataset":None}
+        assert client.get("/workflows/training-input").json()["dataset"] is None
     app.dependency_overrides.pop(get_current_user)
     from app.core.config import settings
     monkeypatch.setattr(settings,"database_url","postgresql://test@offline/production")
-    assert client.get("/workflows/training-input").json()=={"dataset":None}
+    assert client.get("/workflows/training-input").json()=={"dataset":None,"execution":None}
     client.cookies.clear()
     assert client.get("/workflows/training-input").status_code==401
 
@@ -183,3 +185,76 @@ def test_fresh_design_input_can_be_saved_reloaded_copied_and_validated(chained,m
     assert copy.status_code==200 and copy.json()["design_metadata"]==metadata
     request=workflow(reloaded);request["run_input"]=reloaded["design_metadata"]["run_input"]
     assert client.post("/workflows/compile",json=request).status_code==200
+
+
+@pytest.mark.parametrize("services_healthy",[True,False])
+def test_inspection_only_blocks_readiness_and_repeat_confirmation_before_enqueue(chained,monkeypatch,services_healthy):
+    client,payload=chained;training_profile(monkeypatch)
+    import app.main as main
+    from app.models.deployment import Deployment
+    from app.models.execution_submission import ExecutionSubmission
+    calls=[]
+    def health(*args):
+        calls.append("health");return {"status":"ready" if services_healthy else "blocked"}
+    def forbidden(*args,**kwargs):
+        raise AssertionError("Inspection-only request reached a side-effect boundary")
+    monkeypatch.setattr(main,"run_runtime_preflight",health)
+    monkeypatch.setattr(main,"submit_to_orchestrator",forbidden)
+    monkeypatch.setattr(main.execution_submission,"prepare",forbidden)
+    saved=client.post("/solutions",json=payload).json();request=workflow(saved)
+    assert client.post("/workflows/compile",json=request).status_code==200
+    for path in ("/workflows/runtime-preflight","/workflows/submit-to-orchestrator","/workflows/submit-to-orchestrator","/workflows/submit"):
+        response=client.post(path,json=request)
+        assert response.status_code==409,response.text
+        assert response.json()["detail"]["execution_state"]=="inspection_only"
+    assert calls==[]
+    with SessionLocal() as db:
+        assert db.query(Deployment).count()==0 and db.query(ExecutionSubmission).count()==0
+
+
+@pytest.mark.parametrize("task_states,expected",[( ["pending","pending"],"queued"),(["running","pending"],"running"),([],"unknown"),(["completed","completed"],"unknown")])
+def test_status_uses_task_claim_facts_not_capture_absence(chained,monkeypatch,task_states,expected):
+    client,_=chained;training_profile(monkeypatch)
+    from app.models.deployment import Deployment
+    from app.services import orchestrator_adapter
+    raw={"workflow_id":"wf-read-only","status":"running"}
+    with SessionLocal() as db:
+        db.add(Deployment(id="test-deployment",workflow_id=raw["workflow_id"],name="Read only",status="running",created_by_user_id="designer"));db.commit()
+    class Response:
+        status_code=200
+        def __init__(self,value):self.value=value
+        def json(self):return deepcopy(self.value)
+    def get(url,**kwargs):
+        return Response({"tasks":[{"status":state} for state in task_states]} if url.endswith("/tasks") else raw)
+    monkeypatch.setattr(orchestrator_adapter.requests,"get",get)
+    for path in ("/orchestrator/workflows/wf-read-only","/workflows/wf-read-only"):
+        response=client.get(path);assert response.status_code==200,response.text
+        assert response.json()["status"]==expected
+        assert response.json()["execution_detail"]
+    assert raw["status"]=="running"  # No invented runtime status mutation.
+    from app.main import app
+    from app.dependencies.auth import get_current_user
+    from app.models.user import User
+    with SessionLocal() as db:
+        app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
+        assert client.get("/workflows/wf-read-only").status_code==403
+        assert client.get("/workflows/wf-read-only/tasks").status_code==403
+    app.dependency_overrides.pop(get_current_user)
+
+
+def test_status_unavailable_is_not_reported_as_running_and_other_profiles_unchanged(chained,monkeypatch):
+    _,_=chained;training_profile(monkeypatch)
+    from app.services import orchestrator_adapter,capability_bindings
+    from app.core.config import settings
+    from fastapi import HTTPException
+    class Response:
+        status_code=200
+        def json(self):return {"workflow_id":"wf-read-only","status":"running"}
+    monkeypatch.setattr(orchestrator_adapter.requests,"get",lambda *args,**kwargs:Response())
+    def unavailable(*args):raise HTTPException(503,"Task state unavailable")
+    monkeypatch.setattr(orchestrator_adapter,"get_workflow_tasks",unavailable)
+    assert orchestrator_adapter.get_workflow_status("wf-read-only")["status"]=="unknown"
+    monkeypatch.setattr(settings,"database_url","postgresql://test@offline/another_profile")
+    capability_bindings.require_sandbox_execution_allowed()
+    assert capability_bindings.sandbox_execution_policy() is None
+    assert orchestrator_adapter.get_workflow_status("wf-read-only")["status"]=="running"

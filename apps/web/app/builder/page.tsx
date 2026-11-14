@@ -170,6 +170,7 @@ function BuilderContent() {
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
   const [trainingInputRequired, setTrainingInputRequired] = useState(false);
+  const [inspectionMessage, setInspectionMessage] = useState("");
   const [solutionLoadError, setSolutionLoadError] = useState("");
   const [solutionSaveError, setSolutionSaveError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
@@ -215,7 +216,7 @@ function BuilderContent() {
   const review = workflowReview(nodes, edges);
   const dirty = savedFingerprint !== designFingerprint(solutionName, nodes, edges, reviewInput(runInputMode, runInput));
   const composedDesignOnly = catalogueDesignOnly(designMetadata);
-  const offline = composedDesignOnly || offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
+  const offline = !!inspectionMessage || composedDesignOnly || offlineReview(profileConfig, process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL);
   const loaded = !!user && (!solutionId || loadedSolutionScope === JSON.stringify([user.id, solutionId]));
   const reviewAction = nextReviewAction({steps: canvasServices.length, dirty, design: workflowDesignStatus, offline,
     readiness: runtimePreflight?.status, confirmationReady: deploymentConfirmationReady, submitted: !!deploymentResult?.workflow_id});
@@ -773,7 +774,7 @@ function BuilderContent() {
           {!guidedDutch && <button type="button" disabled={!loaded} onClick={() => setPaletteOpen(true)}>Add services</button>}
         </div>
       </div>
-      {offline && <section className="builder-offline-notice" role="status"><strong>OFFLINE TEST FIXTURE</strong>
+      {inspectionMessage ? <section className="builder-offline-notice" role="status"><strong>INSPECTION ONLY</strong><span>{inspectionMessage}</span></section> : offline && <section className="builder-offline-notice" role="status"><strong>OFFLINE TEST FIXTURE</strong>
         <span>Design review only. Execution is unavailable in this profile. Saving or validating does not execute this workflow.</span></section>}
       {solutionLoadError && <p role="alert">Unable to load solution design. {solutionLoadError}</p>}
       <section className="card builder-overview" aria-label="Workflow overview">
@@ -788,6 +789,7 @@ function BuilderContent() {
       <div className="builder-connections-card">
           <CapabilityBindings nodes={nodes} edges={edges} saved={savedBindings} checked={checkedBindings} selectedEdgeId={selectedEdgeId}
             runInput={reviewInput(runInputMode, runInput)} onTrainingRequired={setTrainingInputRequired}
+            onExecutionPolicy={setInspectionMessage}
             onTrainingInput={value => { setRunInputMode("json"); setRunInput(value ? JSON.stringify({dataset_ref:value}) : ""); setRunInputError(""); invalidateWorkflowResults(); }}
             onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
             const edge = edges.find(e => e.id === edgeId);

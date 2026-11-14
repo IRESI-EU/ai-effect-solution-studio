@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "scope": "authorized recovery of one existing unstarted Portuguese workflow; no resubmission",
+  "workflow_id": "wf-375a888b8976",
+  "solution_id": "d733ce01-6489-4865-aec5-c96ffdf2ec9b",
+  "submission_id": "eae852db-3af3-42a0-9bf6-e7e12a126744",
+  "results_url": "http://127.0.0.1:23124/deployments/wf-375a888b8976#results",
+  "submitted_sha256": "0b8817eff18d6e1c8eb67706d4f6cdd968c62f7630a682a3a913cb5e672ec95c",
+  "before": {
+    "reported_workflow_state": "running",
+    "tasks": [
+      {
+        "task_id": "task_030152d9",
+        "node_key": "pt-chain-TrainModel:TrainModel",
+        "status": "pending",
+        "created_at": "2026-11-14T08:55:36.479716Z",
+        "updated_at": "2026-11-14T08:55:36.479716Z"
+      },
+      {
+        "task_id": "task_f6c5c14e",
+        "node_key": "pt-chain-GenerateData:GenerateData",
+        "status": "pending",
+        "created_at": "2026-11-14T08:55:36.482173Z",
+        "updated_at": "2026-11-14T08:55:36.482173Z"
+      }
+    ],
+    "queued_training_entries": 1,
+    "both_workers_exited_before_submission": true,
+    "journal_jobs": 5,
+    "matching_adapter_reservations": 0,
+    "derived_model_identity_absent": true,
+    "determination": "accepted/queued and not started; established from pending unchanged task states, stopped workers, reservation-before-dispatch journal and run-specific upstream model/progress inventory, not missing capture alone"
+  },
+  "cause": "WP3 marks workflow running on initial enqueue; Portal checked wrapper health/contracts without enforcing sandbox execution authorization or processing availability.",
+  "recovery": {
+    "authorization_id": "pt-owner-recovery-20261114-01",
+    "actor": "as-via-Codex/user-authorized-owner-recovery-20261114",
+    "state": "closed",
+    "policy_sha256": "984753beea57bf1afe72bdfc7fe9d5810bb774160ea3181defa49d63d834fecb",
+    "request_sha256": "1c1fb193d21b3c6d8b3609dfa7f622942a4c1860feb283f55ca635a9dcfbc39a",
+    "new_submissions": 0,
+    "TrainModel_executions": 1,
+    "GenerateData_executions": 1,
+    "retries": 0,
+    "task_ids": [
+      "task_030152d9",
+      "task_f6c5c14e"
+    ],
+    "worker": "targeted existing-workflow CLI only; exited 0; stopped",
+    "remaining_queues": [],
+    "runtime_revision": "30e1ac403c7434149f3ff3568843f2cc75702413",
+    "original_ml_image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "resources": {
+      "cpus": 2,
+      "mem_limit": "3g",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "sequence_len": 100,
+      "dataset_rows": 400
+    }
+  },
+  "after": {
+    "workflow": {
+      "workflow_id": "wf-375a888b8976",
+      "status": "completed",
+      "created_at": "2026-11-14T08:55:36.477747Z",
+      "updated_at": "2026-11-14T13:20:57.828926Z",
+      "error": null
+    },
+    "tasks": [
+      {
+        "task_id": "task_030152d9",
+        "node_key": "pt-chain-TrainModel:TrainModel",
+        "status": "completed"
+      },
+      {
+        "task_id": "task_f6c5c14e",
+        "node_key": "pt-chain-GenerateData:GenerateData",
+        "status": "completed"
+      }
+    ],
+    "saved_model_configuration": {
+      "epochs": 1,
+      "batch_size": 4,
+      "max_sequence_len": 100,
+      "sample_len": 1
+    },
+    "evidence": {
+      "workflow_id": "wf-375a888b8976",
+      "submission_id": "eae852db-3af3-42a0-9bf6-e7e12a126744",
+      "source": "Platform-controlled Portuguese sidecar capture v2",
+      "historical": true,
+      "observation_source": "Signed terminal adapter observation; current artifact bytes revalidated without a live runtime",
+      "state": "available",
+      "instances": [
+        {
+          "instance_id": "service-pt-experimental-chain-TrainModel-679ddbea-935e-4698-998f-fda720d561e3",
+          "task_id": "task_030152d9",
+          "node_key": "pt-chain-TrainModel:TrainModel",
+          "operation_name": "TrainModel",
+          "state": "available",
+          "algorithm_consumed": {
+            "epochs": 1,
+            "batch_size": 4
+          },
+          "wrapper_received": {
+            "epochs": 1,
+            "batch_size": 4
+          },
+          "output_sha256": "feacc210dc1a9277eaa794d6867f2ab8862cc528da7c51bc557e01d185ecd4f7",
+          "summary": {
+            "training_sequences": 4,
+            "model_sha256": "b05b022b7c78d08f14877b66c1726481272794fad9c0eb3d3e7560a5740b12e5"
+          },
+          "message": "Saved model configuration and artifact verified; batch size reflects the library's training-sequence clamp.",
+          "instrumentation": "Versioned signed experimental capture plus current model/output artifact hashes; no scientific-quality claim."
+        },
+        {
+          "instance_id": "service-pt-experimental-chain-GenerateData-c323a537-592e-47a2-b5bb-a615a4e91c95",
+          "task_id": "task_f6c5c14e",
+          "node_key": "pt-chain-GenerateData:GenerateData",
+          "operation_name": "GenerateData",
+          "state": "available",
+          "input_binding_verified": true,
+          "model_binding": {
+            "producer_task_id": "task_030152d9",
+            "producer_workflow_id": "wf-375a888b8976",
+            "model_sha256": "b05b022b7c78d08f14877b66c1726481272794fad9c0eb3d3e7560a5740b12e5"
+          },
+          "algorithm_consumed": {
+            "number_of_examples": 10
+          },
+          "wrapper_received": {
+            "number_of_examples": 10
+          },
+          "output_sha256": "98fc83609c6690612b1fcd239ba45df167fa2915fdeee4ef13fa5b2ccf198f60",
+          "summary": {
+            "generated_examples": 10,
+            "csv_rows": 1000,
+            "observations_per_example": 100,
+            "model_sha256": "b05b022b7c78d08f14877b66c1726481272794fad9c0eb3d3e7560a5740b12e5"
+          },
+          "message": "Consumed the model produced by TrainModel in this workflow; producer reference and model/output hashes revalidated.",
+          "instrumentation": "Versioned signed experimental capture plus current model/output artifact hashes; no scientific-quality claim."
+        }
+      ],
+      "limitations": "Platform-controlled experimental observation; scientific suitability, owner approval and hosted compatibility unverified."
+    }
+  },
+  "preservation": {
+    "owner_designs_unchanged": 7,
+    "original_jobs_unchanged": 5,
+    "total_journal_jobs": 7,
+    "old_model_files_and_hashes_unchanged": true,
+    "all_seven_outputs_rehashed": true,
+    "old_authorizations_audit_rows_preserved": true,
+    "old_workflows_unchanged": true,
+    "ledger": {
+      "unchanged": true,
+      "count": 25,
+      "limit": 25,
+      "outstanding": 0,
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b"
+    }
+  },
+  "limitations": [
+    "platform-controlled experimental sidecar, not partner-native support",
+    "scientific suitability, hosted multi-tenant authority and production compatibility unverified",
+    "new interactive submissions disabled; only separately authorized existing-request recovery permitted"
+  ]
+}

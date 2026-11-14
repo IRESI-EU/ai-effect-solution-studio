@@ -141,3 +141,24 @@ image IDs are recorded in manual-builder-verification.json. Private pre-update
 compose and consistent database backup are in the original checkout's
 local-backups/portuguese-builder-20261113. Preserve them; never restore an older
 database over the completed execution or this new saved design.
+
+## Owner request recovery and inspection-only policy — 2026-11-14
+
+The existing owner workflow wf-375a888b8976 was accepted with pending tasks while
+workers were stopped and the earlier scope closed. It was recovered in place,
+without another submission, using the supported create/bind operator and a new
+attributable exact-workflow scope after verifying no dispatch had started.
+One training and one generation completed with immutable effective 1/4/10
+settings. Scope pt-owner-recovery-20261114-01 is now closed; its named worker is
+retained exited 0 and queues are empty. Do not repeat or recreate this scope.
+
+Portal readiness/new-submission routes are now inspection-only for this exact
+sandbox. Healthy services and design compatibility do not override this boundary.
+The browser explains this policy; existing results and Validate design remain
+available. Any future existing-request recovery needs separate user authorization,
+immutable snapshot/owner/task/queue checks, supported journal create/bind, a unique
+targeted worker and close after terminal reconciliation. Never reset prior scopes,
+flush queues, start the general daemon or automatically retry uncertain work.
+
+See docs/PORTUGUESE_OWNER_RECOVERY_2026-11-14.md and
+owner-recovery-verification.json for the exact identity, counts and artifact proof.
