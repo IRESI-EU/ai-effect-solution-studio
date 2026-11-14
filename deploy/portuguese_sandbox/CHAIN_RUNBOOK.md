@@ -132,3 +132,12 @@ For rollback, stop only api/web, restore their previous image pins and the prior
 API environment from the private compose backup, then run the same api/web-only
 command. Retain the database and volumes; no migration, bootstrap, worker start,
 workflow submission or execution is part of this update or browser acceptance.
+
+Verified manual review copy (assembled from empty Builder, no preparation helper):
+http://127.0.0.1:23124/builder?solutionId=e0814ad1-3d96-453b-96e7-ae0124bb43b4
+Save → refresh → Validate passed on 2026-11-14. API serving source 04682b5b1397d3c91904ada9898101b3f4adc7de;
+web serving source 905e5e29740904b9723035faa6ffdfc2dfce580c. Exact new/rollback
+image IDs are recorded in manual-builder-verification.json. Private pre-update
+compose and consistent database backup are in the original checkout's
+local-backups/portuguese-builder-20261113. Preserve them; never restore an older
+database over the completed execution or this new saved design.
