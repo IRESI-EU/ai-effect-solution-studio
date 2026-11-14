@@ -37,6 +37,12 @@ configuration and pins, then the complete focused set passed. No implementation
 failure or real execution was concealed. SQLite tests do not establish PostgreSQL
 concurrency. Actual browser acceptance is pending the separately recorded update.
 
+The initial unsaved UI rehearsal confirmed the new CSV and connection controls.
+Source inspection during that rehearsal also found that first Save did not add
+the new solution ID to the URL, so a direct refresh would reopen an empty Builder.
+First Save now navigates to that saved Builder URL. The unsaved rehearsal is not
+the acceptance record; the final fresh manual assembly will verify this path.
+
 ## Retained-profile update boundary
 
 Only Portal API/web may be rebuilt and replaced, using the existing offline

@@ -678,7 +678,8 @@ function BuilderContent() {
     setSolutionSaveError("");
 
     try {
-      await persistSolution();
+      const saved = await persistSolution();
+      if (!solutionId) journeyRouter.replace(`/builder?solutionId=${encodeURIComponent(saved.id)}`);
       alert("Solution saved successfully.");
     } catch (error) {
       setSolutionSaveError(error instanceof Error ? error.message : "Failed to save solution.");
