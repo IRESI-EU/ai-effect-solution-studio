@@ -85,6 +85,12 @@ interpretation or algorithm evidence. No full backend inventory is claimed; olde
 baseline reports remain historical. Final packaging/browser observations follow
 as a separately identified checkpoint.
 
+Actual first packaged browser inspection found that the existing fixed-height
+workflow panel clipped part of the newly added configuration area at a 720px-high
+viewport. A narrow overflow rule applies only when registered configuration controls
+exist, making the panel scrollable without changing other workspaces. This is a
+controls-reachability correction, not another UI redesign.
+
 ### Local registration procedure (design only)
 
 With the new API image and existing profile mounted/configured, run:

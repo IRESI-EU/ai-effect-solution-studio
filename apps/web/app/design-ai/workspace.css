@@ -98,6 +98,7 @@
 .ai-guided-settings input,.ai-guided-settings select { padding:6px; max-width:100%; }
 .ai-guided-settings p { margin:8px 0; }
 .ai-registered-settings { flex-shrink:0; max-height:38%; overflow:auto; padding:10px 14px; border-top:1px solid #eeeaf5; font-size:12px; }
+.ai-workflow:has(.ai-registered-settings) { overflow-y:auto; }
 .ai-registered-settings summary { cursor:pointer; font-weight:650; }
 .ai-registered-settings fieldset { margin:10px 0; padding:8px; border:1px solid #e5dfef; }
 .ai-registered-settings label { display:block; margin:8px 0; }
