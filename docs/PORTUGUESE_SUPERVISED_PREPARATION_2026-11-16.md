@@ -1,5 +1,10 @@
 # Portuguese Builder and supervised boundary — 2026-11-16
 
+Later authorized recovery investigation:
+[demonstrated settings-save/rename blocker and required operator observation](PORTUGUESE_RECOVERY_BLOCKER_2026-11-16.md).
+Packaging and new browser acceptance remain blocked; historical results below
+have not been reclassified as fresh observations.
+
 **Source/tests prepared; retained application update and fresh browser acceptance
 blocked by unavailable Docker engine. Execution remains disabled.** No new
 authorization, workflow, training, generation or provider request occurred.
