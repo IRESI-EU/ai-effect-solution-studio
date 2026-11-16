@@ -1,0 +1,134 @@
+{
+  "scope": "existing Portuguese local profile only; no execution",
+  "starting_portal": "54dd3f09e75d2c8e21bb79f4ead9c1c8066e811c",
+  "starting_wp3": "17f32be413fe64532373f70d8b862002c3427a8c",
+  "serving_portal_source": "75ccb8fd09be477d5517bea26c139011f9436ad6",
+  "serving_wp3_source": "17f32be413fe64532373f70d8b862002c3427a8c",
+  "portal_build": {
+    "source_commit": "75ccb8fd09be477d5517bea26c139011f9436ad6",
+    "platform": "linux/amd64",
+    "inputs": [
+      "sha256:22c4994a05dce43bde2472a20f73ee27605a955a28ae6085742364ad32d672be",
+      "sha256:ced615705bfc07ad59fd6489491959d9b0a3ff18a54421ad9a6df6aa37d477f6",
+      "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+      "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+    ],
+    "context_sha256": "7660eccd58b4f1f393e73e531a643cf28de285c23e1251332232d0f388096c52",
+    "images": [
+      {
+        "role": "api",
+        "tag": "ai-effect-beta-candidate-api:75ccb8fd09be",
+        "image_id": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e"
+      },
+      {
+        "role": "web",
+        "tag": "ai-effect-beta-candidate-web:75ccb8fd09be",
+        "image_id": "sha256:b33af5d3c6011c2f0564ae201b3269711096996eccc2eefde1f05525ee2065c8"
+      }
+    ],
+    "services_started": false
+  },
+  "runtime_builds": {
+    "adapter": {
+      "source": "17f32be413fe64532373f70d8b862002c3427a8c",
+      "image_id": "sha256:9e92cca958ae4cf83d67acc26c41a968d083a93ecebcc5d2853743d585b149eb",
+      "tag": "ai-effect-pt-parameter-adapter:17f32be413fe",
+      "context_sha256": "13f131d8dbc781f69d2db4fe1bf91927cd8979b69d7a96d0f6e1c60621282576",
+      "retained_base": "sha256:a294c9a4db5ee39b6a1c24d2d385f996e2f72ec0a0a36c8657ed77139c5ae60d"
+    },
+    "wp3": {
+      "source": "17f32be413fe64532373f70d8b862002c3427a8c",
+      "image_id": "sha256:28f727ed76d6c3c1083460fcb93b47f5079d2eb501298c9dd6d0230e9bbd376a",
+      "tag": "ai-effect-pt-wp3:17f32be413fe",
+      "context_sha256": "cbec2c7f2c7694510cf036359af3335bd1504a84796bcd8b7485bf1568b759f5",
+      "retained_base": "sha256:edcac597f327dc817ff0c9b9c930dbf9b4cb62235d42f2ef1940845ca1820a21"
+    }
+  },
+  "retention": {
+    "containers_before": 53,
+    "containers_after": 53,
+    "only_replaced": [
+      "api",
+      "web",
+      "pt-adapter"
+    ],
+    "all_other_ids_images_mounts_unchanged": true,
+    "adapter_bind_path_normalized_by_desktop": true,
+    "private_mounted_file_hashes_match_host": true,
+    "all_workers_stopped": true,
+    "provider_supervision_disabled": true,
+    "test_databases_removed": true,
+    "backup_toc_verified": true,
+    "served_images": {
+      "api": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e",
+      "web": "sha256:b33af5d3c6011c2f0564ae201b3269711096996eccc2eefde1f05525ee2065c8",
+      "pt-adapter": "sha256:9e92cca958ae4cf83d67acc26c41a968d083a93ecebcc5d2853743d585b149eb",
+      "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589"
+    },
+    "disk_free_bytes": 68485591040
+  },
+  "preservation": {
+    "protected_designs": 7,
+    "original_jobs_preserved": 5,
+    "total_jobs": 7,
+    "ledger": {
+      "unchanged": true,
+      "count": 25,
+      "limit": 25,
+      "outstanding": 0,
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b"
+    },
+    "new_submissions": 0,
+    "old_workflows_unchanged": true
+  },
+  "tests": {
+    "postgres_admission": "4 passed, 50 deprecation warnings in 1.70s; suite-created disposable PostgreSQL database; HTTP/dispatch doubles; no algorithms; database removed",
+    "frontend_helpers": "23 passed",
+    "web_packager_checks": "18 passed; Next production compile/typecheck/build passed",
+    "api_dependencies": "48 exact installed pins + pip check passed; network disabled",
+    "imports": "API disposable SQLite startup/import; adapter imports and worker module imports with networking disabled; no worker main/algorithm invocation",
+    "prior_focused_tests": "Retained reports preserve 75 Portal/64 WP3 focused checks and final 16/12 subsets; not rerun as unrelated full inventories."
+  },
+  "browser": {
+    "actor": "agent using existing reviewer; not independent human usability",
+    "fresh_from_empty_builder": true,
+    "api_prepopulation": false,
+    "url": "http://127.0.0.1:23124/builder?solutionId=b4e48556-c3a5-4a73-903d-c2a2618756fd",
+    "save_refresh_validate": "PASS: Checked successfully",
+    "effective_settings": {
+      "TrainModel": {
+        "epochs": 2,
+        "batch_size": 4
+      },
+      "GenerateData": {
+        "number_of_examples": 10
+      }
+    },
+    "dataset": "Sandbox test dataset",
+    "pins_binding_instances_persisted": true,
+    "inspection_only": true,
+    "preflight_denial": 409,
+    "live_submit_attempts": 0,
+    "historical_results": "http://127.0.0.1:23124/deployments/wf-375a888b8976#results"
+  },
+  "frozen_request": {
+    "solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+    "saved_revision": "2026-11-16T11:26:14.691950",
+    "request_sha256": "96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b"
+  },
+  "new_algorithm_executions": {
+    "TrainModel": 0,
+    "GenerateData": 0
+  },
+  "new_authorizations": 0,
+  "provider_requests": 0,
+  "database_backup_sha256": "03237dde2c6bdc2d8c1b9769fbbc8a655fab7db309fd9004863a9d6117d7c0ec",
+  "original_rename_failure_root_cause": "not established",
+  "limitations": [
+    "No new supervised execution has been authorized or run.",
+    "Current adapter serving image and retained historical registration image are recorded separately. No contracts or registry entries were changed.",
+    "Independent usability, partner-native approval, scientific suitability and production compatibility remain unverified."
+  ]
+}

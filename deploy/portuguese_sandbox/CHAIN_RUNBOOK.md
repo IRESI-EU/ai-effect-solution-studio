@@ -167,3 +167,23 @@ flush queues, start the general daemon or automatically retry uncertain work.
 
 See docs/PORTUGUESE_OWNER_RECOVERY_2026-11-14.md and
 owner-recovery-verification.json for the exact identity, counts and artifact proof.
+
+
+## Later 16 November checkpoint: review restored, execution disabled
+
+Docker responds after the owner's Windows Start launch; original settings rename
+root cause remains undetermined. No further Desktop repair/restart. Portal
+source 75ccb8fd09be477d5517bea26c139011f9436ad6; adapter/worker package source
+17f32be413fe64532373f70d8b862002c3427a8c. Only API/web/adapter updated offline; original ML,
+PG/Redis/orchestrator/observer/volumes retained, all workers stopped.
+Fresh UI Save -> refresh -> Validate passed:
+http://127.0.0.1:23124/builder?solutionId=b4e48556-c3a5-4a73-903d-c2a2618756fd
+See [completed report](../../docs/PORTUGUESE_SUPERVISED_PREPARATION_2026-11-16.md)
+and recovery-browser-verification-20261116.json. Exact normal browser request:
+proposed-supervised-acceptance-20261116.json; SHA 96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b.
+This is a proposal, not a live journal policy. No create/bind/worker/execution
+step is authorized yet. Keep both supervision flags disabled.
+Rollback: stop only api/web/pt-adapter, restore their three previous image pins
+from private local-backups/pt-accept-20261116/compose-before.private.json and use
+`up -d --no-deps --no-build --pull never api web pt-adapter`. Preserve current
+DB/journal/evidence/designs. Never restore an older DB, bootstrap or start workers.

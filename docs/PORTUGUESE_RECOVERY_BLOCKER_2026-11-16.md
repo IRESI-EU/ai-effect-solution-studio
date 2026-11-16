@@ -126,3 +126,13 @@ pending. No fresh design URL or exact frozen request/revision/hash exists yet.
 Do not substitute an older prepared design or present an execution authorization
 request before these prerequisites pass. The prior proposed 2/4/10, one-training/
 one-generation scope remains only a proposal, not activated authority.
+
+
+## Later owner-start recovery observation
+
+Owner reports Engine running after Windows Start launch and disposable AppData
+rename passing in normal PowerShell outside Codex. Docker CLI now also responds
+inside Codex. This resolves availability but does not establish the original
+rename root cause. No further Docker repair/restart. See appended completed
+recovery/browser evidence in PORTUGUESE_SUPERVISED_PREPARATION_2026-11-16.md.
+The failed observations above remain intact.

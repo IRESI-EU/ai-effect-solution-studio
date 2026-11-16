@@ -221,3 +221,106 @@ no-network build, source-only context and tag-drift checks remain mandatory.
 No historical image is relabelled or overwritten. This is a build-input repair,
 not a runtime dependency upgrade. Actual build/test/browser results are appended
 separately after they finish; this checkpoint alone is not acceptance.
+
+
+## Later 16 November checkpoint: recovery, packaging and fresh UI acceptance passed
+
+This supersedes only the earlier availability/preparation status. Original failed
+observations above remain historical; their root cause is not established.
+No further Docker repair, settings/ACL change or restart occurred.
+
+Portal serving source **75ccb8fd09be477d5517bea26c139011f9436ad6**, maintained adapter/worker
+packaged source **17f32be413fe64532373f70d8b862002c3427a8c**. Exact images, build contexts,
+retained dependency inputs and checks: [sanitized verification](../deploy/portuguese_sandbox/recovery-browser-verification-20261116.json).
+Only API/web/adapter were replaced. All **53** retained container names remain;
+other identities/images/mounts are unchanged, including original ML. Desktop
+normalized the adapter read-only Windows bind source to its Linux host path;
+credentials/policy/token hashes match the exact host files. Journal volume
+unchanged, all three workers stopped, supervision/provider disabled. Other
+profiles remain stopped. No live scope was created.
+
+Four actual PostgreSQL concurrency cases **passed** (1.70s, 50 existing
+deprecation warnings): real reviewer-row blocking for concurrent confirmations
+of same/different designs and uncertain dispatch. HTTP/dispatch were doubles;
+only suite-created random test databases were used and removed, no algorithms.
+Frontend helpers **23 passed**; packaged frontend checks **18 passed**; Next
+production compilation, TypeScript and build passed. API all 48 exact Python pins
+and pip check passed. Adapter/standby imports passed with networking disabled;
+worker main was never invoked. The API no-network/default-PG import initially
+failed because postgres could not resolve; a separate disposable SQLite startup/
+import passed, then the retained actual PostgreSQL application started normally.
+No unrelated full test inventory or dependency download/upgrade was performed.
+
+### Fresh manual browser acceptance (agent, not independent usability)
+
+[New saved design](http://127.0.0.1:23124/builder?solutionId=b4e48556-c3a5-4a73-903d-c2a2618756fd) began from empty `/builder`, not a
+copied/prepared design. Palette added chained TrainModel and chained GenerateData;
+Training CSV selected **Sandbox test dataset**; canvas edges were drawn and
+**Use published connection** selected. Epochs 2, batch 4 and generation count 10
+were reviewed. Save created the new owned URL; refresh retained dataset,
+settings, both instance identities, 0.2.0 pins and model_ref binding.
+**Validate design: Checked successfully.** No preparation/API design write.
+
+Raw saved overrides contain epochs 2 only; batch 4 and count 10 are omitted
+pinned defaults. Refreshed controls and normal compilation both resolve 2/4/10.
+These are validated settings, not new algorithm-consumption evidence. Browser
+shows INSPECTION ONLY, runtime unchecked and execution unavailable; preflight of
+the exact normal browser request returns **409 / inspection_only**. No live
+submission was used to test denial.
+
+![Fresh saved, refreshed and validated design](evidence/portuguese-20261116-builder.png)
+![Saved binding and exact contract pins](evidence/portuguese-20261116-connection.png)
+
+[Historical owner results](http://127.0.0.1:23124/deployments/wf-375a888b8976#results) still show
+Completed, recorded consumed 1/4 training, same-producer model SHA, and 10 x 100 =
+1000 output rows with workers stopped. Immutable snapshot equals the prior
+record. Seven journal jobs/output hashes, earlier models/designs, closed scopes,
+terminal workflow records and empty queues all rechecked. Ledger byte-identical,
+**25/25**, zero outstanding. New training/generation/provider requests: **0**.
+
+![Historical evidence with workers stopped](evidence/portuguese-20261116-historical.png)
+
+### Backup and rollback
+
+Original-checkout `local-backups/pt-accept-20261116/database-before.dump` is a new
+consistent pg_dump; pg_restore TOC verified, SHA
+`03237dde2c6bdc2d8c1b9769fbbc8a655fab7db309fd9004863a9d6117d7c0ec`.
+Private compose-before/container-before records and old API/web/adapter images
+are retained. No migration. Rollback stops only those three roles, restores only
+their old image pins from compose-before and uses the existing no-deps/no-build/
+pull-never up command. Do not restore the older database over new designs or
+evidence, start workers, rerun bootstrap or modify another profile.
+
+### Exact later execution proposal: NOT AUTHORIZED
+
+[Frozen normal browser request, contracts, resources and closure checks](../deploy/portuguese_sandbox/proposed-supervised-acceptance-20261116.json).
+Saved revision **`2026-11-16T11:26:14.691950`**.
+Request SHA256 **`96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b`** using json.dumps(request, sort_keys=True),
+verified through the serving schema. It includes every normal Builder node
+field; the earlier provisional minimal operator-helper hash is not authority.
+No live policy/scope was created. Both supervision flags remain disabled.
+
+Proposed limit: one workflow, one TrainModel (2 epochs/batch 4), one GenerateData
+(10 sequences), existing 400-row dataset/hash, sequence length 100; ML CPU 2/RAM
+3 GiB; named targeted standby CPU 1/RAM 384 MiB, no restart, wait <=300 seconds,
+six-second lease; zero retries/replacement. Exact candidate/serving images and
+all component limits are frozen. The current adapter image and retained
+historical registry image are separately identified; no registration/contract
+was changed and no new execution qualification is claimed.
+
+Only after separate explicit approval: recheck revision/request/contracts/data/
+images/resources and empty queues, create one new attributable scope through the
+supported operator, enable only this profile's flags, start one named standby,
+require normal readiness and confirm once through Builder. Stop on drift, lost
+lease, failure, uncertainty or missing proof. Reconcile without retry. Verify new
+model settings/hash, signed same-model handoff, ten sequences/1000 rows and
+hashed authorized downloads. Then stop worker, close scope, disable both flags,
+inspect queues and old evidence/ledger. No production/partner-native claim.
+
+Operator check: open new URL; inspect CSV and step settings; inspect connection
+Technical details; refresh and Validate; confirm INSPECTION ONLY. Existing
+sign-in: original-checkout
+`local-backups/portuguese-sandbox-20261112/profile/credentials.json`, identifier
+`pt-sandbox-designer@example.test`. Never reproduce the password. Independent
+human usability, scientific suitability and production compatibility remain
+unverified. C: headroom after packaging: 63.78 GiB.
