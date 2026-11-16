@@ -55,6 +55,17 @@ def test_readiness_is_readonly_and_confirmation_dispatches_once(supervised):
         assert db.query(ExecutionSubmission).count() == db.query(Deployment).count() == 1
 
 
+def test_mode_metadata_is_not_authority_and_default_still_denies(supervised, monkeypatch):
+    client, body, calls = supervised
+    policy = client.get("/workflows/training-input").json()["execution"]
+    assert policy["mode"] == "supervised" and policy["available"] is True
+    monkeypatch.setattr(settings, "portuguese_supervised_mode", False)
+    assert client.get("/workflows/training-input").json()["execution"]["available"] is False
+    assert client.post("/workflows/runtime-preflight", json=body).status_code == 409
+    assert client.post("/workflows/submit-to-orchestrator", json=body).status_code == 409
+    assert not calls
+
+
 @pytest.mark.parametrize("reason", ["closed authority", "stopped processor", "expired lease", "authorization journal unavailable"])
 def test_unavailable_boundary_denies_before_enqueue(supervised, monkeypatch, reason):
     client, body, calls = supervised
@@ -139,3 +150,22 @@ def test_transport_fails_closed_and_never_follows_redirects(environment, monkeyp
     monkeypatch.setattr(gate.requests, "Session", Session)
     with pytest.raises(HTTPException): gate.boundary("check", {})
     assert seen == [(False, False)]
+
+
+def test_normal_dispatch_transport_cannot_redirect_this_profile(chained, monkeypatch):
+    training_profile(monkeypatch)
+    from app.services import orchestrator_adapter as adapter
+    from fastapi import HTTPException
+    calls = []
+    class Session:
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+        def post(self, url, **kw):
+            calls.append((self.trust_env, kw["allow_redirects"]))
+            class Response:
+                status_code = 307
+                def json(self): return {"message": "Do not follow"}
+            return Response()
+    monkeypatch.setattr(adapter.requests, "Session", Session)
+    with pytest.raises(HTTPException): adapter.submit_to_orchestrator({"blueprint": {}})
+    assert calls == [(False, False)]

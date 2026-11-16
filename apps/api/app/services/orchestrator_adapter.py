@@ -98,14 +98,18 @@ def _raise_connection_error(
 
 def submit_to_orchestrator(payload: dict[str, Any]) -> dict[str, Any]:
     url = f"{settings.orchestrator_base_url}/workflows"
-
+    from app.services.capability_bindings import sandbox_profile_enabled
+    sandbox = sandbox_profile_enabled()
     try:
-        response = requests.post(
-            url,
-            json=_service_authorized_payload(payload),
-            headers=_orchestrator_headers(),
-            timeout=20,
-        )
+        arguments = {"json": _service_authorized_payload(payload), "headers": _orchestrator_headers(), "timeout": 20}
+        if sandbox:
+            # A redirect must never dispatch the one authorized request again.
+            # No environment proxy, retries or alternate endpoint in this scope.
+            with requests.Session() as client:
+                client.trust_env = False
+                response = client.post(url, **arguments, allow_redirects=False)
+        else:
+            response = requests.post(url, **arguments)
     except requests.RequestException as exc:
         _raise_connection_error(
             exc=exc,
@@ -113,7 +117,7 @@ def submit_to_orchestrator(payload: dict[str, Any]) -> dict[str, Any]:
             action="submit workflow",
         )
 
-    if response.status_code >= 400:
+    if response.status_code >= (300 if sandbox else 400):
         _raise_orchestrator_error(
             response=response,
             url=url,
