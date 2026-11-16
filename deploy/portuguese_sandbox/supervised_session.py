@@ -139,7 +139,7 @@ class DockerProfile:
             if not path.is_relative_to(root) or hashlib.sha256(path.read_bytes()).hexdigest()!=ledger["sha256"]:raise ValueError("Provider ledger identity changed")
             with sqlite3.connect(path.as_uri()+"?mode=ro",uri=True) as db:
                 if db.execute("select count(*) from requests").fetchone()[0]!=25 or db.execute("select count(*) from requests where usage is null or status='settled_unacknowledged'").fetchone()[0]:raise ValueError("Provider accounting drift")
-        for name in [PROJECT+"-worker-1","ai-effect-pt-chain-20261113-worker","ai-effect-pt-owner-recovery-wf-375a888b8976"]:
+        for name in [PROJECT+"-worker-1","ai-effect-pt-chain-20261113-worker","ai-effect-pt-owner-recovery-wf-375a888b8976","ai-effect-pt-supervised-20261116-01"]:
             if json.loads(self.command(self.D+["inspect",name]))[0]["State"]["Running"]:raise ValueError("Earlier worker must remain stopped")
 
     def verify_authority(self):

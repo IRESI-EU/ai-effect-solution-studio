@@ -1,11 +1,11 @@
 <!-- CURRENT-STATUS-START -->
-## Current status - operational correction in preparation
+## Current status — operational correction verified, execution awaiting approval
 
-- Proven: earlier signed local training/generation and exact-model handoff; manual Builder input/pin/binding persistence.
-- Current correction: one scoped activation helper, transient read-only probe recovery and explicit supervised-session wording. Focused tests pass; packaging/integration/browser checks follow in a separate checkpoint.
-- Release decision: no new live authority or algorithm is authorized in this implementation pass. The closed failed scope and original frozen request remain preserved. A completed candidate/proposal will be presented once.
-- History: [failed readiness and closure proof](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json); prior records below remain intact.
-- Design with AI remains disconnected. The current new-pair composer requires native operations and excludes sidecars/adapters and external workflow-input routing (`catalogue_composition.py`); these global restrictions are unchanged.
+- **Proven parameterisation:** earlier real local Portuguese parameter consumption and exact model handoff remain valid. Seven historical jobs, eight original designs, artifacts and closed scopes preserved.
+- **Operational correction:** adapter-before-standby helper and bounded read-only probe recovery implemented. Disposable-state activation tests and real non-executing probe/API-isolation checks pass. Fresh manual Builder Save → refresh → Validate passes. No preparation blocker observed.
+- **Release decision:** approve [the new exact candidate proposal](../deploy/portuguese_sandbox/proposed-supervised-operational-20261116.json) before one new attempt. No live scope/standby was created; no new workflow, training, generation or provider request. Corrected live activation/algorithm success remains untested.
+- [Current verification](../deploy/portuguese_sandbox/operational-verification-20261116.json); [original failed readiness/closure](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json). Historical findings below remain intact.
+- Design with AI remains disconnected. The native-only new-pair composer excludes sidecars/adapters and external workflow-input routing. These restrictions are unchanged.
 <!-- CURRENT-STATUS-END -->
 
 # Portuguese Builder and supervised boundary — 2026-11-16
@@ -433,3 +433,147 @@ storage/input permissions and resource limits; then verify task-specific handoff
 and parameter delivery on that actual node under separately bounded approval.
 Local sidecar support is not partner-native approval, scientific qualification,
 independent usability or production compatibility.
+
+
+## Operational correction and non-executing acceptance — 16 November, later checkpoint
+
+This new preparation record preserves the original failed readiness observation.
+Its scope stays closed and consumed processor stopped. Docker responded normally;
+no settings repair/restart was performed. The settings rename failure's original
+root cause remains undetermined. No new live authority was created.
+
+### Correction and actual serving identity
+
+The single supervised_session.py helper checks separately created, unused exact
+authority; stabilizes the adapter with API admission OFF; starts one named
+standby; verifies a fresh lease; enables/recreates ONLY API; then checks unchanged
+adapter identity and a fresh lease again. It never creates authority, binds or
+submits. Drift checks cover saved revision/request/settings/contracts/dataset,
+serving images/resources, disconnected provider, old stopped workers, journal
+and ledger. Private configuration is backed up; post-close restore refuses a
+running worker or unrelated changes. See the current SUPERVISED_RUNBOOK.md.
+
+Transient read-only DNS/connection/startup probes retry only before binding,
+within 30 seconds from startup: total probe budget 3 seconds; HTTP/Redis operation
+timeout at most 1 second; poll 1 second; lease 6 seconds; standby max 300 seconds.
+Failed probes revoke the lease. Authentication/capability/policy failures are
+permanent and actionable. All queues are checked before first readiness and
+again against the exact bound workflow before processing. Intervening health
+renewals cannot mistake the accepted root entry just before binding for unrelated
+work. Binding, claim, dispatch and algorithm processing remain single-attempt;
+uncertainty requires reconciliation, never replacement or redispatch.
+
+| Component | Source | Exact image |
+| --- | --- | --- |
+| API retained | 75ccb8fd09be477d5517bea26c139011f9436ad6 | sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e |
+| Web updated | 642d2594001792a41b82a30dc51abc050ad98dbc | sha256:1bb228f840aad90f938faf5b918d6e806a972b8578889b10c046a59015c364ec |
+| Adapter updated | c98b454b1a9ce9b9a154ad82ef104678ba78b443 | sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6 |
+| Candidate standby, not started | c98b454b1a9ce9b9a154ad82ef104678ba78b443 | sha256:75dc18e23e464b3b1ad6c4368f965dcf8185d163a20dd0d92276f6408f217bdb |
+
+
+Historical catalogue image remains
+sha256:1305664435c30980c2649defc1a798fc2262e9ca835f8348ecbe2c43ae89034f.
+It was not relabelled or substituted into the frozen request. Real authenticated
+capability equality verifies candidate worker/adapter parameter and I/O compatibility.
+Original Portuguese ML remains
+sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f,
+2 CPUs / 3 GiB. No ML source/image/API change.
+
+Source-only packagers used exact retained dependency/base inputs, linux/amd64,
+fresh tags, no downloads/pulls and network-disabled builds. Only web/adapter image
+pins changed; API was recreated for the non-executing API-isolation check with
+its retained image/configuration. No migration. Original ML/observer/orchestrator/
+PG/Redis identities and every mount retained. Private backup/build records:
+local-backups/pt-operational-20261116 in the original checkout. Consistent PG dump:
+44,482 bytes, SHA256 dd8d2c3a01364b2335b88da2fc5a2411d8760aaa9b841eaa6302301b58a10c7c;
+pg_restore --list passed. Rollback uses previous web/adapter pins from
+compose-before.private.json with scoped no-deps/no-build/pull-never recreation,
+retaining the current database/journal. Never restore an older database over evidence.
+
+### Checks and limits
+
+- WP3 affected probe/supervision/chain: **49 passed**, one existing Starlette warning.
+  Helper: **8 passed**. Frontend review/persistence/connection/status helpers:
+  **24 passed**. Packaged frontend **18 passed**. Host TypeScript and offline Next
+  production build passed. Adapter/worker imports passed with networking disabled.
+- Full activation ordering/fresh lease/deadline/permanent failure/rollback and
+  duplicate/uncertain processing protections use disposable state and doubles.
+  No live authority/standby manufactured an activation pass.
+- Real candidate probe-only passed against retained Redis/ML/observer/adapter.
+  A separate read-only process **without journal mount or Worker processing**
+  recovered from deliberate transient DNS failure, then passed **24 healthy cycles**.
+  API-only recreation left adapter identity/start time unchanged and did not
+  interrupt/restart that process. This proves dependency/isolation behavior,
+  not a live waiting-processor lease.
+- API admission code unchanged: entire API tree
+  def28b353f5278a74f6d55d88d758f6eccaecbd8 matches previously tested served source.
+  Reused four actual PostgreSQL concurrency passes, 50 existing warnings, 1.70s,
+  mocked dispatch and suite-created disposable databases. SQLite checks do not
+  establish PostgreSQL concurrency. No unrelated suite repeated.
+- One helper rerun hit sandbox temporary-file access; normal host access passed
+  all eight. Node isolated subprocess test invocation hit spawn EPERM; supported
+  in-process isolation passed all 24. No product/security workaround introduced.
+
+### Fresh visible Builder acceptance and preserved evidence
+
+[New separate manually assembled design](http://127.0.0.1:23124/builder?solutionId=ebde9866-4a03-4911-91fc-21dec22582a5)
+started from empty Builder. The agent added chained TrainModel/GenerateData from
+the real palette, selected Sandbox test dataset, drew input/train/generate/output
+edges, selected Use published connection, pinned published defaults and edited/
+reviewed 2 epochs, batch 4 and 10 sequences. Initially overlapping canvas nodes
+were moved clear of the minimap through the UI before connection. No preparation
+script, API design write, saved-template copy or execution.
+
+**Save → refresh → Validate: Checked successfully.** Normal authenticated read/
+compile confirmed dataset, allocated identities, settings, 0.2.0 pins and model_ref
+binding. Omitted raw batch/count values resolve through pinned defaults; these
+are validated settings, not new algorithm consumption. INSPECTION ONLY is visible;
+runtime unchecked and execution unavailable. Normal preflight of the frozen
+approved request returns **409 / inspection_only**, without submission.
+
+![Fresh Builder after Save, refresh and validation](../deploy/portuguese_sandbox/evidence/operational-20261116/builder-validated.png)
+
+Review:
+1. Open the new design; confirm Sandbox test dataset and INSPECTION ONLY.
+2. Select TrainModel (2/4), then GenerateData (10).
+3. Open connection Technical details: model_ref → model_ref, both 0.2.0 pins.
+   Validate again if desired. Do not edit the frozen approved design.
+4. Inspect [historical completed results](http://127.0.0.1:23124/deployments/wf-375a888b8976#results):
+   requested/effective/observed settings stay distinct; both tasks completed,
+   same-workflow model association, 10 × 100 / 1,000 rows. No new run.
+
+All eight original designs unchanged; seven journal jobs complete; three scopes
+closed; failed consumed processor and other workers stopped; no unresolved queues.
+Immutable submission/models/output hashes/mounts preserved. Historical result
+stays 1/4/10; not rewritten to today's validated 2/4/10. All 54 pre-existing
+containers retained; only API/web/adapter recreated; one additional exited
+read-only probe retained. Provider disconnected and ledger byte-identical
+25/25, zero outstanding reservations.
+
+Existing reviewer: pt-sandbox-designer@example.test. Read its existing
+local-backups/portuguese-sandbox-20261112/profile/credentials.json locally; never
+print the password. Agent checks are not independent human usability observations.
+
+### Exact remaining execution decision
+
+[New completed operational candidate proposal](../deploy/portuguese_sandbox/proposed-supervised-operational-20261116.json):
+unchanged saved design b4e48556-c3a5-4a73-903d-c2a2618756fd,
+revision 2026-11-16T11:26:14.691950, request SHA256
+96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b.
+The new manual review design is separate; it does not replace the frozen request.
+Only operational candidate images/procedure changed. Old proposal/failure preserved.
+
+Proposed unused scope pt-supervised-operational-20261116-01: one new workflow,
+at most one training 2/4 and one generation 10 × 100 from its exact produced model;
+approved 400-row synthetic CSV/hash, 0.2.0 pins/model_ref, ML 2 CPUs / 3 GiB;
+zero automatic execution retry, uncertain redispatch or replacement scope.
+All-role images/resources and closure checks are in the proposal. Private policy
+file is labelled NOT-APPROVED and has not been created in the live journal.
+
+After separate approval: revalidate drift; supported attributable operator create;
+single helper activation; normal Builder readiness and one confirmation. Reconcile
+terminal evidence; stop named processor, close scope, restore inspection config,
+recheck queues/history/ledger. No preparation blocker observed; approval is the
+remaining local decision. Corrected live activation and new algorithms remain
+unverified. Portuguese-node access, partner approval, broader composition and
+production compatibility are not established.
