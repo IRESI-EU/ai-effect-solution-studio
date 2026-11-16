@@ -1,3 +1,21 @@
+## Latest actual session — PASS and CLOSED, no further execution
+
+The exact operational proposal at Portal c58fff86fc8085d3edacaf157c4e6a9d54d525e1
+was separately approved and consumed once. Scope pt-supervised-operational-20261116-01
+is CLOSED; its named processor exited0 and stays stopped. Workflow wf-717110fb8d5e
+completed one TrainModel2/4 and one GenerateData10x100 with exact new-model handoff,
+saved-model/artifact hashes and protected output downloads verified. All five
+workers stopped, all four scopes closed, flags OFF/config restored, queues empty
+of unresolved work, historical evidence/designs and 25/25 ledger unchanged.
+
+[Actual evidence/closure](operational-acceptance-20261116-verification.json).
+The proposal is a preserved frozen approval input, not reusable authority.
+Do not run activate, reopen this scope or restart its consumed processor.
+The procedure below describes mechanisms for a future separately approved session,
+not permission for another run. No provider/node/production authority.
+
+---
+
 # Current operator procedure — corrected activation, execution disabled
 
 Use `supervised_session.py` for future sessions on this retained profile. It

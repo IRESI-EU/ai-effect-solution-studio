@@ -1,11 +1,11 @@
 <!-- CURRENT-STATUS-START -->
-## Current status — operational correction verified, execution awaiting approval
+## Current status — supervised local acceptance PASS; scope closed
 
-- **Proven parameterisation:** earlier real local Portuguese parameter consumption and exact model handoff remain valid. Seven historical jobs, eight original designs, artifacts and closed scopes preserved.
-- **Operational correction:** adapter-before-standby helper and bounded read-only probe recovery implemented. Disposable-state activation tests and real non-executing probe/API-isolation checks pass. Fresh manual Builder Save → refresh → Validate passes. No preparation blocker observed.
-- **Release decision:** approve [the new exact candidate proposal](../deploy/portuguese_sandbox/proposed-supervised-operational-20261116.json) before one new attempt. No live scope/standby was created; no new workflow, training, generation or provider request. Corrected live activation/algorithm success remains untested.
-- [Current verification](../deploy/portuguese_sandbox/operational-verification-20261116.json); [original failed readiness/closure](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json). Historical findings below remain intact.
-- Design with AI remains disconnected. The native-only new-pair composer excludes sidecars/adapters and external workflow-input routing. These restrictions are unchanged.
+- **Proven:** corrected activation and one normal Builder confirmation completed workflow wf-717110fb8d5e. Exactly one TrainModel consumed 2/4; one GenerateData consumed its exact new model and produced 10 × 100 observations / 1,000 CSV rows. Independent saved-model observation, signed captures and two authenticated output hashes agree.
+- **Operational blocker:** none observed for this bounded local session. Named processor exited 0; scope closed, all five workers stopped, supervision disabled and private configuration restored exactly. Nine original saved designs, seven earlier jobs/models/artifacts, closed scopes and byte-identical 25/25 ledger preserved.
+- **Release decision:** this one approval is consumed. No additional run, replacement scope, Portuguese-node access, provider or production activation authorized. Obtain responsible Portuguese node owner endpoint/auth/service-contract/dataset/resource confirmation before preparing a node-specific demonstration.
+- [Actual results and closure evidence](../deploy/portuguese_sandbox/operational-acceptance-20261116-verification.json); [live results](http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results); [earlier failed readiness remains failed](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json). Earlier preparation/findings below are preserved history.
+- Design with AI remains disconnected. Native-only new-pair composition still excludes sidecars/adapters and external workflow-input routing. No broader composition, independent-usability, scientific-quality or production-compatibility claim.
 <!-- CURRENT-STATUS-END -->
 
 # Portuguese Builder and supervised boundary — 2026-11-16
@@ -577,3 +577,120 @@ recheck queues/history/ledger. No preparation blocker observed; approval is the
 remaining local decision. Corrected live activation and new algorithms remain
 unverified. Portuguese-node access, partner approval, broader composition and
 production compatibility are not established.
+
+
+## Authorized operational acceptance — PASS, CLOSED — 16 November 2026
+
+This is the actual later acceptance of the exact proposal at Portal
+c58fff86fc8085d3edacaf157c4e6a9d54d525e1. It does not relabel the earlier failed
+attempt. The original scope/processor remain closed/stopped. No code/build or
+dependency change was needed for this run.
+
+### Frozen preflight and normal-path activation
+
+Approved design b4e48556-c3a5-4a73-903d-c2a2618756fd, saved revision
+2026-11-16T11:26:14.691950 and request SHA256
+96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b
+matched exactly. The newer browser-review design was not substituted.
+Proposal JSON matched its committed blob (Windows CRLF normalization only).
+Normal compile, active contract definitions/hashes, approved synthetic CSV/hash,
+effective 2/4/10, model_ref binding, all serving image/resource identities and
+historical catalogue/current-adapter capability mapping passed again.
+All three prior scopes were closed; old consumed processor finished; seven
+historical jobs/models/artifacts and nine designs preserved; queues empty;
+provider disconnected, ledger unchanged25/25/zero outstanding. A consistent
+45,968-byte PostgreSQL backup and private before-state were retained.
+
+Supported attributable operator created only pt-supervised-operational-20261116-01.
+The corrected helper configured/stabilized adapter with API OFF, started the one
+named ai-effect-pt-supervised-operational-20261116-01 processor, verified its fresh
+lease, enabled ONLY API and verified unchanged adapter identity/fresh lease again.
+Recorded container starts establish adapter → standby → API. No transient probe
+failure occurred in this actual session. Earlier bounded failure/recovery tests
+remain separate evidence. Builder displayed SUPERVISED LOCAL SESSION;
+Validate passed; Prepare/readiness showed Checked — ready; Confirm clicked once.
+No API/manual submission or manual workflow binding; no algorithm retry/replacement.
+
+### Actual outcome and separate evidence levels
+
+[Results](http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results):
+workflow wf-717110fb8d5e Completed, created 14:49:55.383443Z, terminal update
+14:49:57.846775Z. Tasks qualified by this workflow:
+TrainModel task_030152d9 and GenerateData task_f6c5c14e, both completed.
+Exactly one submitted ExecutionSubmission is associated with this scope.
+
+| Evidence | TrainModel | GenerateData |
+| --- | --- | --- |
+| Raw requested overrides | epochs 2 | omitted |
+| Validated pinned effective settings | epochs 2, batch_size 4 | number_of_examples 10 |
+| Actual observed consumption | epochs 2, batch_size 4 | 10 sequences, each 100 observations |
+
+Signed terminal sidecar capture, journal/file agreement, current bytes and
+owner/workflow/task/instance/contract associations all validated through the
+normal authenticated instance-evidence endpoint. A fresh independent model-observer
+read corroborated saved configuration: epochs2, batch_size4, max_sequence_len100,
+sample_len1. Four input training sequences meant no batch clamp changed the 4.
+
+Model identity: model_96588980384a2ac8f0770445b745a7bc.
+Model SHA256: e0cd2151c67a247856bb360fb1aea1525091da26a9a8b002fd66ee0b1d0a7b4d.
+Both producer and consumer captures identify this exact newly produced model and
+hash; consumer input is the producer reference with the same recorded hash.
+The model is bound to this owner/workflow/producer task, not a latest-model cache
+or bootstrap model.
+
+Two authorized control-output downloads (not generic HTTP previews) returned 200
+and matched capture/file hashes; requests without authorization returned 401:
+
+| Output | Bytes | SHA256 |
+| --- | ---: | --- |
+| TrainModel opaque model reference JSON | 90 | 707097d96ab390a2a311bbcb6954f9db56d4cd5479c5c69574054b053c8e368e |
+| GenerateData CSV | 41826 | 553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540 |
+
+CSV parsed as 10 sequence IDs, exactly 100 rows each: 1,000 data rows.
+Original ML application logs corroborate one _train invocation, two epoch
+records (total_epochs2), one exact-model generation invocation. HTTP access lines
+are not enabled; the synchronous HTTP completion evidence comes from authenticated
+signed captures, not invented access-log counts. A read-only collection assertion
+initially expected access logs; correcting that assumption did not repeat any call.
+Actual counts: **one workflow / one training / one generation**; zero paid requests.
+
+![Actual consumed settings, model handoff and output counts after closure](../deploy/portuguese_sandbox/evidence/operational-acceptance-20261116/consumption-and-handoff.png)
+
+### Closure and preservation
+
+Processor exited 0 normally and was explicitly stopped without restart.
+Supported operator closed the scope at 2026-11-16T14:55:21.904434+00:00.
+Helper restore-review restored private configuration byte-for-byte and recreated
+only API/adapter. All five execution workers are stopped; all four scopes closed;
+all processor leases zero/finished. Queues contain no unresolved work and all
+earlier Redis workflow records remain unchanged. Normal exact-request preflight
+again returns 409 / inspection_only; Builder displays INSPECTION ONLY.
+New and historical per-instance evidence remain available after closure.
+
+Nine prior designs/revisions and seven old journal jobs/models/output hashes,
+immutable historical submission and original ML image/resources retained.
+Only one new model directory and two authorized jobs were added. All 55
+pre-existing containers retained; the one new named processor is retained stopped.
+Provider/grants disconnected, ledger SHA remains
+cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b:
+25/25, zero outstanding. No production, provider, merge or tracker action.
+
+Actual serving source/images remain the approved ones listed above: Portal web
+642d2594001792a41b82a30dc51abc050ad98dbc; API
+75ccb8fd09be477d5517bea26c139011f9436ad6; experimental adapter/standby
+c98b454b1a9ce9b9a154ad82ef104678ba78b443. No image relabel or rebuild.
+This publication is evidence-only; unchanged relevant test results were reused.
+Private raw records/outputs/backups remain in original-checkout
+local-backups/pt-operational-live-20261116; never publish their contents.
+
+### Next concrete Portuguese-node step
+
+Obtain responsible Portuguese node owner confirmation of the actual accessible
+endpoint/authentication, chosen service family and contract/parameter mapping,
+approved CSV/data handling and bounded node resource policy. Then prepare a
+node-specific supervised qualification; do not assume this local platform-controlled
+sidecar integration is portable or owner-approved. Original Portuguese ML source
+and image were preserved. This local run establishes parameter delivery, saved
+model corroboration, exact producer-model handoff and output counts. It does not
+establish scientific quality, independent usability, Portuguese-node access or
+production compatibility. This scope is exhausted/closed; no further algorithms.
