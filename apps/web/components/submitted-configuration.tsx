@@ -55,6 +55,7 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
           </>}
           {node.input_bindings.length > 0 && <p>Data input: {input.label} — {input.message}</p>}
           {proof?.state === "available" && proof.summary?.generated_examples != null && <p>Generated sequences: {proof.summary.generated_examples} · Observations per sequence: {proof.summary.observations_per_example} · CSV rows: {proof.summary.csv_rows}</p>}
+          {proof?.state === "available" && proof.download_url === `/api/deployments/by-workflow/${workflowId}/tasks/${node.task_id}/generated-csv` && <p><a className="btn btn-primary" href={proof.download_url} download>Download generated CSV</a></p>}
           {proof?.state === "available" && proof.model_binding && <p>Model association: TrainModel task {proof.model_binding.producer_task_id} in this workflow. Model SHA-256: <code>{proof.model_binding.model_sha256}</code></p>}
           {proof?.summary?.topology_count != null && <p>Topologies generated: {proof.summary.topology_count}</p>}
           {proof?.state === "available" && <details><summary>Evidence details</summary><p>{proof.instrumentation}</p><p style={{ overflowWrap: "anywhere" }}>Output SHA-256: {proof.output_sha256}</p></details>}

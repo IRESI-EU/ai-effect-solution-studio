@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.dependencies.auth import can_manage_owned_record, get_current_user
 from app.models.deployment import Deployment
+from app.models.execution_submission import ExecutionSubmission
 from app.models.user import User
 from app.schemas.deployment import DeploymentRead
 from app.services import local_dutch_evidence as evidence
@@ -12,6 +13,32 @@ from app.services import local_dutch_capture as automatic
 from app.services.orchestrator_adapter import get_workflow_status, get_workflow_tasks
 
 router = APIRouter()
+
+
+@router.get("/deployments/by-workflow/{workflow_id}/tasks/{task_id}/generated-csv")
+def generated_csv(workflow_id: str, task_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    deployment = authorized_deployment(db, user, workflow_id)
+    row = db.query(ExecutionSubmission).filter(ExecutionSubmission.workflow_id == workflow_id).first()
+    if row is None:
+        raise HTTPException(404, "No immutable submission recorded")
+    if not can_manage_owned_record(user, row.owner_user_id):
+        raise HTTPException(403, "You can only access your own submissions")
+    if row.solution_id != deployment.solution_id or row.owner_user_id != deployment.created_by_user_id:
+        raise HTTPException(409, "Deployment and submission association differs")
+    from app.services import portuguese_evidence
+    artifacts = {}
+    captured = portuguese_evidence.load(row, db, artifacts=artifacts)
+    proof = next((v for v in captured["instances"] if v["task_id"] == task_id), None)
+    if not proof or proof["operation_name"] != "GenerateData":
+        raise HTTPException(404, "Generated CSV is not recorded for this task")
+    if proof["state"] != "available" or task_id not in artifacts:
+        raise HTTPException(410, proof.get("message", "Generated CSV evidence is unavailable"))
+    # Identities have been constrained by the immutable evidence validator.
+    return Response(artifacts[task_id], media_type="application/octet-stream", headers={
+        "Content-Disposition": f'attachment; filename="{workflow_id}-{task_id}-generated.csv"',
+        "X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store",
+        "Content-Security-Policy": "sandbox; default-src 'none'",
+    })
 
 
 def authorized_deployment(db, user, workflow_id):

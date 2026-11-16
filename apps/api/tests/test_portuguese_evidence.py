@@ -120,6 +120,7 @@ def test_invalid_or_unavailable_evidence_never_verifies_every_instance(captured,
         with sqlite3.connect(root/"journal.sqlite3") as d:d.execute("UPDATE jobs SET result=? WHERE id=?",(evidence.canonical(proof),job))
     body=captured["client"].get("/workflows/"+WF+"/instance-evidence").json()
     assert body["state"]!="available" and any(v["state"]!="available" for v in body["instances"])
+    assert download(captured).status_code in (404,410)
     if failure in {"output-corrupt","signature","wrong-task","wrong-workflow","wrong-owner","wrong-producer","wrong-input","unknown-schema"}:
         assert body["instances"][0]["state"]=="available" and body["instances"][1]["state"]=="invalid"
 
@@ -131,6 +132,55 @@ def test_existing_ownership_boundary_runs_before_capture(captured):
         app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
         assert captured["client"].get("/workflows/"+WF+"/instance-evidence").status_code==403
     app.dependency_overrides.pop(get_current_user)
+
+
+def download(captured,task=None):
+    task=task or captured["proofs"]["GenerateData"][1]["task_id"]
+    return captured["client"].get(f"/deployments/by-workflow/{WF}/tasks/{task}/generated-csv")
+
+
+def test_browser_download_descriptor_and_validated_bytes_without_runtime(captured,monkeypatch):
+    import requests
+    monkeypatch.setattr(requests,"get",lambda *a,**k:pytest.fail("Downloads must not contact a runtime"))
+    body=captured["client"].get("/workflows/"+WF+"/instance-evidence").json()
+    train,gen=body["instances"]
+    assert "download_url" not in train
+    response=captured["client"].get(gen["download_url"].removeprefix("/api"))
+    assert response.status_code==200,response.text
+    assert hashlib.sha256(response.content).hexdigest()==gen["output_sha256"]
+    assert response.headers["content-disposition"]==f'attachment; filename="{WF}-{gen["task_id"]}-generated.csv"'
+    assert response.headers["cache-control"]=="private, no-store"
+    assert response.headers["x-content-type-options"]=="nosniff"
+    assert response.headers["content-type"]=="application/octet-stream"
+    assert download(captured,train["task_id"]).status_code==404
+    assert download(captured,"task_ffffffff").status_code==404
+
+
+@pytest.mark.parametrize("failure",["missing","corrupt","association","submission"])
+def test_download_rejects_unvalidated_historical_artifact(captured,failure):
+    path=captured["root"]/(captured["proofs"]["GenerateData"][0]+".csv")
+    if failure=="missing":path.unlink()
+    elif failure=="corrupt":path.write_bytes(b"changed")
+    else:
+        with SessionLocal() as db:
+            if failure=="association":db.get(Deployment,"pt-result").solution_id="another"
+            else:
+                row=db.get(ExecutionSubmission,captured["sid"])
+                value=deepcopy(row.submitted);value["request"]["name"]="tampered";row.submitted=value
+            db.commit()
+    assert download(captured).status_code in (404,409,410)
+
+
+def test_download_owner_and_authentication_checked_before_storage(captured,monkeypatch):
+    from app.main import app
+    from app.dependencies.auth import get_current_user
+    monkeypatch.setattr(evidence,"load",lambda *a,**k:pytest.fail("Authorization must precede storage"))
+    with SessionLocal() as db:
+        app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
+        assert download(captured).status_code==403
+    app.dependency_overrides.pop(get_current_user)
+    captured["client"].cookies.clear()
+    assert download(captured).status_code==401
 
 
 @pytest.mark.parametrize("captured",[6],indirect=True)

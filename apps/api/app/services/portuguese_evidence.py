@@ -46,7 +46,7 @@ def csv_counts(data,expected):
     return {"generated_examples":len(counts),"csv_rows":sum(counts.values()),"observations_per_example":100}
 
 
-def load(row,db):
+def load(row,db,*,artifacts=None):
     base={"workflow_id":row.workflow_id,"submission_id":row.id,"source":"Platform-controlled Portuguese sidecar capture v2",
         "historical":True,"observation_source":"Signed terminal adapter observation; current artifact bytes revalidated without a live runtime"}
     def unavailable(message,state="unavailable",instances=None):
@@ -184,6 +184,11 @@ def load(row,db):
                     message="Consumed the model produced by TrainModel in this workflow; producer reference and model/output hashes revalidated."
                     result.update(input_binding_verified=True,model_binding={"producer_task_id":producer_task,
                         "producer_workflow_id":row.workflow_id,"model_sha256":model["model_sha256"]})
+                    # Only bytes validated in this same read may leave the server.
+                    # Neither an editable solution nor a caller-supplied location is used.
+                    if artifacts is not None:
+                        artifacts[node["task_id"]]=output
+                    result["download_url"]=f"/api/deployments/by-workflow/{row.workflow_id}/tasks/{node['task_id']}/generated-csv"
                 else:raise ValueError("Unsupported operation")
                 result.update(state="available",algorithm_consumed=consumed,wrapper_received=config["parameters"],
                     output_sha256=proof["sha256"],summary=summary,message=message,
