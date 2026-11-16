@@ -53,7 +53,7 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
         {dataset && <option value={dataset.dataset_ref}>{dataset.label}</option>}
         {!!selectedDataset && selectedDataset !== dataset?.dataset_ref && <option value={String(selectedDataset)}>Saved input — not available in this profile</option>}
       </select>
-      <p id="training-csv-help">This sandbox offers its existing approved test CSV. This is a test input, not a fixed dataset requirement of the original Portuguese service.</p>
+      <p id="training-csv-help">The original TrainModel accepts an uploaded CSV. This sandbox offers one approved synthetic test CSV; it is not a fixed dataset requirement of the original service. Dataset and model references are separate from instance settings.</p>
       {inputMessage && <p id="training-csv-message" role="alert">{inputMessage}</p>}
       {!dataset && <p>The approved sandbox test dataset is unavailable for this account or profile.</p>}
     </div>}

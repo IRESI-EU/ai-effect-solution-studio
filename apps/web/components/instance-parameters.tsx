@@ -37,6 +37,7 @@ export default function InstanceParameters({ instanceId, serviceId, configuratio
     {incompatible && <p role="alert">The saved contract changed. Review the current settings and select Use current defaults before saving.</p>}
     {loading ? <p>Loading settings…</p> : error ? null : properties ? <>
       <p>Edit settings, then save and validate the design. Defaults apply to omitted values.</p>
+      {serviceId.startsWith("pt-experimental-") && <p>These limits apply only to this sandbox. Requested settings, validated defaults and algorithm-observed settings are separate evidence. Training batch size may be clamped to the available training sequences.</p>}
       {!configuration || incompatible ? <button type="button" onClick={() => onChange({ contract_id: contract!.id, contract_version: contract!.contract_version, parameters: {} })}>Use current defaults</button> : <>
         {Object.entries(properties).map(([name, spec]) => {
           const value = configuration.parameters[name] ?? spec.default ?? "";

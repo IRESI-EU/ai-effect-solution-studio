@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     portuguese_model_root: str = ""
     portuguese_evidence_owner_id: str = ""
     portuguese_training_dataset_ref: str = ""
+    # Explicit operator opt-in only; no grant creation, fallback or activation.
+    portuguese_supervised_mode: bool = False
+    portuguese_supervised_authorization_id: str = ""
+    portuguese_supervised_adapter_url: str = ""
     # A separate local qualification database/network, never the guarded demos.
     aie37_qualification: bool = False
     # Additive, opt-in journey on the existing isolated AIE-37 catalogue/runtime.

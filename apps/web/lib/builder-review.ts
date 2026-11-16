@@ -73,3 +73,11 @@ export function trainingInputMessage(required: boolean, input: unknown) {
   return required && !(input && typeof input === "object" && "dataset_ref" in input && typeof input.dataset_ref === "string" && input.dataset_ref.trim())
     ? "Select a training CSV before validating." : "";
 }
+
+export function portugueseOperationHelp(serviceId: string) {
+  if (serviceId === "pt-experimental-chain-TrainModel") return "Connected workflow: train a new model from Training CSV, then connect to chained GenerateData.";
+  if (serviceId === "pt-experimental-chain-GenerateData") return "Connected workflow: generate sequences using the model_ref from chained TrainModel.";
+  if (serviceId === "pt-experimental-TrainModel") return "Standalone historical operation; use the chained entries for a new connected workflow.";
+  if (serviceId === "pt-experimental-GenerateData") return "Standalone historical operation using the earlier model; use chained GenerateData after training a new model.";
+  return "";
+}

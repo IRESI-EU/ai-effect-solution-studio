@@ -35,12 +35,20 @@ def sandbox_profile_enabled():
 def sandbox_execution_policy():
     if not sandbox_profile_enabled():
         return None
+    from app.core.config import settings
+    if settings.portuguese_supervised_mode:
+        return {"available": True, "message": "Supervised sandbox: confirmation requires an exact operator authorization and a waiting targeted processor. Design validation does not execute algorithms."}
     return {"available": False, "message": "This sandbox is available only for inspection. New workflow submissions are disabled; execution requires separate operator authorization and targeted processing of an existing request."}
 
 
-def require_sandbox_execution_allowed():
+def require_sandbox_execution_allowed(workflow=None, user=None):
     policy = sandbox_execution_policy()
     if policy:
+        from app.core.config import settings
+        if policy["available"] and workflow is not None and user is not None:
+            if user.id != settings.portuguese_evidence_owner_id or user.status != "active":
+                raise HTTPException(403, "Only the configured active sandbox reviewer may submit")
+            return
         raise HTTPException(409, {"message": policy["message"], "execution_state": "inspection_only"})
 
 

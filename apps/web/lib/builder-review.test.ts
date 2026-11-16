@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, withRunInput, trainingInputMessage } from "./builder-review.ts";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, withRunInput, trainingInputMessage, portugueseOperationHelp } from "./builder-review.ts";
 
 const producer = {id:"p", position:{x:20,y:40}, data:{label:"Stored producer",service:{id:"service-p",name:"Generate sample images"},configuration:{parameters:{seed:42}},operation_contract:{contract_id:"p-pin",contract_version:"1"}}};
 const consumer = {id:"c",position:{x:400,y:40},data:{service:{id:"service-c",name:"Score images"}}};
 const nodes = [consumer,producer,{id:"output",data:{label:"Output"},position:{x:700,y:40}}];
 const edges=[{id:"bound",source:"p",target:"c",data:{binding:{source_slot:"images",target_slot:"images"}}},{id:"end",source:"c",target:"output"}];
 const saved=designFingerprint("Example",nodes,edges);
+test("Portuguese palette distinguishes published chained operations from retained standalone history", () => {
+  assert.match(portugueseOperationHelp("pt-experimental-chain-TrainModel"), /Connected workflow.*Training CSV/);
+  assert.match(portugueseOperationHelp("pt-experimental-chain-GenerateData"), /model_ref.*chained TrainModel/);
+  assert.match(portugueseOperationHelp("pt-experimental-TrainModel"), /Standalone historical/);
+  assert.match(portugueseOperationHelp("pt-experimental-GenerateData"), /earlier model/);
+  assert.equal(portugueseOperationHelp("another-service"), "");
+});
 const state={steps:2,dirty:false,design:null as "valid"|"invalid"|null,offline:false,confirmationReady:false,submitted:false};
 
 test("purpose and processing order follow the recorded graph, not catalogue or array order",()=>{

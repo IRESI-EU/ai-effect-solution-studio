@@ -27,7 +27,7 @@ import InstanceParameters, { type InstanceConfiguration } from "../../components
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
 import ReviewDialog from "../../components/review-dialog";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly, withRunInput, normalizeRunInput, trainingInputMessage } from "../../lib/builder-review";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly, withRunInput, normalizeRunInput, trainingInputMessage, portugueseOperationHelp } from "../../lib/builder-review";
 import { bindingSignature, savedBindingSignatures, stepPurpose } from "../../lib/connection-review";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
@@ -903,6 +903,7 @@ function BuilderContent() {
                   </div>
 
                   <ServiceBadges service={service} />
+                  {portugueseOperationHelp(service.id) && <p>{portugueseOperationHelp(service.id)}</p>}
 
                   {isDeprecated && (
                     <div

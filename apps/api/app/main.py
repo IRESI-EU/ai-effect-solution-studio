@@ -683,7 +683,10 @@ def runtime_preflight_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    capability_bindings.require_sandbox_execution_allowed()
+    capability_bindings.require_sandbox_execution_allowed(workflow, user)
+    if capability_bindings.sandbox_profile_enabled():
+        from app.services.portuguese_supervision import preflight
+        return preflight(workflow, db, user)[0]
     from app.services.catalogue_composition import require_execution_allowed
     require_execution_allowed(workflow, db, user)
     compiled = compile_to_wp3_payload(workflow, db)
@@ -703,7 +706,10 @@ def submit_workflow_to_orchestrator_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    capability_bindings.require_sandbox_execution_allowed()
+    capability_bindings.require_sandbox_execution_allowed(workflow, user)
+    if capability_bindings.sandbox_profile_enabled():
+        from app.services.portuguese_supervision import submit
+        return submit(workflow, db, user)
     from app.services.catalogue_composition import require_execution_allowed
     require_execution_allowed(workflow, db, user)
     from app.services import execution_journey, qualified_demo
