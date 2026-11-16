@@ -1,5 +1,18 @@
 # Portuguese results and registered Design with AI integration
 
+## Current acceptance preparation
+
+Offline controls PASS; genuine Portuguese model interpretation UNTESTED.
+The [frozen three-case provider proposal](PORTUGUESE_PROVIDER_ACCEPTANCE_2026-11-16.md)
+now records exact prompts, 1+1+1 calls, Luna/low/Standard, USD0.015 maximum and an
+inactive supported new scope on the original ledger (25→28 only after separate
+approval). Focused75 tests passed; final10 changed cases rerun passed, overlapping.
+Real operator dry-run left the historical25/25 ledger byte-identical with zero
+outstanding. Actual accounting TLS preflight is BLOCKED: retained API is on an
+internal-only Docker network and host.docker.internal does not resolve. A specific
+API-only egress/public-CA delta is proposed; no configuration or provider activation
+occurred. All execution restrictions and historical evidence remain preserved.
+
 Starting review: Portal e252f0221e80781e4b6d1754960eff9d6c3ce54c,
 maintained WP3 4a4bdc8f1150d44d809b0b281765a114f695c71d. This is a
 non-executing extension; earlier successful/failed acceptance records remain intact.
