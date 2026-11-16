@@ -1,5 +1,10 @@
 # Existing Portuguese request recovery — 2026-11-14
 
+Follow-up (2026-11-16): [supervised preparation and actual availability](PORTUGUESE_SUPERVISED_PREPARATION_2026-11-16.md).
+The original recovery observations below remain historical and unchanged. The
+new pass has not executed another workflow or freshly reverified unavailable
+Docker-held evidence.
+
 Starting Portal PR #22: db4cb0ee4669c3f96c27d58e83165d3d750971c5.
 Maintained WP3 PR #4: a0fd73c7a55148a8df471c918ec45da4f4aad668;
 serving adapter/targeted-worker implementation: 30e1ac403c7434149f3ff3568843f2cc75702413.

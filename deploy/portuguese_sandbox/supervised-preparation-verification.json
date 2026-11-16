@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-16",
+  "scope": "existing-profile design/admission preparation only",
+  "starting_portal_head": "643999dd46196f216c0524203d9da846d9092ad9",
+  "starting_wp3_head": "1a6a792aa3effbfaeb979aaeaa03a7535e53e4bd",
+  "portal_implementation_source": "1354a141a0d76ee90ed6eb5ae1ce1b6d5242608b",
+  "wp3_implementation_source": "822c05cf1cac09c9448f423a1359369b6fc61aac",
+  "last_verified_serving_portal_source": "002686f04fb584d5bea2f1556d8e994405f1db45",
+  "last_verified_serving_runtime_source": "30e1ac403c7434149f3ff3568843f2cc75702413",
+  "current_serving_identity": "unavailable; retained compose pins unchanged, no build/update occurred",
+  "availability": {
+    "docker": "missing dockerDesktopLinuxEngine named pipe after one normal Desktop launch",
+    "web_23124": false,
+    "api_28188": false,
+    "actual_browser_navigation": "http://127.0.0.1:23124/builder -> ERR_CONNECTION_REFUSED",
+    "fresh_ui_acceptance": "blocked; no new design created",
+    "live_workflow_artifact_worker_queue_verification": "blocked; last live record remains 2026-11-14"
+  },
+  "preservation": {
+    "historical_workflow": "wf-375a888b8976",
+    "historical_submission_sha256": "0b8817eff18d6e1c8eb67706d4f6cdd968c62f7630a682a3a913cb5e672ec95c",
+    "last_live_observation": "completed, epochs 1, batch 4, same-model generation 10 sequences x 100 rows, all scopes closed and workers stopped",
+    "prior_private_preservation_record_sha256": "0897a1e76b2acdf1c9404ecebc695433dc2bbc573458dd722c1b8b200811a570",
+    "current_profile_configuration_rewritten": false,
+    "new_authorities": 0,
+    "new_submissions": 0,
+    "real_train_calls": 0,
+    "real_generate_calls": 0,
+    "provider_calls": 0,
+    "ledger_current": {
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b",
+      "calls": 25,
+      "limit": 25,
+      "outstanding": 0,
+      "byte_identical": true
+    }
+  },
+  "checks": {
+    "portal_focused_set_passed": 75,
+    "final_portal_admission_subset_passed": 16,
+    "wp3_focused_set_passed": 64,
+    "final_wp3_policy_subset_passed": 12,
+    "frontend_helpers_passed": 23,
+    "typecheck": "passed",
+    "secret_scans": "passed",
+    "tests_use": "disposable SQLite and network/algorithm doubles",
+    "postgresql_concurrency": "not verified",
+    "new_image_builds": "blocked",
+    "independent_usability": "not observed",
+    "node_or_production_readiness": "not established"
+  },
+  "supervised_mode_activated": false,
+  "next_execution_proposal": {
+    "authorized": false,
+    "new_workflows_max": 1,
+    "training_max": 1,
+    "generation_max": 1,
+    "epochs": 2,
+    "batch_size": 4,
+    "number_of_examples": 10,
+    "sequence_length": 100,
+    "expected_csv_rows": 1000,
+    "dataset_sha256": "36c7721e9254d1abd24cf6999bb693fc6d3ccf28e377431c0562a32d6efe17a8",
+    "required_before_approval": "engine recovery, read-only preservation checks, pinned packaging, default-disabled fresh UI acceptance and exact saved-request freeze",
+    "closure": "stop named targeted processor, supported close, disable flags, inspect queues/evidence/unchanged ledger; no retry"
+  }
+}

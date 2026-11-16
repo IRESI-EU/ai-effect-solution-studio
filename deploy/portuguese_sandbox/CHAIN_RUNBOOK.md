@@ -1,5 +1,10 @@
 # Connected Portuguese phase — existing-profile operator runbook
 
+2026-11-16 follow-up: [prepared supervised boundary](SUPERVISED_RUNBOOK.md).
+It remains disabled; no new scope/execution is authorized. The retained engine
+is currently unavailable, so packaging and fresh browser acceptance are blocked.
+The historical execution instructions below are preserved, not reopened.
+
 This is an additive update of ai-effect-pt-parameters, not a new profile.
 The original three jobs and old one-training/two-generation scope stay exhausted.
 Do not rerun the initial profile initializer or bootstrap.

@@ -1,0 +1,104 @@
+# Prepared supervised mode — disabled, not activated
+
+This is preparation for the existing ai-effect-pt-parameters profile only.
+No command below authorizes a new algorithm. The 2026-11-16 report records the
+engine outage and **blocked** retained update/browser acceptance. Historical
+closed scopes stay closed. Never rerun bootstrap, prior authorize/submit helpers,
+or start the general daemon.
+
+## Recovery / packaging prerequisites (no execution)
+
+1. Restore Docker's existing Linux engine in a separate bounded recovery task.
+   Current blocker: missing `dockerDesktopLinuxEngine` pipe after one normal
+   startup. No settings repair or further restart belongs to this milestone.
+2. Follow CHAIN_RUNBOOK.md to inspect retained identities/volumes, then start only
+   postgres/redis and required review services. Keep all three workers stopped.
+   Revalidate wf-375a888b8976, immutable snapshot, seven jobs/artifact hashes,
+   scopes/queues and original designs against the private 14 November record.
+3. Obtain a consistent pg_dump using the established private backup procedure.
+   Preserve current compose and API/web/adapter/worker images as rollback pins.
+   No PostgreSQL migration is needed. Never restore an older journal/database
+   over new evidence.
+4. Use the retained offline packagers, with new private records directories:
+
+   ```powershell
+   # Portal review worktree, existing original-checkout Python environment:
+   & ../../.venv/Scripts/python.exe deploy/restricted-beta/build_candidate.py --roles api web --records ../portuguese-supervised-20261116/build
+   # Maintained WP3 review worktree; substitute its verified source SHA:
+   & ../../.venv/Scripts/python.exe experimental/portuguese_parameters/build_images.py --role adapter --revision <verified-WP3-source> --records ../portuguese-supervised-20261116/build
+   & ../../.venv/Scripts/python.exe experimental/portuguese_parameters/build_images.py --role wp3 --revision <verified-WP3-source> --records ../portuguese-supervised-20261116/build
+   ```
+
+   These use retained inputs, no downloads/pulls, linux/amd64 and new tags.
+   The WP3 image packages the experimental standby beside the maintained CLI;
+   its runtime imports/dependencies must be smoke-checked without starting work.
+   An unavailable build input is a blocker, not permission to install/upgrade it.
+5. With flags still absent/false, propose/review exact new private compose pins,
+   then replace only needed API/web/adapter components using the existing
+   no-deps/no-build/pull-never procedure. Leave orchestrator, ML and all workers
+   unchanged. Keep the newly built worker image stopped for later approval.
+6. Complete fresh manual Builder/browser acceptance with no submission. Record
+   its actual saved ID, revision, parameters, pins, binding and input through
+   normal authorized GET/compile routes; no helper/API prepopulation.
+
+## Later explicit execution authorization only
+
+The existing operator's `create` / `close` commands remain authoritative. Freeze
+the exact normal Builder request (SHA256 of json.dumps(request, sort_keys=True))
+and compiled task configurations/inputs with its existing
+`pt-chain-authorization-v1` policy. Do not reuse the closed November 13/14 scopes.
+The new private policy must include exact reviewed image/resource identities,
+one TrainModel and one GenerateData and the existing dataset hash. Freeze the
+actual new UI-built solution revision before requesting approval.
+
+Only after approval, stage a private compose update for these exact changes:
+
+- API: PORTUGUESE_SUPERVISED_MODE=true,
+  PORTUGUESE_SUPERVISED_AUTHORIZATION_ID=<new approved ID>,
+  PORTUGUESE_SUPERVISED_ADAPTER_URL=http://pt-adapter:8080.
+- Adapter: PT_SANDBOX_SUPERVISED=1. Keep its policy, token, state and all other
+  existing settings/mounts unchanged. Restart only with no in-flight job.
+- Existing chain-worker role: new verified WP3 image; same retained Redis
+  URL/private network; add the adapter's exact existing PT_SANDBOX_* environment
+  values, read-only policy/token binds and the **same existing adapter volume**
+  at /state. Never invent/copy a replacement journal. Set
+  PT_SANDBOX_SUPERVISED=1 for this explicitly named one-shot process only.
+- Keep the chain-worker role's default refusal command. An explicit one-time
+  override runs `python -m experimental.portuguese_parameters.supervised_worker
+  <new approved authorization ID>` in one unique named container. Do not use
+  `up` to start a worker or permit a restart policy. Bound its wait to 300 seconds.
+
+Create the policy using the existing supported operator after the private
+configuration is reviewed. The standby registers a one-shot identity in the
+same journal, checks actual dependencies and unrelated queued/nonterminal work,
+and renews a six-second readiness lease. Only read-only readiness may then show
+ready. Prepare preserves the saved revision for an unchanged supervised design.
+Explicit browser confirmation rechecks everything before accepting one workflow.
+Do not manually bind the returned ID: the authenticated admission path binds
+the exact frozen request/policy only after recording the returned identity.
+
+## Stop / reconciliation / closure
+
+- A denied readiness creates no attempt. Inspect the reason; never fake a lease.
+- A consumed or expired processor cannot be automatically replaced. Preserve the
+  journal; no new scope or retry without a new decision.
+- Once submission is dispatching, an unknown response is consumed. Inspect the
+  existing ExecutionSubmission, Redis workflow/task/queue facts and journal.
+  Do not confirm again to produce another workflow. A repeated identical accepted
+  confirmation only returns its existing ID.
+- Accepted plus pending tasks means queued, not active algorithms. A claimed task
+  is distinct from verified consumption/completion. The adapter still reserves
+  each task before its one upstream call; do not use missing artifacts as proof
+  that nothing started.
+- After terminal reconciliation, stop only the named standby if necessary,
+  inspect no in-flight adapter dispatch, then use supported `close` with an
+  attributable actor. Set API mode=false and adapter PT_SANDBOX_SUPERVISED=0;
+  retain scope/attempt/events/container logs and every model/capture/output.
+- Recheck all workflow queues without flushing; preserve unrelated entries and
+  stop if any unresolved work exists. Verify previous designs/evidence/ledger
+  unchanged, then inspect historical results with workers stopped.
+
+Rollback: stop only changed review components; restore their previous compose
+pins/configuration and restart safe review services with the same volumes.
+Never downgrade/overwrite the journal or database. No original Portuguese source,
+image, API semantics, provider authority or spending limit changes are involved.
