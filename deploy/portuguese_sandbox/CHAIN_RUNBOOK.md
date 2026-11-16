@@ -187,3 +187,23 @@ Rollback: stop only api/web/pt-adapter, restore their three previous image pins
 from private local-backups/pt-accept-20261116/compose-before.private.json and use
 `up -d --no-deps --no-build --pull never api web pt-adapter`. Preserve current
 DB/journal/evidence/designs. Never restore an older DB, bootstrap or start workers.
+
+
+## Terminal failed supervised attempt, 16 November
+
+Scope `pt-supervised-browser-20261116-01` was explicitly authorized, created and
+is now **closed/unbound**, with zero workflow submissions and zero algorithm calls.
+One named standby exited 1 during its first read-only adapter capability probe:
+adapter recreation while enabling supervision removed the DNS target. Builder
+readiness was denied, Confirm was not clicked, no retry/replacement occurred.
+All flags/configuration restored to before; workers stopped; seven old jobs,
+eight designs, queues and 25/25 ledger preserved. Keep its container and logs.
+See supervised-acceptance-20261116-verification.json and the appended report.
+
+**Do not rerun the preceding execution instructions for this scope.** A later
+attempt needs separate explicit authorization after a reviewed startup-order fix.
+Proposed safe sequencing for review: create exact authority; enable/stabilize only
+the adapter while API stays inspection-only; launch the one named standby; verify
+its fresh lease; enable only API (do not recreate adapter again); normal Builder
+readiness and one confirmation. Do not add automatic processor replacement,
+algorithm retries or bypass the lease. This correction has not been exercised.

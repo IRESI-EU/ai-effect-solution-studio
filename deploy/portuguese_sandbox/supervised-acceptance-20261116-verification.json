@@ -1,0 +1,263 @@
+{
+  "outcome": "FAILED_READINESS_NO_SUBMISSION",
+  "approved_portal_commit": "cd9a6527aea5084c63bfaccad3b35ca7713c4ea5",
+  "serving_portal_source": "75ccb8fd09be477d5517bea26c139011f9436ad6",
+  "serving_wp3_source": "17f32be413fe64532373f70d8b862002c3427a8c",
+  "authorization_id": "pt-supervised-browser-20261116-01",
+  "saved_design_url": "http://127.0.0.1:23124/builder?solutionId=b4e48556-c3a5-4a73-903d-c2a2618756fd",
+  "saved_revision": "2026-11-16T11:26:14.691950",
+  "request_sha256": "96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b",
+  "images": {
+    "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "pt-adapter": "sha256:9e92cca958ae4cf83d67acc26c41a968d083a93ecebcc5d2853743d585b149eb",
+    "api": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e",
+    "web": "sha256:b33af5d3c6011c2f0564ae201b3269711096996eccc2eefde1f05525ee2065c8",
+    "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+    "candidate_targeted_worker": "sha256:28f727ed76d6c3c1083460fcb93b47f5079d2eb501298c9dd6d0230e9bbd376a"
+  },
+  "preflight": {
+    "passed": true,
+    "request_sha256": "96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b",
+    "saved_revision": "2026-11-16T11:26:14.691950",
+    "previous_jobs": 7,
+    "previous_scopes_closed": true,
+    "queues_empty": true,
+    "ledger_count": 25,
+    "ledger_outstanding": 0,
+    "runtime_mapping": "Historical registry image retained exactly; current served adapter equals frozen image; actual parameter/binding checks and pinned worker capability match passed."
+  },
+  "browser_actions": {
+    "Validate_design_clicks": 1,
+    "Prepare_and_deploy_clicks": 1,
+    "Confirm_clicks": 0,
+    "saved_design_edits": 0,
+    "manual_submit_or_bind": false
+  },
+  "readiness_error": "Exact execution authority or waiting targeted processing is unavailable. No automatic retry; inspect any accepted attempt.",
+  "demonstrated_cause": {
+    "worker": "ai-effect-pt-supervised-20261116-01",
+    "exit_code": 1,
+    "exception": "httpx.ConnectError: [Errno -3] Temporary failure in name resolution",
+    "call_site": "supervised_worker.py probe(): PT_SANDBOX_SELF_URL + /control/capabilities",
+    "hostname": "pt-adapter",
+    "sequence": "Standby was launched first. Applying the adapter supervised flag recreated that container during the first read-only probe; DNS failed and no readiness lease was established.",
+    "timeline": [
+      {
+        "source": "Docker event",
+        "time_utc": "2026-11-16T11:50:06.723526+00:00",
+        "time_nanoseconds": 1794829806723525731,
+        "action": "start",
+        "name": "ai-effect-pt-supervised-20261116-01"
+      },
+      {
+        "source": "Docker event",
+        "time_utc": "2026-11-16T11:50:08.019320+00:00",
+        "time_nanoseconds": 1794829808019320242,
+        "action": "kill",
+        "name": "ai-effect-pt-parameters-pt-adapter-1"
+      },
+      {
+        "source": "Docker event",
+        "time_utc": "2026-11-16T11:50:08.734564+00:00",
+        "time_nanoseconds": 1794829808734563874,
+        "action": "stop",
+        "name": "ai-effect-pt-parameters-pt-adapter-1"
+      },
+      {
+        "source": "Docker event",
+        "time_utc": "2026-11-16T11:50:08.739769+00:00",
+        "time_nanoseconds": 1794829808739768666,
+        "action": "die",
+        "name": "ai-effect-pt-parameters-pt-adapter-1"
+      },
+      {
+        "source": "Docker event",
+        "time_utc": "2026-11-16T11:50:08.793937+00:00",
+        "time_nanoseconds": 1794829808793937149,
+        "action": "destroy",
+        "name": "ai-effect-pt-parameters-pt-adapter-1"
+      },
+      {
+        "source": "Docker event",
+        "time_utc": "2026-11-16T11:50:08.807645+00:00",
+        "time_nanoseconds": 1794829808807644675,
+        "action": "rename",
+        "name": "ai-effect-pt-parameters-pt-adapter-1"
+      },
+      {
+        "source": "Retained container State.FinishedAt",
+        "time_utc": "2026-11-16T11:50:09.795329387Z",
+        "action": "finished",
+        "exit_code": 1,
+        "name": "ai-effect-pt-supervised-20261116-01"
+      }
+    ]
+  },
+  "actual_new_results": {
+    "workflow_id": null,
+    "qualified_task_ids": [],
+    "results_url": null,
+    "workflow_submissions": 0,
+    "TrainModel_calls": 0,
+    "GenerateData_calls": 0,
+    "new_model_consumption_proof": null,
+    "new_model_hash": null,
+    "new_generation_output_hash": null,
+    "new_authorized_downloads": []
+  },
+  "parameter_evidence": {
+    "requested_overrides": {
+      "TrainModel": {
+        "epochs": 2
+      },
+      "GenerateData": {}
+    },
+    "validated_effective": {
+      "TrainModel": {
+        "epochs": 2,
+        "batch_size": 4
+      },
+      "GenerateData": {
+        "number_of_examples": 10
+      }
+    },
+    "observed_new_algorithm_settings": null,
+    "reason": "Readiness failed before confirmation, dispatch, task creation or model generation."
+  },
+  "closure": {
+    "outcome": "FAILED_READINESS_NO_SUBMISSION",
+    "scope": "pt-supervised-browser-20261116-01",
+    "scope_state": "closed",
+    "scope_workflow_id": null,
+    "scope_closed_at": "2026-11-16T11:52:03.031550+00:00",
+    "new_workflows": 0,
+    "TrainModel_calls": 0,
+    "GenerateData_calls": 0,
+    "provider_requests": 0,
+    "new_submission_attempt_rows": 0,
+    "original_seven_jobs_unchanged": true,
+    "all_saved_designs_unchanged": 8,
+    "queue_state_unchanged": true,
+    "all_four_workers_stopped": true,
+    "private_configuration_restored_exactly": true,
+    "inspection_policy": {
+      "available": false,
+      "message": "This sandbox is available only for inspection. New workflow submissions are disabled; execution requires separate operator authorization and targeted processing of an existing request."
+    },
+    "processor": [
+      {
+        "authorization_id": "pt-supervised-browser-20261116-01",
+        "worker_id": "4a9c9e93-5392-44cf-b5dc-bfcf4863e996",
+        "state": "finished",
+        "lease_until": 0.0
+      }
+    ],
+    "events": [
+      {
+        "id": 15,
+        "authorization_id": "pt-supervised-browser-20261116-01",
+        "action": "created",
+        "actor": "as-via-Codex/user-authorized-20261116",
+        "at": "2026-11-16T11:50:04.785923+00:00",
+        "details": "{\"max_generation\":1,\"max_training\":1,\"max_workflows\":1,\"policy_sha256\":\"2ea9009055f1a17418c1bbdf4b49838660e872cb2238203de967d4ba94520a90\"}"
+      },
+      {
+        "id": 16,
+        "authorization_id": "pt-supervised-browser-20261116-01",
+        "action": "processor_registered",
+        "actor": "4a9c9e93-5392-44cf-b5dc-bfcf4863e996",
+        "at": "2026-11-16T11:50:07.489752+00:00",
+        "details": "{}"
+      },
+      {
+        "id": 17,
+        "authorization_id": "pt-supervised-browser-20261116-01",
+        "action": "processor_stopped",
+        "actor": "4a9c9e93-5392-44cf-b5dc-bfcf4863e996",
+        "at": "2026-11-16T11:50:09.475307+00:00",
+        "details": "{}"
+      },
+      {
+        "id": 18,
+        "authorization_id": "pt-supervised-browser-20261116-01",
+        "action": "closed",
+        "actor": "as-via-Codex/user-authorized-20261116",
+        "at": "2026-11-16T11:52:03.032641+00:00",
+        "details": "{\"jobs\":[]}"
+      }
+    ]
+  },
+  "preservation": {
+    "total_historical_jobs": 7,
+    "historical_jobs_unchanged": true,
+    "all_eight_saved_designs_unchanged": true,
+    "historical_model_files_and_mtimes_unchanged": true,
+    "historical_artifact_hashes_rechecked": [
+      {
+        "job_id": "3cfaf2a8fe78eac9f48f67af3beebc17b85a10f412c06c48b305b64a9b6cbe2e",
+        "method": "TrainModel",
+        "sha256": "25b840a5647d949f0c2ccb44c98a7a579f70032ed104d690d33fea1f741342d6"
+      },
+      {
+        "job_id": "f6623ef2fef2e49483d891b1ca1b7aec808b9616ad81338d66e1e9e36479ef53",
+        "method": "GenerateData",
+        "sha256": "becaca408f6a7a2f153575fa75a1737e0e57a7414f1b4ee1d620024924127fab"
+      },
+      {
+        "job_id": "439ce9dba3a6b84922ef33372d9982f815c3fdeaa4589e7eb4bb4c5eac95e48b",
+        "method": "GenerateData",
+        "sha256": "30912aefb86c40546ace2d035b7f862461a4b2069c7deb90488c02217c7e8e73"
+      },
+      {
+        "job_id": "3768d711e3282fa5e91c9a4fb03a6b82f493cb2d9ea4fb9c43901813813dfe33",
+        "method": "TrainModel",
+        "sha256": "a6bb82d518da9cdc1dc47f5bcdc5529211808e029c5e2ea53a81dc3adb486d26"
+      },
+      {
+        "job_id": "8b965f373f7acfdd854e0b85d7933f1685b8da6e0ed52606d3c4d4bea4d7b3de",
+        "method": "GenerateData",
+        "sha256": "f8b2ca463392571f573a899eabd414b7ee07101521782cfd3cfdca27e31d3d57"
+      },
+      {
+        "job_id": "f5b84be34be28c11286e40015f92ea0789c80ce29048e1e908616d0cdd783a20",
+        "method": "TrainModel",
+        "sha256": "feacc210dc1a9277eaa794d6867f2ab8862cc528da7c51bc557e01d185ecd4f7"
+      },
+      {
+        "job_id": "777ede8078e2d357e96b9fefef816a8c038b785a86b93342a707eeb50d121585",
+        "method": "GenerateData",
+        "sha256": "98fc83609c6690612b1fcd239ba45df167fa2915fdeee4ef13fa5b2ccf198f60"
+      }
+    ],
+    "ledger": {
+      "unchanged": true,
+      "count": 25,
+      "limit": 25,
+      "outstanding": 0,
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b"
+    },
+    "containers": {
+      "retained_container_names": 53,
+      "current_total": 54,
+      "only_added": "ai-effect-pt-supervised-20261116-01 (retained exited 1)",
+      "only_replaced": [
+        "api",
+        "pt-adapter"
+      ],
+      "all_original_images_unchanged": true,
+      "other_container_ids_mounts_running_states_unchanged": true,
+      "private_compose_byte_identical_to_before": true
+    }
+  },
+  "historical_results_url": "http://127.0.0.1:23124/deployments/wf-375a888b8976#results",
+  "next_action": "Review and non-executingly verify startup ordering: stabilize the enabled adapter before launching a one-shot standby; keep API inspection-only until its processor lease is fresh. Any later algorithm attempt requires a separate explicit authorization and new supported scope. Do not reopen this scope or restart this processor.",
+  "portuguese_node_prerequisites": [
+    "Correct and verify supervised activation ordering; complete a separately authorized successful local supervised acceptance.",
+    "Portuguese owner confirms service family/version/image, settings semantics and bounds, model/input/output contract and authorization.",
+    "Obtain approved node endpoint/network access, credentials, storage/input permissions and compute limits through its responsible owner.",
+    "Verify parameter/binding negotiation and task-specific model/output association on that actual node under separately bounded authorization; local sidecar evidence is not partner-native approval."
+  ],
+  "new_provider_requests": 0,
+  "production_changes": 0
+}

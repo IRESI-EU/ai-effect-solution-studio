@@ -324,3 +324,102 @@ sign-in: original-checkout
 `pt-sandbox-designer@example.test`. Never reproduce the password. Independent
 human usability, scientific suitability and production compatibility remain
 unverified. C: headroom after packaging: 63.78 GiB.
+
+
+## Supervised acceptance attempt: FAILED READINESS, no dispatch (16 November)
+
+The owner explicitly authorized exactly the frozen request at Portal
+`cd9a6527aea5084c63bfaccad3b35ca7713c4ea5`, saved design
+`b4e48556-c3a5-4a73-903d-c2a2618756fd`, revision `2026-11-16T11:26:14.691950`,
+SHA **`96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b`**. The original proposal and successful design-only
+acceptance above remain unchanged. This is a separate failed live-readiness
+observation; it must not be reported as a completed algorithm acceptance.
+
+Before authority, the authenticated saved record/revision/hash, active complete
+contract definitions, dataset bytes/hash, compiled instance configurations and
+model_ref binding all matched. Actual images/resources matched the frozen
+proposal. The historical registered adapter image was retained exactly; current
+served adapter image separately matched the proposal. Actual orchestrator
+parameter compatibility, adapter binding/I/O hashes and pinned worker capability
+identity all passed read-only checks. Seven old jobs/models/artifacts, closed
+scopes, empty terminal workflow queues and byte-identical 25/25 ledger were verified.
+
+Supported operator created one attributable scope
+**`pt-supervised-browser-20261116-01`**. One named standby
+`ai-effect-pt-supervised-20261116-01` started with the pinned candidate, existing
+journal volume, CPU 1 / RAM 384 MiB, restart=no and at most 300-second wait.
+Only this profile's API/adapter supervision flags were enabled. In the actual
+Builder, Validate succeeded; **Prepare & deploy was clicked once**. Readiness
+returned: “Exact execution authority or waiting targeted processing is unavailable.
+No automatic retry; inspect any accepted attempt.” **Confirm was never clicked.**
+No alternate submit/bind route, saved-design edit, retry or replacement was used.
+
+### Demonstrated failure and closure
+
+The startup order launched the standby before the adapter flag change recreated
+its dependency. Docker records standby start at 11:50:06.723526Z and adapter
+stop/destroy at 11:50:08.734564Z / 11:50:08.793937Z. The worker traceback fails in
+its first read-only `/control/capabilities` probe with
+`httpx.ConnectError: [Errno -3] Temporary failure in name resolution` for
+`pt-adapter`; retained State.FinishedAt is 11:50:09.795329387Z, exit 1.
+No fresh waiting-processor lease was established. The worker ended through its
+finally path; no processor claim or workflow binding event exists. This is an
+activation-sequencing failure, not a demonstrated parameter or contract mismatch.
+No recovery retry was attempted after the readiness denial.
+
+![Actual failed readiness](evidence/portuguese-supervised-20261116-readiness-denied.png)
+
+| Item | Actual outcome |
+| --- | --- |
+| New workflow / qualified task identities / results URL | None created |
+| TrainModel / GenerateData calls | **0 / 0** |
+| Requested overrides | Train epochs 2; batch/count omitted pinned defaults |
+| Validated effective settings | epochs 2, batch 4; generation 10 |
+| New observed consumption / saved model / output / downloads | **Not available: no dispatch** |
+| Scope | Closed unbound at **2026-11-16T11:52:03.031550+00:00**, zero scoped jobs |
+| Processor | Retained exited 1, finished lease 0; never restarted |
+| Other workers | Three retained workers stopped |
+| Queues and old evidence | Unchanged, no unresolved queued work |
+| Provider | 0 requests; unchanged **25/25**, zero outstanding |
+
+Closure used the supported operator, not journal edits. Private compose was
+restored byte-for-byte, disabling both flags and removing active scope settings;
+only API/adapter were recreated with the same frozen images/volumes. All original
+53 container names/images remain, with the failed named standby as the sole added
+container. All eight saved designs are equal to before. Seven completed journal
+jobs, prior authorization rows/events, model bytes/mtimes, artifact hashes,
+immutable historical submissions and queue records passed read-only preservation.
+No new ExecutionSubmission row references this scope. Provider ledger SHA remains
+`cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b`. Original Portuguese ML code/image unchanged.
+
+![Inspection-only restored after closure](evidence/portuguese-supervised-20261116-inspection-restored.png)
+
+[Exact sanitized attempt/closure evidence](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json).
+Private records/logs/configuration are retained under original-checkout
+`local-backups/pt-supervised-live-20261116`; none of the credentials/database/model
+bytes/raw private configuration were published. This evidence-only update did not
+rerun unrelated tests or build/change application source.
+
+There is **no new results URL**. [Historical completed owner results](http://127.0.0.1:23124/deployments/wf-375a888b8976#results)
+remain available and are explicitly earlier execution evidence.
+
+### Required next work, not another attempt
+
+Review/non-executingly verify startup ordering: stage and stabilize the adapter's
+supervised flag before launching a one-shot standby; keep the API inspection-only
+until that exact processor has a fresh healthy lease. An API-only activation then
+must not recreate the adapter beneath the standby. This ordering correction is
+not applied here. Do not restart this processor, reopen this closed scope, retry
+readiness or infer permission for a new workflow. Any later algorithm attempt
+requires a new explicit decision and supported exact-request scope.
+
+This attempt establishes preflight/request compatibility and fail-closed
+readiness; it establishes **no new algorithm consumption**. Earlier local signed
+parameter/model-handoff evidence remains valid. Before Portuguese node access:
+finish stable local supervision and its separately authorized acceptance; obtain
+owner-confirmed service family/image/version, parameter semantics and bounds,
+input/model/output contracts; obtain approved node endpoint/authentication,
+storage/input permissions and resource limits; then verify task-specific handoff
+and parameter delivery on that actual node under separately bounded approval.
+Local sidecar support is not partner-native approval, scientific qualification,
+independent usability or production compatibility.
