@@ -1,12 +1,13 @@
 # Portuguese genuine-provider acceptance preparation
 
 <!-- CURRENT-STATUS-START -->
-**Prepared; blocked on local accounting transport and new session authorization.**
-Offline context/proposal/accounting checks PASS. Genuine-provider interpretation
-is **UNTESTED**. This preparation made zero provider/algorithm calls, no spending
-activation, no new live drafts/designs and no runtime/configuration change.
-Historical allowance remains **25/25**, USD0.10 ceiling, USD0.010603500 held/accounted,
-USD0.089396500 conservative remainder, zero outstanding reservations.
+**Later authorized session: behavioral A/B/C PASS; overall PARTIAL for incomplete
+wire evidence.** [Actual responses, usage and closure](PORTUGUESE_PROVIDER_ACCEPTANCE_RESULTS_2026-11-16.md)
+record three genuine calls, conservative charge USD0.001834000, scope closed,
+28/28 with zero outstanding, provider disconnected and original internal-only API
+configuration restored. Execution remained disabled. The original preparation
+below and frozen proposal preserve their earlier25/25/UNTESTED checkpoint; they
+are not rewritten as evidence that the later session already passed.
 <!-- CURRENT-STATUS-END -->
 
 Starting clean/remote-verified reviews: Portal
