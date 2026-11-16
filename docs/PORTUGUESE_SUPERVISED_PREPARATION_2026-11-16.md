@@ -6,6 +6,8 @@
 - **Release decision:** this one approval is consumed. No additional run, replacement scope, Portuguese-node access, provider or production activation authorized. Obtain responsible Portuguese node owner endpoint/auth/service-contract/dataset/resource confirmation before preparing a node-specific demonstration.
 - [Actual results and closure evidence](../deploy/portuguese_sandbox/operational-acceptance-20261116-verification.json); [live results](http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results); [earlier failed readiness remains failed](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json). Earlier preparation/findings below are preserved history.
 - Design with AI remains disconnected. Native-only new-pair composition still excludes sidecars/adapters and external workflow-input routing. No broader composition, independent-usability, scientific-quality or production-compatibility claim.
+
+- **Milestone closeout:** [6½-minute Portuguese-node audience guide](PORTUGUESE_NODE_DEMONSTRATION_2026-11-16.md). Fresh UI-built disposable count20 design saved/refreshed/validated without execution; existing count10/count20 contexts and artifacts rechecked. Browser-only Portuguese download control remains absent; use the verified local CSV handout. Provider and all execution scopes remain closed/disabled.
 <!-- CURRENT-STATUS-END -->
 
 # Portuguese Builder and supervised boundary — 2026-11-16
@@ -694,3 +696,51 @@ and image were preserved. This local run establishes parameter delivery, saved
 model corroboration, exact producer-model handoff and output counts. It does not
 establish scientific quality, independent usability, Portuguese-node access or
 production compatibility. This scope is exhausted/closed; no further algorithms.
+
+
+## Local Builder milestone closeout and meeting preparation
+
+[Short guide](PORTUGUESE_NODE_DEMONSTRATION_2026-11-16.md) and [read-only/UI verification](../deploy/portuguese_sandbox/demonstration-closeout-20261116.json). A separate fresh design changed10→20 via UI, saved/refreshed/validated, with zero deployments. All nine original designs, nine completed jobs, four closed scopes/audit and Redis records unchanged. The retained application/images stay available with execution/provider disabled and ledger25/25. Actual local presentation gap: no Portuguese browser Download control; existing authenticated-downloaded, rehashed CSV handouts are available locally. No runtime/feature change, rebuild or repeated test inventory.
+
+## Smallest next Design with AI task — proposed, not implemented
+
+**Recommend and configure one explicitly approved Portuguese TrainModel →
+GenerateData workflow, then hand the owned design to the same validated Builder.**
+No arbitrary sidecar composition, uploads, new dataset catalogue or execution.
+
+Existing extension points:
+
+- catalogue_discovery.py: registered(), operation_projection(), selected()
+  and create(); design_ai.py: TemplatePolicy/template/start, discovery_capability,
+  validate/apply/undo/save. The current registered recommendation path is
+  seed/Dutch-specific and must gain a bounded Portuguese case, not pretend it
+  already supports arbitrary declared parameters.
+- schemas/design_ai.py and the existing design_ai router/MCP/provider context:
+  explicit approved per-instance settings plus a required opaque dataset selection.
+  Only public label/reference/schema may enter context, never data/path/token.
+- instance_configuration.py, parameter_values.py and instance_proposals.py for
+  canonical settings/review; capability_bindings.sandbox_training_input and
+  existing /workflows/training-input for authorized profile-scoped CSV selection.
+  Reuse the compiler and Builder persistence/binding/input validation.
+- Existing Design with AI recommendation/settings and draft controls in
+  apps/web/app/design-ai/page.tsx; Builder's instance-parameters control supplies
+  the declared schema pattern. Keep Create/Apply/Undo/Save explicit.
+
+Acceptance: (1) only the authorized pinned registered Portuguese workflow is
+recommended; (2) missing CSV is visibly required, unavailable/unauthorized input
+denied; (3) declared parameter edits produce reviewable proposals, with invalid
+types/limits/unknown settings rejected; (4) Create/Apply/Undo/Apply/Save/reload in
+Builder retain independent identities, parameters, dataset, pins and model_ref;
+(5) stale contracts/revisions/ownership changes deny mutation; (6) unrelated
+sidecars/external-input pairs remain rejected, provider disconnected and no new
+execution/grant/budget use. A real-provider acceptance would be a later decision.
+
+Do not remove catalogue_composition.record_for's native-only/one-input restrictions
+globally. Do not make production impersonate the sandbox identity. A source-backed
+local workflow is not Portuguese-owner attestation or node qualification.
+
+Reviewer dependencies: Portal PR22 is stacked on PR21; maintained WP3 PR4 on PR3.
+Review the cumulative authentication/ownership/artifact boundaries, exact active
+0.2.0 contracts and canonical validator provenance, sidecar isolation/mounts,
+immutable submission/journal/duplicate protections, operator lease/closure policy
+and unchanged original ML image. Require all normal checks/reviews; no merge.

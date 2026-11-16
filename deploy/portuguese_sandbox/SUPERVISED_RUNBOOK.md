@@ -1,3 +1,5 @@
+For the completed local meeting sequence, use [the demonstration guide](../../docs/PORTUGUESE_NODE_DEMONSTRATION_2026-11-16.md). Inspection only; do not activate any consumed scope.
+
 ## Latest actual session — PASS and CLOSED, no further execution
 
 The exact operational proposal at Portal c58fff86fc8085d3edacaf157c4e6a9d54d525e1
