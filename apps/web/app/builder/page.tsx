@@ -782,6 +782,7 @@ function BuilderContent() {
           {!guidedDutch && <button type="button" disabled={!loaded} onClick={() => setPaletteOpen(true)}>Add services</button>}
         </div>
       </div>
+      {supervisedSandbox && !inspectionMessage && <section className="builder-offline-notice" role="status"><strong>SUPERVISED LOCAL SESSION</strong><span>One exact authorized request and a healthy waiting processor are required before confirmation. Saving and validating do not execute algorithms. Readiness is checked separately.</span></section>}
       {inspectionMessage ? <section className="builder-offline-notice" role="status"><strong>INSPECTION ONLY</strong><span>{inspectionMessage}</span></section> : offline && <section className="builder-offline-notice" role="status"><strong>OFFLINE TEST FIXTURE</strong>
         <span>Design review only. Execution is unavailable in this profile. Saving or validating does not execute this workflow.</span></section>}
       {solutionLoadError && <p role="alert">Unable to load solution design. {solutionLoadError}</p>}

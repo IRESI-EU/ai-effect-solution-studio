@@ -1,3 +1,13 @@
+<!-- CURRENT-STATUS-START -->
+## Current status - operational correction in preparation
+
+- Proven: earlier signed local training/generation and exact-model handoff; manual Builder input/pin/binding persistence.
+- Current correction: one scoped activation helper, transient read-only probe recovery and explicit supervised-session wording. Focused tests pass; packaging/integration/browser checks follow in a separate checkpoint.
+- Release decision: no new live authority or algorithm is authorized in this implementation pass. The closed failed scope and original frozen request remain preserved. A completed candidate/proposal will be presented once.
+- History: [failed readiness and closure proof](../deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json); prior records below remain intact.
+- Design with AI remains disconnected. The current new-pair composer requires native operations and excludes sidecars/adapters and external workflow-input routing (`catalogue_composition.py`); these global restrictions are unchanged.
+<!-- CURRENT-STATUS-END -->
+
 # Portuguese Builder and supervised boundary — 2026-11-16
 
 Later authorized recovery investigation:

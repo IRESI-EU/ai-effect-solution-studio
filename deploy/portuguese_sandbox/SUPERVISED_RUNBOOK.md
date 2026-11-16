@@ -1,4 +1,52 @@
-# Prepared supervised mode — disabled, not activated
+# Current operator procedure — corrected activation, execution disabled
+
+Use `supervised_session.py` for future sessions on this retained profile. It
+does not create authority. The older procedures below are historical evidence;
+their closed scopes and consumed processors must never be reused.
+
+1. With API admission disabled, run `check --profile <retained-profile>
+   --proposal <reviewed-proposal.json> --records <new-private-directory>` using
+   the original checkout's Python environment. This validates saved revision,
+   request/settings/contracts/dataset, actual images/resources, closed historical
+   scopes, stopped old workers and the unchanged provider ledger. Its real
+   dependency check has no journal mount, workflow creation or job reservation.
+2. Only after approval of the completed proposal, use the existing
+   `experimental.portuguese_parameters.authorization create --file <policy>
+   --actor <attributable-actor>` operator against the retained journal. Never
+   create authority as part of a probe. Freeze the policy's task inputs and
+   resources from that proposal; do not edit the saved design.
+3. Run `supervised_session.py activate --profile <retained-profile>
+   --proposal <reviewed-proposal.json> --authority-file <exact-policy.json>
+   --worker-name <unique-approved-name> --records <new-private-directory>`.
+   The helper checks the separately created, unused authority; configures and
+   stabilizes the adapter with API admission OFF; starts one named standby;
+   waits for a fresh lease; then enables/recreates ONLY the API. It checks the
+   adapter identity and fresh lease again. No replacement standby is permitted.
+4. Obtain readiness and confirm once through the normal Builder. The standby
+   retries only transient read-only DNS/connection/startup probes within the
+   first 30 seconds. Probe budget is 3 seconds, HTTP/Redis operation timeouts
+   at most 1 second, healthy polling 1 second and lease 6 seconds. A failed probe
+   revokes the lease. Authentication/capability/policy failures are permanent.
+   Standby lifetime is at most 300 seconds. Binding/claim/algorithm processing
+   are single-attempt; uncertainty requires reconciliation, never redispatch.
+5. Reconcile terminal submission/task/journal/model/output evidence; stop only
+   the named processor, close the scope with the supported attributable
+   operator, then run `restore-review --profile <retained-profile> --records
+   <activation-record-directory>`. This refuses a running worker/unclosed scope
+   or unrelated configuration drift, restores the backed-up configuration and
+   recreates only API/adapter. Preserve databases, journal and all evidence.
+   Recheck flags OFF, old workers stopped, queues and 25/25 provider ledger.
+
+No live scope, standby or algorithm is authorized by this document. The current
+candidate and non-executing verification are recorded in
+[the current-status report](../../docs/PORTUGUESE_SUPERVISED_PREPARATION_2026-11-16.md).
+The single synthetic CSV and bounds are sandbox choices; the original service
+accepts uploaded CSV data. Design with AI remains disconnected: its native-only
+new-pair composer excludes this sidecar and external-input routing.
+
+---
+
+# Historical preparation and failed attempt
 
 This is preparation for the existing ai-effect-pt-parameters profile only.
 No command below authorizes a new algorithm. The 2026-11-16 report records the
