@@ -27,7 +27,7 @@ import InstanceParameters, { type InstanceConfiguration } from "../../components
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
 import ReviewDialog from "../../components/review-dialog";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly, withRunInput, normalizeRunInput, trainingInputMessage, portugueseOperationHelp } from "../../lib/builder-review";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, catalogueDesignOnly, withRunInput, normalizeRunInput, trainingInputMessage, portugueseOperationHelp, reuseSavedForSupervisedReadiness } from "../../lib/builder-review";
 import { bindingSignature, savedBindingSignatures, stepPurpose } from "../../lib/connection-review";
 import BuilderViewport from "../../components/builder-viewport";
 import { MIN_ZOOM, MAX_ZOOM } from "../../lib/builder-viewport";
@@ -171,6 +171,10 @@ function BuilderContent() {
   const [runInputError, setRunInputError] = useState("");
   const [trainingInputRequired, setTrainingInputRequired] = useState(false);
   const [inspectionMessage, setInspectionMessage] = useState("");
+  const [supervisedSandbox, setSupervisedSandbox] = useState(false);
+  const onExecutionPolicy = useCallback((message: string, supervised = false) => {
+    setInspectionMessage(message); setSupervisedSandbox(supervised);
+  }, []);
   const [solutionLoadError, setSolutionLoadError] = useState("");
   const [solutionSaveError, setSolutionSaveError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
@@ -587,7 +591,11 @@ function BuilderContent() {
     try {
       let savedSolution: SavedSolution;
       try {
-        savedSolution = await persistSolution();
+        // A needless Save changes updated_at and invalidates the operator's
+        // exact frozen request. Other profiles retain their existing behavior.
+        savedSolution = reuseSavedForSupervisedReadiness(supervisedSandbox, dirty, currentSolutionId, savedUpdatedAtRef.current)
+          ? {id: currentSolutionId!, name: solutionName, updated_at: savedUpdatedAtRef.current!}
+          : await persistSolution();
       } catch (error) {
         if (workflowRevision === workflowRevisionRef.current) {
           setRuntimePreflight(null);
@@ -789,7 +797,7 @@ function BuilderContent() {
       <div className="builder-connections-card">
           <CapabilityBindings nodes={nodes} edges={edges} saved={savedBindings} checked={checkedBindings} selectedEdgeId={selectedEdgeId}
             runInput={reviewInput(runInputMode, runInput)} onTrainingRequired={setTrainingInputRequired}
-            onExecutionPolicy={setInspectionMessage}
+            onExecutionPolicy={onExecutionPolicy}
             onTrainingInput={value => { setRunInputMode("json"); setRunInput(value ? JSON.stringify({dataset_ref:value}) : ""); setRunInputError(""); invalidateWorkflowResults(); }}
             onBind={(edgeId, source, target, sourceSlot, targetSlot) => {
             const edge = edges.find(e => e.id === edgeId);

@@ -81,3 +81,7 @@ export function portugueseOperationHelp(serviceId: string) {
   if (serviceId === "pt-experimental-GenerateData") return "Standalone historical operation using the earlier model; use chained GenerateData after training a new model.";
   return "";
 }
+
+export function reuseSavedForSupervisedReadiness(supervised: boolean, dirty: boolean, id: string | null, updatedAt: string | null) {
+  return supervised && !dirty && !!id && !!updatedAt;
+}

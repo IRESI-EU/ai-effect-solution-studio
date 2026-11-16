@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, withRunInput, trainingInputMessage, portugueseOperationHelp } from "./builder-review.ts";
+import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, withRunInput, trainingInputMessage, portugueseOperationHelp, reuseSavedForSupervisedReadiness } from "./builder-review.ts";
 
 const producer = {id:"p", position:{x:20,y:40}, data:{label:"Stored producer",service:{id:"service-p",name:"Generate sample images"},configuration:{parameters:{seed:42}},operation_contract:{contract_id:"p-pin",contract_version:"1"}}};
 const consumer = {id:"c",position:{x:400,y:40},data:{service:{id:"service-c",name:"Score images"}}};
@@ -13,6 +13,13 @@ test("Portuguese palette distinguishes published chained operations from retaine
   assert.match(portugueseOperationHelp("pt-experimental-TrainModel"), /Standalone historical/);
   assert.match(portugueseOperationHelp("pt-experimental-GenerateData"), /earlier model/);
   assert.equal(portugueseOperationHelp("another-service"), "");
+});
+test("supervised readiness preserves the saved revision used by exact authorization", () => {
+  assert.equal(reuseSavedForSupervisedReadiness(true, false, "saved", "revision"), true);
+  assert.equal(reuseSavedForSupervisedReadiness(false, false, "saved", "revision"), false);
+  assert.equal(reuseSavedForSupervisedReadiness(true, true, "saved", "revision"), false);
+  assert.equal(reuseSavedForSupervisedReadiness(true, false, null, "revision"), false);
+  assert.equal(reuseSavedForSupervisedReadiness(true, false, "saved", null), false);
 });
 const state={steps:2,dirty:false,design:null as "valid"|"invalid"|null,offline:false,confirmationReady:false,submitted:false};
 

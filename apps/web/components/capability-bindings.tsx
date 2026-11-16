@@ -9,7 +9,7 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
   nodes: Node[]; edges: Edge[]; saved: Record<string, string>; checked: Record<string, string>; selectedEdgeId: string | null;
   onBind: (edgeId: string, source: Contract, target: Contract, sourceSlot: string, targetSlot: string) => void;
   runInput: unknown; onTrainingInput: (reference: string) => void; onTrainingRequired: (required: boolean) => void;
-  onExecutionPolicy: (message: string) => void;
+  onExecutionPolicy: (message: string, supervised?: boolean) => void;
 }) {
   const [detailsEdge, setDetailsEdge] = useState<string | null>(null);
   const [contracts, setContracts] = useState<Record<string, Contract>>({});
@@ -32,7 +32,7 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
   useEffect(() => {
     let active = true;
     fetch("/api/workflows/training-input").then(r => r.ok ? r.json() : null)
-      .then(value => { if (active) { setDataset(value?.dataset || null); onExecutionPolicy(value?.execution?.available === false ? value.execution.message : ""); } }).catch(() => {});
+      .then(value => { if (active) { setDataset(value?.dataset || null); onExecutionPolicy(value?.execution?.available === false ? value.execution.message : "", value?.execution?.mode === "supervised"); } }).catch(() => {});
     return () => { active = false; };
   }, [onExecutionPolicy]);
   const trainingRequired = Object.values(contracts).some(c => c.definition.inputs.some(s => s.name === "dataset_ref" && s.required && s.source_requirement === "workflow_input"));
