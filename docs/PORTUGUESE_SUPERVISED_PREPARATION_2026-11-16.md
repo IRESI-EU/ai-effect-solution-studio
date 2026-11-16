@@ -188,3 +188,36 @@ the one-shot processor, close that scope, disable both supervised flags, check
 all queues and old evidence, and verify the exhausted 25/25 ledger unchanged.
 Do not run this proposal or ask for execution approval until the blocked design
 and packaging prerequisites are complete. No partner-native/node-ready claim.
+
+
+## 16 November recovery / packaging checkpoint (non-executing)
+
+Starting reviews: Portal 54dd3f09e75d2c8e21bb79f4ead9c1c8066e811c,
+maintained WP3 17f32be413fe64532373f70d8b862002c3427a8c.
+The owner reported Engine running after a normal Windows Start launch and a
+successful disposable AppData create/write/rename test in normal PowerShell
+outside Codex. Docker CLI subsequently responds inside Codex (server 29.9.2).
+These observations do not establish the original rename failure's root cause.
+No further Desktop repair, settings/ACL change or restart was performed.
+
+No retained containers started automatically. Only this profile's retained
+PostgreSQL, Redis, ML, orchestrator, adapter, observer, API and web were started.
+All three workers remain stopped; supervision is disabled and provider is
+ disconnected. Before packaging, authenticated read-only checks confirmed the
+owner workflow Completed, unchanged immutable submission, seven completed
+journal jobs and rehashed outputs, old designs/models, closed scopes, empty
+queues and unchanged ledger SHA/count 25/25 with zero outstanding reservations.
+A new consistent pg_dump and exact private compose/container rollback snapshot
+are retained under original-checkout local-backups/pt-accept-20261116.
+
+The original packager stopped on missing dependency image
+8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1.
+Its older staging web dependency image is also absent. Instead of downloading
+or changing dependencies, the packager now pins the retained current verified
+API/web 002686f04fb5 images by exact IDs. All 48 installed Python requirements
+match requirements.lock (CPython 3.12.14); web pnpm-lock.yaml and package.json
+hashes match exactly (Node 24.15.0). Existing lock comparisons, pip check,
+no-network build, source-only context and tag-drift checks remain mandatory.
+No historical image is relabelled or overwritten. This is a build-input repair,
+not a runtime dependency upgrade. Actual build/test/browser results are appended
+separately after they finish; this checkpoint alone is not acceptance.

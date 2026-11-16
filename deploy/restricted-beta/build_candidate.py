@@ -15,14 +15,14 @@ import tarfile
 ROOT = Path(__file__).resolve().parents[2]
 DOCKER = ["docker", "--context", "desktop-linux"]
 INPUTS = [
-    "sha256:8a998103f1ea42cb1a8fd461e8e3fbf32c992d98b60c3147917f9cac95a758e1",
-    "sha256:2c9ec04228b8e223d8fcd6adf86188b5a591e814c43eb25317ac95d33a20c36a",
+    "sha256:22c4994a05dce43bde2472a20f73ee27605a955a28ae6085742364ad32d672be",
+    "sha256:ced615705bfc07ad59fd6489491959d9b0a3ff18a54421ad9a6df6aa37d477f6",
     "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
     "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d",
 ]
 DEPENDENCY_TAGS = {
-    "ai-effect-staging-api:0458b93949a4": INPUTS[0],
-    "ai-effect-staging-web:0458b93949a4": INPUTS[1],
+    "ai-effect-beta-candidate-api:002686f04fb5": INPUTS[0],
+    "ai-effect-beta-candidate-web:002686f04fb5": INPUTS[1],
 }
 
 
