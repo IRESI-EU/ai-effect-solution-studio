@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "session": "pt-provider-acceptance-20261116",
+  "maximum_provider_attempts": 3,
+  "followup_attempts": 0,
+  "case_a": {
+    "prompt": "Recommend a workflow that trains a Portuguese synthetic-data model and then generates data using that same model. Explain the required training CSV selection and the declared default settings. Do not execute anything.",
+    "calls": 1,
+    "initial_state": "New visible Design with AI conversation; no draft, no history, no pending clarification.",
+    "structured_expectation": "supported_recommendation for workflow-ac621480df1df1b05633230f only; no edits; no seed or native-pair settings. registered_settings absent or declared defaults first epochs=1,batch_size=4 and second number_of_examples=10.",
+    "pass": ["Only the authorized registered chain is selected", "Explains TrainModel then GenerateData from its model_ref", "Describes explicit Sandbox test dataset selection separately from defaults 1/4/10", "No draft, submission, runtime authority or results are created by the response", "No claim that execution is currently available"],
+    "after_response": "If valid, explicitly Create in the visible UI for Case B. Record newly allocated draft/instance identities; no inherited results. Otherwise stop the session."
+  },
+  "case_b": {
+    "prompt": "Set training to 2 epochs with batch size 4, and generate 20 sequences using that model. Keep the selected training CSV and the existing model connection. Do not execute anything.",
+    "calls": 1,
+    "initial_state": "Fresh draft created from valid Case A via visible Create, defaults 1/4/10. Explicitly select Sandbox test dataset through visible controls, Review configuration changes and Apply the input-only proposal (revision 1). No model call for this selection. Normal UI carries the actual Case A user/assistant history; preserve it, with no intervening chat. Recompute the framed input bound including that actual history before dispatch; deny above 32000.",
+    "structured_expectation": "expected_revision=1; set_node_parameters on the actual TrainModel node for epochs=2 (batch_size=4 may be repeated or preserved) and actual GenerateData node for number_of_examples=20; correct 0.2.0 contract IDs; no other edits, discovery selection or registered_settings.",
+    "pass": ["Canonical pending proposal shows effective training 2/4 and generation 20 without changing CSV or binding", "No settings applied before explicit Apply", "Explicit Apply then Save then refresh then Open in Builder then Validate succeeds", "All newly allocated instance IDs, both pins, selected dataset and model_ref binding survive", "No deployments or results inherited or created"],
+    "after_response": "Do not repair an incorrect response, inject a proposal or send a follow-up. Preserve failure and stop. Controls require no further provider requests."
+  },
+  "case_c": {
+    "prompt": "Change the size to 2.",
+    "calls": 1,
+    "initial_state": "Separate fresh registered draft created by the visible approved-workflow card; revision 0; defaults 1/4/10; no selected CSV, no history, no pending proposal, no saved copy or results. All three declared numeric parameters accept 2, so size does not identify a unique target.",
+    "structured_expectation": "edits=[]; model asks which declared setting/operation size refers to; no invented dataset or arbitrary value/target. Explanatory answer_only or null discovery is acceptable on this draft; no creation selection. Missing CSV is independently exposed by the application.",
+    "pass": ["Actual model text clarifies the ambiguous setting, not merely the missing CSV", "Application visibly requests training CSV selection and its validation remains invalid", "Draft revision, design, pins, IDs and pending state remain unchanged", "No Apply, Save or dataset selection is made for this case"],
+    "after_response": "Do not answer the clarification. A model that only guesses or only requests a CSV fails ambiguity interpretation even when backend guards prevent mutation."
+  },
+  "session_stop": "Any failed response, refusal, incomplete/invalid output, drift, timeout, unknown usage or uncertain dispatch stops subsequent requests. No retries, fallback, changed expectations or replacement cases. Preserve raw sanitized evidence and reconcile the same accounting permit."
+}

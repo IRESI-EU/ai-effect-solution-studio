@@ -1,6 +1,6 @@
 """Single-writer authority over the EXISTING ledger; no import/copy/reset path.
 
-Policy transitions are operator-only, exact 13->15->25, within the original
+Policy transitions are operator-only, exact 13->15->25->28, within the original
 USD0.10. Clients never receive the ledger. One unresolved reservation blocks
 further dispatch across environments; no timeout/expiry refunds a call or money.
 """
@@ -139,7 +139,7 @@ class Authority:
         for value in (scope_id, authority_id, operator, authorization_ref):
             if not isinstance(value,str) or not value.strip() or len(value)>500:
                 raise ValueError("Exact scope, authority, operator and authorization required")
-        if phase not in {"acceptance","beta"} or not re.fullmatch(r"[a-zA-Z0-9_.-]{1,100}",scope_id):
+        if phase not in {"acceptance","beta","portuguese_acceptance"} or not re.fullmatch(r"[a-zA-Z0-9_.-]{1,100}",scope_id):
             raise ValueError("Unsupported phase or scope identifier")
         if not isinstance(bindings,list) or not bindings:
             raise ValueError("Explicit environment bindings required")
@@ -151,6 +151,12 @@ class Authority:
                     or b["consumer_id"] in ids or b["token_sha256"] in hashes):
                 raise ValueError("Invalid or duplicate exact consumer/database/token binding")
             ids.add(b["consumer_id"]); hashes.add(b["token_sha256"])
+        if phase=="portuguese_acceptance" and (
+                scope_id!="pt-provider-acceptance-20261116" or len(bindings)!=1
+                or bindings[0]["consumer_id"]!="pt-registered-design-review"
+                or bindings[0]["environment"]!="portuguese-sandbox-local"
+                or not re.fullmatch(r"[a-f0-9]{64}",acceptance_evidence)):
+            raise ValueError("Portuguese acceptance requires its exact new scope, sole local consumer and frozen proposal SHA-256")
         with self.transaction(write=apply) as db:
             if (os.path.normcase(str(self.path))!=os.path.normcase(str(Path(expected_ledger_path).resolve()))
                     or expected_file_identity!=[self.path.stat().st_dev,self.path.stat().st_ino]):
@@ -159,7 +165,8 @@ class Authority:
                 raise HTTPException(409,"Ledger fingerprint changed; inspect without retrying the amendment")
             historical = rows(db)
             closed, money, maximum = db.execute("SELECT closed,limit_nano,max_calls FROM batch WHERE id=1").fetchone()
-            old, new, calls, cap = (13,15,2,10_000_000) if phase=="acceptance" else (15,25,10,50_000_000)
+            old, new, calls, cap = {"acceptance":(13,15,2,10_000_000),
+                "beta":(15,25,10,50_000_000),"portuguese_acceptance":(25,28,3,15_000_000)}[phase]
             if closed or money != TOTAL or maximum!=old or len(historical)!=old or any(not r["usage"] or r["status"] in {"reserved","settled_unacknowledged"} for r in historical):
                 raise HTTPException(409,"Expected exact exhausted, settled prior policy at unchanged USD0.10")
             if TOTAL-sum(r["held"] for r in historical)<cap:
@@ -172,11 +179,12 @@ class Authority:
             else:
                 policy=self.verify(db)
                 previous=policy["scopes"][policy["active_scope"]]
-                if (policy["authority_id"]!=authority_id or policy["phase"]!="acceptance"
-                        or previous["kind"]!="acceptance" or not acceptance_evidence.strip()):
-                    raise HTTPException(409,"Completed acceptance and attributable pass evidence required")
+                prior_kind, prior_calls = ("acceptance",2) if phase=="beta" else ("beta",10)
+                if (policy["authority_id"]!=authority_id or policy["phase"]!=prior_kind
+                        or previous["kind"]!=prior_kind or not acceptance_evidence.strip()):
+                    raise HTTPException(409,"Completed prior scope and attributable evidence required")
                 mapped=db.execute("SELECT count(*) FROM authority_requests WHERE scope=?",(policy["active_scope"],)).fetchone()[0]
-                if mapped!=2: raise HTTPException(409,"Both acceptance slots must be accounted before beta activation")
+                if mapped!=prior_calls: raise HTTPException(409,"All prior scope slots must be accounted before activation")
                 if scope_id in policy["scopes"]:raise HTTPException(409,"A historical scope cannot be reopened")
             proposal={"before_calls":old,"after_calls":new,"limit_nano":TOTAL,"scope":scope_id,
                       "max_calls":calls,"max_reserved_nano":cap,"per_request_nano":RESERVATION,"bindings":bindings}
