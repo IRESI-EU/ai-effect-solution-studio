@@ -107,3 +107,78 @@ Record attributable before/after hashes. No bootstrap, database migration, workf
 registration rewrite, account/permission change or execution authorization is part
 of this procedure. Removing the policy revokes its AI draft mutations; saved owned
 Builder designs and historical evidence remain separate.
+
+## Checkpoint 3 — actual packaged browser acceptance PASS
+
+Registration `pt-reviewer-chain-v2-20261116` is installed only in this retained
+reviewer's local profile. Candidate `workflow-ac621480df1df1b05633230f`, revision
+`3494d028405b95bb938e6eb9297bcf559f01426fc4fc84003f43f9f81c2ec8a0`, advertises
+the two pinned experimental operations and one authorized opaque CSV choice.
+No shared workflow, contract approval or service registration was changed.
+Before/after configuration hashes and attributable operator records are retained
+privately, together with the consistent backup and rollback images/configurations.
+
+Actual controls, with the existing designer signed in and AI disconnected:
+
+1. **Create Portuguese design** allocated independent instances at defaults1/4/10,
+   no selected input, no inherited result/authority. Missing-CSV instruction visible.
+2. Selected **Sandbox test dataset**, set epochs2 and generation20 (batch4 retained),
+   and selected **Review configuration changes**. Review explained1→2,10→20 and CSV.
+3. **Apply** reached revision1. **Undo** reached revision2 and exactly restored the
+   initial complete design, including unselected input and1/4/10. The same proposal
+   remained reviewable; **Apply** again reached revision3 with the same identities.
+4. **Save draft → refresh → Advanced Builder → refresh → Validate design** showed
+   **Checked successfully**, Saved, INSPECTION ONLY and no execution result. Training
+   settings2/4, generation20, CSV, both0.2.0 pins and model_ref binding survived.
+5. Read-only inspection confirmed zero deployments for this new solution. A normal
+   runtime-preflight request was denied409/inspection_only before admission.
+
+- [Saved AI design](http://127.0.0.1:23124/design-ai?draftId=91a37168-92af-47a8-b4d3-f28eb9476be8)
+- [Builder handoff](http://127.0.0.1:23124/builder?solutionId=07c9449a-48f5-4da4-b06c-b1bc9f765ba8)
+- Saved revision `2026-11-16T18:43:00.968204`; TrainModel instance
+  `a4bfeac0-bff9-461c-9a74-46686ef6a7ca`, GenerateData instance
+  `8f7cb1b9-1e4d-4d70-9415-67031cfd8449`.
+- [Proposal](../deploy/portuguese_sandbox/evidence/design-ai-20261116/registered-proposal.png),
+  [Undo](../deploy/portuguese_sandbox/evidence/design-ai-20261116/registered-undo.png),
+  [Saved](../deploy/portuguese_sandbox/evidence/design-ai-20261116/registered-saved.png),
+  [Builder binding/pins](../deploy/portuguese_sandbox/evidence/design-ai-20261116/builder-binding.png).
+
+The final results page also downloaded the original41,826-byte CSV again, with the
+same full recorded hash above. [Final rendered results](../deploy/portuguese_sandbox/evidence/design-ai-20261116/generated-csv-final.png).
+No output was regenerated. All nine historical output hashes were revalidated;
+all ten prior saved designs, nine journal jobs, four closed scopes/audit and Redis
+state remain unchanged. All56 retained container names/mounts and other component
+identities remain. Five workers stay stopped. Provider disconnected, supervision
+OFF, ledger byte-identical25/25 with zero outstanding. Only API/web and the explicit
+design-registration configuration changed. The new design is the eleventh solution.
+
+| Serving component | Actual source | Actual image |
+| --- | --- | --- |
+| API | `25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b` | `sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e` |
+| Web | `4296ec484542ce9dfa4d1b45e3ce9a897793edc3` | `sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed` |
+
+Both offline packages use retained pinned inputs/linux-amd64; final web package
+passed19 checks, typecheck and production build. Final atomic creation/control
+checks2 passed; the strengthened read-only operator check1 passed. No runtime or
+original Portuguese ML image was rebuilt/changed. The final changed-composer suite
+also passed all53 cases after the external-input guard correction. No unrelated
+complete test inventory was repeated. Exact sanitized evidence:
+[integration verification](../deploy/portuguese_sandbox/design-ai-integration-verification-20261116.json).
+
+These are **agent controls observations**, separate from the isolated deterministic
+recommendation tests. No prepared/fake provider response was installed in this
+application or its conversations. Genuine interpretation and independent human
+usability remain untested. No new algorithm consumption is claimed.
+
+### One later genuine-provider acceptance: remaining prerequisites
+
+Freeze the reviewed source/images, registration/candidate revision, authorized
+account/dataset and active contract pins. Agree bounded positive recommendation/
+configuration and ambiguity/missing-input cases with expected outcomes beforehand.
+Verify the applicable separate spending authority and supported shared-accounting
+task allocation; the existing exhausted25/25 ledger was not amended or reopened.
+Before spending, verify genuine provider/pricing, exact model/output/retry limits,
+environment identity, accounting availability and zero outstanding reservations.
+Keep execution grants disabled; provider acceptance would not authorize algorithms.
+Portuguese-owner deployment-specific confirmation/qualification, production
+compatibility and independent usability remain separate release prerequisites.

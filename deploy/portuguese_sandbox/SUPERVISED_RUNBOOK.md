@@ -1,5 +1,14 @@
 For the completed local meeting sequence, use [the demonstration guide](../../docs/PORTUGUESE_NODE_DEMONSTRATION_2026-11-16.md). Inspection only; do not activate any consumed scope.
 
+The later [download/registered Design with AI integration](../../docs/PORTUGUESE_DESIGN_AI_INTEGRATION_2026-11-16.md)
+adds an owner-authorized historical CSV download and reviewer-scoped design controls.
+Provider remains disconnected; all workers and supervised admission remain OFF.
+Create/configure/Apply/Undo/Save/Builder/Validate needs no execution activation.
+The new2/4/20 design has no results or grant. Registration uses the existing local
+operator template policy, with source/contract/reviewer pins, not shared publication
+or Portuguese-owner approval. Its guide records exact served images, rollback and
+later genuine-provider prerequisites. Historical closed scopes below stay closed.
+
 ## Latest actual session — PASS and CLOSED, no further execution
 
 The exact operational proposal at Portal c58fff86fc8085d3edacaf157c4e6a9d54d525e1
