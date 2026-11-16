@@ -101,3 +101,14 @@ test("compact catalogue-only review retains missing-input restrictions and canno
   assert.match(html,/Input requirements are unresolved/);assert.match(html,/<button[^>]+disabled/);
   assert.ok(!html.includes("Workflow complete"));
 });
+
+test("Portuguese registered recommendation requires separate CSV selection and does not invent seed or results",()=>{
+  const item={...service,mechanism:"registered_workflow",configuration_kind:"registered_parameters",candidate_id:"workflow-"+"b".repeat(24),
+    creation_supported:true,execution_supported:false,recommendation_revision:"c".repeat(64),
+    registered_settings:{first:[{name:"epochs",value:1},{name:"batch_size",value:4}],second:[{name:"number_of_examples",value:20}]}};
+  const html=render(item);
+  assert.match(html,/Select its authorized training CSV separately/);
+  assert.match(html,/declared defaults/);
+  assert.ok(!html.includes("with seed") && !html.includes("Expected after successful execution"));
+  assert.ok(!/<button[^>]+disabled/.test(html));
+});

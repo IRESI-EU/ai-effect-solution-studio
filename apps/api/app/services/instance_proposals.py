@@ -32,10 +32,22 @@ def entries(design, db):
 
 def settings_context(row, db):
     instances = entries(row.state["design"], db)
-    return {"instances": instances, "supported_edits": ["set_node_parameters"] if any(n["resolution"] == "active" for n in instances) else [],
+    result = {"instances": instances, "supported_edits": ["set_node_parameters"] if any(n["resolution"] == "active" for n in instances) else [],
         "parameter_update": "Patch only the requested parameter keys; preserve other settings and the pinned contract",
         "targeting": "Use the logical node_id. Labels identify first/second steps; if the intended instance is ambiguous, ask which label/ID and return no edits.",
         "runtime_checked": False, "execution": "No workflow is submitted by this conversation"}
+    if row.state["design"].get("registered_workflow"):
+        from app.services.catalogue_discovery import text
+        for item in instances:
+            item["label"]=text(item["label"],160)
+            item["description"]=text(item["description"])
+            if item.get("definition"):
+                for spec in item["definition"]["properties"].values():
+                    spec["title"]=text(spec["title"],120)
+                    spec["description"]=text(spec["description"],240)
+        # Input selection belongs to visible controls, never arbitrary provider data.
+        result["training_input"]={"required":True,"selected":bool(row.state["design"].get("run_input")),"selection":"Choose an authorized Training CSV in the visible controls. No dataset bytes or storage location are provided."}
+    return result
 
 
 def parameter_review(before, after, db):

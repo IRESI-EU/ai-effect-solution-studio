@@ -10,7 +10,7 @@ from app.core.config import settings
 from app.db import get_db
 from app.dependencies.auth import get_current_user, get_optional_user
 from app.models.user import User
-from app.schemas.design_ai import ApplyRequest, AssistantTurn, ChatRequest, GuidedSettingsRequest, RevisionRequest, StartRequest
+from app.schemas.design_ai import ApplyRequest, AssistantTurn, ChatRequest, GuidedSettingsRequest, RevisionRequest, StartRequest, RegisteredConfigurationRequest
 from app.services import design_ai as service
 from app.services.design_ai_mcp import connection
 from app.services.design_ai_provider import Provider, configured, get_provider, redact_context
@@ -74,12 +74,27 @@ def templates(db: Session = Depends(get_db), user: User = Depends(pilot_user)):
     return service.list_templates(db, user)
 
 
+@router.get("/registered-workflows")
+def registered_workflows(db: Session = Depends(get_db), user: User = Depends(pilot_user)):
+    from app.services.catalogue_discovery import projection
+    from app.services.registered_parameters import recommendation
+    return [recommendation(item,None) for item in projection(db,user)["registered_workflows"] if item.get("configuration_kind")=="registered_parameters"]
+
+
+@router.post("/drafts/{draft_id}/configuration")
+def registered_configuration(draft_id: str, payload: RegisteredConfigurationRequest, db: Session = Depends(get_db), user: User = Depends(pilot_user)):
+    from app.services.registered_parameters import configuration_turn
+    row=service.load_draft(draft_id,db,user,lock=True)
+    service.check_revision(row,payload.revision)
+    return service.propose(draft_id,configuration_turn(row,payload.settings,payload.run_input,db,user),db,user)
+
+
 @router.post("/drafts")
 def start(payload: StartRequest, db: Session = Depends(get_db), user: User = Depends(pilot_user)):
     if payload.candidate_id:
         from app.services.catalogue_discovery import create
         return create(payload, db, user)
-    if payload.composition_settings is not None or payload.creation_request_id is not None:
+    if payload.composition_settings is not None or payload.creation_request_id is not None or payload.registered_settings is not None:
         raise HTTPException(422, "Pair creation settings cannot be attached to a legacy template")
     if payload.template_key not in service.PILOTS:
         raise HTTPException(422, "Unknown legacy template selector; use an advertised registered recommendation")
@@ -100,7 +115,7 @@ def guided_settings(draft_id: str, payload: GuidedSettingsRequest, db: Session =
 @router.get("/drafts/{draft_id}")
 def read(draft_id: str, db: Session = Depends(get_db), user: User = Depends(pilot_user)):
     row = service.load_draft(draft_id, db, user)
-    result = service.view(row)
+    result = service.view(row,db)
     result["validation"] = service.validate(row.state["design"], db, user)
     if service.policy_scope(row.state["design"]):
         from app.services.instance_proposals import settings_context
@@ -215,7 +230,7 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                     result["message"] = "No supported catalogue match was found for this request. No design was created or changed."
                 result["activity"] = tools.activity
                 return result
-            if turn.composition_settings is not None:
+            if turn.composition_settings is not None or turn.registered_settings is not None:
                 raise HTTPException(422, "Pair settings require a structured catalogue-pair recommendation")
             if turn.edits:
                 result["clarification"] = None
@@ -235,6 +250,8 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                     result["recommendation"]["recommended_seed"] = turn.recommended_seed
         else:
             row = service.load_draft(payload.draft_id, db, user)
+            if turn.registered_settings is not None:
+                raise HTTPException(422,"Registered recommendation settings cannot edit an existing draft; use its supported edits")
             if turn.edits:
                 service.check_revision(row, base_revision)
                 if focused and turn.expected_revision != base_revision:

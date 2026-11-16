@@ -13,12 +13,12 @@ export default function DiscoveryRecommendation({ recommendation: item, busy, on
     <h3>{item.label}</h3>
     {item.purpose && !(compact && composed) && <p>{item.purpose}</p>}
     {composed && item.composition_review ? <CompositionReview review={item.composition_review} compact={compact} /> : registered ? <>
-      <p>Use the existing registered workflow with seed <strong>{item.recommended_seed}</strong>. Its supported steps and connection stay fixed.</p>
+      {item.configuration_kind === "registered_parameters" ? <><p>Use the registered experimental Portuguese workflow. Select its authorized training CSV separately in the visible controls. No execution permission or prior results are copied.</p><p>Recommended declared settings: <code>{JSON.stringify(item.registered_settings)}</code>. Unspecified values use the operation's declared defaults.</p></> : <p>Use the existing registered workflow with seed <strong>{item.recommended_seed}</strong>. Its supported steps and connection stay fixed.</p>}
       {item.defaults_used?.includes("seed") && <p>Seed {item.recommended_seed} is the declared default. You can change it in the draft's supported input settings before saving.</p>}
       <ol>{item.steps.map(step => <li key={step.operation}>{step.title}</li>)}</ol>
       <p>{item.connection}.</p>
-      <p>Expected after successful execution and capture: {item.expected_result_view.join(", ")}.</p>
-      <p>Optional downloads: {item.optional_downloads.join(", ")}.</p>
+      {!!item.expected_result_view.length && <p>Expected after successful execution and capture: {item.expected_result_view.join(", ")}.</p>}
+      {!!item.optional_downloads.length && <p>Optional downloads: {item.optional_downloads.join(", ")}.</p>}
     </> : <>
       <p>This service may help with your objective. It has no supported experiment creation path here.</p>
       <p>{item.input_requirements_known ? "Required information: " + (item.required_inputs?.map(input => input.purpose ? `${input.name} (${input.purpose})` : input.name).join(", ") || "No required inputs declared.") : "Input requirements are unresolved because a unique supported operation contract is unavailable."}</p>

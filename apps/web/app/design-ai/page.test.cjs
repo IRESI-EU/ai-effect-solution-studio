@@ -23,6 +23,7 @@ const view = load(path.join(__dirname,'workspace-view.ts'));
 const session = load(path.join(__dirname,'session.ts'));
 const allowance = load(path.join(__dirname,'allowance.ts'));
 const conversationMessage = load(path.join(__dirname,'../../components/conversation-message.tsx'));
+const registeredConfiguration = load(path.join(__dirname,'../../components/registered-configuration.tsx'));
 for (const [name, config, expected, args] of [
   ['disconnected',{provider_mode:'openai',provider_configured:false},'AI disconnected · existing controls available',[false,false,false]],
   ['allowance paused',{provider_mode:'openai',provider_configured:true,test_allowance:{can_request:false,message:'Allowance exhausted'}},'AI messages paused · existing controls available',[false,false,true]],
@@ -39,7 +40,7 @@ for (const [name, config, expected, args] of [
     '../../components/auth-context':{useAuth:()=>({user:{id:'render-only'}})},
     '../../lib/solution-design':{apiErrorMessage:()=>assert.fail('unexpected API error')},
     './session':session,'./allowance':allowance,
-    '../../components/conversation-message':conversationMessage,
+    '../../components/conversation-message':conversationMessage,'../../components/registered-configuration':registeredConfiguration,
     './workspace-view':{...view,promptPlaceholder:(...values)=>{calls.push(values);return view.promptPlaceholder(...values);}},
     './workspace-viewport':{__esModule:true,default:noop},'../../components/review-dialog':{__esModule:true,default:noop},
     '../../components/discovery-recommendation':{__esModule:true,default:noop},'../../components/experiment-execution':{__esModule:true,default:noop},
@@ -83,7 +84,7 @@ function routeHarness({messages=[],prompt="",clarification=null,params=new URLSe
     '../../components/auth-context':{useAuth:()=>({user:{id:'render-only'}})},
     '../../lib/solution-design':{apiErrorMessage:()=>assert.fail('unexpected API error')},
     './session':session,'./allowance':allowance,'./workspace-view':view,
-    '../../components/conversation-message':conversationMessage,
+    '../../components/conversation-message':conversationMessage,'../../components/registered-configuration':registeredConfiguration,
     './workspace-viewport':{__esModule:true,default:noop},'../../components/review-dialog':{__esModule:true,default:noop},
     '../../components/discovery-recommendation':{__esModule:true,default:noop},'../../components/experiment-execution':{__esModule:true,default:noop},
     '../../components/composition-review':{__esModule:true,default:noop},'../../components/structural-review':{__esModule:true,default:noop},'../../components/instance-setting-review':{__esModule:true,default:noop},

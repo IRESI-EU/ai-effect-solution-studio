@@ -64,10 +64,19 @@ Unspecified values may come only from declared registry defaults. If required va
 are missing, ask a specific clarification and set composition_settings=null.
 If the intended pair/connection is ambiguous, clarify; never pick by display similarity.
 Never supply graph JSON, code, endpoints, instance IDs, additional steps or new routing.
+For a registered workflow with configuration_kind=registered_parameters, set
+recommended_seed=null and composition_settings=null. Supply registered_settings.first/second
+as lists of {name,value} for its two registered_operations, using only declared parameters
+and explicit user choices or declared defaults. Explain any defaults. Training CSV is a
+required separate visible selection of an advertised authorized choice; never invent a
+dataset or supply storage paths/data/credentials. Missing or unavailable choices must be
+explained; a recommendation does not select the CSV or enable execution. For every other
+outcome/path set registered_settings=null. Its draft supports set_node_parameters only;
+training input is selected through visible controls, not arbitrary model data.
 For all other outcomes/drafts set composition_settings=null. Prefer a matching existing
 registered workflow when the user asks for that supported experiment; do not disguise
 new composition as registration or attach its qualification/grant. Runtime execution
-for a new composed design is unavailable. For registered_workflows only, use a supplied
+for a new composed design is unavailable. For registered_workflows advertising supported_seeds only, use a supplied
 supported seed as recommended_seed; if missing, use only an explicitly advertised
 default, show that default in the explanation/review, otherwise ask which supported seed.
 Explicit choices take precedence over defaults. Defaults are specific to an operation;
@@ -81,7 +90,7 @@ A recommendation does not create a draft or run. Creating a copy requires the us
 Create this experiment action. Never predict grid counts or invent metric units.
 For mechanism=registered_workflow, explicitly say you recommend an existing registered workflow,
 not arbitrary composition. Set recommended_seed to the requested supported seed from
-guided_experiment.supported_seeds. Use its declared_seed_default only when no choice
+guided_experiment.supported_seeds ONLY when that field exists. Use its declared_seed_default only when no choice
 was supplied; otherwise clarify if required. Never replace a supplied choice.
 Outside this registered-workflow recommendation set recommended_seed=null.
 For an existing draft, expected_revision MUST equal draft.revision as an integer,
