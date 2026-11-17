@@ -1,0 +1,2913 @@
+{
+  "portal": [
+    {
+      "path": ".dockerignore",
+      "status": "modified",
+      "sha": "772f415eaee6b771711ef5aeeeefd39ae93995df"
+    },
+    {
+      "path": ".gitattributes",
+      "status": "added",
+      "sha": "ba43293afd0f88df7e746318bc756c1f9575380e"
+    },
+    {
+      "path": ".gitignore",
+      "status": "modified",
+      "sha": "ac0fd4402b7470a52de7956a2f45d16eecff00cc"
+    },
+    {
+      "path": ".gitleaksignore",
+      "status": "added",
+      "sha": "5bf359aff98b1b15b8ee42418fddc1ad0ef7487b"
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "sha": "c2a51fef984f3fb89eb81aa574f8631759843b7c"
+    },
+    {
+      "path": "apps/api/app/accounting_authority.py",
+      "status": "added",
+      "sha": "eaffcccc12c21993a38968a4dfde8357725bb019"
+    },
+    {
+      "path": "apps/api/app/core/config.py",
+      "status": "modified",
+      "sha": "6f127713e346495cf85edc835b88f050a563a3b5"
+    },
+    {
+      "path": "apps/api/app/main.py",
+      "status": "modified",
+      "sha": "d21a8b45a0f7771e5ad834d517d8c572b09b2bd4"
+    },
+    {
+      "path": "apps/api/app/models/design_ai.py",
+      "status": "added",
+      "sha": "006f2c064e5719e0b2b29d6d1efbc412d17349f3"
+    },
+    {
+      "path": "apps/api/app/models/execution_submission.py",
+      "status": "added",
+      "sha": "2c8a1b1cd4d02ab9434fce99439211e99ffe236c"
+    },
+    {
+      "path": "apps/api/app/models/local_dutch_execution.py",
+      "status": "added",
+      "sha": "d1450d6c9865811f6a5aacb4b638d2de17bdf8fe"
+    },
+    {
+      "path": "apps/api/app/models/solution.py",
+      "status": "modified",
+      "sha": "295a2af6de825006d01eb89072db2e1becdc2592"
+    },
+    {
+      "path": "apps/api/app/routers/admin_users.py",
+      "status": "modified",
+      "sha": "74028758773dbfe8e35d31b5c167dceaa1409458"
+    },
+    {
+      "path": "apps/api/app/routers/deployment_results.py",
+      "status": "added",
+      "sha": "2fe84ad4b429358ed9142849882f7ba9eef7c3f4"
+    },
+    {
+      "path": "apps/api/app/routers/design_ai.py",
+      "status": "added",
+      "sha": "732991feb0a42683f0bd86b0b83386725168c392"
+    },
+    {
+      "path": "apps/api/app/routers/experiment_journey.py",
+      "status": "added",
+      "sha": "000fcfafdbf41535076b1df376eb8b9427644d37"
+    },
+    {
+      "path": "apps/api/app/schemas/data_reference.py",
+      "status": "modified",
+      "sha": "1e34d8bf32db1fa707efd13767044dcd181aa4da"
+    },
+    {
+      "path": "apps/api/app/schemas/design_ai.py",
+      "status": "added",
+      "sha": "38e70f97047a67f2ea9b2de2df69f177ba16bb83"
+    },
+    {
+      "path": "apps/api/app/schemas/operation_contract.py",
+      "status": "modified",
+      "sha": "b1ff81fca7be1b641367169dff350d6c86aa0ade"
+    },
+    {
+      "path": "apps/api/app/schemas/solution.py",
+      "status": "modified",
+      "sha": "9be41ed3ec0e8a91e40901177765f7e89d643f8b"
+    },
+    {
+      "path": "apps/api/app/schemas/workflow_submit.py",
+      "status": "modified",
+      "sha": "caa72d82f5551d50f1242b700ad6438aa90c229d"
+    },
+    {
+      "path": "apps/api/app/services/allowance_client.py",
+      "status": "added",
+      "sha": "85b2d3676b21e5601171e6968980fa5899a79322"
+    },
+    {
+      "path": "apps/api/app/services/capability_bindings.py",
+      "status": "added",
+      "sha": "8c299096ada31ed28fdb6bd3ec4bb9bfdeeeee0f"
+    },
+    {
+      "path": "apps/api/app/services/capability_readiness.py",
+      "status": "added",
+      "sha": "2f2b72e6a8ccd4d776d58ba9a4e5ac8519a73b13"
+    },
+    {
+      "path": "apps/api/app/services/catalogue_composition.py",
+      "status": "added",
+      "sha": "af32dab5b04fdf71ab51faddb8be91eb90363575"
+    },
+    {
+      "path": "apps/api/app/services/catalogue_discovery.py",
+      "status": "added",
+      "sha": "2aa7b3036f78ede1b133885e443487ef38fb121d"
+    },
+    {
+      "path": "apps/api/app/services/data_reference_service.py",
+      "status": "modified",
+      "sha": "714e8df9be81888b6c6670b7f4b601ce39495510"
+    },
+    {
+      "path": "apps/api/app/services/design_ai.py",
+      "status": "added",
+      "sha": "7bb78203644c7767c36daa08ec87653d1baed6de"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_allowance_operator.py",
+      "status": "added",
+      "sha": "4ed59c29c261f63193b54ff3996ecc71f6e34e4b"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_budget.py",
+      "status": "added",
+      "sha": "02ff1fe16b2171b4c4205d2445c1c91f50473f68"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_demo_allowance.py",
+      "status": "added",
+      "sha": "2b8fbad4b31f5e65b4d63a09eed2b42e4c2846ae"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_mcp.py",
+      "status": "added",
+      "sha": "c983e7c92f900bea69f29bf4beb8e91ae2c1b2c5"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_provider.py",
+      "status": "added",
+      "sha": "f64b36080c31793f7ac9d5f750940c1a3dc6fd3e"
+    },
+    {
+      "path": "apps/api/app/services/dutch_capture_contract.py",
+      "status": "added",
+      "sha": "25e27d6da7cebe307ef7f4a5dc3f62612f33dc4c"
+    },
+    {
+      "path": "apps/api/app/services/execution_journey.py",
+      "status": "added",
+      "sha": "2233b35f792be03fed99300ec4e2f2300fb533cc"
+    },
+    {
+      "path": "apps/api/app/services/execution_submission.py",
+      "status": "added",
+      "sha": "da45e80404e8fd2837df75d05c3b4d9164714efa"
+    },
+    {
+      "path": "apps/api/app/services/instance_configuration.py",
+      "status": "added",
+      "sha": "19de470a9c1626b2800a6383ac381975625b668b"
+    },
+    {
+      "path": "apps/api/app/services/instance_evidence.py",
+      "status": "added",
+      "sha": "e56cff8b34af1846ea6ef8ddf3b3cfd9ea797e6a"
+    },
+    {
+      "path": "apps/api/app/services/instance_proposals.py",
+      "status": "added",
+      "sha": "ca4150ed65ba2919f88b9427eaf1336747518e71"
+    },
+    {
+      "path": "apps/api/app/services/local_dutch_capture.py",
+      "status": "added",
+      "sha": "d7623ce376f6672c11f5ffce0bdfda85ee1f2031"
+    },
+    {
+      "path": "apps/api/app/services/local_dutch_evidence.py",
+      "status": "added",
+      "sha": "518984ef9c3689d89ce501945a870c025ea6c8e1"
+    },
+    {
+      "path": "apps/api/app/services/operation_contract_registry.py",
+      "status": "modified",
+      "sha": "7cb5a358e26c90a16caeb784091016e0c2a8cecc"
+    },
+    {
+      "path": "apps/api/app/services/orchestrator_adapter.py",
+      "status": "modified",
+      "sha": "c691bd9dcc63102bd8aec2f3e387de271b38655e"
+    },
+    {
+      "path": "apps/api/app/services/owned_artifact_preview.py",
+      "status": "added",
+      "sha": "cdf30cf938899324b8d072cc67ec062d4356b13f"
+    },
+    {
+      "path": "apps/api/app/services/parameter_values.py",
+      "status": "added",
+      "sha": "e8e700b0f168a9c57dd0137979dbf2dec275ee6d"
+    },
+    {
+      "path": "apps/api/app/services/portuguese_evidence.py",
+      "status": "added",
+      "sha": "651d9950d8b59348364d40117fe9fd07236c86e7"
+    },
+    {
+      "path": "apps/api/app/services/portuguese_supervision.py",
+      "status": "added",
+      "sha": "043089a2c4af9a86185d5e4b091945a507a3dbd1"
+    },
+    {
+      "path": "apps/api/app/services/provider_evidence.py",
+      "status": "added",
+      "sha": "098078560ae205958a957a21e6f931c7b13038ca"
+    },
+    {
+      "path": "apps/api/app/services/qualified_demo.py",
+      "status": "added",
+      "sha": "27119d35875f9c69cbe5afabd0d16aeec8a4788e"
+    },
+    {
+      "path": "apps/api/app/services/registered_parameters.py",
+      "status": "added",
+      "sha": "50daabef93f45694f7172d6facc413ee4efd2afd"
+    },
+    {
+      "path": "apps/api/app/services/registered_parameters_operator.py",
+      "status": "added",
+      "sha": "e5564484640866493e08230d12d6de24991d2ec6"
+    },
+    {
+      "path": "apps/api/app/services/shared_allowance.py",
+      "status": "added",
+      "sha": "25c9e865f10861ac78f9503ef4f92df162c7184d"
+    },
+    {
+      "path": "apps/api/app/services/structural_proposals.py",
+      "status": "added",
+      "sha": "6ab5f5790691a1be64eaedcbe872747a9fe54a1d"
+    },
+    {
+      "path": "apps/api/app/services/workflow_compiler.py",
+      "status": "modified",
+      "sha": "1260e4665877096188ade0bdc61209db45db9951"
+    },
+    {
+      "path": "apps/api/app/tests/test_package_import.py",
+      "status": "modified",
+      "sha": "de574d4d9cadd499e4c1951de36862c456a28e55"
+    },
+    {
+      "path": "apps/api/postgres_tests/conftest.py",
+      "status": "added",
+      "sha": "d407760471c370099c21a11a3cba0db0d0f88f08"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_capture_migration.py",
+      "status": "added",
+      "sha": "4eaddaecfb3d160592b12b78f64111a79bcb6876"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_design_persistence.py",
+      "status": "added",
+      "sha": "69deae70aa31fb116c55d839ef43155607376156"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_execution_claim.py",
+      "status": "added",
+      "sha": "ea27b5d7a9451154000a7ca69bce224eed585412"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_portuguese_admission.py",
+      "status": "added",
+      "sha": "a9c720cd1fc06d11f3a4dd7565e22ec155f4a660"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_prerequisite_account_locks.py",
+      "status": "added",
+      "sha": "90fe15e39ce080a568605187880c132be4fd4d73"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_staging_fresh_schema.py",
+      "status": "added",
+      "sha": "ec7131a9fc09467772ebe93f8c2407fd523b6194"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_structural_composition.py",
+      "status": "added",
+      "sha": "eda2b62c775f71575648a084d2638edd025b421a"
+    },
+    {
+      "path": "apps/api/requirements-acceptance.txt",
+      "status": "added",
+      "sha": "2613448c2bb7f7ac68c15e5d89af49722ce5e570"
+    },
+    {
+      "path": "apps/api/requirements.txt",
+      "status": "modified",
+      "sha": "7feb0a324cce75bfa66b8eddafad93d1443ff8e1"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_check.py",
+      "status": "added",
+      "sha": "35c6616f674c43beed3dd3fe1225687b4c690115"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_followup.py",
+      "status": "added",
+      "sha": "a25d916b3f431d9508b69d059893e8ef79766887"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_local.py",
+      "status": "added",
+      "sha": "9f2df2a064d7562d65361ea574e3d6ec842cc53c"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_luna_batch.py",
+      "status": "added",
+      "sha": "f38719915ada9bc3fd8bc12d80f4ffa8dba494b2"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_metadata.py",
+      "status": "added",
+      "sha": "89d8953147ed2676d07b72c52dcef6fd8ed23351"
+    },
+    {
+      "path": "apps/api/tests/conftest.py",
+      "status": "added",
+      "sha": "4162daf3b111c18639efa987b083317f53bfab97"
+    },
+    {
+      "path": "apps/api/tests/preview.py",
+      "status": "added",
+      "sha": "ee5e6996184a971fcc447c3e134b310f04eb225e"
+    },
+    {
+      "path": "apps/api/tests/test_allowance_amendment.py",
+      "status": "added",
+      "sha": "5ee7a753c842ca8934c834216f4b5dc762f0fb32"
+    },
+    {
+      "path": "apps/api/tests/test_allowance_authority_protocol.py",
+      "status": "added",
+      "sha": "3a4197a3287628437d2d9d70376fc5c3dc65e044"
+    },
+    {
+      "path": "apps/api/tests/test_automatic_dutch_capture.py",
+      "status": "added",
+      "sha": "5740954720bf49bece2a5e9f9ec581937e0a6439"
+    },
+    {
+      "path": "apps/api/tests/test_capability_bindings.py",
+      "status": "added",
+      "sha": "996968e6a38bc70da4d206727a9ffb9535c33b0f"
+    },
+    {
+      "path": "apps/api/tests/test_catalogue_composition.py",
+      "status": "added",
+      "sha": "1114e89a76b45703eb1fe12dae36a927ee0e68a6"
+    },
+    {
+      "path": "apps/api/tests/test_catalogue_discovery.py",
+      "status": "added",
+      "sha": "bf9a6c1febc1b48cb02db879521e41313dc6e5b8"
+    },
+    {
+      "path": "apps/api/tests/test_conversation_repair.py",
+      "status": "added",
+      "sha": "59de1a6e4effee80f2ecfbf88006870e10f10e35"
+    },
+    {
+      "path": "apps/api/tests/test_demo_allowance.py",
+      "status": "added",
+      "sha": "5ce76d771edfabbae150a66f6233491a8953d4e6"
+    },
+    {
+      "path": "apps/api/tests/test_deployment_results.py",
+      "status": "added",
+      "sha": "322ce33e2200e79495854b1b8b011e862a167637"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai.py",
+      "status": "added",
+      "sha": "438c2c8d2412b03bb1fe914090469989f8d8c1fb"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_budget.py",
+      "status": "added",
+      "sha": "1f437cb4a7034c8af31c63a427672d08436109d2"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_local_seed.py",
+      "status": "added",
+      "sha": "ed49e5daf976907b5634f0b128205e24eb2626e5"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_metadata.py",
+      "status": "added",
+      "sha": "ff968990d9ce3eaec7c702bed44529e20afba443"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_navigation.py",
+      "status": "added",
+      "sha": "667309cb2525bb3a95271642bf65cd26e4d3d249"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_provider.py",
+      "status": "added",
+      "sha": "e5caedd42d5e72b690c34dc8e2d91ac18fd75cd1"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_task_limit.py",
+      "status": "added",
+      "sha": "d40336c32ee34fb0998641bed76e09226ef98050"
+    },
+    {
+      "path": "apps/api/tests/test_goal_to_results.py",
+      "status": "added",
+      "sha": "4bdba233e15439b561a3ac15c45fd47015794892"
+    },
+    {
+      "path": "apps/api/tests/test_guided_dutch.py",
+      "status": "added",
+      "sha": "324e0b88bc24000024fb45cb3bdccfdfd5f42eab"
+    },
+    {
+      "path": "apps/api/tests/test_guided_provider_context.py",
+      "status": "added",
+      "sha": "0fad53e89a9b23d9d25a8c5b22c9d055f6a9741e"
+    },
+    {
+      "path": "apps/api/tests/test_instance_parameters.py",
+      "status": "added",
+      "sha": "df4a7c5cfa3fe70cd87fa95f5433fb0ea87eb3f2"
+    },
+    {
+      "path": "apps/api/tests/test_owned_artifact_preview.py",
+      "status": "added",
+      "sha": "ec3610b6f47b27cf1bd176675e4ec09bafea47b9"
+    },
+    {
+      "path": "apps/api/tests/test_parameter_compatibility.py",
+      "status": "added",
+      "sha": "d268d6247483df33be0abe564a158f6bfb9c63e9"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_acceptance_allocation.py",
+      "status": "added",
+      "sha": "01ffe5b0f46413545f656b932de8adabdf789ab2"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_chain.py",
+      "status": "added",
+      "sha": "62317f72c3c083a5ec27539422ab3c8cc22788c3"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_evidence.py",
+      "status": "added",
+      "sha": "8acf38cf5141985ab7acdcbcdff96cfe5abc645c"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_parameters.py",
+      "status": "added",
+      "sha": "7df81eb4b1c9d781f5fefb49dc8114fa2d9bad16"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_provider_preparation.py",
+      "status": "added",
+      "sha": "db34a75943fc6df0d32cc57807e9ce09e5b5d5ae"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_service_authority.py",
+      "status": "added",
+      "sha": "8f3bc071e78d7474a0267d7892c4714896ec7047"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_supervision.py",
+      "status": "added",
+      "sha": "3cd2cd3f346d16a05ec0f9a8ed7ead66666a6b9d"
+    },
+    {
+      "path": "apps/api/tests/test_prerequisite_admin_review.py",
+      "status": "added",
+      "sha": "43566b4cedab661fd798f6198533ddebb47d06b6"
+    },
+    {
+      "path": "apps/api/tests/test_prompt_first_discovery.py",
+      "status": "added",
+      "sha": "d43ca1c2390b8658c8e5be68a2eca8a411b3cbe0"
+    },
+    {
+      "path": "apps/api/tests/test_provider_evidence.py",
+      "status": "added",
+      "sha": "cb630363245b84be41705a64f54f7bb91817fd07"
+    },
+    {
+      "path": "apps/api/tests/test_provider_verification_guard.py",
+      "status": "added",
+      "sha": "6667aa20dc8eb00e505bd344b4d5ea14d94f436d"
+    },
+    {
+      "path": "apps/api/tests/test_qualification_guard.py",
+      "status": "added",
+      "sha": "12a6160fb518acaf1b20dcbd63cae5fd20e54717"
+    },
+    {
+      "path": "apps/api/tests/test_qualification_runtime.py",
+      "status": "added",
+      "sha": "e7a2352385b92f0b417666333491d27be7fc89a8"
+    },
+    {
+      "path": "apps/api/tests/test_qualified_instance_evidence.py",
+      "status": "added",
+      "sha": "aa579ae30d6e7babfbaff48a41aafa3223bed6e5"
+    },
+    {
+      "path": "apps/api/tests/test_registered_portuguese.py",
+      "status": "added",
+      "sha": "0f0f1e7a4ba316598b0d3b4aa12d102ef2e0e12c"
+    },
+    {
+      "path": "apps/api/tests/test_restricted_beta.py",
+      "status": "added",
+      "sha": "67ad89e4ec7976a34a99d18ff4b17db7dc5f22bd"
+    },
+    {
+      "path": "apps/api/tests/test_shared_allowance.py",
+      "status": "added",
+      "sha": "7492074e979ef7346783c37dd618790694566ccf"
+    },
+    {
+      "path": "apps/api/tests/test_staging_preparation.py",
+      "status": "added",
+      "sha": "0a03b8b081e7ef555aac7c4c1cdc6df4564630ab"
+    },
+    {
+      "path": "apps/api/tests/test_structural_composition.py",
+      "status": "added",
+      "sha": "6e174478fc137f872890b82a40a2531f2756edb4"
+    },
+    {
+      "path": "apps/api/tests/test_targeted_instance_edit.py",
+      "status": "added",
+      "sha": "c3f59c505873ed8e7cc47b5c4fcd22581483bcc9"
+    },
+    {
+      "path": "apps/web/AGENTS.md",
+      "status": "added",
+      "sha": "643577dfaef36ee8032915ef80a0f0638f7beda0"
+    },
+    {
+      "path": "apps/web/CLAUDE.md",
+      "status": "added",
+      "sha": "43c994c2d3617f947bcb5adf1933e21dabe46bb5"
+    },
+    {
+      "path": "apps/web/app/builder/page.tsx",
+      "status": "modified",
+      "sha": "a1772d3c49f6dfd684826c999aa533d6328d525b"
+    },
+    {
+      "path": "apps/web/app/deployments/[id]/page.tsx",
+      "status": "modified",
+      "sha": "bce4590b9dd7260b9382878fd50ce916f689429e"
+    },
+    {
+      "path": "apps/web/app/deployments/page.tsx",
+      "status": "modified",
+      "sha": "7074be9b5d2be6f11d8c406d8cae9b0ac0481c2c"
+    },
+    {
+      "path": "apps/web/app/deployments/recorded-results.tsx",
+      "status": "added",
+      "sha": "8454927c5fccf84cd85b65cde8399981e484c917"
+    },
+    {
+      "path": "apps/web/app/deployments/results.test.ts",
+      "status": "added",
+      "sha": "46f8bf6194ccd34f5013529edd239dc519e63865"
+    },
+    {
+      "path": "apps/web/app/deployments/results.ts",
+      "status": "added",
+      "sha": "b1e7f46ed5ff9b94e1d7b94f699e5aa4517a734b"
+    },
+    {
+      "path": "apps/web/app/design-ai/allowance.test.ts",
+      "status": "added",
+      "sha": "5b31b9f2bb62a4ec774733734e11c7f6a7839bbb"
+    },
+    {
+      "path": "apps/web/app/design-ai/allowance.ts",
+      "status": "added",
+      "sha": "4833a3bce6c50ba0f2d65bfdb91c47deb9ff501f"
+    },
+    {
+      "path": "apps/web/app/design-ai/composition.test.ts",
+      "status": "added",
+      "sha": "827f4d3827f029103c0c623652580ce750b31e9e"
+    },
+    {
+      "path": "apps/web/app/design-ai/page.test.cjs",
+      "status": "added",
+      "sha": "eeca233ec2b8602e444e961a2a6ecc9cb762abb7"
+    },
+    {
+      "path": "apps/web/app/design-ai/page.tsx",
+      "status": "added",
+      "sha": "5c4c3f88552255fd8d792114e1f59ecb66c6c219"
+    },
+    {
+      "path": "apps/web/app/design-ai/session.test.ts",
+      "status": "added",
+      "sha": "ee440f6284723fe2c6b868540aecd56bcc43c37c"
+    },
+    {
+      "path": "apps/web/app/design-ai/session.ts",
+      "status": "added",
+      "sha": "a7e56634d9d4c095b581a1a54550c1799b32c4d3"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace-view.test.ts",
+      "status": "added",
+      "sha": "35c6f79cfb2120b3490493032ec645746df08222"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace-view.ts",
+      "status": "added",
+      "sha": "4e52b97adc0411556ddefdadee38664354fb52f1"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace-viewport.tsx",
+      "status": "added",
+      "sha": "87f174b6904b25d8becd6001ae10c6b52312c9ff"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace.css",
+      "status": "added",
+      "sha": "4b9d5a1c4a20a65ac934f7afda5e60571579ab4f"
+    },
+    {
+      "path": "apps/web/app/globals.css",
+      "status": "modified",
+      "sha": "6e493f645b2f069a42479031b89faf2c82a69af3"
+    },
+    {
+      "path": "apps/web/app/solutions/[id]/page.tsx",
+      "status": "modified",
+      "sha": "3702611aa6ff6a643a05bff1a9eb92d31255c450"
+    },
+    {
+      "path": "apps/web/components/builder-viewport.tsx",
+      "status": "added",
+      "sha": "81ad4ed6d1c9b863237363257b4d13f31854d238"
+    },
+    {
+      "path": "apps/web/components/capability-bindings.tsx",
+      "status": "added",
+      "sha": "3d7ba0536ba121d94095b2c7268561ab20fdfee2"
+    },
+    {
+      "path": "apps/web/components/composition-review.tsx",
+      "status": "added",
+      "sha": "3449a194bc41a41d28c74db39c00a1bcb05b9f53"
+    },
+    {
+      "path": "apps/web/components/conversation-message.tsx",
+      "status": "added",
+      "sha": "15e1ded602d076a55a3bb0c9288bb464e037dc6f"
+    },
+    {
+      "path": "apps/web/components/discovery-recommendation.test.cjs",
+      "status": "added",
+      "sha": "171ab153d51f8ca314b4e1ebab3a288baace099b"
+    },
+    {
+      "path": "apps/web/components/discovery-recommendation.tsx",
+      "status": "added",
+      "sha": "9501c6976598ce1b9d14dc213e6d68c22be9050b"
+    },
+    {
+      "path": "apps/web/components/experiment-execution.tsx",
+      "status": "added",
+      "sha": "edcc8b193bf5d24f89b3fe3110f5c83511619c16"
+    },
+    {
+      "path": "apps/web/components/instance-parameters.tsx",
+      "status": "added",
+      "sha": "402485a5899bb22b951ca15974d8bc9d582bc20e"
+    },
+    {
+      "path": "apps/web/components/instance-setting-review.tsx",
+      "status": "added",
+      "sha": "f148f1ee0f006a5c53a5c13fa9932af47ca283f2"
+    },
+    {
+      "path": "apps/web/components/registered-configuration.tsx",
+      "status": "added",
+      "sha": "0654e0b62581c57e157ae2f40212a10cb49e16f5"
+    },
+    {
+      "path": "apps/web/components/review-dialog.tsx",
+      "status": "added",
+      "sha": "ea86826b39939b19b4d37a8c621c7d7c406185ca"
+    },
+    {
+      "path": "apps/web/components/shell.tsx",
+      "status": "modified",
+      "sha": "39b910ec6857f3fa2258d116df102e07eaf4f65c"
+    },
+    {
+      "path": "apps/web/components/structural-review.tsx",
+      "status": "added",
+      "sha": "86625b48ba4fc00ce1c9be5fb8c32bd14759f2e8"
+    },
+    {
+      "path": "apps/web/components/submitted-configuration.tsx",
+      "status": "added",
+      "sha": "a0a182d10357dc521fcf1ab185687195d31463e3"
+    },
+    {
+      "path": "apps/web/lib/builder-review.test.ts",
+      "status": "added",
+      "sha": "f806eef2a849db4f4b91720f31cc7300c4c724f7"
+    },
+    {
+      "path": "apps/web/lib/builder-review.ts",
+      "status": "added",
+      "sha": "80835719f58717e7a7808fc30b3d92ecbedb5e1d"
+    },
+    {
+      "path": "apps/web/lib/builder-viewport.test.ts",
+      "status": "added",
+      "sha": "1e4ef59da038d71db4bef457bbf4e9d5a9ab6d03"
+    },
+    {
+      "path": "apps/web/lib/builder-viewport.ts",
+      "status": "added",
+      "sha": "d4452bdfe412005913aecc44e72fa845753c0f39"
+    },
+    {
+      "path": "apps/web/lib/connection-review.test.ts",
+      "status": "added",
+      "sha": "9de99cd556b9914a1717c499a3062a573719ca5f"
+    },
+    {
+      "path": "apps/web/lib/connection-review.ts",
+      "status": "added",
+      "sha": "1f9b4a805d99fb7fe96d7e33889d5d23c28df81a"
+    },
+    {
+      "path": "apps/web/lib/copy-instance.test.ts",
+      "status": "added",
+      "sha": "4b0b4ba43c7cda6f6e2686f62120d2d26990b4f2"
+    },
+    {
+      "path": "apps/web/lib/copy-instance.ts",
+      "status": "added",
+      "sha": "5c7bc4c3a8470f6ff3c6e43832e7116332aa1fab"
+    },
+    {
+      "path": "apps/web/lib/experiment-journey.test.ts",
+      "status": "added",
+      "sha": "9d4db5ad10057a2fb4bd41308748f1245168ea14"
+    },
+    {
+      "path": "apps/web/lib/experiment-journey.ts",
+      "status": "added",
+      "sha": "46790d6fcb67856b376f6187ad95b940694776ba"
+    },
+    {
+      "path": "apps/web/lib/submitted-settings.test.ts",
+      "status": "added",
+      "sha": "f1ee5f14e374b294bbdcd3cb8bc53384952e9b83"
+    },
+    {
+      "path": "apps/web/lib/submitted-settings.ts",
+      "status": "added",
+      "sha": "f8547ba8de8a68b7378f8c9a88bb091a2e4f3aad"
+    },
+    {
+      "path": "apps/web/next.config.js",
+      "status": "modified",
+      "sha": "3b61e99a3566a26133764ffd9a5be4d62fc20fdc"
+    },
+    {
+      "path": "deploy/aie18/contracts.json",
+      "status": "added",
+      "sha": "63312dafd2e719b43d5bd43405304ba8ca57893b"
+    },
+    {
+      "path": "deploy/aie18/proof_wrapper.py",
+      "status": "added",
+      "sha": "eb2692dcc0b703560a40b98daf852c47ae599318"
+    },
+    {
+      "path": "deploy/aie18/runtime_parameters.py",
+      "status": "added",
+      "sha": "f959801d4eabb6d82d8bf3325007308548236e67"
+    },
+    {
+      "path": "deploy/aie18/sync_wp3_contract.py",
+      "status": "added",
+      "sha": "bf30d32cfccdc4af86d938392dd12357c6a49971"
+    },
+    {
+      "path": "deploy/aie37/Api.Dockerfile",
+      "status": "added",
+      "sha": "98e4b39342e93ce2875468b1e2ec5fa3fd7af9c1"
+    },
+    {
+      "path": "deploy/aie37/Api.Dockerfile.dockerignore",
+      "status": "added",
+      "sha": "c3face174e682aa6ba135ca166dc103be1a55c8f"
+    },
+    {
+      "path": "deploy/aie37/Demo.Api.Dockerfile",
+      "status": "added",
+      "sha": "721b58db036539169153e118b198c7722b74fbd4"
+    },
+    {
+      "path": "deploy/aie37/Demo.Api.Dockerfile.dockerignore",
+      "status": "added",
+      "sha": "023736541a01d649f6e27270f9af5211f5bebf18"
+    },
+    {
+      "path": "deploy/aie37/PARAMETERISATION.md",
+      "status": "added",
+      "sha": "a6f2cbf3b84469fc9dbb0be788a1865a10fd81eb"
+    },
+    {
+      "path": "deploy/aie37/Runtime.Dockerfile",
+      "status": "added",
+      "sha": "2036b3f02ef84a3ea2f02ac612b9a7a65c6732a2"
+    },
+    {
+      "path": "deploy/aie37/Runtime.Dockerfile.dockerignore",
+      "status": "added",
+      "sha": "f9adb2f7b1fa6d9e53c20e35678639502320451b"
+    },
+    {
+      "path": "deploy/aie37/SCHEMAS.md",
+      "status": "added",
+      "sha": "d5e610c676eb43856df16b99b0b5030782e1709a"
+    },
+    {
+      "path": "deploy/aie37/acceptance.compose.yaml",
+      "status": "added",
+      "sha": "f7bb48cc3ccf92d74c10ce46a81213ef2dc55d76"
+    },
+    {
+      "path": "deploy/aie37/audit_runtime.py",
+      "status": "added",
+      "sha": "e7f005fba0e71ce7f7c4b2cdfabf2b882348fd63"
+    },
+    {
+      "path": "deploy/aie37/build_parameterisation.py",
+      "status": "added",
+      "sha": "7fce7bcfb403864480f95c373b8e1806d7500939"
+    },
+    {
+      "path": "deploy/aie37/capture_algorithms.py",
+      "status": "added",
+      "sha": "e468234e4be33e62e8c638ef10a943e0968f98c4"
+    },
+    {
+      "path": "deploy/aie37/compose.yaml",
+      "status": "added",
+      "sha": "a995415892bb44766b30178b88fdb7fa4fe5e458"
+    },
+    {
+      "path": "deploy/aie37/composition-acceptance.compose.yaml",
+      "status": "added",
+      "sha": "f16b140ba9b7f9fa1fd80e6daaab768af0fdc22a"
+    },
+    {
+      "path": "deploy/aie37/contracts.json",
+      "status": "added",
+      "sha": "c8a81d0f0baca1182820edcd3c2d7efbcad8e049"
+    },
+    {
+      "path": "deploy/aie37/demo.compose.yaml",
+      "status": "added",
+      "sha": "1f26dc9cf46986cd1ea537ee77644a22f9bf770e"
+    },
+    {
+      "path": "deploy/aie37/initialize.py",
+      "status": "added",
+      "sha": "90eeb07edaa97f513524a091a05a68e5beec24e7"
+    },
+    {
+      "path": "deploy/aie37/inspect_parameterisation.py",
+      "status": "added",
+      "sha": "761c00ef26cfc3990c0e3888943a2ea71a78c2b5"
+    },
+    {
+      "path": "deploy/aie37/lock_runtime.py",
+      "status": "added",
+      "sha": "d5212a77d8f3cd053e62b5547029370849f43548"
+    },
+    {
+      "path": "deploy/aie37/parameterisation.compose.yaml",
+      "status": "added",
+      "sha": "862e8199d2a124cc8971ed79f438f42d8e525305"
+    },
+    {
+      "path": "deploy/aie37/prepare.py",
+      "status": "added",
+      "sha": "4fdbc49b860fc944bb810adcc0cd57c12146676f"
+    },
+    {
+      "path": "deploy/aie37/runtime.py",
+      "status": "added",
+      "sha": "3bdc0a310372a339880befb3ee2d3a7018e35d8a"
+    },
+    {
+      "path": "deploy/aie37/stage_demo.py",
+      "status": "added",
+      "sha": "9dbb2cdf426d8e91dd26f72191fa254e0d63a1f3"
+    },
+    {
+      "path": "deploy/aie37/supervised-pilot.compose.yaml",
+      "status": "added",
+      "sha": "93858c8591b1acc1ed57aa66e4212c5fa5926d03"
+    },
+    {
+      "path": "deploy/aie37/verify.py",
+      "status": "added",
+      "sha": "b3083d6412ff6104ff0e52503f187d0b29008295"
+    },
+    {
+      "path": "deploy/aie38/README.md",
+      "status": "added",
+      "sha": "a11e90a0e1ec65ef9f01731329dc434dfa7afa7b"
+    },
+    {
+      "path": "deploy/aie38/offline_profile.py",
+      "status": "added",
+      "sha": "c376a0b9d26b1a83dbd73940bb98f157f9bd0cf2"
+    },
+    {
+      "path": "deploy/composition_walkthrough/README.md",
+      "status": "added",
+      "sha": "2fad204eab7f1cc734e42444f04c7101373d5d64"
+    },
+    {
+      "path": "deploy/composition_walkthrough/Start-Walkthrough.ps1",
+      "status": "added",
+      "sha": "54472ca7d1bdfc01abbf10d74e575cf26c79c866"
+    },
+    {
+      "path": "deploy/composition_walkthrough/harness.py",
+      "status": "added",
+      "sha": "90081818e85ae399556bad1318f69d9c9bdf5877"
+    },
+    {
+      "path": "deploy/composition_walkthrough/inspect_controls.py",
+      "status": "added",
+      "sha": "42d8af1f19c56f802802dbe9b9fe9d3bd72c088a"
+    },
+    {
+      "path": "deploy/composition_walkthrough/prepare_workspace_review.py",
+      "status": "added",
+      "sha": "edb6a33760090869bf626a8b54e95ef62cffb650"
+    },
+    {
+      "path": "deploy/composition_walkthrough/test_safety.py",
+      "status": "added",
+      "sha": "9902f8a7e175cf58a8a9645e953ee1af49ab2ec2"
+    },
+    {
+      "path": "deploy/dutch-seed/amend_allowance.py",
+      "status": "added",
+      "sha": "62eda33c325f024721a85615f64dfd1606146369"
+    },
+    {
+      "path": "deploy/dutch-seed/amend_demo_allowance.py",
+      "status": "added",
+      "sha": "1c07c8d75b58959e21ebda1c269727a8a6b4c946"
+    },
+    {
+      "path": "deploy/instance-edit/verification_guard.py",
+      "status": "added",
+      "sha": "3641e157fff5cbdb1d846db79b7fab1cb78da288"
+    },
+    {
+      "path": "deploy/migrations/003_design_ai_pilot.sql",
+      "status": "added",
+      "sha": "6dfa73f9150a3827314042a4304e2be77bfa5975"
+    },
+    {
+      "path": "deploy/migrations/004_instance_submissions.sql",
+      "status": "added",
+      "sha": "c8e0b9710a0c94744d122316c3a0711442c02239"
+    },
+    {
+      "path": "deploy/migrations/005_local_capture_records.sql",
+      "status": "added",
+      "sha": "c96309088babecf1b7e2ed52647207d1e682a228"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/CHAIN_RUNBOOK.md",
+      "status": "added",
+      "sha": "b49b1815154a60f60d882ec3f370a417d411f256"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/README.md",
+      "status": "added",
+      "sha": "656f3b71676706a6bba12171663c95cd81bcf190"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/SUPERVISED_RUNBOOK.md",
+      "status": "added",
+      "sha": "d32a6d64da64e5520570242a568a1d7b175f3ba8"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/apply_chain_profile.py",
+      "status": "added",
+      "sha": "01fa77fc37f7af40383438fa131bf88d5f35709b"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/bootstrap.py",
+      "status": "added",
+      "sha": "cbd8aa54a4a12b1d76ac29c273380cb48966b2cc"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/bounded_jobs.py",
+      "status": "added",
+      "sha": "3c27699167ed79a14df19b973c7fc659968e4422"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/chain-verification.json",
+      "status": "added",
+      "sha": "5772fc086616d3755d4e227219bc6fb55e07e418"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/chain_contracts.json",
+      "status": "added",
+      "sha": "5c78e579ab889014587aeab7888211823c6b1667"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/chain_review.py",
+      "status": "added",
+      "sha": "50eaf3cc249172997ac53ca229d499f7589ed4e9"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/collect_artifact.py",
+      "status": "added",
+      "sha": "cddc3a923ed3878ee841d037890e79a02382f40b"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/complete_image_metadata.py",
+      "status": "added",
+      "sha": "315a36293a40f2e2aa1fff44098861998bc24757"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/contracts.json",
+      "status": "added",
+      "sha": "bfe9181212ea2a87430ef9c8685b19b370e8f531"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/demonstration-closeout-20261116.json",
+      "status": "added",
+      "sha": "a1b22289673ec73171f3fe18f88e5167f299a18e"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/design-ai-integration-verification-20261116.json",
+      "status": "added",
+      "sha": "557270ef8e12d97a8a6aa88eb7d3d92d38f190b0"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/demo-20261116/count20-configured-validated.png",
+      "status": "added",
+      "sha": "fff3aa5743dafaf9e48f49ed89434894747b68b3"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/builder-binding.png",
+      "status": "added",
+      "sha": "ac8844815e50888ca85784291a85598197dbb61d"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/builder-generation.png",
+      "status": "added",
+      "sha": "c91a9ccc3a078da817029abad72535df0d2df0d7"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/builder-training.png",
+      "status": "added",
+      "sha": "7ee2069f3cc1e60f4679d0c3aac5dbf0f70dd5c6"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/generated-csv-download.png",
+      "status": "added",
+      "sha": "6493a306171b1066ae4f5eb78a6eceb6b5c96bcb"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/generated-csv-final.png",
+      "status": "added",
+      "sha": "6c04af519782b7c23ad16e33b88787db77e62dec"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/registered-proposal.png",
+      "status": "added",
+      "sha": "6dec9378451f02079991d9a7d84c4f97c2e260e3"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/registered-saved.png",
+      "status": "added",
+      "sha": "740555c68daac1efb62a622aefd9fc933dbff23c"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/design-ai-20261116/registered-undo.png",
+      "status": "added",
+      "sha": "4421fd3edc88b59e741ce7040d9dc14c380e61cd"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/human-review-20261117/historical-count-10-results.jpg",
+      "status": "added",
+      "sha": "6c04af519782b7c23ad16e33b88787db77e62dec"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/human-review-20261117/saved-generation-20.jpg",
+      "status": "added",
+      "sha": "cbf495bbf872c74e4fa232113635bfd6b43f38a0"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/human-review-20261117/unanswered-clarification.jpg",
+      "status": "added",
+      "sha": "8802c84dc97db1b2a13bebc367d85355a24706ed"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-20261116/builder-validated.png",
+      "status": "added",
+      "sha": "8a056ce806f1912b107bb73120ad88eeef2ae0a5"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-20261116/connection.png",
+      "status": "added",
+      "sha": "4d250ee75c8aa9bb9f3e676dce7f97ba28ec0f92"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-20261116/historical-results.png",
+      "status": "added",
+      "sha": "c1407f7fa93944a5ab8c56dbc1347fa782b9f3d4"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-acceptance-20261116/completed-results.png",
+      "status": "added",
+      "sha": "425a8749b1283235242364015d8ea97283e3959d"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-acceptance-20261116/consumption-and-handoff.png",
+      "status": "added",
+      "sha": "a09f2eae8d84408685646e259a47eab0169ee71c"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-acceptance-20261116/inspection-restored.png",
+      "status": "added",
+      "sha": "02a91730a7a75ac9b420ac7a827c510f8c4fc290"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/operational-acceptance-20261116/readiness-ready.png",
+      "status": "added",
+      "sha": "eae387084439903b47dbd42efd19173561e7a733"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-a-recommendation.jpg",
+      "status": "added",
+      "sha": "ba431d59d1d85b640dd7339aeea8791e316479fc"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-binding-pins.jpg",
+      "status": "added",
+      "sha": "ac8844815e50888ca85784291a85598197dbb61d"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-builder-validated.jpg",
+      "status": "added",
+      "sha": "2f34a1cb089e28bbd61e88b09a321a23d48ca1a3"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-generation-persisted.jpg",
+      "status": "added",
+      "sha": "b1913d1d52539ab9486614fdffbc7b02d8dbb90b"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-proposal.jpg",
+      "status": "added",
+      "sha": "d3f869a44e081f523233e8fc33ff37f0215b2020"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-saved-refreshed.jpg",
+      "status": "added",
+      "sha": "01707c0d7b4a58aeb078a8b73b403e22986ef1b5"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-training-persisted.jpg",
+      "status": "added",
+      "sha": "1d0556a82dc89faa04cde983d620c32fdad39ce1"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-c-clarification-paused.jpg",
+      "status": "added",
+      "sha": "7c0cc1bf7647f06d659683f5b2c400543a917776"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-c-closed-disconnected.jpg",
+      "status": "added",
+      "sha": "8802c84dc97db1b2a13bebc367d85355a24706ed"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/export_evidence.py",
+      "status": "added",
+      "sha": "9196ab8040ce8b97993e57300bd6efff5ad1e58e"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/manual-builder-verification.json",
+      "status": "added",
+      "sha": "7e2521092d490156373f4341be5d94296b920bde"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/operational-acceptance-20261116-verification.json",
+      "status": "added",
+      "sha": "542fd0968c9eaba024271009597673474bc206ad"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/operational-verification-20261116.json",
+      "status": "added",
+      "sha": "cac6d14dd67c3b2c4edf50735a7bdc0276e7cad5"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/owner-recovery-verification.json",
+      "status": "added",
+      "sha": "3d4f937e34f90489bc1a37eb996d69d694dcaac3"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/prepare_designs.py",
+      "status": "added",
+      "sha": "8745e3ea8a03a0262a595cab85f57e0227dc7b28"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/profile.py",
+      "status": "added",
+      "sha": "3837bf9678dee71334ba588b78fd1179480ac918"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/proposed-provider-acceptance-20261116.json",
+      "status": "added",
+      "sha": "f4c41a6b61730ba9cd9ee28105ce6ab16872af56"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/proposed-supervised-acceptance-20261116.json",
+      "status": "added",
+      "sha": "c876d694480e01e4d5be53536443821f1e9cb1a4"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/proposed-supervised-operational-20261116.json",
+      "status": "added",
+      "sha": "35c663ff5cede05e2a5c0bffff5e1338cba09aee"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/provider-acceptance-cases-20261116.json",
+      "status": "added",
+      "sha": "71b4edd47baf95d4372ac669accac60fa1877966"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/provider-acceptance-results-20261116.json",
+      "status": "added",
+      "sha": "3e4074a896b26ef4dc6adb33a9a6bb59e271772b"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/provider-preparation-verification-20261116.json",
+      "status": "added",
+      "sha": "6c04aa0f6517a46ac42101f65ad17d17338036a9"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/recovery-browser-verification-20261116.json",
+      "status": "added",
+      "sha": "f1115282b61a9b8442a1713201ccfebea3bab71e"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/register_chain.py",
+      "status": "added",
+      "sha": "b075a625cd134161de4513d5babf1d58daf98097"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/supervised-acceptance-20261116-verification.json",
+      "status": "added",
+      "sha": "329fd461fd3c3498d5001f28f12b07f34ee78756"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/supervised-preparation-verification.json",
+      "status": "added",
+      "sha": "f7f01a0ea8a0e1cf793dd0d75f5533679a34e47f"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/supervised_session.py",
+      "status": "added",
+      "sha": "78e972eeea3d0a71ad63505ade0a672b7f83a571"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/test_chain_profile.py",
+      "status": "added",
+      "sha": "128fc02a06fb737d07a6de4ac0277f7cdf545f70"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/test_profile.py",
+      "status": "added",
+      "sha": "aaa928047ef97618396dc96099873c96aafc566f"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/tests/test_supervised_session.py",
+      "status": "added",
+      "sha": "22fb26fd7bad0d605086415a820d109b6150bc19"
+    },
+    {
+      "path": "deploy/portuguese_sandbox/verification.json",
+      "status": "added",
+      "sha": "bd1bfd8a0605c078e8482089ce1265e57a3492f4"
+    },
+    {
+      "path": "deploy/restricted-beta/ACCOUNTING.md",
+      "status": "added",
+      "sha": "9583eaf219f88b69e1ab10104665999cd75a4f4e"
+    },
+    {
+      "path": "deploy/restricted-beta/Api.Dockerfile",
+      "status": "added",
+      "sha": "0be60ef5a39f4f77a50d2cdc89be27e1c8d82162"
+    },
+    {
+      "path": "deploy/restricted-beta/Web.Dockerfile",
+      "status": "added",
+      "sha": "7528befbb1552d28c9f5d01f074e0e6fba34401b"
+    },
+    {
+      "path": "deploy/restricted-beta/amend_shared_allowance.py",
+      "status": "added",
+      "sha": "0a042d32583f0dbe6ce38b8deb31eb3a2184f156"
+    },
+    {
+      "path": "deploy/restricted-beta/build_candidate.py",
+      "status": "added",
+      "sha": "917b9927753b4262d598c6432c1139ee995757dd"
+    },
+    {
+      "path": "deploy/restricted-beta/provider-audit.json",
+      "status": "added",
+      "sha": "1217fd77d036dff2d0570f652741eaf555849b82"
+    },
+    {
+      "path": "deploy/staging/build/Api.Dockerfile",
+      "status": "added",
+      "sha": "a51b99a9bfbaabef53e88b896430807799426173"
+    },
+    {
+      "path": "deploy/staging/build/Web.Dockerfile",
+      "status": "added",
+      "sha": "87f7ee39714847817b5743893df27c0f180a4a92"
+    },
+    {
+      "path": "deploy/staging/build/inputs.lock.json",
+      "status": "added",
+      "sha": "b72ac6e1f5ee704b8e0578c78618658b902617f7"
+    },
+    {
+      "path": "deploy/staging/build/requirements.lock",
+      "status": "added",
+      "sha": "f2e8bc72a992dad9dae7be194cfe98801e45c5d2"
+    },
+    {
+      "path": "deploy/staging/build_candidate.py",
+      "status": "added",
+      "sha": "6c5d718ce3b461cdd4e163d21814c406e3b4b3b7"
+    },
+    {
+      "path": "deploy/staging/compose.yaml",
+      "status": "added",
+      "sha": "44a1aaa795f1999eaa12f217b9f7e17c2d211e1c"
+    },
+    {
+      "path": "deploy/staging/fetch_build_inputs.py",
+      "status": "added",
+      "sha": "20cae8cb6ffdfb3b7a2356fd25fc9163be0143ab"
+    },
+    {
+      "path": "deploy/staging/local_review.py",
+      "status": "added",
+      "sha": "c04ee262316ea51711f8d487ec37555647c67bfb"
+    },
+    {
+      "path": "deploy/staging/nginx.conf",
+      "status": "added",
+      "sha": "70258b1fbfae35c255c486ccb2e0326933b709f1"
+    },
+    {
+      "path": "deploy/staging/synthetic_seed.py",
+      "status": "added",
+      "sha": "28da22881bf9a874a14914c2d445a5ba06b00886"
+    },
+    {
+      "path": "docker-compose.design-ai.yml",
+      "status": "added",
+      "sha": "d60a8da6ef91b3085e09abcf2b0971f91a7f7188"
+    },
+    {
+      "path": "docs/AIE37_CATALOGUE_QUALIFICATION.md",
+      "status": "added",
+      "sha": "70eb93ab10c515d66826f7a29396bef1703c532a"
+    },
+    {
+      "path": "docs/AIE37_QUALIFICATION_EVIDENCE.json",
+      "status": "added",
+      "sha": "737a3f6a756d1603a070531bbaaa8ac2d129ee2d"
+    },
+    {
+      "path": "docs/AIE38_COMPOSITION_EVIDENCE.json",
+      "status": "added",
+      "sha": "a4f2885535922cb2ee9795602b6e091c0dc7443c"
+    },
+    {
+      "path": "docs/AIE38_CONVERSATIONAL_COMPOSITION.md",
+      "status": "added",
+      "sha": "83cb1e4ff87115f752261a4e72410a7bd8583c62"
+    },
+    {
+      "path": "docs/AIE38_OBSERVER_CHECKLIST_2026-10-29.md",
+      "status": "added",
+      "sha": "2c89a3c6d5cd3f367239d3d08d67773a7f628b48"
+    },
+    {
+      "path": "docs/AIE38_PARTICIPANT_BRIEF_2026-10-29.md",
+      "status": "added",
+      "sha": "8abfba6ae0334ab6245e23b515b1eeab5a4f8c88"
+    },
+    {
+      "path": "docs/AIE41_USABILITY_EVIDENCE.json",
+      "status": "added",
+      "sha": "e37faa87b64375cc6d79e6dfebeb01ecb836b288"
+    },
+    {
+      "path": "docs/AIE41_USABILITY_REFINEMENT.md",
+      "status": "added",
+      "sha": "b74cc028611ddbfb035d0e50b34bf7f15ece3388"
+    },
+    {
+      "path": "docs/CONVERSATIONAL_INSTANCE_EDITING.md",
+      "status": "added",
+      "sha": "546f16e7caa9dc677822894c3b8f22eed6c3a537"
+    },
+    {
+      "path": "docs/CONVERSATION_REPAIR_2026-11-12.json",
+      "status": "added",
+      "sha": "a2b4b25ffd44e4a108a939217854738c69493c7d"
+    },
+    {
+      "path": "docs/CONVERSATION_REPAIR_2026-11-12.md",
+      "status": "added",
+      "sha": "8d3ab56cc9ec8575fb0af5876b7f17d9c259eb9c"
+    },
+    {
+      "path": "docs/CONVERSATION_RETEST_2026-11-12.json",
+      "status": "added",
+      "sha": "ea667001ff0f7e7790ed182453843c35b4096426"
+    },
+    {
+      "path": "docs/CONVERSATION_RETEST_2026-11-12.md",
+      "status": "added",
+      "sha": "54e7a2e5a962cef4f0c570a957d768b8c278d3a8"
+    },
+    {
+      "path": "docs/CURRENT_CAPABILITIES.md",
+      "status": "modified",
+      "sha": "3754205a51e7d5aea04be19978bba5ed202b4ea3"
+    },
+    {
+      "path": "docs/DESIGN_AI_BETA_ENGINEERING_2026-11-11.json",
+      "status": "added",
+      "sha": "bb5e573a95e253b4316635a700e7891744df14f2"
+    },
+    {
+      "path": "docs/DESIGN_AI_BETA_ENGINEERING_2026-11-11.md",
+      "status": "added",
+      "sha": "c950a080edc8ed816da1afd4e2945411fac548d3"
+    },
+    {
+      "path": "docs/DESIGN_AI_BUILD_PREPARATION_2026-11-01.json",
+      "status": "added",
+      "sha": "82ef76b7b59c1202fe1658ba32d9d91c1d16286b"
+    },
+    {
+      "path": "docs/DESIGN_AI_CATALOGUE_COMPOSITION_2026-11-02.md",
+      "status": "added",
+      "sha": "d8162a0fb7129ddeb6a1eca46756151c670f51c9"
+    },
+    {
+      "path": "docs/DESIGN_AI_CATALOGUE_COMPOSITION_EVIDENCE_2026-11-02.json",
+      "status": "added",
+      "sha": "4a42346c6366ef28acd020a1a51c56fa15e04657"
+    },
+    {
+      "path": "docs/DESIGN_AI_CATALOGUE_DISCOVERY_2026-11-02.md",
+      "status": "added",
+      "sha": "9ccc01c0272050bc2b68780556f08fe2360880ed"
+    },
+    {
+      "path": "docs/DESIGN_AI_CATALOGUE_DISCOVERY_EVIDENCE_2026-11-02.json",
+      "status": "added",
+      "sha": "5589824bf9ecd0fe2579c085f85d3c223e40b052"
+    },
+    {
+      "path": "docs/DESIGN_AI_COMPOSITION_BROWSER_EVIDENCE_2026-11-06.json",
+      "status": "added",
+      "sha": "689a5b5e02d194b4ff2a7a73d4fecde0f93b2ea3"
+    },
+    {
+      "path": "docs/DESIGN_AI_CONVERSATIONAL_ACCEPTANCE_2026-11-10.md",
+      "status": "added",
+      "sha": "e1d64b5e9529b20b7637a94113a74e5663a507b2"
+    },
+    {
+      "path": "docs/DESIGN_AI_CONVERSATIONAL_ACCEPTANCE_EVIDENCE_2026-11-10.json",
+      "status": "added",
+      "sha": "c1c67a8920cc7d70b3b9603f3e8f427b7e92681d"
+    },
+    {
+      "path": "docs/DESIGN_AI_EVIDENCE_CORRECTION_2026-11-01.json",
+      "status": "added",
+      "sha": "6e2c048a5f90d7dbd6e2aa315bbd61f4ecb6b1fa"
+    },
+    {
+      "path": "docs/DESIGN_AI_EVIDENCE_CORRECTION_2026-11-01.md",
+      "status": "added",
+      "sha": "bb2b077c56b7cfce546673195d8b13fbb2414e35"
+    },
+    {
+      "path": "docs/DESIGN_AI_GOAL_TO_RESULTS.md",
+      "status": "added",
+      "sha": "86968fd04e29291bde2752d402936b02570ef86a"
+    },
+    {
+      "path": "docs/DESIGN_AI_GOAL_TO_RESULTS_EVIDENCE.json",
+      "status": "added",
+      "sha": "7d39c70f407df896551b4505c99244a09e8f87c4"
+    },
+    {
+      "path": "docs/DESIGN_AI_GOAL_TO_RESULTS_OPERATOR.md",
+      "status": "added",
+      "sha": "a3afb601e9e9bdfa1ea403cda4ebf189074255f0"
+    },
+    {
+      "path": "docs/DESIGN_AI_LIVE_ACCEPTANCE_2026-10-31.json",
+      "status": "added",
+      "sha": "6e3646f57192cae9b6408d754ab5bfc5b51fc6e2"
+    },
+    {
+      "path": "docs/DESIGN_AI_LIVE_ACCEPTANCE_2026-10-31.md",
+      "status": "added",
+      "sha": "ff1b2b11638d805ea37fe624c05cfd157428ec74"
+    },
+    {
+      "path": "docs/DESIGN_AI_LOCAL_REVIEW_PROPOSAL_2026-11-01.md",
+      "status": "added",
+      "sha": "7cd4ac96127476b74c58a4d61e9a389a16892939"
+    },
+    {
+      "path": "docs/DESIGN_AI_RESTRICTED_BETA_2026-11-10.json",
+      "status": "added",
+      "sha": "97099d57f00fee14fa4bfaa0c9651a37c1f6def6"
+    },
+    {
+      "path": "docs/DESIGN_AI_STAGING_EVIDENCE_2026-11-01.json",
+      "status": "added",
+      "sha": "9c9763c28f5bd211585e14c00ab2f0d5d6a8a3ef"
+    },
+    {
+      "path": "docs/DESIGN_AI_STAGING_READINESS_2026-11-01.md",
+      "status": "added",
+      "sha": "00688c1d3f61bcee5394216dccd02c1c204f0c67"
+    },
+    {
+      "path": "docs/DESIGN_AI_WORKSPACE_EVIDENCE_2026-11-10.json",
+      "status": "added",
+      "sha": "7c6bf2220b041faff038c4145ebe5e79cbaf0816"
+    },
+    {
+      "path": "docs/DESIGN_AI_WORKSPACE_REVIEW_2026-11-10.md",
+      "status": "added",
+      "sha": "2f6649436684c346ad448aa451e2678d0d461c41"
+    },
+    {
+      "path": "docs/DESIGN_WITH_AI_PILOT.md",
+      "status": "added",
+      "sha": "1fd5ec7ded04225c5ab95160a9f186a304a5f899"
+    },
+    {
+      "path": "docs/KNOWN_LIMITATIONS.md",
+      "status": "modified",
+      "sha": "2a77f0c8c4db6e8d02d6872b6343e563c3f320f9"
+    },
+    {
+      "path": "docs/LOCAL_COMPOSITION_ACCEPTANCE_2026-11-12.json",
+      "status": "added",
+      "sha": "f15959041b4bbef53c9d2bd7dbefc7ad0f52f7ba"
+    },
+    {
+      "path": "docs/LOCAL_COMPOSITION_ACCEPTANCE_2026-11-12.md",
+      "status": "added",
+      "sha": "772cd6a5734d939bb6c46b6afc68219c7c38cd00"
+    },
+    {
+      "path": "docs/LOCAL_PILOT_OBSERVER_TEMPLATE_2026-11-12.md",
+      "status": "added",
+      "sha": "5792b9da010579fed00b27a19a6b70a7cadfd597"
+    },
+    {
+      "path": "docs/LOCAL_PILOT_PARTICIPANT_BRIEF_2026-11-12.md",
+      "status": "added",
+      "sha": "16225db0bd2713cc67fc81cb5100d21d395f4e14"
+    },
+    {
+      "path": "docs/LOCAL_PILOT_READINESS_2026-11-12.json",
+      "status": "added",
+      "sha": "fec885700090ef983e0ccb25c06191caf51d9fce"
+    },
+    {
+      "path": "docs/LOCAL_PILOT_RELEASE_REVIEW_2026-11-12.md",
+      "status": "added",
+      "sha": "438d466b228626240dfed3889990da3754b9beac"
+    },
+    {
+      "path": "docs/MODULE_PARAMETERISATION_DEMO.md",
+      "status": "added",
+      "sha": "05b8b59d1bd9a3f63eccd9d505d4eef2282557a3"
+    },
+    {
+      "path": "docs/MODULE_PARAMETERISATION_REVIEW.md",
+      "status": "added",
+      "sha": "8258076ec2cbb9457ce6b2a4afdec5ffb5df96a6"
+    },
+    {
+      "path": "docs/OPERATION_CONTRACTS.md",
+      "status": "modified",
+      "sha": "d93fbfed35bddcb30cae7f213374c0ede5aba2d8"
+    },
+    {
+      "path": "docs/PARAMETERISATION_PLATFORM_VERIFICATION_2026-11-12.json",
+      "status": "added",
+      "sha": "c4c9b225be8d38c9dd1726d5bbdc6054414b2d2b"
+    },
+    {
+      "path": "docs/PARAMETERISATION_PLATFORM_VERIFICATION_2026-11-12.md",
+      "status": "added",
+      "sha": "37a013af637f410ffded0091ef2eceff3e458942"
+    },
+    {
+      "path": "docs/PARAMETERISATION_PUBLICATION_CHECKS.md",
+      "status": "added",
+      "sha": "7d6624f96b73ab03c5c2ded0ee2dae9df061a582"
+    },
+    {
+      "path": "docs/PORTUGUESE_BUILDER_INPUT_2026-11-13.md",
+      "status": "added",
+      "sha": "71376a5e5b9476d295394d24535be809ade01d74"
+    },
+    {
+      "path": "docs/PORTUGUESE_CHAINED_WORKFLOW_2026-11-13.md",
+      "status": "added",
+      "sha": "0af9791ff935581f57141e3ca5698bd967ce520b"
+    },
+    {
+      "path": "docs/PORTUGUESE_DESIGN_AI_INTEGRATION_2026-11-16.md",
+      "status": "added",
+      "sha": "bd12f70a1cb9013f3f071872bff30ca33d1007c4"
+    },
+    {
+      "path": "docs/PORTUGUESE_HUMAN_OBSERVATIONS_2026-11-17.md",
+      "status": "added",
+      "sha": "8191aa2da366bdf3ce71cd2c9e8bfa967092150e"
+    },
+    {
+      "path": "docs/PORTUGUESE_HUMAN_WALKTHROUGH_2026-11-17.md",
+      "status": "added",
+      "sha": "068345d5e875fbe56bac72494a13eead0584cb3b"
+    },
+    {
+      "path": "docs/PORTUGUESE_NODE_DEMONSTRATION_2026-11-16.md",
+      "status": "added",
+      "sha": "92381a72d9f3b6c8414130a956637eb232e47484"
+    },
+    {
+      "path": "docs/PORTUGUESE_OWNER_RECOVERY_2026-11-14.md",
+      "status": "added",
+      "sha": "818d351cdeb53eb5a73bf4b3d0b4cd8c9d356e19"
+    },
+    {
+      "path": "docs/PORTUGUESE_PARAMETER_SANDBOX_2026-11-12.md",
+      "status": "added",
+      "sha": "e1ca3355a1a8afca3a0a92efcc03a60898cab3be"
+    },
+    {
+      "path": "docs/PORTUGUESE_PROVIDER_ACCEPTANCE_2026-11-16.md",
+      "status": "added",
+      "sha": "2466b2f93d9994acb6a5c5b575f2e38feb28bcdb"
+    },
+    {
+      "path": "docs/PORTUGUESE_PROVIDER_ACCEPTANCE_RESULTS_2026-11-16.md",
+      "status": "added",
+      "sha": "2fdc6d7f3a018c4e499058eb78e7baaa654f87ef"
+    },
+    {
+      "path": "docs/PORTUGUESE_RECOVERY_BLOCKER_2026-11-16.md",
+      "status": "added",
+      "sha": "1660aa1b0ca9a4f29b85a44a2fec01c300705e8c"
+    },
+    {
+      "path": "docs/PORTUGUESE_REVIEW_HANDOFF_2026-11-17.md",
+      "status": "added",
+      "sha": "2f7d20f84368e3939c0c32c5082ced32479d5b75"
+    },
+    {
+      "path": "docs/PORTUGUESE_SUPERVISED_PREPARATION_2026-11-16.md",
+      "status": "added",
+      "sha": "c926556945ae57a778878b44117dffa97f8dc30e"
+    },
+    {
+      "path": "docs/PRODUCTION_ACCEPTANCE_2026-10-04.md",
+      "status": "modified",
+      "sha": "05c3ad488e16e2c586edd7140b66316e94ed5eb3"
+    },
+    {
+      "path": "docs/TEAM_TESTING_GUIDE.md",
+      "status": "modified",
+      "sha": "68cb0bc926e7c2b36caf0f0fc0d2ebfb235929bd"
+    },
+    {
+      "path": "docs/contracts/dutch-production/0.1.0-draft.1/imported-configure-and-synthesize.json",
+      "status": "added",
+      "sha": "b3207da46ddb57dcbd661b6ec96c5358b4197c09"
+    },
+    {
+      "path": "docs/contracts/dutch-production/0.1.0-draft.1/imported-run-benchmark.json",
+      "status": "added",
+      "sha": "59f45014a804074d092db45de124b7e43908f9b0"
+    },
+    {
+      "path": "docs/contracts/dutch-production/0.1.0-draft.1/package-configure-and-synthesize.json",
+      "status": "added",
+      "sha": "5282e914d94b976fe7fc3e9cdc79361242895cec"
+    },
+    {
+      "path": "docs/contracts/dutch-production/0.1.0-draft.1/package-run-benchmark.json",
+      "status": "added",
+      "sha": "cd68ef01925d64c26ec9f1f7b23e6802a2c0929e"
+    },
+    {
+      "path": "docs/contracts/dutch-production/0.1.0-draft.1/source-evidence.json",
+      "status": "added",
+      "sha": "b6837c6a00fde444d4734711fd20eb02133be9b2"
+    },
+    {
+      "path": "docs/contracts/dutch-production/README.md",
+      "status": "added",
+      "sha": "d585b30cb4932f2c4b3d6f773efd4fadb2204543"
+    },
+    {
+      "path": "docs/evidence/conversation-repair-20261112/paused-normal-application.png",
+      "status": "added",
+      "sha": "2e4d3fa54287686b92ce79eee0c4b6ea24e067d3"
+    },
+    {
+      "path": "docs/evidence/conversation-retest-20261112/created-seed42-no-apply.png",
+      "status": "added",
+      "sha": "bc92236920f565dc275250539a0e6a215a32685d"
+    },
+    {
+      "path": "docs/evidence/conversation-retest-20261112/request-one-rendered.txt",
+      "status": "added",
+      "sha": "f55205600ee87b640ceb8147867db26ff6230309"
+    },
+    {
+      "path": "docs/evidence/conversation-retest-20261112/request-one.png",
+      "status": "added",
+      "sha": "70349dc54f5b30f060673010407f3b92f61754b0"
+    },
+    {
+      "path": "docs/evidence/conversation-retest-20261112/request-two-rendered.txt",
+      "status": "added",
+      "sha": "6ec2a45ba65c73e59abcfad35bd7604e43df279f"
+    },
+    {
+      "path": "docs/evidence/conversation-retest-20261112/request-two.png",
+      "status": "added",
+      "sha": "83db7949e045de1ba2013a09cf277f502a828a87"
+    },
+    {
+      "path": "docs/evidence/conversation-retest-20261112/saved-refreshed.png",
+      "status": "added",
+      "sha": "183db7e168abe694090970b8f2a68cb272fda703"
+    },
+    {
+      "path": "docs/evidence/local-composition-acceptance-20261112/case-a-saved.png",
+      "status": "added",
+      "sha": "9d7b086cf79f6f6dd76a73592ec0742b03b79cc1"
+    },
+    {
+      "path": "docs/evidence/local-composition-acceptance-20261112/case-a-undone.png",
+      "status": "added",
+      "sha": "e852117152c0c438901f33507739ba1f143e60c4"
+    },
+    {
+      "path": "docs/evidence/local-composition-acceptance-20261112/case-b-clarification.png",
+      "status": "added",
+      "sha": "739f2fc40e06b6520d081f7b424a5968eff4089b"
+    },
+    {
+      "path": "docs/evidence/local-pilot-20261112/ready-empty-conversation.png",
+      "status": "added",
+      "sha": "1dccc3c5526abcf96bdb3da01872ca45808cf589"
+    },
+    {
+      "path": "docs/evidence/portuguese-20261116-builder.png",
+      "status": "added",
+      "sha": "63a4bb914569ee4dfc2b58a3482778f3419cf614"
+    },
+    {
+      "path": "docs/evidence/portuguese-20261116-connection.png",
+      "status": "added",
+      "sha": "d8a25c5a0db271770d0a238e5fcf8e2323acda9e"
+    },
+    {
+      "path": "docs/evidence/portuguese-20261116-historical.png",
+      "status": "added",
+      "sha": "aee43519e5dd87ff4d111868fe561d1975e0f8bd"
+    },
+    {
+      "path": "docs/evidence/portuguese-supervised-20261116-inspection-restored.png",
+      "status": "added",
+      "sha": "f0a64954c92effe1713da4cfe7df3dde0f597ffd"
+    },
+    {
+      "path": "docs/evidence/portuguese-supervised-20261116-readiness-denied.png",
+      "status": "added",
+      "sha": "f690b788412e06825a55d64462ddf2ca15196f89"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/.gitattributes",
+      "status": "added",
+      "sha": "abc213de4f1fed2e7d9b14c145832a353ee8d320"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/OWNER_REVIEW.md",
+      "status": "added",
+      "sha": "c60aeac63aba763363f1e957d189d025d8d2b670"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/README.md",
+      "status": "added",
+      "sha": "2760326ae43f43285472bbdf6a3accdfa1b56a69"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/ba598b2-instance-seed.patch",
+      "status": "added",
+      "sha": "29a10b05bd65daa71adc0f37c6b9ae3bc6d688ba"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/capability-proposal.json",
+      "status": "added",
+      "sha": "8d8f5fbd49f2537a4eef9c2684d560d8c82ce628"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/contract-proposal.json",
+      "status": "added",
+      "sha": "f70ece0208d6f62b02625830f7e2b497efc4fbda"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/request-example.json",
+      "status": "added",
+      "sha": "d75067724f55ed8642b3b5e836a09ab432c00f44"
+    },
+    {
+      "path": "docs/partner-review/dutch-parameters/verification.json",
+      "status": "added",
+      "sha": "caabb0371cb55da73a4171b75e0e0757e1184132"
+    },
+    {
+      "path": "docs/patches/normal-placeholder-wiring-1068cea.patch",
+      "status": "added",
+      "sha": "55875ccd583a47a7652ac9ec8c8f770e8a8fb1ed"
+    },
+    {
+      "path": "docs/screenshots/aie37-builder.png",
+      "status": "added",
+      "sha": "3b65592757e6e2cb925ff47f9372f34be2f02fd4"
+    },
+    {
+      "path": "docs/screenshots/aie37-results.png",
+      "status": "added",
+      "sha": "71f36aebff2c2b56b20a5fda78026b73da392426"
+    },
+    {
+      "path": "docs/screenshots/aie38-builder-desktop.png",
+      "status": "added",
+      "sha": "7ceb90db1f303f48643ed89abca0099c280e7e21"
+    },
+    {
+      "path": "docs/screenshots/aie38-builder-narrow.png",
+      "status": "added",
+      "sha": "6479ff48ff47c1d21e392b1ec8d594362f66a72b"
+    },
+    {
+      "path": "docs/screenshots/aie38-review-desktop.png",
+      "status": "added",
+      "sha": "80132695b343d3d23997cded636fc2782126abc0"
+    },
+    {
+      "path": "docs/screenshots/aie38-review-narrow.png",
+      "status": "added",
+      "sha": "4d414ec0bfef7d509375d828b12262c97fe9d728"
+    },
+    {
+      "path": "docs/screenshots/aie38-walkthrough-pending-20261029.png",
+      "status": "added",
+      "sha": "065a1d9bb19bfdec90641a70609049dbe869c461"
+    },
+    {
+      "path": "docs/screenshots/aie41-builder-after.png",
+      "status": "added",
+      "sha": "8fcf23612e4f47b93934a02934cf1bea29352393"
+    },
+    {
+      "path": "docs/screenshots/aie41-builder-before.png",
+      "status": "added",
+      "sha": "f3810dff90fe0fe9fe761b10ffe92074a48c6c96"
+    },
+    {
+      "path": "docs/screenshots/aie41-builder-narrow.png",
+      "status": "added",
+      "sha": "b330f58c29eff8e84d7e4aa48ff26df6f9491685"
+    },
+    {
+      "path": "docs/screenshots/aie41-builder-settings-after.png",
+      "status": "added",
+      "sha": "10e6d8949dfee0a44a7f01fc6c7eb22b3c4e6661"
+    },
+    {
+      "path": "docs/screenshots/aie41-connection-details.png",
+      "status": "added",
+      "sha": "a025c8d5d51cc5bca255f0e4f9ac943c7beee12e"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-after-desktop.png",
+      "status": "added",
+      "sha": "6d0b086b5bab11b0da5c0b86334de71a2be84639"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-before-expanded.png",
+      "status": "added",
+      "sha": "a2f13e68b4ca702d73f226c9e6f32a31cef634d8"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-before.png",
+      "status": "added",
+      "sha": "37340b6644a98835fc55ae2a52baf127b80ca2f7"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-connection-details.png",
+      "status": "added",
+      "sha": "3bcb2399e78303385e1c87baceb94a5aeec49c4f"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-narrow-details.png",
+      "status": "added",
+      "sha": "8249074f3111279f5a673bf202740b1c54c6d7e6"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-narrow-settings.png",
+      "status": "added",
+      "sha": "3c725db6f04760c404e007d73dbd5219f50da7af"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-review-status.png",
+      "status": "added",
+      "sha": "0239c88c2db8e335d411bd421f48e017311d7a44"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-stale-save.png",
+      "status": "added",
+      "sha": "a8eba9771ea19c8e2fddfbe1859b12b3b5a4689a"
+    },
+    {
+      "path": "docs/screenshots/aie41-followup-step-details.png",
+      "status": "added",
+      "sha": "ae9ee66e31e684bead7614853af10a94a9396fe3"
+    },
+    {
+      "path": "docs/screenshots/aie41-proposal-after.png",
+      "status": "added",
+      "sha": "872aabe620b036be2e15c642df0aa8a033878a5b"
+    },
+    {
+      "path": "docs/screenshots/aie41-proposal-before.png",
+      "status": "added",
+      "sha": "d2cab2c7d2042c422e173c26954517b0b42c094d"
+    },
+    {
+      "path": "docs/screenshots/aie41-proposal-narrow.png",
+      "status": "added",
+      "sha": "ac3a595e3ab50b34a315268ebbe64970f62d0936"
+    },
+    {
+      "path": "docs/screenshots/aie41-real-edit-revalidation.png",
+      "status": "added",
+      "sha": "c7177a6097b7195990469954766ba77ef32eff53"
+    },
+    {
+      "path": "docs/screenshots/composition-controls-builder-20261106.png",
+      "status": "added",
+      "sha": "77570146ee465510367b93b3b71e8bf9cd89c061"
+    },
+    {
+      "path": "docs/screenshots/composition-controls-prepared-20261106.png",
+      "status": "added",
+      "sha": "29e95dc1edb929e0c51c7ea936257526578012af"
+    },
+    {
+      "path": "docs/screenshots/conversation-review-desktop-1920-20261110.jpg",
+      "status": "added",
+      "sha": "ad1dbeaf4d059bd7ab06cb668731da4e834c5e46"
+    },
+    {
+      "path": "docs/screenshots/conversation-review-narrow-390-20261110.jpg",
+      "status": "added",
+      "sha": "84f18365e149c50ecdddca8aa3a9c0b32ea39ea0"
+    },
+    {
+      "path": "docs/screenshots/design-ai-goal-to-results-start.png",
+      "status": "added",
+      "sha": "ef5782fa139cd4729bb77625afd81c747b142e35"
+    },
+    {
+      "path": "docs/screenshots/evidence-correction-instances-20261101.png",
+      "status": "added",
+      "sha": "21ee8d8fb0d35b0bdec53f43edbe98e20f39b1b8"
+    },
+    {
+      "path": "docs/screenshots/evidence-correction-results-20261101.png",
+      "status": "added",
+      "sha": "aae5331ce464fcca2af3d9e3c2e1050d9da3ff9d"
+    },
+    {
+      "path": "docs/screenshots/normal-composition-1068cea-browser.jpg",
+      "status": "added",
+      "sha": "ebeb58d3f6954ce7240e8832a9efecd3ec67fb5b"
+    },
+    {
+      "path": "docs/screenshots/portuguese-chain-results-20261113.png",
+      "status": "added",
+      "sha": "24964969268b1d69d77841cb136589906ac0ff5e"
+    },
+    {
+      "path": "docs/screenshots/portuguese-inspection-only-20261114.png",
+      "status": "added",
+      "sha": "fb2a9622ef2aa560d86a56475c3b8f34a2575c50"
+    },
+    {
+      "path": "docs/screenshots/portuguese-manual-builder-20261114.png",
+      "status": "added",
+      "sha": "1d09d09ae0012067b21372833efa5f8f39a68468"
+    },
+    {
+      "path": "docs/screenshots/portuguese-owner-recovered-20261114.png",
+      "status": "added",
+      "sha": "aee43519e5dd87ff4d111868fe561d1975e0f8bd"
+    },
+    {
+      "path": "docs/screenshots/workspace-after-desktop-20261110.jpg",
+      "status": "added",
+      "sha": "bd85a092025bc62bb5c40a2f7d2a3ca9ab7960c2"
+    },
+    {
+      "path": "docs/screenshots/workspace-after-narrow-20261110.jpg",
+      "status": "added",
+      "sha": "84f18365e149c50ecdddca8aa3a9c0b32ea39ea0"
+    },
+    {
+      "path": "docs/screenshots/workspace-before-desktop-20261110.jpg",
+      "status": "added",
+      "sha": "5b786a3595756813b050339fb272ecd98983ded9"
+    },
+    {
+      "path": "examples/design-ai-templates.example.json",
+      "status": "added",
+      "sha": "933dc38dced999090e8c732ea643ff18ed0ea9eb"
+    }
+  ],
+  "api_from_historical_base": [
+    {
+      "path": "apps/api/app/accounting_authority.py",
+      "sha": "eaffcccc12c21993a38968a4dfde8357725bb019",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/core/config.py",
+      "sha": "6f127713e346495cf85edc835b88f050a563a3b5",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/main.py",
+      "sha": "d21a8b45a0f7771e5ad834d517d8c572b09b2bd4",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/models/design_ai.py",
+      "sha": "006f2c064e5719e0b2b29d6d1efbc412d17349f3",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/models/execution_submission.py",
+      "sha": "2c8a1b1cd4d02ab9434fce99439211e99ffe236c",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/models/local_dutch_execution.py",
+      "sha": "d1450d6c9865811f6a5aacb4b638d2de17bdf8fe",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/models/solution.py",
+      "sha": "295a2af6de825006d01eb89072db2e1becdc2592",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/routers/admin_users.py",
+      "sha": "74028758773dbfe8e35d31b5c167dceaa1409458",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/routers/deployment_results.py",
+      "sha": "2fe84ad4b429358ed9142849882f7ba9eef7c3f4",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/routers/design_ai.py",
+      "sha": "732991feb0a42683f0bd86b0b83386725168c392",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/routers/experiment_journey.py",
+      "sha": "000fcfafdbf41535076b1df376eb8b9427644d37",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/schemas/data_reference.py",
+      "sha": "1e34d8bf32db1fa707efd13767044dcd181aa4da",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/schemas/design_ai.py",
+      "sha": "38e70f97047a67f2ea9b2de2df69f177ba16bb83",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/schemas/operation_contract.py",
+      "sha": "b1ff81fca7be1b641367169dff350d6c86aa0ade",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/schemas/solution.py",
+      "sha": "9be41ed3ec0e8a91e40901177765f7e89d643f8b",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/schemas/workflow_submit.py",
+      "sha": "caa72d82f5551d50f1242b700ad6438aa90c229d",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/services/allowance_client.py",
+      "sha": "85b2d3676b21e5601171e6968980fa5899a79322",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/capability_bindings.py",
+      "sha": "8c299096ada31ed28fdb6bd3ec4bb9bfdeeeee0f",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/capability_readiness.py",
+      "sha": "2f2b72e6a8ccd4d776d58ba9a4e5ac8519a73b13",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/catalogue_composition.py",
+      "sha": "af32dab5b04fdf71ab51faddb8be91eb90363575",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/catalogue_discovery.py",
+      "sha": "2aa7b3036f78ede1b133885e443487ef38fb121d",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/data_reference_service.py",
+      "sha": "714e8df9be81888b6c6670b7f4b601ce39495510",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/services/design_ai.py",
+      "sha": "7bb78203644c7767c36daa08ec87653d1baed6de",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_allowance_operator.py",
+      "sha": "4ed59c29c261f63193b54ff3996ecc71f6e34e4b",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_budget.py",
+      "sha": "02ff1fe16b2171b4c4205d2445c1c91f50473f68",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_demo_allowance.py",
+      "sha": "2b8fbad4b31f5e65b4d63a09eed2b42e4c2846ae",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_mcp.py",
+      "sha": "c983e7c92f900bea69f29bf4beb8e91ae2c1b2c5",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_provider.py",
+      "sha": "f64b36080c31793f7ac9d5f750940c1a3dc6fd3e",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/dutch_capture_contract.py",
+      "sha": "25e27d6da7cebe307ef7f4a5dc3f62612f33dc4c",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/execution_journey.py",
+      "sha": "2233b35f792be03fed99300ec4e2f2300fb533cc",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/execution_submission.py",
+      "sha": "da45e80404e8fd2837df75d05c3b4d9164714efa",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/instance_configuration.py",
+      "sha": "19de470a9c1626b2800a6383ac381975625b668b",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/instance_evidence.py",
+      "sha": "e56cff8b34af1846ea6ef8ddf3b3cfd9ea797e6a",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/instance_proposals.py",
+      "sha": "ca4150ed65ba2919f88b9427eaf1336747518e71",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/local_dutch_capture.py",
+      "sha": "d7623ce376f6672c11f5ffce0bdfda85ee1f2031",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/local_dutch_evidence.py",
+      "sha": "518984ef9c3689d89ce501945a870c025ea6c8e1",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/operation_contract_registry.py",
+      "sha": "7cb5a358e26c90a16caeb784091016e0c2a8cecc",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/services/orchestrator_adapter.py",
+      "sha": "c691bd9dcc63102bd8aec2f3e387de271b38655e",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/services/owned_artifact_preview.py",
+      "sha": "cdf30cf938899324b8d072cc67ec062d4356b13f",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/parameter_values.py",
+      "sha": "e8e700b0f168a9c57dd0137979dbf2dec275ee6d",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/portuguese_evidence.py",
+      "sha": "651d9950d8b59348364d40117fe9fd07236c86e7",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/portuguese_supervision.py",
+      "sha": "043089a2c4af9a86185d5e4b091945a507a3dbd1",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/provider_evidence.py",
+      "sha": "098078560ae205958a957a21e6f931c7b13038ca",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/qualified_demo.py",
+      "sha": "27119d35875f9c69cbe5afabd0d16aeec8a4788e",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/registered_parameters.py",
+      "sha": "50daabef93f45694f7172d6facc413ee4efd2afd",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/registered_parameters_operator.py",
+      "sha": "e5564484640866493e08230d12d6de24991d2ec6",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/shared_allowance.py",
+      "sha": "25c9e865f10861ac78f9503ef4f92df162c7184d",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/structural_proposals.py",
+      "sha": "6ab5f5790691a1be64eaedcbe872747a9fe54a1d",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/app/services/workflow_compiler.py",
+      "sha": "1260e4665877096188ade0bdc61209db45db9951",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/app/tests/test_package_import.py",
+      "sha": "de574d4d9cadd499e4c1951de36862c456a28e55",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/postgres_tests/conftest.py",
+      "sha": "d407760471c370099c21a11a3cba0db0d0f88f08",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_capture_migration.py",
+      "sha": "4eaddaecfb3d160592b12b78f64111a79bcb6876",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_design_persistence.py",
+      "sha": "69deae70aa31fb116c55d839ef43155607376156",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_execution_claim.py",
+      "sha": "ea27b5d7a9451154000a7ca69bce224eed585412",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_portuguese_admission.py",
+      "sha": "a9c720cd1fc06d11f3a4dd7565e22ec155f4a660",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_prerequisite_account_locks.py",
+      "sha": "90fe15e39ce080a568605187880c132be4fd4d73",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_staging_fresh_schema.py",
+      "sha": "ec7131a9fc09467772ebe93f8c2407fd523b6194",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/postgres_tests/test_structural_composition.py",
+      "sha": "eda2b62c775f71575648a084d2638edd025b421a",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/requirements-acceptance.txt",
+      "sha": "2613448c2bb7f7ac68c15e5d89af49722ce5e570",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/requirements.txt",
+      "sha": "7feb0a324cce75bfa66b8eddafad93d1443ff8e1",
+      "status": "modified"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_check.py",
+      "sha": "35c6616f674c43beed3dd3fe1225687b4c690115",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_followup.py",
+      "sha": "a25d916b3f431d9508b69d059893e8ef79766887",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_local.py",
+      "sha": "9f2df2a064d7562d65361ea574e3d6ec842cc53c",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_luna_batch.py",
+      "sha": "f38719915ada9bc3fd8bc12d80f4ffa8dba494b2",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/scripts/design_ai_metadata.py",
+      "sha": "89d8953147ed2676d07b72c52dcef6fd8ed23351",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/conftest.py",
+      "sha": "4162daf3b111c18639efa987b083317f53bfab97",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/preview.py",
+      "sha": "ee5e6996184a971fcc447c3e134b310f04eb225e",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_allowance_amendment.py",
+      "sha": "5ee7a753c842ca8934c834216f4b5dc762f0fb32",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_allowance_authority_protocol.py",
+      "sha": "3a4197a3287628437d2d9d70376fc5c3dc65e044",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_automatic_dutch_capture.py",
+      "sha": "5740954720bf49bece2a5e9f9ec581937e0a6439",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_capability_bindings.py",
+      "sha": "996968e6a38bc70da4d206727a9ffb9535c33b0f",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_catalogue_composition.py",
+      "sha": "1114e89a76b45703eb1fe12dae36a927ee0e68a6",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_catalogue_discovery.py",
+      "sha": "bf9a6c1febc1b48cb02db879521e41313dc6e5b8",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_conversation_repair.py",
+      "sha": "59de1a6e4effee80f2ecfbf88006870e10f10e35",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_demo_allowance.py",
+      "sha": "5ce76d771edfabbae150a66f6233491a8953d4e6",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_deployment_results.py",
+      "sha": "322ce33e2200e79495854b1b8b011e862a167637",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai.py",
+      "sha": "438c2c8d2412b03bb1fe914090469989f8d8c1fb",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_budget.py",
+      "sha": "1f437cb4a7034c8af31c63a427672d08436109d2",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_local_seed.py",
+      "sha": "ed49e5daf976907b5634f0b128205e24eb2626e5",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_metadata.py",
+      "sha": "ff968990d9ce3eaec7c702bed44529e20afba443",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_navigation.py",
+      "sha": "667309cb2525bb3a95271642bf65cd26e4d3d249",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_provider.py",
+      "sha": "e5caedd42d5e72b690c34dc8e2d91ac18fd75cd1",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_task_limit.py",
+      "sha": "d40336c32ee34fb0998641bed76e09226ef98050",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_goal_to_results.py",
+      "sha": "4bdba233e15439b561a3ac15c45fd47015794892",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_guided_dutch.py",
+      "sha": "324e0b88bc24000024fb45cb3bdccfdfd5f42eab",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_guided_provider_context.py",
+      "sha": "0fad53e89a9b23d9d25a8c5b22c9d055f6a9741e",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_instance_parameters.py",
+      "sha": "df4a7c5cfa3fe70cd87fa95f5433fb0ea87eb3f2",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_owned_artifact_preview.py",
+      "sha": "ec3610b6f47b27cf1bd176675e4ec09bafea47b9",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_parameter_compatibility.py",
+      "sha": "d268d6247483df33be0abe564a158f6bfb9c63e9",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_acceptance_allocation.py",
+      "sha": "01ffe5b0f46413545f656b932de8adabdf789ab2",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_chain.py",
+      "sha": "62317f72c3c083a5ec27539422ab3c8cc22788c3",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_evidence.py",
+      "sha": "8acf38cf5141985ab7acdcbcdff96cfe5abc645c",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_parameters.py",
+      "sha": "7df81eb4b1c9d781f5fefb49dc8114fa2d9bad16",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_provider_preparation.py",
+      "sha": "db34a75943fc6df0d32cc57807e9ce09e5b5d5ae",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_service_authority.py",
+      "sha": "8f3bc071e78d7474a0267d7892c4714896ec7047",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_supervision.py",
+      "sha": "3cd2cd3f346d16a05ec0f9a8ed7ead66666a6b9d",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_prerequisite_admin_review.py",
+      "sha": "43566b4cedab661fd798f6198533ddebb47d06b6",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_prompt_first_discovery.py",
+      "sha": "d43ca1c2390b8658c8e5be68a2eca8a411b3cbe0",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_provider_evidence.py",
+      "sha": "cb630363245b84be41705a64f54f7bb91817fd07",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_provider_verification_guard.py",
+      "sha": "6667aa20dc8eb00e505bd344b4d5ea14d94f436d",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_qualification_guard.py",
+      "sha": "12a6160fb518acaf1b20dcbd63cae5fd20e54717",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_qualification_runtime.py",
+      "sha": "e7a2352385b92f0b417666333491d27be7fc89a8",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_qualified_instance_evidence.py",
+      "sha": "aa579ae30d6e7babfbaff48a41aafa3223bed6e5",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_registered_portuguese.py",
+      "sha": "0f0f1e7a4ba316598b0d3b4aa12d102ef2e0e12c",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_restricted_beta.py",
+      "sha": "67ad89e4ec7976a34a99d18ff4b17db7dc5f22bd",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_shared_allowance.py",
+      "sha": "7492074e979ef7346783c37dd618790694566ccf",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_staging_preparation.py",
+      "sha": "0a03b8b081e7ef555aac7c4c1cdc6df4564630ab",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_structural_composition.py",
+      "sha": "6e174478fc137f872890b82a40a2531f2756edb4",
+      "status": "added"
+    },
+    {
+      "path": "apps/api/tests/test_targeted_instance_edit.py",
+      "sha": "c3f59c505873ed8e7cc47b5c4fcd22581483bcc9",
+      "status": "added"
+    }
+  ],
+  "web_from_historical_base": [
+    {
+      "path": "apps/web/AGENTS.md",
+      "sha": "643577dfaef36ee8032915ef80a0f0638f7beda0",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/CLAUDE.md",
+      "sha": "43c994c2d3617f947bcb5adf1933e21dabe46bb5",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/builder/page.tsx",
+      "sha": "a1772d3c49f6dfd684826c999aa533d6328d525b",
+      "status": "modified"
+    },
+    {
+      "path": "apps/web/app/deployments/[id]/page.tsx",
+      "sha": "bce4590b9dd7260b9382878fd50ce916f689429e",
+      "status": "modified"
+    },
+    {
+      "path": "apps/web/app/deployments/page.tsx",
+      "sha": "7074be9b5d2be6f11d8c406d8cae9b0ac0481c2c",
+      "status": "modified"
+    },
+    {
+      "path": "apps/web/app/deployments/recorded-results.tsx",
+      "sha": "8454927c5fccf84cd85b65cde8399981e484c917",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/deployments/results.test.ts",
+      "sha": "46f8bf6194ccd34f5013529edd239dc519e63865",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/deployments/results.ts",
+      "sha": "b1e7f46ed5ff9b94e1d7b94f699e5aa4517a734b",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/allowance.test.ts",
+      "sha": "5b31b9f2bb62a4ec774733734e11c7f6a7839bbb",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/allowance.ts",
+      "sha": "4833a3bce6c50ba0f2d65bfdb91c47deb9ff501f",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/composition.test.ts",
+      "sha": "827f4d3827f029103c0c623652580ce750b31e9e",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/page.test.cjs",
+      "sha": "eeca233ec2b8602e444e961a2a6ecc9cb762abb7",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/page.tsx",
+      "sha": "5c4c3f88552255fd8d792114e1f59ecb66c6c219",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/session.test.ts",
+      "sha": "ee440f6284723fe2c6b868540aecd56bcc43c37c",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/session.ts",
+      "sha": "a7e56634d9d4c095b581a1a54550c1799b32c4d3",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace-view.test.ts",
+      "sha": "35c6f79cfb2120b3490493032ec645746df08222",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace-view.ts",
+      "sha": "4e52b97adc0411556ddefdadee38664354fb52f1",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace-viewport.tsx",
+      "sha": "87f174b6904b25d8becd6001ae10c6b52312c9ff",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/design-ai/workspace.css",
+      "sha": "4b9d5a1c4a20a65ac934f7afda5e60571579ab4f",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/app/globals.css",
+      "sha": "6e493f645b2f069a42479031b89faf2c82a69af3",
+      "status": "modified"
+    },
+    {
+      "path": "apps/web/app/solutions/[id]/page.tsx",
+      "sha": "3702611aa6ff6a643a05bff1a9eb92d31255c450",
+      "status": "modified"
+    },
+    {
+      "path": "apps/web/components/builder-viewport.tsx",
+      "sha": "81ad4ed6d1c9b863237363257b4d13f31854d238",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/capability-bindings.tsx",
+      "sha": "3d7ba0536ba121d94095b2c7268561ab20fdfee2",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/composition-review.tsx",
+      "sha": "3449a194bc41a41d28c74db39c00a1bcb05b9f53",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/conversation-message.tsx",
+      "sha": "15e1ded602d076a55a3bb0c9288bb464e037dc6f",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/discovery-recommendation.test.cjs",
+      "sha": "171ab153d51f8ca314b4e1ebab3a288baace099b",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/discovery-recommendation.tsx",
+      "sha": "9501c6976598ce1b9d14dc213e6d68c22be9050b",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/experiment-execution.tsx",
+      "sha": "edcc8b193bf5d24f89b3fe3110f5c83511619c16",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/instance-parameters.tsx",
+      "sha": "402485a5899bb22b951ca15974d8bc9d582bc20e",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/instance-setting-review.tsx",
+      "sha": "f148f1ee0f006a5c53a5c13fa9932af47ca283f2",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/registered-configuration.tsx",
+      "sha": "0654e0b62581c57e157ae2f40212a10cb49e16f5",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/review-dialog.tsx",
+      "sha": "ea86826b39939b19b4d37a8c621c7d7c406185ca",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/shell.tsx",
+      "sha": "39b910ec6857f3fa2258d116df102e07eaf4f65c",
+      "status": "modified"
+    },
+    {
+      "path": "apps/web/components/structural-review.tsx",
+      "sha": "86625b48ba4fc00ce1c9be5fb8c32bd14759f2e8",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/components/submitted-configuration.tsx",
+      "sha": "a0a182d10357dc521fcf1ab185687195d31463e3",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/builder-review.test.ts",
+      "sha": "f806eef2a849db4f4b91720f31cc7300c4c724f7",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/builder-review.ts",
+      "sha": "80835719f58717e7a7808fc30b3d92ecbedb5e1d",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/builder-viewport.test.ts",
+      "sha": "1e4ef59da038d71db4bef457bbf4e9d5a9ab6d03",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/builder-viewport.ts",
+      "sha": "d4452bdfe412005913aecc44e72fa845753c0f39",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/connection-review.test.ts",
+      "sha": "9de99cd556b9914a1717c499a3062a573719ca5f",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/connection-review.ts",
+      "sha": "1f9b4a805d99fb7fe96d7e33889d5d23c28df81a",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/copy-instance.test.ts",
+      "sha": "4b0b4ba43c7cda6f6e2686f62120d2d26990b4f2",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/copy-instance.ts",
+      "sha": "5c7bc4c3a8470f6ff3c6e43832e7116332aa1fab",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/experiment-journey.test.ts",
+      "sha": "9d4db5ad10057a2fb4bd41308748f1245168ea14",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/experiment-journey.ts",
+      "sha": "46790d6fcb67856b376f6187ad95b940694776ba",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/submitted-settings.test.ts",
+      "sha": "f1ee5f14e374b294bbdcd3cb8bc53384952e9b83",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/lib/submitted-settings.ts",
+      "sha": "f8547ba8de8a68b7378f8c9a88bb091a2e4f3aad",
+      "status": "added"
+    },
+    {
+      "path": "apps/web/next.config.js",
+      "sha": "3b61e99a3566a26133764ffd9a5be4d62fc20fdc",
+      "status": "modified"
+    }
+  ]
+}

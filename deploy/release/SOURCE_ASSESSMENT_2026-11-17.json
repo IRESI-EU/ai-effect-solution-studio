@@ -1,0 +1,365 @@
+{
+  "assessment_date": "2026-11-17",
+  "assessment_type": "read-only GitHub source and published-evidence assessment; no live server inspection",
+  "status": "READY_FOR_OPERATOR_INVENTORY_NOT_FOR_PUBLIC_CUTOVER",
+  "portal_candidate": "c0b9405657a3c64ba2b570cecb3c973ba1bcfb7e",
+  "wp3_candidate": "d533219426af9ea6defaf0bc78956741201a5109",
+  "historical_production": {
+    "api": {
+      "source": "89072340c9a13f3aa49d3e433380de8928cc16dd",
+      "image": "sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340"
+    },
+    "web": {
+      "source": "df5b75873326ab56cad608990f3bd4add125bcc4",
+      "image": "sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f"
+    },
+    "evidence": "docs/DESIGN_AI_BETA_ENGINEERING_2026-11-11.md",
+    "current_server_reverified": false,
+    "wp3_current_source": null
+  },
+  "candidate_images": {
+    "api": null,
+    "web": null,
+    "wp3": null
+  },
+  "branch_protection_requirements_verified": false,
+  "dependency_lineage": {
+    "portal": true,
+    "wp3": true
+  },
+  "prs": [
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 8,
+      "title": "Publish gated Design with AI foundation for instance editing",
+      "head": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+      "head_branch": "codex/review-design-ai-foundation",
+      "base": "df5b75873326ab56cad608990f3bd4add125bcc4",
+      "base_branch": "feature/production-ui-polish-v1",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "failure"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 9,
+      "title": "AIE-18: configure reusable instances and review targeted setting edits",
+      "head": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+      "head_branch": "codex/review-module-parameterisation",
+      "base": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+      "base_branch": "codex/review-design-ai-foundation",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "failure"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 10,
+      "title": "AIE-37: qualify Dutch workflow capability contracts and evidence",
+      "head": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+      "head_branch": "codex/aie37-workflow-qualification",
+      "base": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+      "base_branch": "codex/review-module-parameterisation",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "failure"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 11,
+      "title": "AIE-38: review and apply one contract-bound analyzer addition",
+      "head": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+      "head_branch": "codex/aie38-bounded-workflow-composition",
+      "base": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+      "base_branch": "codex/aie37-workflow-qualification",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 12,
+      "title": "AIE-41: simplify Builder workflow review and technical details",
+      "head": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+      "head_branch": "codex/aie41-builder-review-usability",
+      "base": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+      "base_branch": "codex/aie38-bounded-workflow-composition",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 13,
+      "title": "Connect qualified Design with AI goal to recorded run results",
+      "head": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf",
+      "head_branch": "codex/design-ai-goal-to-results",
+      "base": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+      "base_branch": "codex/aie41-builder-review-usability",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 14,
+      "title": "Discover catalogue capabilities and clarify goals before creating experiments",
+      "head": "f36f8fdfcfb95576d948fea2971907ad4d433e3a",
+      "head_branch": "codex/catalogue-grounded-discovery",
+      "base": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf",
+      "base_branch": "codex/design-ai-goal-to-results",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 15,
+      "title": "Create design-only two-operation workflows from catalogue pairs",
+      "head": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+      "head_branch": "codex/two-operation-composition",
+      "base": "f36f8fdfcfb95576d948fea2971907ad4d433e3a",
+      "base_branch": "codex/catalogue-grounded-discovery",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 16,
+      "title": "Focus Design with AI on the canvas and adjacent assistant",
+      "head": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe",
+      "head_branch": "codex/design-ai-workspace-review",
+      "base": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+      "base_branch": "codex/two-operation-composition",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 17,
+      "title": "Prepare restricted beta contracts, shared accounting and release guards",
+      "head": "c93848eb3d3495287ed0c615c6ffe98bddae2f77",
+      "head_branch": "codex/conversational-pair-review",
+      "base": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe",
+      "base_branch": "codex/design-ai-workspace-review",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 18,
+      "title": "Verify real local parameter consumption and preserve immutable results",
+      "head": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d",
+      "head_branch": "codex/platform-parameterisation-verification",
+      "base": "c93848eb3d3495287ed0c615c6ffe98bddae2f77",
+      "base_branch": "codex/conversational-pair-review",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 19,
+      "title": "Verify genuine local two-operation Design with AI acceptance",
+      "head": "94c28277a60cc18d3e2095455844cde36afae463",
+      "head_branch": "codex/local-composition-acceptance",
+      "base": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d",
+      "base_branch": "codex/platform-parameterisation-verification",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 20,
+      "title": "Prepare supervised local design-only pilot with ten-call allowance",
+      "head": "14680bbebfb4db62c44330058f6593f26e28f7ce",
+      "head_branch": "codex/supervised-local-pilot",
+      "base": "94c28277a60cc18d3e2095455844cde36afae463",
+      "base_branch": "codex/local-composition-acceptance",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 21,
+      "title": "Preserve explanations and pending choices in Design with AI",
+      "head": "4faa2c9dcf30f725aa890d027052277e5760f871",
+      "head_branch": "codex/conversation-context-repair",
+      "base": "14680bbebfb4db62c44330058f6593f26e28f7ce",
+      "base_branch": "codex/supervised-local-pilot",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 22,
+      "title": "AIE-18: Portuguese parameter sandbox and verified model handoff",
+      "head": "c0b9405657a3c64ba2b570cecb3c973ba1bcfb7e",
+      "head_branch": "codex/portuguese-parameter-sandbox",
+      "base": "4faa2c9dcf30f725aa890d027052277e5760f871",
+      "base_branch": "codex/conversation-context-repair",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0
+    },
+    {
+      "repository": "AI-EFFECT/ai-effect-wp3",
+      "number": 2,
+      "title": "Restore optional legacy control parameters without changing omitted payloads",
+      "head": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+      "head_branch": "codex/review-legacy-client-parameters",
+      "base": "e8914565e966a2d78879c314f980574769d31b87",
+      "base_branch": "main",
+      "draft": true,
+      "statuses": [],
+      "review_count": 0
+    },
+    {
+      "repository": "AI-EFFECT/ai-effect-wp3",
+      "number": 3,
+      "title": "AIE-18: validate and transport reusable instance settings",
+      "head": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+      "head_branch": "codex/review-instance-configuration",
+      "base": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+      "base_branch": "codex/review-legacy-client-parameters",
+      "draft": true,
+      "statuses": [],
+      "review_count": 0
+    },
+    {
+      "repository": "AI-EFFECT/ai-effect-wp3",
+      "number": 4,
+      "title": "AIE-18: experimental Portuguese parameters and model handoff",
+      "head": "d533219426af9ea6defaf0bc78956741201a5109",
+      "head_branch": "codex/portuguese-parameter-sandbox",
+      "base": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+      "base_branch": "codex/review-instance-configuration",
+      "draft": true,
+      "statuses": [],
+      "review_count": 0
+    }
+  ],
+  "tree_comparisons": {
+    "portal_feature_base": "df5b75873326ab56cad608990f3bd4add125bcc4",
+    "portal_tree_changed_files": 424,
+    "portal_api_changes_from_historical_api_base": 109,
+    "portal_web_changes_from_historical_web_base": 48,
+    "wp3_changes_from_main": 34,
+    "github_compare_file_limit_observed": 300,
+    "full_blob_tree_comparison_used": true
+  },
+  "source_sha256": {
+    "deploy/migrations/003_design_ai_pilot.sql": "8b351d65a60f0868b48c6b35922721543da1d96dfe6f0f83604359248e80a89e",
+    "deploy/migrations/004_instance_submissions.sql": "ed8b0e330f79b8d059be5300d4dfc579a4016eb9ffae06dbfd99d22be33429ce",
+    "deploy/migrations/005_local_capture_records.sql": "22935283810c1086b39c1d6b192ecf31f11a1478961470f93980f2c5872896cc",
+    "apps/api/app/core/config.py": "aab3f0e1e3cc4c4b6093caa08d9e31f8610c9bbc5472f8a0b47bc3a97361d2e3",
+    "docker-compose.design-ai.yml": "be34aa17dbee4506d51c856a154eec2c0b0ecfb7096c932693bd781b602fcb46",
+    "deploy/staging/compose.yaml": "3c949204b64f241606d8b907903060818a335b70ab5eeab36e6a55924389b789"
+  },
+  "open_gates": [
+    "current production API/web/WP3/config/schema/storage inventory",
+    "independent human and code review across complete dependencies",
+    "PR8-10 Vercel failures and applicable required-check policy",
+    "deployment-scoped Portuguese registration/input authority; current path sandbox-only",
+    "deployable restricted-beta config and authorized nonexhausted accounting policy/transport",
+    "new immutable API/web packages including source-only evidence capture",
+    "isolated staging migration/auth/ownership/legacy-workflow/denial/rollback verification",
+    "explicit final release decision on concrete candidate"
+  ],
+  "not_performed": [
+    "production connection",
+    "Docker build or startup",
+    "database migration or restore",
+    "provider request",
+    "algorithm call",
+    "authorization or accounting change",
+    "PR merge or production deployment"
+  ],
+  "historical_provider_acceptance": "behavior cases A/B/C PASS; overall PARTIAL evidence; not relabelled",
+  "closed_ledger_state_from_published_evidence": "28/28, scope 3/3 closed, zero outstanding; not inspected live or changed",
+  "runtime_capabilities_here": {
+    "docker": false,
+    "psql": false
+  }
+}
