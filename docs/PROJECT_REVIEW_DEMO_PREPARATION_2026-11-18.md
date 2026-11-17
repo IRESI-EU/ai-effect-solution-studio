@@ -1,3 +1,13 @@
+> **Current outcome — 17 November:** the owner-approved fresh rehearsal stopped
+> after A passed and B returned the application's invalid-proposal error. C was
+> not attempted. The review scope is permanently closed after two settled calls;
+> no unused permit is spendable. Provider is disconnected and inspection mode
+> restored. The preparation/resume instructions below are historical and must
+> not be replayed for this closed scope.
+>
+> For tomorrow, use the [provider-free parameterisation rehearsal](PROJECT_REVIEW_DEMO_2026-11-18.md).
+> It creates a separate design and does not repair or replace the failed AI case.
+
 # Fresh Design with AI review demonstration
 
 **Source prepared; local activation and fresh browser rehearsal not performed.**
