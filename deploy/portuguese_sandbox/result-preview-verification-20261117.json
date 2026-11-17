@@ -1,0 +1,52 @@
+{
+  "at": "2026-11-17T16:39:00.442525+00:00",
+  "source_fix": "0660430724007c537c44d0985163043c5fa5688f",
+  "installed": {
+    "source_commit": "de58dc98f581642339d753c8d3a228e97d94a1fb",
+    "image": "sha256:511b44899c6f437ad33c3cbfc514a31581cbc9dc240e54dcb02aaa7b1d4cc1b5",
+    "old_source": "25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b",
+    "rollback_image": "sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e",
+    "only_api_recreated": true,
+    "health": "200",
+    "provider_disconnected": true,
+    "supervision_disabled": true
+  },
+  "tests": {
+    "suites": [
+      "test_portuguese_evidence.py",
+      "test_owned_artifact_preview.py"
+    ],
+    "passed": 47
+  },
+  "browser": {
+    "train_model_output_json": "PASS: recorded opaque model_ref rendered",
+    "generate_data_output_csv": "PASS: four-column CSV table, 20-row limit",
+    "historical_workflow": "Completed",
+    "task_ids": [
+      "task_030152d9",
+      "task_f6c5c14e"
+    ],
+    "download": {
+      "bytes": 41826,
+      "sha256": "sha256:553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540",
+      "source": "Actual visible browser Download generated CSV"
+    }
+  },
+  "preservation": {
+    "other_container_identities_images_mounts_states": 59,
+    "total_containers": 60,
+    "all_solutions_and_deployments_unchanged": true,
+    "nine_completed_journal_jobs_and_closed_scopes_unchanged": true,
+    "queues_unchanged": true,
+    "ledger_28_of_28_closed_unchanged": true,
+    "zero_outstanding_reservations": true,
+    "provider_disconnected": true,
+    "supervision_disabled": true,
+    "original_ml_web_sidecar_workers_staging_unchanged": true
+  },
+  "new_workflows": 0,
+  "new_training": 0,
+  "new_generation": 0,
+  "new_provider_calls": 0,
+  "development": "PAUSED; narrow meeting repair only"
+}
