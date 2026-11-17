@@ -126,7 +126,8 @@ def operate(directory, action, approved, backup=None, restore_name=None):
         for migration in sorted((REPO / "deploy/migrations").glob("*.sql")):
             command(compose + ["exec", "-T", "postgres", "psql", "-U", "staging", "-d", "design_ai_staging", "-v", "ON_ERROR_STOP=1"], input=migration.read_bytes())
     elif action == "bootstrap":
-        command(compose + ["run", "--rm", "--no-deps", "--pull", "never", "api", "python", "/opt/staging/synthetic_seed.py"])
+        command(compose + ["run", "--rm", "--no-deps", "--pull", "never", "api", "python", "-c",
+            "import runpy;runpy.run_path('/opt/staging/synthetic_seed.py',run_name='__main__')"])
     elif action == "start":
         command(compose + ["up", "-d", "--no-build", "--pull", "never", "postgres", "api", "web", "gateway"])
     elif action == "stop":

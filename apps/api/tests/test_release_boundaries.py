@@ -18,6 +18,18 @@ def test_production_overlay_is_default_off_and_keeps_experimental_execution_disc
     assert 'postgres' not in document['services'] and 'worker' not in document['services']
 
 
+def test_only_staging_https_gateway_gets_publishable_edge_network():
+    base=yaml.safe_load((ROOT/'deploy/staging/compose.yaml').read_text())
+    overlay=yaml.safe_load((ROOT/'deploy/release/staging-design-only.compose.yaml').read_text())
+    assert overlay['services']['gateway']['networks']==['private','review_edge']
+    assert overlay['networks']['review_edge']['internal'] is False
+    for name in ('api','web','postgres'):
+        assert base['services'][name]['networks']==['private']
+        assert 'networks' not in overlay['services'].get(name,{})
+        assert not base['services'][name].get('ports')
+    assert base['services']['gateway']['ports'][0].startswith('127.0.0.1:')
+
+
 def test_staging_adaptation_allows_chat_route_without_relaxing_denial_or_tls():
     base=yaml.safe_load((ROOT/'deploy/staging/compose.yaml').read_text())
     assert base['networks']['private']['internal'] is True
