@@ -1,8 +1,9 @@
 """Single-writer authority over the EXISTING ledger; no import/copy/reset path.
 
-Policy transitions are operator-only, exact 13->15->25->28, within the original
-USD0.10. Clients never receive the ledger. One unresolved reservation blocks
-further dispatch across environments; no timeout/expiry refunds a call or money.
+Legacy transitions are operator-only, exact 13->15->25->28, within the original
+USD0.10. A separately authorized, dated review budget leaves that batch closed.
+Clients never receive the ledger. One unresolved reservation blocks further
+dispatch across environments; no timeout/expiry refunds a call or money.
 """
 from contextlib import contextmanager, closing
 from datetime import datetime, timezone
@@ -22,6 +23,12 @@ RESERVATION = 5_000_000
 TOTAL = 100_000_000
 CONTROLS = {"model":"gpt-6-luna","reasoning":"low","service_tier":"default","cache_ttl":"30m"}
 FIELDS = ("id", "held", "reserved", "input_bound", "usage", "status", "response_id")
+REVIEW_SCOPE = "pt-project-review-20261118"
+REVIEW_EXPIRES = "2026-11-18T21:00:00+00:00"
+
+
+def utc_now():
+    return datetime.now(timezone.utc)
 
 
 def canonical(value):
@@ -204,6 +211,69 @@ class Authority:
             self.audit(db,"activate_"+phase,operator,authorization_ref,{**proposal,"original_ledger_sha256":expected_sha256,"acceptance_evidence":acceptance_evidence})
             return {"applied":True,"proposal":proposal}
 
+    def activate_review_demo(self, *, authority_id, bindings, expected_sha256,
+                             expected_ledger_path, expected_file_identity,
+                             operator, authorization_ref, proposal_sha256, apply=False):
+        """One dated, additional USD0.05 budget; never reopens the USD0.10 batch.
+
+        This is an operator-only amendment, not an HTTP endpoint or startup task.
+        The caller must obtain new spending approval for the frozen proposal.
+        Dry-run validates the exact original file without writing any bytes.
+        """
+        for value in (authority_id, operator, authorization_ref):
+            if not isinstance(value,str) or not value.strip() or len(value)>500:
+                raise ValueError("Attributable authority, operator and new authorization required")
+        if not isinstance(proposal_sha256,str) or not re.fullmatch(r"[a-f0-9]{64}",proposal_sha256):
+            raise ValueError("Frozen review proposal SHA-256 required")
+        if (not isinstance(bindings,list) or len(bindings)!=1 or not isinstance(bindings[0],dict)
+                or set(bindings[0])!={"consumer_id","environment","database_scope","token_sha256"}
+                or bindings[0]["consumer_id"]!="pt-project-review-demo"
+                or bindings[0]["environment"]!="portuguese-sandbox-local"
+                or any(not isinstance(bindings[0][k],str) or not re.fullmatch(r"[a-f0-9]{64}",bindings[0][k])
+                       for k in ("database_scope","token_sha256"))):
+            raise ValueError("One exact Portuguese local reviewer consumer binding required")
+        if utc_now() >= datetime.fromisoformat(REVIEW_EXPIRES):
+            raise HTTPException(409,"The dated review budget has expired")
+        with self.transaction(write=apply) as db:
+            if (os.path.normcase(str(self.path))!=os.path.normcase(str(Path(expected_ledger_path).resolve()))
+                    or expected_file_identity!=[self.path.stat().st_dev,self.path.stat().st_ino]
+                    or not isinstance(expected_sha256,str) or not re.fullmatch(r"[a-f0-9]{64}",expected_sha256)
+                    or hashlib.sha256(self.path.read_bytes()).hexdigest()!=expected_sha256):
+                raise HTTPException(409,"Exact canonical ledger file and reviewed fingerprint required")
+            policy=self.verify(db)
+            history=rows(db)
+            batch=list(db.execute("SELECT closed,limit_nano,max_calls FROM batch WHERE id=1").fetchone())
+            prior=policy["scopes"].get("pt-provider-acceptance-20261116",{})
+            if (policy["authority_id"]!=authority_id or policy["phase"]!="portuguese_acceptance"
+                    or policy["active_scope"]!="pt-provider-acceptance-20261116"
+                    or REVIEW_SCOPE in policy["scopes"] or batch!=[1,TOTAL,28]
+                    or len(history)!=28 or any(not r["usage"] or r["status"] not in {"completed","settled"} for r in history)
+                    or prior.get("kind")!="portuguese_acceptance"
+                    or digest(history[:prior.get("baseline_count",0)])!=prior.get("history_sha256")
+                    or len(prior.get("bindings",[]))!=1
+                    or bindings[0]["database_scope"]!=prior["bindings"][0]["database_scope"]
+                    or db.execute("SELECT count(*) FROM authority_requests WHERE scope=?",(policy["active_scope"],)).fetchone()[0]!=3):
+                raise HTTPException(409,"Exact closed, fully settled 28/28 Portuguese checkpoint required; no reopening")
+            if any(bindings[0]["token_sha256"]==b["token_sha256"] for s in policy["scopes"].values() for b in s["bindings"]):
+                raise HTTPException(409,"The review session requires a new private consumer token")
+            if sum(r["held"] for r in history)+50_000_000>TOTAL:
+                raise HTTPException(409,"The review cap must also fit the unchanged original USD0.10 ceiling")
+            proposal={"scope":REVIEW_SCOPE,"budget_kind":"project_review_demo","historical_batch":batch,
+                      "historical_request_count":28,"historical_held_nano":sum(r["held"] for r in history),
+                      "max_calls":10,"max_reserved_nano":50_000_000,"aggregate_limit_nano":TOTAL,"per_request_nano":RESERVATION,
+                      "expires_at":REVIEW_EXPIRES,"controls":CONTROLS,"bindings":bindings,
+                      "proposal_sha256":proposal_sha256}
+            if not apply:return {"applied":False,"proposal":proposal}
+            policy.update(phase="project_review_demo",active_scope=REVIEW_SCOPE)
+            policy["scopes"][REVIEW_SCOPE]={"kind":"project_review_demo","baseline_count":28,
+                "history_sha256":digest(history),"historical_batch":batch,"max_calls":10,
+                "max_reserved_nano":50_000_000,"expires_at":REVIEW_EXPIRES,
+                "closed":False,"bindings":bindings,"proposal_sha256":proposal_sha256}
+            db.execute("UPDATE authority_state SET value=? WHERE id=1",(canonical(policy),))
+            self.audit(db,"activate_project_review_demo",operator,authorization_ref,
+                       {**proposal,"original_ledger_sha256":expected_sha256})
+            return {"applied":True,"proposal":proposal}
+
     def binding(self, policy, token, claims):
         hashed=hashlib.sha256(token.encode()).hexdigest()
         scope=policy["scopes"].get(claims.get("scope"))
@@ -221,6 +291,25 @@ class Authority:
             raise HTTPException(503,"Historical checkpoint integrity failed")
         count, reserved=db.execute("SELECT count(*),coalesce(sum(r.reserved),0) FROM requests r JOIN authority_requests a ON r.id=a.request_id WHERE a.scope=?",(claims["scope"],)).fetchone()
         outstanding=sum(not r["usage"] or r["status"]=="settled_unacknowledged" for r in history)
+        if scope["kind"]=="project_review_demo":
+            if [closed,money,maximum]!=scope["historical_batch"] or scope["historical_batch"]!=[1,TOTAL,28]:
+                raise HTTPException(503,"The historical batch must remain closed and unchanged")
+            held=db.execute("SELECT coalesce(sum(r.held),0) FROM requests r JOIN authority_requests a ON r.id=a.request_id WHERE a.scope=?",(claims["scope"],)).fetchone()[0]
+            reason=("closed" if scope["closed"] else "expired" if utc_now()>=datetime.fromisoformat(scope["expires_at"])
+                    else "inactive_scope" if policy["active_scope"]!=claims["scope"]
+                    else "outstanding_usage" if outstanding else "call_limit" if count>=scope["max_calls"]
+                    else "scope_money_limit" if max(reserved,held)+RESERVATION>scope["max_reserved_nano"]
+                    else "shared_money_limit" if sum(r["held"] for r in history)+RESERVATION>TOTAL else None)
+            return {"protocol_version":1,"authority_id":policy["authority_id"],"scope":claims["scope"],
+                    "can_request":reason is None,"blocked_reason":reason,
+                    "message":"Review allowance available" if reason is None else "AI messages paused: "+reason,
+                    "budget_kind":"project_review_demo","historical_request_count":28,"historical_batch_closed":True,
+                    "aggregate_limit_usd":TOTAL/1e9,
+                    "max_calls":scope["max_calls"],"request_count":count,"remaining_calls":max(0,scope["max_calls"]-count),
+                    "limit_usd":scope["max_reserved_nano"]/1e9,
+                    "remaining_usd":max(0,scope["max_reserved_nano"]-max(reserved,held))/1e9,
+                    "outstanding_reservations":outstanding,"scope_count":count,"scope_max_calls":scope["max_calls"],
+                    "scope_reserved_nano":reserved,"scope_limit_nano":scope["max_reserved_nano"],"expires_at":scope["expires_at"]}
         reason=("closed" if closed else "inactive_scope" if policy["active_scope"]!=claims["scope"]
                 else "outstanding_usage" if outstanding else "call_limit" if len(history)>=maximum or count>=scope["max_calls"]
                 else "scope_money_limit" if reserved+RESERVATION>scope["max_reserved_nano"]
@@ -296,6 +385,9 @@ class Authority:
                 db.execute("UPDATE requests SET held=?,usage=?,status=?,response_id=? WHERE id=?",(max(cost,RESERVATION) if over else cost,canonical(usage),"overrun" if over else "settled_unacknowledged",payload["id"],r["id"]))
                 if over:db.execute("UPDATE batch SET closed=1 WHERE id=1")
                 error=over
+            if error and policy["scopes"][claims["scope"]]["kind"]=="project_review_demo":
+                policy["scopes"][claims["scope"]]["closed"]=True
+                db.execute("UPDATE authority_state SET value=? WHERE id=1",(canonical(policy),))
             self.audit(db,"usage_uncertain" if not good else "settle",claims["consumer_id"],claims["scope"],{"request_key":key,"request_id":r["id"],"stopped":error})
             result=self.receipt(db,policy,claims,key)
         # Commit the hold/overrun BEFORE returning the stop error.
@@ -341,6 +433,10 @@ class Authority:
             policy=self.verify(db)
             if scope_id!=policy["active_scope"] or hashlib.sha256(self.path.read_bytes()).hexdigest()!=expected_sha256:
                 raise HTTPException(409,"Exact active scope/fingerprint required to stop")
-            db.execute("UPDATE batch SET closed=1 WHERE id=1")
+            if policy["scopes"][scope_id]["kind"]=="project_review_demo":
+                policy["scopes"][scope_id]["closed"]=True
+                db.execute("UPDATE authority_state SET value=? WHERE id=1",(canonical(policy),))
+            else:
+                db.execute("UPDATE batch SET closed=1 WHERE id=1")
             self.audit(db,"stop",operator,authorization_ref,{"scope":scope_id})
             return {"closed":True,"scope":scope_id,"reopen_supported":False}
