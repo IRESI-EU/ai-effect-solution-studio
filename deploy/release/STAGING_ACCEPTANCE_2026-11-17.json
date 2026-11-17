@@ -1,0 +1,222 @@
+{
+  "api_route_fixture": {
+    "kind": "Authenticated API route fixture; NOT visible browser acceptance",
+    "draft_id": "3ca21e8b-cf93-4087-a2a8-42876a04b2c2",
+    "saved_solution_id": "908f8d2c-fd7e-44bf-8c9f-84016b68b012",
+    "missing_csv_denied": true,
+    "unauthorized_csv_denied": true,
+    "wrong_reviewer_denied": true,
+    "stale_revision_denied": true,
+    "unchanged_on_denial": true,
+    "apply_undo_reapply_save_compile": true,
+    "independent_instance_ids": [
+      "ebc95d53-805c-4dee-9192-ac26f9e3c6bf",
+      "2493d02e-658f-4868-bf9e-1a45d994f4df"
+    ],
+    "provider_config": {
+      "enabled": true,
+      "provider_configured": false,
+      "provider_name": "OpenAI",
+      "provider_mode": "real",
+      "model": null
+    },
+    "chat_denial": {
+      "detail": "Restricted beta requires durable shared accounting and a scoped allowance; provider requests are disabled"
+    },
+    "direct_API_denial": {
+      "runtime-preflight": {
+        "status": 403,
+        "detail": {
+          "detail": "Experimental registered workflows are design-only in this environment; execution is disabled."
+        }
+      },
+      "submit-to-orchestrator": {
+        "status": 403,
+        "detail": {
+          "detail": "Experimental registered workflows are design-only in this environment; execution is disabled."
+        }
+      }
+    },
+    "deployments": [],
+    "provider_calls": 0,
+    "algorithm_calls": 0
+  },
+  "binary_rollback": {
+    "backup_sha256": "sha256:a82c14b3bad98f67764243b13fd2130ef3d592d7307bb263fef10486500d83cc",
+    "backup_bytes": 36627,
+    "restored_database": "design_ai_staging_restore_20261117110132",
+    "separate_restore_matches": true,
+    "previous_binaries": [
+      {
+        "role": "api",
+        "original_image": "sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340",
+        "local_image": "sha256:66125fea149293827f0e9bbeb59eb3004f4a80dc84939c6c38fc78810130761f",
+        "nonempty_configuration_and_rootfs_identical": true,
+        "legacy_empty_defaults_omitted": [
+          "AttachStderr",
+          "AttachStdin",
+          "AttachStdout",
+          "Domainname",
+          "Entrypoint",
+          "Hostname",
+          "Image",
+          "Labels",
+          "OnBuild",
+          "OpenStdin",
+          "StdinOnce",
+          "Tty",
+          "Volumes"
+        ]
+      },
+      {
+        "role": "web",
+        "original_image": "sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f",
+        "local_image": "sha256:4e06e7f02d18b97b87d3fa97b6182323807e79213896d5b616ef00cb06bff7a6",
+        "nonempty_configuration_and_rootfs_identical": true,
+        "legacy_empty_defaults_omitted": [
+          "AttachStderr",
+          "AttachStdin",
+          "AttachStdout",
+          "Domainname",
+          "Hostname",
+          "Image",
+          "OnBuild",
+          "OpenStdin",
+          "StdinOnce",
+          "Tty",
+          "Volumes"
+        ]
+      }
+    ],
+    "traffic_controlled": true,
+    "old_web_build_id": "aLp4c1xkUjCM1v23PtrYY",
+    "old_records_readable": true,
+    "candidate_writes_preserved": true,
+    "old_binary_new_write_id": "aa7e98a9-3c80-4b6e-aa48-060751b013aa",
+    "candidate_restored": true,
+    "candidate_saved_state_exact": true,
+    "old_binary_write_retained": true,
+    "provider_calls": 0,
+    "workflows": 0,
+    "algorithms": 0
+  },
+  "serving_and_preservation": {
+    "at": "2026-11-17T11:07:52.774474+00:00",
+    "retained_container_identities_states_images_mounts_unchanged": 56,
+    "new_staging_services": 4,
+    "new_workers": 0,
+    "serving_images": {
+      "api": "sha256:29a48dae5efceac7fbab0b151909803a70ccec74843159b3fbe2349d55ea6e67",
+      "web": "sha256:57cf29da97ab875de93e78fa2068551ba6c44062233358de410a82c490ddc6c0",
+      "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "gateway": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10"
+    },
+    "web_build_id": "EY9BALGRvOJYRAkWG_pgJ",
+    "image_source": "349f45166f319c040b2b3f2b98c4cefb9b537aa3",
+    "source_manifest_files_checked": 174,
+    "provider_disconnected": true,
+    "execution_disabled": true,
+    "bootstrap_credentials_removed": true,
+    "internal_api_web_database": true,
+    "only_gateway_edge_bridge": true,
+    "new_deployments": 0,
+    "direct_server_denial": {
+      "runtime-preflight": {
+        "status": 403,
+        "detail": {
+          "detail": "Experimental registered workflows are design-only in this environment; execution is disabled."
+        }
+      },
+      "submit-to-orchestrator": {
+        "status": 403,
+        "detail": {
+          "detail": "Experimental registered workflows are design-only in this environment; execution is disabled."
+        }
+      }
+    },
+    "staging_execution_table_counts": {
+      "deployments": 0,
+      "execution_submissions": 0,
+      "local_dutch_executions": 0
+    }
+  },
+  "registration_removal": {
+    "removed_registration": true,
+    "omitted_solution_identity": true,
+    "direct_denial": {
+      "runtime-preflight": {
+        "status": 403,
+        "detail": {
+          "detail": "Experimental registered workflows are design-only in this environment; execution is disabled."
+        }
+      },
+      "submit-to-orchestrator": {
+        "status": 403,
+        "detail": {
+          "detail": "Experimental registered workflows are design-only in this environment; execution is disabled."
+        }
+      }
+    },
+    "registration_restored": true
+  },
+  "synthetic_governance": {
+    "reviewer_id": "02dea80e-896c-4e58-a971-4a7a6d00d80c",
+    "other_reviewer_id": "4c42bace-6890-422f-8b25-4f7e75999288",
+    "source_id": "8d413acc-668a-4bf8-bf04-7c3e6ccccf72",
+    "synthetic_only": true,
+    "services": [
+      "pt-experimental-chain-GenerateData",
+      "pt-experimental-chain-TrainModel"
+    ],
+    "contract_ids": [
+      "pt-chain-generate-v2",
+      "pt-chain-train-v2"
+    ],
+    "provider_calls": 0,
+    "workflows": 0,
+    "wrong_role_publish_and_approve_denied": true
+  },
+  "registration": {
+    "portugal": {
+      "instance_settings_only": true,
+      "registered_parameters": {
+        "contract_definitions": {
+          "pt-chain-generate-v2": "sha256:4739abb0a7bc5795bc70a5cc0c2aee1abb1f03420ab0ab35c0e00c283db67eeb",
+          "pt-chain-train-v2": "sha256:2d384fb0ad28f401978d0cd9006087f1ca9e7294118765c8db52293cf6f49c9a"
+        },
+        "deployment_design_input": {
+          "database_scope": "sha256:f3cce8d9fe64bd2182d67557335510a1065b649851ee377f20228de661f397a9",
+          "dataset_ref": "staging-synthetic-csv-20261117",
+          "environment": "isolated-design-staging-20261117",
+          "label": "Synthetic staging CSV (design only)"
+        },
+        "registration_id": "synthetic-staging-portuguese-20261117",
+        "reviewer_id": "02dea80e-896c-4e58-a971-4a7a6d00d80c",
+        "source_revision": "sha256:2977b758d3c362429312e08963f4f82240ac25bc8ae02411ebbc153da30ba30e"
+      },
+      "solution_id": "8d413acc-668a-4bf8-bf04-7c3e6ccccf72"
+    }
+  },
+  "retained_evidence": {
+    "global_request_count": 28,
+    "global_call_ceiling": 28,
+    "outstanding_reservations": 0,
+    "global_closed": true,
+    "workers_stopped": true,
+    "historical_completed_results_accessible": true,
+    "nine_journal_jobs_and_four_closed_execution_scopes_unchanged": true,
+    "queues_unchanged_no_unresolved_work": true,
+    "original_compose_byte_identical": true
+  },
+  "application_source": "349f45166f319c040b2b3f2b98c4cefb9b537aa3",
+  "authorized_configuration": "20de4bdeb428c23a4ac66065e3761abc9dc85a2c",
+  "configuration_fix": "c7ee549396614e08c5a6719083edbb5b211a6491",
+  "browser_acceptance": "PENDING \u2014 owner-confirmed profile-scoped certificate trust and connected review browser required",
+  "independent_human_usability": "NOT PERFORMED",
+  "tests": {
+    "target_registration_and_owned_preview": 22,
+    "configuration_and_synthetic_monitoring_downloads": 29,
+    "stale_source": 1
+  },
+  "provider_acceptance_historical": "PARTIAL, unchanged; no new provider attempt"
+}

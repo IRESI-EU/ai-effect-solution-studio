@@ -312,3 +312,15 @@ staging acceptance plus full old-binary rollback. Complete the human observation
 sheet. No final release approval is requested while these gates are unmet.
 
 Local parameterisation and bounded Design with AI behavior verified; provider audit evidence remains partial; independent usability and code review remain outstanding.
+
+## Separately authorized staging acceptance follow-up
+
+The subsequent isolated staging pass is recorded separately in
+[staging acceptance](RESTRICTED_STAGING_ACCEPTANCE_2026-11-17.md). The four new
+services are healthy, synthetic governance/registration and authenticated API checks
+pass, and actual previous-binary rollback plus separate backup restoration pass.
+Two demonstrated staging preparation issues were corrected without rebuilding the
+frozen application images. **Visible browser acceptance remains pending** scoped
+certificate trust and a connected review browser; API fixtures do not substitute
+for it. Historical provider PARTIAL, production activation gates and unperformed
+independent human usability remain intact.
