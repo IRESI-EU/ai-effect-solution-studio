@@ -46,6 +46,19 @@ def test_owned_task_output_previews_but_omitted_authority_cannot(environment, ob
     assert environment.post("/data-references/preview",json={"protocol":"file","uri":"/data/wf-owned/result.json"}).status_code == 422
 
 
+@pytest.mark.parametrize("compiled",[None,{"solution_studio_metadata":None},
+    {"solution_studio_metadata":{"execution_instances":None}}])
+def test_non_capture_submission_keeps_existing_preview_behavior(environment,observed,db,compiled):
+    row=db.get(ExecutionSubmission,"submitted-owned")
+    value={"request":{},"compiled":compiled}
+    row.submitted=value
+    row.submitted_sha256=hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False,allow_nan=False).encode()).hexdigest()
+    db.commit()
+    result=request(environment)
+    assert result.status_code==200,result.text
+    assert result.json()["content"]=={"answer":43}
+
+
 def test_other_owner_denied_before_runtime_or_storage_read(environment, observed, monkeypatch):
     state, calls, _ = observed
     monkeypatch.setattr(owned,"resolve_artifact_path",lambda _: pytest.fail("must authorize first"))
