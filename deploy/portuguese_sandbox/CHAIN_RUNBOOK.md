@@ -1,9 +1,13 @@
 # Connected Portuguese phase — existing-profile operator runbook
 
-2026-11-16 follow-up: [prepared supervised boundary](SUPERVISED_RUNBOOK.md).
-It remains disabled; no new scope/execution is authorized. The retained engine
-is currently unavailable, so packaging and fresh browser acceptance are blocked.
-The historical execution instructions below are preserved, not reopened.
+Current review: [ten-minute human walkthrough](../../docs/PORTUGUESE_HUMAN_WALKTHROUGH_2026-11-17.md)
+and [source/image/review handoff](../../docs/PORTUGUESE_REVIEW_HANDOFF_2026-11-17.md).
+The retained application is available on23124; provider disconnected, authority
+stopped, ledger28/28 closed, workers stopped and supervision disabled. New saved
+2/4/20 design has no results; completed historical wf-717110fb8d5e is2/4/10.
+No startup, packaging or rollback is needed for the source-only future audit change.
+The [supervised boundary](SUPERVISED_RUNBOOK.md) remains disabled. Historical
+execution/update instructions below are preserved, not reopened; never replay them.
 
 This is an additive update of ai-effect-pt-parameters, not a new profile.
 The original three jobs and old one-training/two-generation scope stay exhausted.

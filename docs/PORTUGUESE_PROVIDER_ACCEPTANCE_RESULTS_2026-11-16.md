@@ -153,3 +153,21 @@ No feature implementation, build or repeated test suite was needed in this pass.
   [model binding/pins](../deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-b-binding-pins.jpg).
 - [C clarification and exhausted ceiling](../deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-c-clarification-paused.jpg),
   [retained clarification after disconnection](../deploy/portuguese_sandbox/evidence/provider-acceptance-20261116/case-c-closed-disconnected.jpg).
+
+## Separate 17 November review preparation — no repeat acceptance
+
+The original results, rubric, actual responses and overall **PARTIAL** above
+remain unchanged. [Human walkthrough and blank observation sheet](PORTUGUESE_HUMAN_WALKTHROUGH_2026-11-17.md)
+are **READY, NOT YET PERFORMED**. Agent read-only inspection rechecked the saved
+2/4/20 design, genuine recommendation, unanswered clarification and historical
+wf-717110fb8d5e results/download, which belongs to its actual2/4/10 execution.
+No provider requests, algorithms, designs, scopes or ledger records were added.
+
+The [review handoff](PORTUGUESE_REVIEW_HANDOFF_2026-11-17.md) records a narrow
+offline-tested format3 extension of the existing opt-in provider audit logger:
+separate requested/returned metadata, validated structured turn, hashes and
+conversation/revision/permit correlation, with private data excluded. It does not
+reconstruct old missing metadata or require complete raw wire retention in future.
+Serving images/configuration remain unchanged; this is source-only preparation
+for review, not a live test of new capture. Independent usability/code review and
+Portuguese-hosted/production qualification remain outstanding.
