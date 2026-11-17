@@ -46,7 +46,7 @@ def csv_counts(data,expected):
     return {"generated_examples":len(counts),"csv_rows":sum(counts.values()),"observations_per_example":100}
 
 
-def load(row,db,*,artifacts=None):
+def load(row,db,*,artifacts=None,previews=None):
     base={"workflow_id":row.workflow_id,"submission_id":row.id,"source":"Platform-controlled Portuguese sidecar capture v2",
         "historical":True,"observation_source":"Signed terminal adapter observation; current artifact bytes revalidated without a live runtime"}
     def unavailable(message,state="unavailable",instances=None):
@@ -194,9 +194,51 @@ def load(row,db,*,artifacts=None):
                     output_sha256=proof["sha256"],summary=summary,message=message,
                     instrumentation="Versioned signed experimental capture plus current model/output artifact hashes; no scientific-quality claim.")
                 accepted[node["instance_id"]]={**proof,"task_id":node["task_id"]}
+                if previews is not None:
+                    # Expose only bytes and the exact signed output reference after
+                    # all existing ownership, provenance and integrity checks pass.
+                    previews[node["task_id"]]={"reference":dict(proof["output"]),"format":fmt,"bytes":output}
             except FileNotFoundError:result.update(message="Completed task artifact is missing; no consumption claim.")
             except PermissionError:result.update(state="inaccessible",message="Recorded artifact is inaccessible.")
             except (ValueError,KeyError,TypeError,OSError,IndexError):result.update(state="invalid",message="Experimental evidence failed integrity or producer/consumer association validation.")
             results.append(result)
     state="available" if results and all(r["state"]=="available" for r in results) else "unavailable"
     return {**base,"state":state,"instances":results,"limitations":"Platform-controlled experimental observation; scientific suitability, owner approval and hosted compatibility unverified."}
+
+
+def preview_output(row,db,payload):
+    """Resolve a qualified capture, never fetch the browser's HTTP reference.
+
+    The caller must first authorize the deployment and immutable submission.
+    Non-Portuguese workflows retain their existing generic preview boundary.
+    """
+    from fastapi import HTTPException
+    compiled=row.submitted.get("compiled")
+    metadata=compiled.get("solution_studio_metadata") if isinstance(compiled,dict) else None
+    nodes=metadata.get("execution_instances") if isinstance(metadata,dict) else None
+    if not isinstance(nodes,list):
+        return None
+    identities={"urn:aieffect:experimental:portuguese:train-model",
+                "urn:aieffect:experimental:portuguese:generate-data"}
+    if not any(isinstance(node,dict) and isinstance(node.get("configuration"),dict)
+               and isinstance(node["configuration"].get("operation_identity"),str)
+               and node["configuration"]["operation_identity"] in identities for node in nodes):
+        return None
+    outputs={}
+    captured=load(row,db,previews=outputs)
+    proof=next((item for item in captured["instances"] if item["task_id"]==payload.task_id),None)
+    if proof is None:
+        raise HTTPException(404,"No verified output is recorded for this workflow and task")
+    if proof["state"]!="available" or payload.task_id not in outputs:
+        raise HTTPException(410,"Recorded output is unavailable or failed capture integrity validation")
+    output=outputs[payload.task_id];reference=output["reference"]
+    if (payload.protocol,payload.uri)!=(reference.get("protocol"),reference.get("uri")):
+        raise HTTPException(403,"Reference is not the verified output of this task")
+    if reference.get("format")!=output["format"] or (payload.format and payload.format!=output["format"]):
+        raise HTTPException(409,"Reference format differs from the verified output")
+    from app.services.data_reference_service import parse_content_preview
+    content_type="application/json" if output["format"]=="json" else "text/csv"
+    result=parse_content_preview(output["bytes"].decode("utf-8"),output["format"],reference["uri"],
+                                 output["format"],content_type)
+    return {**result,"workflow_id":row.workflow_id,"task_id":payload.task_id,"historical":True,
+            "output_sha256":proof["output_sha256"],"source":captured["source"]}

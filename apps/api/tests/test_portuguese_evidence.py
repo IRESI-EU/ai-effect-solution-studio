@@ -121,6 +121,7 @@ def test_invalid_or_unavailable_evidence_never_verifies_every_instance(captured,
     body=captured["client"].get("/workflows/"+WF+"/instance-evidence").json()
     assert body["state"]!="available" and any(v["state"]!="available" for v in body["instances"])
     assert download(captured).status_code in (404,410)
+    assert preview(captured).status_code in (404,409,410)
     if failure in {"output-corrupt","signature","wrong-task","wrong-workflow","wrong-owner","wrong-producer","wrong-input","unknown-schema"}:
         assert body["instances"][0]["state"]=="available" and body["instances"][1]["state"]=="invalid"
 
@@ -189,3 +190,68 @@ def test_requested_batch_size_and_observed_library_clamp_are_distinct(captured):
     assert body["state"]=="available",body
     assert captured["saved"]["nodes"][0]["data"]["configuration"]["parameters"]["batch_size"]==6
     assert body["instances"][0]["algorithm_consumed"]["batch_size"]==4
+
+
+def preview(captured,method="GenerateData",**changes):
+    proof=captured["proofs"][method][1]
+    return captured["client"].post("/data-references/preview",json={
+        "workflow_id":WF,"task_id":proof["task_id"],**proof["output"],**changes})
+
+
+@pytest.mark.parametrize("method",["TrainModel","GenerateData"])
+def test_task_card_previews_verified_json_and_csv_without_runtime(captured,monkeypatch,method):
+    from app.services import owned_artifact_preview as owned
+    import requests
+    monkeypatch.setattr(owned,"get_workflow_tasks",lambda *a,**k:pytest.fail("Capture preview must not read live runtime"))
+    monkeypatch.setattr(requests,"get",lambda *a,**k:pytest.fail("Do not fetch an internal or arbitrary HTTP URI"))
+    response=preview(captured,method)
+    assert response.status_code==200,response.text
+    assert response.headers["cache-control"]=="private, no-store"
+    body=response.json();proof=captured["proofs"][method][1]
+    assert body["available"] and body["historical"]
+    assert body["output_sha256"]==proof["sha256"] and body["task_id"]==proof["task_id"]
+    if method=="TrainModel":
+        assert body["kind"]=="json" and body["content"]=={"model_ref":proof["model"]["model_ref"]}
+    else:
+        assert body["kind"]=="csv" and body["columns"]==["datetime","value","example"]
+        assert len(body["rows"])==20 and body["row_preview_limit"]==20
+        assert hashlib.sha256(download(captured).content).hexdigest()==body["output_sha256"]
+
+
+@pytest.mark.parametrize("changes,status",[
+    ({"uri":"http://untrusted.invalid/private"},403),
+    ({"protocol":"file"},403),
+    ({"task_id":"task_ffffffff"},404),
+    ({"format":"json"},409),
+])
+def test_capture_preview_rejects_other_reference_task_protocol_or_format(captured,monkeypatch,changes,status):
+    from app.services import owned_artifact_preview as owned
+    monkeypatch.setattr(owned,"get_workflow_tasks",lambda *a,**k:pytest.fail("Invalid capture cannot fall back to live runtime"))
+    assert preview(captured,**changes).status_code==status
+
+
+@pytest.mark.parametrize("failure",["csv-corrupt","json-corrupt","model-missing","wrong-association","submission"])
+def test_preview_never_returns_unverified_capture_bytes(captured,failure):
+    if failure in {"csv-corrupt","json-corrupt"}:
+        method="GenerateData" if failure=="csv-corrupt" else "TrainModel"
+        suffix="csv" if method=="GenerateData" else "json"
+        (captured["root"]/(captured["proofs"][method][0]+"."+suffix)).write_bytes(b"changed")
+    elif failure=="model-missing":captured["modelpath"].unlink()
+    else:
+        with SessionLocal() as db:
+            if failure=="wrong-association":db.get(Deployment,"pt-result").solution_id="different"
+            else:db.get(ExecutionSubmission,captured["sid"]).submitted_sha256="invalid"
+            db.commit()
+    assert preview(captured).status_code in {409,410}
+
+
+def test_capture_preview_authorizes_before_reading_evidence(captured,monkeypatch):
+    from app.main import app
+    from app.dependencies.auth import get_current_user
+    monkeypatch.setattr(evidence,"load",lambda *a,**k:pytest.fail("Authorize before storage"))
+    with SessionLocal() as db:
+        app.dependency_overrides[get_current_user]=lambda:db.get(User,"other")
+        assert preview(captured).status_code==403
+    app.dependency_overrides.pop(get_current_user)
+    captured["client"].cookies.clear()
+    assert preview(captured).status_code==401

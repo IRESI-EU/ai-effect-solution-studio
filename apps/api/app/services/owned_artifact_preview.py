@@ -33,6 +33,13 @@ def preview(payload, db, user):
             or submission.solution_id != deployment.solution_id):
         raise HTTPException(409, "Server-recorded submission association is unavailable; legacy preview stays blocked")
     submitted_view(submission)
+    # Signed Portuguese captures already bind exact output bytes to this owned
+    # submission/task. Their internal HTTP labels are not URLs to fetch. Resolve
+    # those bytes through the existing validator, before any runtime request.
+    from app.services.portuguese_evidence import preview_output
+    captured=preview_output(submission,db,payload)
+    if captured is not None:
+        return captured
     observed = get_workflow_tasks(payload.workflow_id)
     if not isinstance(observed, dict) or observed.get("workflow_id") != payload.workflow_id:
         raise HTTPException(409, "Workflow task association could not be verified")

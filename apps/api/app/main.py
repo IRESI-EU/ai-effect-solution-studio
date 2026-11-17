@@ -171,10 +171,12 @@ def admin_import_wp3_package(
 @app.post("/data-references/preview")
 def preview_data_reference_endpoint(
     payload: DataReferencePreviewRequest,
+    response: Response,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     from app.services.owned_artifact_preview import preview
+    response.headers["Cache-Control"] = "private, no-store"
     return preview(payload, db, user)
 
 
