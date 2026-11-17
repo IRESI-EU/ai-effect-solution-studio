@@ -1,0 +1,383 @@
+{
+  "state": "PROPOSED_ONLY_NOT_AUTHORIZED",
+  "solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+  "saved_revision": "2026-11-16T11:26:14.691950",
+  "request_sha256": "96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b",
+  "request": {
+    "name": "Portuguese manual acceptance \u2014 16 November \u2014 no execution",
+    "solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+    "expected_updated_at": "2026-11-16T11:26:14.691950",
+    "nodes": [
+      {
+        "node_id": "service-pt-experimental-chain-TrainModel-5503415b-f128-4034-903d-afbd3dc743dd",
+        "service_id": "pt-experimental-chain-TrainModel",
+        "container_name": "pt-chain-TrainModel",
+        "proto_uri": "",
+        "image": "sha256:1305664435c30980c2649defc1a798fc2262e9ca835f8348ecbe2c43ae89034f",
+        "node_type": "MLModel",
+        "operation_name": "TrainModel",
+        "input_message_name": "Request",
+        "output_message_name": "Response",
+        "internal_host": "pt-adapter",
+        "internal_port": "8080",
+        "configuration": {
+          "parameters": {
+            "epochs": 2
+          },
+          "contract_id": "pt-chain-train-v2",
+          "contract_version": "0.2.0"
+        },
+        "operation_contract": {
+          "contract_id": "pt-chain-train-v2",
+          "contract_version": "0.2.0"
+        }
+      },
+      {
+        "node_id": "service-pt-experimental-chain-GenerateData-4655f5bd-7876-4edd-8515-bd429d36d60a",
+        "service_id": "pt-experimental-chain-GenerateData",
+        "container_name": "pt-chain-GenerateData",
+        "proto_uri": "",
+        "image": "sha256:1305664435c30980c2649defc1a798fc2262e9ca835f8348ecbe2c43ae89034f",
+        "node_type": "MLModel",
+        "operation_name": "GenerateData",
+        "input_message_name": "Request",
+        "output_message_name": "Response",
+        "internal_host": "pt-adapter",
+        "internal_port": "8080",
+        "configuration": {
+          "parameters": {},
+          "contract_id": "pt-chain-generate-v2",
+          "contract_version": "0.2.0"
+        },
+        "operation_contract": {
+          "contract_id": "pt-chain-generate-v2",
+          "contract_version": "0.2.0"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "service-pt-experimental-chain-TrainModel-5503415b-f128-4034-903d-afbd3dc743dd",
+        "target": "service-pt-experimental-chain-GenerateData-4655f5bd-7876-4edd-8515-bd429d36d60a",
+        "binding": {
+          "source_slot": "model_ref",
+          "target_slot": "model_ref"
+        }
+      }
+    ],
+    "run_input": {
+      "dataset_ref": "pt-approved-synthetic-data"
+    }
+  },
+  "dataset_ref": "pt-approved-synthetic-data",
+  "dataset_sha256": "36c7721e9254d1abd24cf6999bb693fc6d3ccf28e377431c0562a32d6efe17a8",
+  "effective_settings": {
+    "TrainModel": {
+      "epochs": 2,
+      "batch_size": 4
+    },
+    "GenerateData": {
+      "number_of_examples": 10
+    }
+  },
+  "instances": [
+    {
+      "instance_id": "service-pt-experimental-chain-TrainModel-5503415b-f128-4034-903d-afbd3dc743dd",
+      "service_id": "pt-experimental-chain-TrainModel",
+      "operation_name": "TrainModel",
+      "node_key": "pt-chain-TrainModel:TrainModel",
+      "task_id": "task_030152d9",
+      "configuration": {
+        "contract_id": "pt-chain-train-v2",
+        "contract_version": "0.2.0",
+        "operation_identity": "urn:aieffect:experimental:portuguese:train-model",
+        "schema_version": "1.0",
+        "parameters": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "instance_id": "service-pt-experimental-chain-TrainModel-5503415b-f128-4034-903d-afbd3dc743dd"
+      },
+      "parameter_contract_sha256": "82d8d1a734f4e181d2695ddbdcec2d77d9272aab43d6e806ef630fb28159ceef",
+      "input_bindings": []
+    },
+    {
+      "instance_id": "service-pt-experimental-chain-GenerateData-4655f5bd-7876-4edd-8515-bd429d36d60a",
+      "service_id": "pt-experimental-chain-GenerateData",
+      "operation_name": "GenerateData",
+      "node_key": "pt-chain-GenerateData:GenerateData",
+      "task_id": "task_f6c5c14e",
+      "configuration": {
+        "contract_id": "pt-chain-generate-v2",
+        "contract_version": "0.2.0",
+        "operation_identity": "urn:aieffect:experimental:portuguese:generate-data",
+        "schema_version": "1.0",
+        "parameters": {
+          "number_of_examples": 10
+        },
+        "instance_id": "service-pt-experimental-chain-GenerateData-4655f5bd-7876-4edd-8515-bd429d36d60a"
+      },
+      "parameter_contract_sha256": "9e4e6e968ec15a295ad5f635499d592e984bf7a792ef1e0bbf033309517e62b3",
+      "input_bindings": [
+        "service-pt-experimental-chain-TrainModel-5503415b-f128-4034-903d-afbd3dc743dd"
+      ]
+    }
+  ],
+  "binding": {
+    "producer_task": "task_030152d9",
+    "consumer_task": "task_f6c5c14e",
+    "source_slot": "model_ref",
+    "target_slot": "model_ref"
+  },
+  "resources": {
+    "ml_cpu": 2,
+    "ml_memory_bytes": 3221225472,
+    "dataset_rows": 400,
+    "max_sequence_len": 100,
+    "sample_len": 1,
+    "expected_generated_sequences": 10,
+    "expected_csv_rows": 1000,
+    "standby_wait_seconds": 300,
+    "readiness_lease_seconds": 6,
+    "workflows": 1,
+    "TrainModel": 1,
+    "GenerateData": 1,
+    "retries": 0,
+    "retained_component_limits": {
+      "postgres": {
+        "cpus": 1,
+        "mem_limit": "512m"
+      },
+      "redis": {
+        "cpus": 0.5,
+        "mem_limit": "128m"
+      },
+      "orchestrator": {
+        "cpus": 1,
+        "mem_limit": "384m",
+        "restart": "no"
+      },
+      "ml": {
+        "cpus": 2,
+        "mem_limit": "3g",
+        "restart": "no"
+      },
+      "pt-adapter": {
+        "cpus": 1,
+        "mem_limit": "384m",
+        "restart": "no"
+      },
+      "api": {
+        "cpus": 1,
+        "mem_limit": "640m",
+        "restart": "no"
+      },
+      "web": {
+        "cpus": 1,
+        "mem_limit": "768m",
+        "restart": "no"
+      },
+      "model-observer": {
+        "cpus": 0.5,
+        "mem_limit": "1g",
+        "restart": "no"
+      },
+      "chain-worker": {
+        "cpus": 1,
+        "mem_limit": "384m",
+        "restart": "no"
+      }
+    }
+  },
+  "images": {
+    "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "pt-adapter": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+    "api": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e",
+    "web": "sha256:1bb228f840aad90f938faf5b918d6e806a972b8578889b10c046a59015c364ec",
+    "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+    "candidate_targeted_worker": "sha256:75dc18e23e464b3b1ad6c4368f965dcf8185d163a20dd0d92276f6408f217bdb",
+    "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+    "redis": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065"
+  },
+  "registered_adapter_image": "sha256:1305664435c30980c2649defc1a798fc2262e9ca835f8348ecbe2c43ae89034f",
+  "registry_image_note": "Retained catalogue registration is historical. Current serving adapter image is recorded separately; no registry/contract changed. No new execution qualification claimed.",
+  "contracts": {
+    "TrainModel": {
+      "id": "pt-chain-train-v2",
+      "version": "0.2.0",
+      "definition_sha256": "502d72ffcb680318c88322a776a40a24f5036a16c03e5b31187845ee3342360e",
+      "definition": {
+        "operation_role": "adapter",
+        "binding_transport": "whole-output-v1",
+        "inputs": [
+          {
+            "min_cardinality": 1,
+            "max_cardinality": 1,
+            "name": "dataset_ref",
+            "semantic_concept": "urn:aieffect:experimental:pt:dataset_ref",
+            "value_representation": "data_reference",
+            "data_reference_protocols": [
+              "inline"
+            ],
+            "content_types": [
+              "application/json"
+            ],
+            "schema_ref": "urn:aieffect:experimental:pt:dataset-reference:1",
+            "compatibility_notes": [],
+            "required": true,
+            "source_requirement": "workflow_input"
+          }
+        ],
+        "outputs": [
+          {
+            "min_cardinality": 1,
+            "max_cardinality": 1,
+            "name": "model_ref",
+            "semantic_concept": "urn:aieffect:experimental:pt:model_ref",
+            "value_representation": "data_reference",
+            "data_reference_protocols": [
+              "http"
+            ],
+            "content_types": [
+              "application/json"
+            ],
+            "schema_ref": "urn:aieffect:experimental:pt:model-reference:2",
+            "compatibility_notes": []
+          }
+        ],
+        "adapter_capabilities": [],
+        "compatibility_notes": [
+          "Platform-controlled experimental sidecar, not partner-native or owner-approved. Whole reference forwarding only; no fetching arbitrary URLs or projections."
+        ],
+        "execution_parameters": {
+          "schema_version": "1.0",
+          "transport": "http-parameters-v1",
+          "properties": {
+            "epochs": {
+              "type": "integer",
+              "title": "Training epochs",
+              "description": "Sandbox limit, not a scientific recommendation.",
+              "required": false,
+              "default": 1,
+              "minimum": 1.0,
+              "maximum": 2.0,
+              "enum": null
+            },
+            "batch_size": {
+              "type": "integer",
+              "title": "Batch size",
+              "description": "Upstream clamps to the number of training sequences.",
+              "required": false,
+              "default": 4,
+              "minimum": 2.0,
+              "maximum": 16.0,
+              "enum": null
+            }
+          }
+        }
+      }
+    },
+    "GenerateData": {
+      "id": "pt-chain-generate-v2",
+      "version": "0.2.0",
+      "definition_sha256": "9f4677716da64b5f7959f61944ca35130c8b206dc3891b38e9a527c28828d0a9",
+      "definition": {
+        "operation_role": "adapter",
+        "binding_transport": "whole-output-v1",
+        "inputs": [
+          {
+            "min_cardinality": 1,
+            "max_cardinality": 1,
+            "name": "model_ref",
+            "semantic_concept": "urn:aieffect:experimental:pt:model_ref",
+            "value_representation": "data_reference",
+            "data_reference_protocols": [
+              "http"
+            ],
+            "content_types": [
+              "application/json"
+            ],
+            "schema_ref": "urn:aieffect:experimental:pt:model-reference:2",
+            "compatibility_notes": [],
+            "required": true,
+            "source_requirement": "upstream_operation"
+          }
+        ],
+        "outputs": [
+          {
+            "min_cardinality": 1,
+            "max_cardinality": 1,
+            "name": "sequences",
+            "semantic_concept": "urn:aieffect:experimental:pt:sequences",
+            "value_representation": "data_reference",
+            "data_reference_protocols": [
+              "http"
+            ],
+            "content_types": [
+              "text/csv"
+            ],
+            "schema_ref": "urn:aieffect:experimental:pt:sequences-csv:1",
+            "compatibility_notes": []
+          }
+        ],
+        "adapter_capabilities": [],
+        "compatibility_notes": [
+          "Platform-controlled experimental sidecar, not partner-native or owner-approved. Whole reference forwarding only; no fetching arbitrary URLs or projections."
+        ],
+        "execution_parameters": {
+          "schema_version": "1.0",
+          "transport": "http-parameters-v1",
+          "properties": {
+            "number_of_examples": {
+              "type": "integer",
+              "title": "Generated sequences",
+              "description": "Number of time-series sequences; each contains 100 observations in this sandbox.",
+              "required": false,
+              "default": 10,
+              "minimum": 1.0,
+              "maximum": 20.0,
+              "enum": null
+            }
+          }
+        }
+      }
+    }
+  },
+  "closure_checks": [
+    "Verify exact saved revision/request/contracts and dataset hashes before authorization; stop on drift.",
+    "Create one new supported attributable exact-request scope only after explicit approval; never reopen earlier scopes.",
+    "Stabilize adapter with API admission off; start one named standby; fresh lease; enable API ONLY, assert adapter unchanged and fresh lease again. Never retry binding/dispatch/algorithms.",
+    "One named targeted standby only; fresh six-second lease; no general worker or unrelated queued/nonterminal work.",
+    "Confirm once through normal Builder after successful readiness; stop/reconcile uncertain or failed dispatch. No retry or replacement.",
+    "Verify signed terminal capture, trained model settings/hash and same-workflow model_ref handoff, ten sequences and 1000 CSV rows; rehash authenticated downloads.",
+    "Stop named worker, close scope, disable supervision flags, inspect queues without flushing and recheck historical jobs/designs/ledger."
+  ],
+  "not_authority": "This is a review proposal, not a journal authorization policy. No scope has been created or activated.",
+  "proposed_authorization_id": "pt-supervised-operational-20261116-01",
+  "approval_status": "pending approval of corrected candidate; not created in live journal",
+  "supersedes_operational_candidate_only": "Original failed scope pt-supervised-browser-20261116-01 stays closed; original proposal and failed observation preserved. Saved design/revision/request unchanged.",
+  "sources": {
+    "portal_web": "642d2594001792a41b82a30dc51abc050ad98dbc",
+    "wp3_adapter_worker": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+    "retained_backend_commit": "75ccb8fd09be477d5517bea26c139011f9436ad6"
+  },
+  "provider_ledger": {
+    "relative_path": "local-backups/dutch-seed-runtime/acceptance/luna-dutch-manual-20261018-04.sqlite3",
+    "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b",
+    "calls": 25,
+    "limit": 25,
+    "outstanding": 0
+  },
+  "readiness_recovery": {
+    "probe_seconds": 3,
+    "http_redis_operation_seconds": 1,
+    "startup_deadline_seconds": 30,
+    "poll_seconds": 1,
+    "lease_seconds": 6,
+    "standby_deadline_seconds": 300,
+    "execution_retries": 0,
+    "replacement_scopes": 0
+  },
+  "activation_helper": "deploy/portuguese_sandbox/supervised_session.py"
+}

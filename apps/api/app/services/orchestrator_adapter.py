@@ -13,6 +13,21 @@ def _orchestrator_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {settings.orchestrator_api_key}"}
 
 
+def _service_authorized_payload(payload):
+    """Add the server-owned control credential only to the private wire copy.
+
+    Compiled payloads, browser responses and immutable snapshots remain secret-free.
+    The default is empty, preserving all retained profiles unchanged.
+    """
+    wire = dict(payload)
+    key = settings.orchestrator_services_api_key
+    if key:
+        if "services_api_key" in wire and wire["services_api_key"] != key:
+            raise HTTPException(409, "Conflicting service authority; no workflow was submitted")
+        wire["services_api_key"] = key
+    return wire
+
+
 def require_parameter_transport(compiled):
     try:
         response = requests.get(f"{settings.orchestrator_base_url}/capabilities", headers=_orchestrator_headers(), timeout=5)
@@ -24,7 +39,7 @@ def require_parameter_transport(compiled):
             raise ValueError("Runtime cannot verify target-wrapper parameter contracts")
         # This endpoint is read-only: it never initializes tasks or starts a workflow.
         checked = requests.post(f"{settings.orchestrator_base_url}/workflows/check-compatibility",
-            json={key: compiled[key] for key in ("blueprint", "dockerinfo", "task_configurations", "services_api_key") if key in compiled},
+            json=_service_authorized_payload({key: compiled[key] for key in ("blueprint", "dockerinfo", "task_configurations", "services_api_key") if key in compiled}),
             headers=_orchestrator_headers(), timeout=20)
         report = checked.json() if checked.status_code == 200 else None
         expected = {node["node_key"]: node for node in compiled["solution_studio_metadata"]["execution_instances"] if node["configuration"]}
@@ -83,14 +98,18 @@ def _raise_connection_error(
 
 def submit_to_orchestrator(payload: dict[str, Any]) -> dict[str, Any]:
     url = f"{settings.orchestrator_base_url}/workflows"
-
+    from app.services.capability_bindings import sandbox_profile_enabled
+    sandbox = sandbox_profile_enabled()
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers=_orchestrator_headers(),
-            timeout=20,
-        )
+        arguments = {"json": _service_authorized_payload(payload), "headers": _orchestrator_headers(), "timeout": 20}
+        if sandbox:
+            # A redirect must never dispatch the one authorized request again.
+            # No environment proxy, retries or alternate endpoint in this scope.
+            with requests.Session() as client:
+                client.trust_env = False
+                response = client.post(url, **arguments, allow_redirects=False)
+        else:
+            response = requests.post(url, **arguments)
     except requests.RequestException as exc:
         _raise_connection_error(
             exc=exc,
@@ -98,7 +117,7 @@ def submit_to_orchestrator(payload: dict[str, Any]) -> dict[str, Any]:
             action="submit workflow",
         )
 
-    if response.status_code >= 400:
+    if response.status_code >= (300 if sandbox else 400):
         _raise_orchestrator_error(
             response=response,
             url=url,
@@ -142,7 +161,7 @@ def get_workflow_status(workflow_id: str) -> dict[str, Any]:
         )
 
     try:
-        return response.json()
+        value = response.json()
     except ValueError as exc:
         raise HTTPException(
             status_code=502,
@@ -152,6 +171,14 @@ def get_workflow_status(workflow_id: str) -> dict[str, Any]:
                 "response_text": response.text,
             },
         ) from exc
+    from app.services.capability_bindings import sandbox_profile_enabled, sandbox_workflow_status
+    if sandbox_profile_enabled() and value.get("status") == "running":
+        try:
+            return sandbox_workflow_status(value, get_workflow_tasks(workflow_id)["tasks"])
+        except (HTTPException, KeyError, TypeError):
+            return {**value, "reported_status": "running", "status": "unknown",
+                    "execution_detail": "Task state is unavailable; active execution cannot be confirmed. Do not resubmit."}
+    return value
 
 
 def get_workflow_tasks(workflow_id: str) -> dict[str, Any]:

@@ -13,7 +13,8 @@ def require_binding_transport(compiled):
     try:
         for key, contract in report["contracts"].items():
             endpoint = endpoints[instances[key]["node_key"].split(":")[0]]
-            token = compiled.get("services_api_key")
+            from app.services.orchestrator_adapter import _service_authorized_payload
+            token = _service_authorized_payload(compiled).get("services_api_key")
             headers = {"Authorization": f"Bearer {token}"} if token else {}
             response = requests.get(f"http://{endpoint['ip_address']}:{endpoint['port']}/control/capabilities",
                                     headers=headers, timeout=5, allow_redirects=False)
@@ -23,7 +24,9 @@ def require_binding_transport(compiled):
             value = response.json()
             if not isinstance(value, dict) or not isinstance(value.get("operations"), list):
                 raise ValueError()
-            matches = [o for o in value["operations"] if isinstance(o, dict) and o.get("operation_name") == contract["runtime_operation_name"]]
+            matches = [o for o in value["operations"] if isinstance(o, dict) and o.get("operation_name") == contract["runtime_operation_name"]
+                       and o.get("operation_identity") == contract["operation_identity"]
+                       and o.get("contract_version") == contract["contract_version"]]
             if value.get("capability_schema_version") != "1.0" or len(matches) != 1:
                 raise ValueError()
             operation = matches[0]

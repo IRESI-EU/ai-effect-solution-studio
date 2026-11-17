@@ -1,0 +1,130 @@
+{
+  "result": "DESIGN_DEMO_PREPARED_NO_EXECUTION",
+  "starting_portal_head": "4829dd18f4ee90830714c35d271718ae6b397977",
+  "starting_wp3_head": "cec56192f05f689632d7b29486f927602cf001e8",
+  "saved_source_url": "http://127.0.0.1:23124/builder?solutionId=b4e48556-c3a5-4a73-903d-c2a2618756fd",
+  "completed_results_url": "http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results",
+  "demo_url": "http://127.0.0.1:23124/builder?solutionId=e26923cd-0c19-4c53-92d5-b5384a86ac2b",
+  "demo_saved_revision": "2026-11-16T16:59:02.355790",
+  "demo_preparation": "Fresh empty Builder through UI; no workflow copy control. Saved at default generation10; changed to20 through UI; Save/refresh/Validate checked successfully. No script/API design writes.",
+  "demo_instances": [
+    {
+      "instance_id": "service-pt-experimental-chain-TrainModel-0d54ba67-e6a8-4010-b41b-6b386bbaba18",
+      "service_id": "pt-experimental-chain-TrainModel",
+      "operation_name": "TrainModel",
+      "node_key": "pt-chain-TrainModel:TrainModel",
+      "task_id": "task_030152d9",
+      "configuration": {
+        "contract_id": "pt-chain-train-v2",
+        "contract_version": "0.2.0",
+        "operation_identity": "urn:aieffect:experimental:portuguese:train-model",
+        "schema_version": "1.0",
+        "parameters": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "instance_id": "service-pt-experimental-chain-TrainModel-0d54ba67-e6a8-4010-b41b-6b386bbaba18"
+      },
+      "parameter_contract_sha256": "82d8d1a734f4e181d2695ddbdcec2d77d9272aab43d6e806ef630fb28159ceef",
+      "input_bindings": []
+    },
+    {
+      "instance_id": "service-pt-experimental-chain-GenerateData-8209326e-0057-4ef3-bb4a-417295e59d67",
+      "service_id": "pt-experimental-chain-GenerateData",
+      "operation_name": "GenerateData",
+      "node_key": "pt-chain-GenerateData:GenerateData",
+      "task_id": "task_f6c5c14e",
+      "configuration": {
+        "contract_id": "pt-chain-generate-v2",
+        "contract_version": "0.2.0",
+        "operation_identity": "urn:aieffect:experimental:portuguese:generate-data",
+        "schema_version": "1.0",
+        "parameters": {
+          "number_of_examples": 20
+        },
+        "instance_id": "service-pt-experimental-chain-GenerateData-8209326e-0057-4ef3-bb4a-417295e59d67"
+      },
+      "parameter_contract_sha256": "9e4e6e968ec15a295ad5f635499d592e984bf7a792ef1e0bbf033309517e62b3",
+      "input_bindings": [
+        "service-pt-experimental-chain-TrainModel-0d54ba67-e6a8-4010-b41b-6b386bbaba18"
+      ]
+    }
+  ],
+  "demo_run_input": {
+    "dataset_ref": "pt-approved-synthetic-data"
+  },
+  "demo_binding": [
+    {
+      "source": "service-pt-experimental-chain-TrainModel-0d54ba67-e6a8-4010-b41b-6b386bbaba18",
+      "target": "service-pt-experimental-chain-GenerateData-8209326e-0057-4ef3-bb4a-417295e59d67",
+      "binding": {
+        "source_slot": "model_ref",
+        "target_slot": "model_ref"
+      }
+    }
+  ],
+  "demo_deployments": 0,
+  "demo_observed_settings": null,
+  "comparison": {
+    "context": "Earlier standalone v0.1 runs; both use pt-approved-test-model, trained separately at epochs1/batch4, not the v0.2 chained model or new demo design. Generic v2 consumption panel remains honestly unavailable for v0.1; correlated capture and current artifact/model bytes establish these counts.",
+    "training_workflow": "wf-dc54e79834df",
+    "model_identity": "model_3cfaf2a8fe78eac9f48f67af3beebc17",
+    "model_sha256": "9d7af5049b4e59daf14aca1e74d50419a88c10a71ca4076a347407932ca63f22",
+    "saved_model_configuration": {
+      "epochs": 1,
+      "batch_size": 4,
+      "max_sequence_len": 100,
+      "sample_len": 1
+    },
+    "runs": [
+      {
+        "workflow_id": "wf-5d9b6ad6aa23",
+        "sequences": 10,
+        "observations_per_sequence": 100,
+        "csv_rows": 1000,
+        "sha256": "becaca408f6a7a2f153575fa75a1737e0e57a7414f1b4ee1d620024924127fab",
+        "status": 200
+      },
+      {
+        "workflow_id": "wf-956d17cb477d",
+        "sequences": 20,
+        "observations_per_sequence": 100,
+        "csv_rows": 2000,
+        "sha256": "30912aefb86c40546ace2d035b7f862461a4b2069c7deb90488c02217c7e8e73",
+        "status": 200
+      }
+    ]
+  },
+  "preservation": {
+    "nine_original_saved_records_unchanged": true,
+    "nine_journal_jobs_unchanged": true,
+    "four_closed_scopes_and_audit_unchanged": true,
+    "all_five_workers_stopped": true,
+    "redis_workflows_queues_unchanged": true,
+    "provider_disconnected": true,
+    "ledger_byte_identical_25_of_25_zero_outstanding": true,
+    "inspection_only_preflight": 409,
+    "new_workflows": 0,
+    "new_algorithm_calls": 0,
+    "new_live_authority": 0
+  },
+  "download_presentation_limit": "Protected adapter /control/data download verified. No Portuguese browser Download control exists; generic remote preview stays blocked. Existing private CSV may be opened locally for the meeting; it is not the new count20 design output.",
+  "local_existing_csv_relative_path": "local-backups/pt-operational-live-20261116/GenerateData-authorized-output.csv",
+  "local_existing_csv_sha256": "553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540",
+  "serving_sources": {
+    "portal_web": "642d2594001792a41b82a30dc51abc050ad98dbc",
+    "wp3_adapter_worker": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+    "retained_backend_commit": "75ccb8fd09be477d5517bea26c139011f9436ad6"
+  },
+  "serving_images": {
+    "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "pt-adapter": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+    "api": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e",
+    "web": "sha256:1bb228f840aad90f938faf5b918d6e806a972b8578889b10c046a59015c364ec",
+    "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+    "candidate_targeted_worker": "sha256:75dc18e23e464b3b1ad6c4368f965dcf8185d163a20dd0d92276f6408f217bdb",
+    "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+    "redis": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065"
+  }
+}

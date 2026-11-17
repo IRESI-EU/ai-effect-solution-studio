@@ -1,0 +1,249 @@
+{
+  "result": "PASS",
+  "workflow_id": "wf-717110fb8d5e",
+  "submission_id": "a0ccafc2-278c-49d6-b05f-3f1e4058fcfd",
+  "immutable_submission_sha256": "90231c01cdba26be5fd649787f33b6d21f64ba31c3e8ddffcaf1a856be0d9eee",
+  "scope": "pt-supervised-operational-20261116-01",
+  "request_sha256": "96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b",
+  "solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+  "saved_revision": "2026-11-16T11:26:14.691950",
+  "new_workflows": 1,
+  "TrainModel_executions": 1,
+  "GenerateData_executions": 1,
+  "upstream_application_log_counts": {
+    "TrainModel": 1,
+    "GenerateData": 1,
+    "epoch_records": 2
+  },
+  "http_access_log_limitation": "ML access lines are not enabled; synchronous completion and exact output hashes come from authenticated signed captures. Actual application events corroborate counts.",
+  "tasks": [
+    {
+      "workflow_id": "wf-717110fb8d5e",
+      "task_id": "task_030152d9",
+      "status": "completed"
+    },
+    {
+      "workflow_id": "wf-717110fb8d5e",
+      "task_id": "task_f6c5c14e",
+      "status": "completed"
+    }
+  ],
+  "requested": {
+    "TrainModel": {
+      "epochs": 2
+    },
+    "GenerateData": {}
+  },
+  "validated_effective": {
+    "TrainModel": {
+      "epochs": 2,
+      "batch_size": 4
+    },
+    "GenerateData": {
+      "number_of_examples": 10
+    }
+  },
+  "observed": {
+    "TrainModel": {
+      "batch_size": 4,
+      "epochs": 2
+    },
+    "GenerateData": {
+      "number_of_examples": 10
+    }
+  },
+  "model": {
+    "identity": "model_96588980384a2ac8f0770445b745a7bc",
+    "sha256": "e0cd2151c67a247856bb360fb1aea1525091da26a9a8b002fd66ee0b1d0a7b4d",
+    "saved_configuration": {
+      "batch_size": 4,
+      "epochs": 2,
+      "max_sequence_len": 100,
+      "sample_len": 1
+    },
+    "producer_workflow_id": "wf-717110fb8d5e",
+    "producer_task_id": "task_030152d9",
+    "model_ref": "pt-model-96588980384a2ac8f0770445b745a7bcef52d2e9104dff57981d1cd384fee249",
+    "independently_reobserved_after_completion": true
+  },
+  "handoff": {
+    "same_exact_model": true,
+    "producer_reference_sha256": "707097d96ab390a2a311bbcb6954f9db56d4cd5479c5c69574054b053c8e368e",
+    "consumer_verified_producer_reference_sha256": "707097d96ab390a2a311bbcb6954f9db56d4cd5479c5c69574054b053c8e368e",
+    "binding": {
+      "producer_task": "task_030152d9",
+      "consumer_task": "task_f6c5c14e",
+      "source_slot": "model_ref",
+      "target_slot": "model_ref"
+    }
+  },
+  "output": {
+    "sequences": 10,
+    "observations_per_sequence": 100,
+    "csv_rows": 1000,
+    "sha256": "553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540"
+  },
+  "downloads": [
+    {
+      "method": "TrainModel",
+      "status": 200,
+      "unauthorized_status": 401,
+      "sha256": "707097d96ab390a2a311bbcb6954f9db56d4cd5479c5c69574054b053c8e368e",
+      "bytes": 90
+    },
+    {
+      "method": "GenerateData",
+      "status": 200,
+      "unauthorized_status": 401,
+      "sha256": "553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540",
+      "bytes": 41826
+    }
+  ],
+  "evidence_source": "Platform-controlled Portuguese sidecar capture v2",
+  "historical_revalidation": true,
+  "all_nine_saved_designs_unchanged": true,
+  "seven_old_jobs_and_models_unchanged": true,
+  "ledger_unchanged": true,
+  "named_worker_exit_code": 0,
+  "scope_closure_pending": false,
+  "no_provider_requests": true,
+  "images": {
+    "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "pt-adapter": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+    "api": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e",
+    "web": "sha256:1bb228f840aad90f938faf5b918d6e806a972b8578889b10c046a59015c364ec",
+    "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+    "candidate_targeted_worker": "sha256:75dc18e23e464b3b1ad6c4368f965dcf8185d163a20dd0d92276f6408f217bdb",
+    "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+    "redis": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065"
+  },
+  "sources": {
+    "portal_web": "642d2594001792a41b82a30dc51abc050ad98dbc",
+    "wp3_adapter_worker": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+    "retained_backend_commit": "75ccb8fd09be477d5517bea26c139011f9436ad6"
+  },
+  "results_url": "http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results",
+  "closure": {
+    "scope_state": "closed",
+    "closed_at": "2026-11-16T14:55:21.904434+00:00",
+    "named_processor_exit_code": 0,
+    "all_five_workers_stopped": true,
+    "all_four_scopes_closed": true,
+    "all_processors_finished_zero_lease": true,
+    "configuration_restored_byte_identical": true,
+    "api_supervision_disabled": true,
+    "adapter_supervision_disabled": true,
+    "normal_preflight_http": 409,
+    "normal_preflight_state": "inspection_only",
+    "queues_no_unresolved_work": true,
+    "one_submission_attempt": true,
+    "old_scope_processor_not_reused": true,
+    "provider_disconnected": true,
+    "ledger": {
+      "count": 25,
+      "limit": 25,
+      "outstanding": 0,
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b",
+      "unchanged": true
+    },
+    "all_existing_containers_retained": 55,
+    "all_existing_saved_designs_unchanged": 9,
+    "historical_jobs_models_outputs_and_immutable_submission_preserved": true,
+    "historical_and_new_evidence_available_after_closure": true
+  },
+  "activation": {
+    "adapter_id": "4618eb20385c0f8e6b256b1bbfead9643e80e0179883f3e0771a1c947499feca",
+    "adapter_started_at": "2026-11-16T14:48:55.286641375Z",
+    "standby_id": "f31fd9773937667432ce35edeb2b66f8616f85697581200299e2a53de80bad2d",
+    "standby_started_at": "2026-11-16T14:48:58.851009632Z",
+    "api_started_at": "2026-11-16T14:49:01.938154361Z",
+    "standby_exit_code": 0,
+    "standby_finished_at": "2026-11-16T14:49:57.94790618Z",
+    "adapter_before_standby_before_api": true,
+    "helper_verified_fresh_lease_before_and_after_api_enable": true,
+    "backend_container_identity": "5bfddf63c049717ce038c21d63365ca3734563d0fdb7ce894d1598d2c18a3b17"
+  },
+  "limits": "This proves one supervised local platform-controlled Portuguese sidecar run. It does not establish Portuguese-node access/owner approval, production compatibility, scientific suitability or independent usability. Design with AI stays disconnected.",
+  "next_step": "Obtain Portuguese node owner confirmation of actual endpoint/authentication, chosen service/contract mapping, dataset permission and bounded resource policy, then prepare a node-specific supervised qualification without assuming local sidecar portability.",
+  "approved_proposal_commit": "c58fff86fc8085d3edacaf157c4e6a9d54d525e1",
+  "approved_proposal": "deploy/portuguese_sandbox/proposed-supervised-operational-20261116.json",
+  "authorization_policy_sha256": "6f59aeb7fea3120c6a38abe3afe01d2a38ffc628230a2191a729389136d86a23",
+  "dataset": {
+    "reference": "pt-approved-synthetic-data",
+    "sha256": "36c7721e9254d1abd24cf6999bb693fc6d3ccf28e377431c0562a32d6efe17a8",
+    "synthetic_rows": 400,
+    "sandbox_choice_not_universal_service_requirement": true
+  },
+  "contracts": {
+    "TrainModel": {
+      "id": "pt-chain-train-v2",
+      "version": "0.2.0",
+      "definition_sha256": "502d72ffcb680318c88322a776a40a24f5036a16c03e5b31187845ee3342360e"
+    },
+    "GenerateData": {
+      "id": "pt-chain-generate-v2",
+      "version": "0.2.0",
+      "definition_sha256": "9f4677716da64b5f7959f61944ca35130c8b206dc3891b38e9a527c28828d0a9"
+    }
+  },
+  "audit": [
+    {
+      "action": "created",
+      "actor": "as-via-Codex/user-approved-operational-20261116",
+      "at": "2026-11-16T14:48:32.449683+00:00"
+    },
+    {
+      "action": "processor_registered",
+      "actor": "2f2f4bec-0a5f-44b0-941a-fe9e0c339de0",
+      "at": "2026-11-16T14:48:59.405369+00:00"
+    },
+    {
+      "action": "bound",
+      "actor": "portal-supervised/5cc4b476-b97d-41b0-8d75-e381b3dbe581",
+      "at": "2026-11-16T14:49:55.425169+00:00"
+    },
+    {
+      "action": "processor_claimed",
+      "actor": "2f2f4bec-0a5f-44b0-941a-fe9e0c339de0",
+      "at": "2026-11-16T14:49:55.703370+00:00"
+    },
+    {
+      "action": "reserved",
+      "actor": "runtime",
+      "at": "2026-11-16T14:49:55.750073+00:00"
+    },
+    {
+      "action": "observed",
+      "actor": "runtime",
+      "at": "2026-11-16T14:49:56.600812+00:00"
+    },
+    {
+      "action": "reserved",
+      "actor": "runtime",
+      "at": "2026-11-16T14:49:56.810478+00:00"
+    },
+    {
+      "action": "observed",
+      "actor": "runtime",
+      "at": "2026-11-16T14:49:56.931798+00:00"
+    },
+    {
+      "action": "processor_stopped",
+      "actor": "2f2f4bec-0a5f-44b0-941a-fe9e0c339de0",
+      "at": "2026-11-16T14:49:57.848125+00:00"
+    },
+    {
+      "action": "closed",
+      "actor": "as-via-Codex/user-approved-operational-20261116",
+      "at": "2026-11-16T14:55:21.905500+00:00"
+    }
+  ],
+  "read_only_probe_failures_in_this_live_session": 0,
+  "operator_record_location": "Original checkout: local-backups/pt-operational-live-20261116 (private; never publish raw configuration/journal/models/dataset)",
+  "verification_notes": [
+    "Windows Git CRLF normalization only; committed and on-disk proposal JSON/request identical. No proposal change.",
+    "One reconciliation assertion expected HTTP access lines; ML emits application events. Corrected read-only evidence collection corroborated one _train entry, two epoch records and one exact-model generation entry. No algorithm or submission repeated.",
+    "A full-page results screenshot failed; viewport captures and actual AX observations succeeded."
+  ]
+}

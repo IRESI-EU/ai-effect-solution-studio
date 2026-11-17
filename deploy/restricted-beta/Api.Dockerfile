@@ -1,5 +1,5 @@
 # Reuse validated installed dependencies, not the staging application/bootstrap.
-FROM ai-effect-staging-api:0458b93949a4 AS installed
+FROM ai-effect-beta-candidate-api:002686f04fb5 AS installed
 FROM python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e
 ARG PORTAL_SOURCE_COMMIT
 LABEL org.opencontainers.image.revision=$PORTAL_SOURCE_COMMIT

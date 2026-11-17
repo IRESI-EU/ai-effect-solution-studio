@@ -1,0 +1,496 @@
+{
+  "collected_at": "2026-11-17T08:38:28.235985+00:00",
+  "production_inventory_read_only": true,
+  "review_stack_collected_before_implementation": true,
+  "production": {
+    "api_image": "sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340",
+    "web_image": "sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f",
+    "api_source_comparison": {
+      "expected_source": "89072340c9a13f3aa49d3e433380de8928cc16dd",
+      "compared_files": 44,
+      "mismatches": [],
+      "expected_files_absent": []
+    },
+    "web_historical_source": "df5b75873326ab56cad608990f3bd4add125bcc4",
+    "source_labels_present": false,
+    "web_build_id": "aLp4c1xkUjCM1v23PtrYY",
+    "table_counts": {
+      "audit_events": 494,
+      "deployments": 55,
+      "operation_contracts": 0,
+      "services": 37,
+      "solutions": 49,
+      "user_sessions": 99,
+      "users": 31
+    },
+    "null_owner_counts": {
+      "deployments": 1,
+      "services": 16,
+      "solutions": 2
+    },
+    "configuration_hashes": {
+      "/ai-effect-solution-studio-web-1": "sha256:4dc7ad9c9e722acacc8ce1cfbdec60de84a97634585bf794f5d405f6af693884",
+      "/ai-effect-solution-studio-api-1": "sha256:4dd0e997b4ba516daa04a0d2bca83a502d2225c2a9a95aab376b2edaa734a42f",
+      "/ai-effect-solution-studio-postgres-1": "sha256:85d01a81abd9ea2575b61b343e50e4193a43768cc2df183c94e5ed36e9ccdc88"
+    },
+    "orchestrator_image": "sha256:15ebcb7261be2dd7b0a3a55b5b65953dcfa8a132c0dad46fcbf8fbd0830069cc",
+    "worker_image": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+    "worker_source": null,
+    "worker_mutations": false,
+    "existing_account_sign_in": "UNPERFORMED: previous temporary credential failed; not retried",
+    "tls": {
+      "hostname": "platform.ai-effect.eu",
+      "verified_tls": true,
+      "certificate_sha256": "sha256:1dc34f96aabec02b9b4fbe3505dd5e6f77d52ea3c88feadf8bb90e140d256562",
+      "not_after": "Dec 17 10:18:52 2026 GMT",
+      "issuer": [
+        [
+          [
+            "countryName",
+            "US"
+          ]
+        ],
+        [
+          [
+            "organizationName",
+            "Let's Encrypt"
+          ]
+        ],
+        [
+          [
+            "commonName",
+            "YR1"
+          ]
+        ]
+      ],
+      "schema_sha256": "sha256:2f0ea70bdf430b0611b37d11fd3d76b5b1fa37101888a1cb30669975bc3a2488",
+      "schema_bytes": 12576
+    },
+    "routing_and_rename": {
+      "node_rename_counts": {
+        "legacy_dutch_users": 0,
+        "legacy_dutch_services": 0
+      },
+      "public_route_labels": {
+        "traefik.http.routers.ai-effect-studio-auth-api.rule": "(Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && PathPrefix(`/api/auth`)",
+        "traefik.http.routers.ai-effect-studio-management.rule": "(Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && (PathPrefix(`/admin`) || PathPrefix(`/builder`) || PathPrefix(`/publish`) || PathPrefix(`/deployments`) || PathPrefix(`/solutions`) || PathPrefix(`/api`))",
+        "traefik.http.routers.ai-effect-studio-public-api.rule": "(Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)) && (Method(`GET`) || Method(`HEAD`)) && (Path(`/api/health`) || PathPrefix(`/api/services`))",
+        "traefik.http.routers.ai-effect-studio.rule": "Host(`portal.renewenergy.io`) || Host(`platform.ai-effect.eu`)"
+      }
+    },
+    "historical_private_backup": {
+      "bytes": 86227,
+      "sha256": "sha256:b5d862f4d99c57d3e4532166cc171a57b053f8eb439a8a90be2d0c5915b59764",
+      "format": "pg_dump custom",
+      "production_writes": false
+    }
+  },
+  "candidate": {
+    "source_commit": "349f45166f319c040b2b3f2b98c4cefb9b537aa3",
+    "platform": "linux/amd64",
+    "inputs": [
+      "sha256:22c4994a05dce43bde2472a20f73ee27605a955a28ae6085742364ad32d672be",
+      "sha256:ced615705bfc07ad59fd6489491959d9b0a3ff18a54421ad9a6df6aa37d477f6",
+      "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+      "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+    ],
+    "context_sha256": "sha256:4233d95642554bd430315ec8fa48a0c3d1673bad4219e41a94d5fd04a80a02d9",
+    "images": [
+      {
+        "role": "api",
+        "tag": "ai-effect-beta-candidate-api:349f45166f31",
+        "image_id": "sha256:29a48dae5efceac7fbab0b151909803a70ccec74843159b3fbe2349d55ea6e67"
+      },
+      {
+        "role": "web",
+        "tag": "ai-effect-beta-candidate-web:349f45166f31",
+        "image_id": "sha256:57cf29da97ab875de93e78fa2068551ba6c44062233358de410a82c490ddc6c0"
+      }
+    ],
+    "services_started": false
+  },
+  "wp3_review_head": "d533219426af9ea6defaf0bc78956741201a5109",
+  "wp3_runtime_update_required": false,
+  "migration_rehearsal": {
+    "schema_sha256": "sha256:2f0ea70bdf430b0611b37d11fd3d76b5b1fa37101888a1cb30669975bc3a2488",
+    "synthetic_only": true,
+    "production_mutations": false,
+    "databases_created_by_this_run": true,
+    "migrations": {
+      "003_design_ai_pilot.sql": "sha256:573fb084bcc593ba85a214a135f8cb11e5b8d0d4ea6797af66e5a8544c92b37e",
+      "004_instance_submissions.sql": "sha256:a1c50a7a02f9077eb91a3625db4b2067a12fd6d23969f85fadec09f833f481fb",
+      "005_local_capture_records.sql": "sha256:c92cd3b6d6658546582168ae46416c8dca3cd910dc07760584e93f7befd05db2"
+    },
+    "backup_bytes": 20802,
+    "backup_sha256": "sha256:dc24bb654d224caf6eb9b2e7ed3d670a63effcaffb352d49dab508b2fc8dfe5a",
+    "separate_restore_verified": true,
+    "migrations_003_005_twice": true,
+    "legacy_owned_and_ownerless_rows_preserved": true,
+    "old_column_reads_after_new_writes": true,
+    "full_old_binary_rollback_tested": false,
+    "production_data_copied": false,
+    "disposable_databases_removed": 2
+  },
+  "review_stack": [
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 8,
+      "title": "Publish gated Design with AI foundation for instance editing",
+      "head": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+      "head_branch": "codex/review-design-ai-foundation",
+      "base": "df5b75873326ab56cad608990f3bd4add125bcc4",
+      "base_branch": "feature/production-ui-polish-v1",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "failure"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 9,
+      "title": "AIE-18: configure reusable instances and review targeted setting edits",
+      "head": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+      "head_branch": "codex/review-module-parameterisation",
+      "base": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+      "base_branch": "codex/review-design-ai-foundation",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "failure"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 10,
+      "title": "AIE-37: qualify Dutch workflow capability contracts and evidence",
+      "head": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+      "head_branch": "codex/aie37-workflow-qualification",
+      "base": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+      "base_branch": "codex/review-module-parameterisation",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "failure"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 11,
+      "title": "AIE-38: review and apply one contract-bound analyzer addition",
+      "head": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+      "head_branch": "codex/aie38-bounded-workflow-composition",
+      "base": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+      "base_branch": "codex/aie37-workflow-qualification",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 12,
+      "title": "AIE-41: simplify Builder workflow review and technical details",
+      "head": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+      "head_branch": "codex/aie41-builder-review-usability",
+      "base": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+      "base_branch": "codex/aie38-bounded-workflow-composition",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 13,
+      "title": "Connect qualified Design with AI goal to recorded run results",
+      "head": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf",
+      "head_branch": "codex/design-ai-goal-to-results",
+      "base": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+      "base_branch": "codex/aie41-builder-review-usability",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 14,
+      "title": "Discover catalogue capabilities and clarify goals before creating experiments",
+      "head": "f36f8fdfcfb95576d948fea2971907ad4d433e3a",
+      "head_branch": "codex/catalogue-grounded-discovery",
+      "base": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf",
+      "base_branch": "codex/design-ai-goal-to-results",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 15,
+      "title": "Create design-only two-operation workflows from catalogue pairs",
+      "head": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+      "head_branch": "codex/two-operation-composition",
+      "base": "f36f8fdfcfb95576d948fea2971907ad4d433e3a",
+      "base_branch": "codex/catalogue-grounded-discovery",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 16,
+      "title": "Focus Design with AI on the canvas and adjacent assistant",
+      "head": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe",
+      "head_branch": "codex/design-ai-workspace-review",
+      "base": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+      "base_branch": "codex/two-operation-composition",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 17,
+      "title": "Prepare restricted beta contracts, shared accounting and release guards",
+      "head": "c93848eb3d3495287ed0c615c6ffe98bddae2f77",
+      "head_branch": "codex/conversational-pair-review",
+      "base": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe",
+      "base_branch": "codex/design-ai-workspace-review",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 18,
+      "title": "Verify real local parameter consumption and preserve immutable results",
+      "head": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d",
+      "head_branch": "codex/platform-parameterisation-verification",
+      "base": "c93848eb3d3495287ed0c615c6ffe98bddae2f77",
+      "base_branch": "codex/conversational-pair-review",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 19,
+      "title": "Verify genuine local two-operation Design with AI acceptance",
+      "head": "94c28277a60cc18d3e2095455844cde36afae463",
+      "head_branch": "codex/local-composition-acceptance",
+      "base": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d",
+      "base_branch": "codex/platform-parameterisation-verification",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 20,
+      "title": "Prepare supervised local design-only pilot with ten-call allowance",
+      "head": "14680bbebfb4db62c44330058f6593f26e28f7ce",
+      "head_branch": "codex/supervised-local-pilot",
+      "base": "94c28277a60cc18d3e2095455844cde36afae463",
+      "base_branch": "codex/local-composition-acceptance",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 21,
+      "title": "Preserve explanations and pending choices in Design with AI",
+      "head": "4faa2c9dcf30f725aa890d027052277e5760f871",
+      "head_branch": "codex/conversation-context-repair",
+      "base": "14680bbebfb4db62c44330058f6593f26e28f7ce",
+      "base_branch": "codex/supervised-local-pilot",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "IRESI-EU/ai-effect-solution-studio",
+      "number": 22,
+      "title": "AIE-18: Portuguese parameter sandbox and verified model handoff",
+      "head": "1f30b18859231e0a2acf269eb487661a80e99b0f",
+      "head_branch": "codex/portuguese-parameter-sandbox",
+      "base": "4faa2c9dcf30f725aa890d027052277e5760f871",
+      "base_branch": "codex/conversation-context-repair",
+      "draft": true,
+      "statuses": [
+        {
+          "context": "Vercel",
+          "state": "success"
+        }
+      ],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "AI-EFFECT/ai-effect-wp3",
+      "number": 2,
+      "title": "Restore optional legacy control parameters without changing omitted payloads",
+      "head": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+      "head_branch": "codex/review-legacy-client-parameters",
+      "base": "e8914565e966a2d78879c314f980574769d31b87",
+      "base_branch": "main",
+      "draft": true,
+      "statuses": [],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "AI-EFFECT/ai-effect-wp3",
+      "number": 3,
+      "title": "AIE-18: validate and transport reusable instance settings",
+      "head": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+      "head_branch": "codex/review-instance-configuration",
+      "base": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+      "base_branch": "codex/review-legacy-client-parameters",
+      "draft": true,
+      "statuses": [],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    },
+    {
+      "repository": "AI-EFFECT/ai-effect-wp3",
+      "number": 4,
+      "title": "AIE-18: experimental Portuguese parameters and model handoff",
+      "head": "d533219426af9ea6defaf0bc78956741201a5109",
+      "head_branch": "codex/portuguese-parameter-sandbox",
+      "base": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+      "base_branch": "codex/review-instance-configuration",
+      "draft": true,
+      "statuses": [],
+      "review_count": 0,
+      "visible_base_branch_protected": false
+    }
+  ],
+  "provider_accounting": "28/28 CLOSED; no allocation or amendment",
+  "deployment_performed": false,
+  "staging_provisioned": false,
+  "human_walkthrough_performed": false,
+  "remaining_gates": [
+    "target existing reviewer/source/contracts/CSV approval and sign-in",
+    "separately reviewed future production spending policy",
+    "human walkthrough and code review",
+    "actual candidate staging acceptance and old binary rollback"
+  ],
+  "configuration_checks": {
+    "production_compose_validation": "PASS",
+    "default_off": true,
+    "existing_networks_and_mounts_inherited": true,
+    "no_provider_or_accounting_token": true,
+    "services_started": false,
+    "public_http": {
+      "/login": 200,
+      "/api/health": 200
+    },
+    "staging_compose_validation": "PASS: isolated network, loopback TLS, Secure cookie, explicit seed mount"
+  },
+  "package_checks": {
+    "api_network_disabled_import": "PASS",
+    "web_build_id": "EY9BALGRvOJYRAkWG_pgJ",
+    "packaged_frontend_tests": 19,
+    "host_frontend_tests": 20,
+    "host_typecheck": "PASS",
+    "registration_suite": {
+      "cases": 74,
+      "broader_run_passed": 71,
+      "affected_endpoint_rerun_passed": 3,
+      "new_target_cases": 9
+    },
+    "owned_preview_cases_passed": 13,
+    "provider_accounting_configuration_cases_passed": 47
+  },
+  "retained_sandbox": {
+    "global_request_count": 28,
+    "global_call_ceiling": 28,
+    "outstanding_reservations": 0,
+    "global_closed": true,
+    "new_scope_closed": true,
+    "provider_disconnected": true,
+    "workers_stopped": true,
+    "supervised_api_adapter_disabled": true,
+    "current_saved_solutions": 12,
+    "nine_journal_jobs_and_four_closed_execution_scopes_unchanged": true,
+    "queues_unchanged_no_unresolved_work": true,
+    "historical_completed_results_accessible": true
+  }
+}

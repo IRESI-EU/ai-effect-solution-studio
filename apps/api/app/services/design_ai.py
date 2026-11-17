@@ -42,6 +42,25 @@ class InputPolicy(BaseModel):
     json_schema: dict
 
 
+class DeploymentDesignInput(BaseModel):
+    """Owner-selected target metadata only; no storage path or execution grant."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    environment: str = Field(pattern=r"^[a-z0-9-]{1,80}$")
+    database_scope: str = Field(pattern=r"^[a-f0-9]{64}$")
+    dataset_ref: str = Field(pattern=r"^[a-zA-Z0-9_-]{1,100}$")
+    label: str = Field(min_length=1, max_length=100)
+
+
+class RegisteredParameters(BaseModel):
+    """Operator-selected, private experimental design authority; never a grant."""
+    model_config = ConfigDict(extra="forbid")
+    registration_id: str = Field(pattern=r"^[a-z0-9-]{1,80}$")
+    reviewer_id: str = Field(min_length=1)
+    source_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
+    contract_definitions: dict[str, str]
+    deployment_design_input: DeploymentDesignInput | None = None
+
+
 class TemplatePolicy(BaseModel):
     model_config = ConfigDict(extra="forbid")
     solution_id: str | None = None
@@ -50,6 +69,7 @@ class TemplatePolicy(BaseModel):
     instance_settings_only: bool = False
     structural_append_only: bool = False
     qualified_experiment: bool = False
+    registered_parameters: RegisteredParameters | None = None
 
     @model_validator(mode="after")
     def selector(self):
@@ -59,6 +79,8 @@ class TemplatePolicy(BaseModel):
             raise ValueError("Select exactly one editing scope")
         if self.qualified_experiment and (not self.instance_settings_only or self.run_input or self.structural_append_only):
             raise ValueError("Qualified experiments require saved instance settings and connections")
+        if self.registered_parameters and (not self.instance_settings_only or self.qualified_experiment or self.structural_append_only or self.run_input):
+            raise ValueError("Registered parameters require the bounded settings scope, without qualification or legacy input policy")
         if self.run_input:
             schema = self.run_input.json_schema
             Draft202012Validator.check_schema(schema)
@@ -165,6 +187,9 @@ def ordered_services(nodes: list[dict], edges: list[dict], *, instance_settings_
 def template(key: str, db: Session, user: User) -> dict:
     source = source_solution(key, db)
     policy = policies()[key]
+    if policy.registered_parameters:
+        from app.services.registered_parameters import authority
+        authority(key, policy, source, db, user)
     raw = deepcopy(source.nodes)
     ordered_services(raw, source.edges, instance_settings_only=policy.instance_settings_only)
     nodes = hydrate_solution_service_references(db, raw, user)
@@ -205,7 +230,7 @@ def template(key: str, db: Session, user: User) -> dict:
         first = chain[0]["data"]["service"]
         if (policy.run_input.service_id, policy.run_input.operation_name) != (first["id"], first["operation_name"]):
             raise HTTPException(409, "The configured run input does not target this workflow's first operation")
-    return {"key": key, "label": PILOTS[key][0], "source": {"solution_id": source.id,
+    result = {"key": key, "label": PILOTS[key][0], "source": {"solution_id": source.id,
             "revision": digest(content(source)), "updated_at": source.updated_at.isoformat() if source.updated_at else None,
             "reference_kind": "mutable_saved_design", "execution_snapshot": None},
             "name": source.name, "description": source.description or "", "nodes": nodes,
@@ -215,6 +240,12 @@ def template(key: str, db: Session, user: User) -> dict:
             "reference_note": ("Separate settings copy of the selected saved design. Historical execution snapshots remain separate; no experiment has run."
                 if policy.instance_settings_only else "Separate composition copy; historical execution snapshots remain separate. No workflow has run for this copy."
                 if policy.structural_append_only else "Copied saved design. No immutable deployment snapshot is stored by this platform; previous execution equivalence is unverified.")}
+    if policy.registered_parameters:
+        result["source"]["registration_id"] = policy.registered_parameters.registration_id
+        if policy.registered_parameters.deployment_design_input:
+            result["source"]["execution_policy"] = "design_only_registered_parameters"
+        result["reference_note"] = "Reviewer-scoped experimental registered design. New identities, declared defaults and separate CSV selection; no inherited results or execution authority. Portuguese-owner approval and hosted compatibility unverified."
+    return result
 
 
 def list_templates(db: Session, user: User) -> list[dict]:
@@ -233,6 +264,7 @@ def list_templates(db: Session, user: User) -> list[dict]:
                 value = template(key, db, user)
                 item.update(available=True, description=value["description"], operations=[n["data"]["service"]["operation_name"] for n in ordered_services(value["nodes"], value["edges"], instance_settings_only=policy_scope(value))])
                 item["qualified_experiment"] = configured[key].qualified_experiment
+                item["registered_parameters"] = bool(configured[key].registered_parameters)
                 if configured[key].qualified_experiment:
                     from app.services.qualified_demo import capability
                     capability(key, value, db, user)
@@ -260,6 +292,9 @@ def contracts(nodes: list[dict], db: Session) -> list[dict]:
 
 
 def validate(design: dict, db: Session, user: User) -> dict:
+    if design.get("registered_workflow"):
+        from app.services.registered_parameters import validation
+        return validation(design, db, user)
     if design.get("editing_scope") == "catalogue_pair" and not design.get("nodes"):
         return {"valid": False, "errors": ["Apply the proposed two-operation design before Save."],
             "unknown": ["Initial empty engineering state. Runtime readiness and execution are unverified."], "required_inputs": []}
@@ -352,6 +387,10 @@ def load_draft(draft_id: str, db: Session, user: User, lock: bool = False) -> De
         raise HTTPException(409, "This pilot template is no longer enabled")
     if source_solution(row.state["template_key"], db).id != row.state["source"]["solution_id"]:
         raise HTTPException(409, "The operator selected a different source. Start a new copy.")
+    if row.state["design"].get("registered_workflow") or policies()[row.state["template_key"]].registered_parameters:
+        value = template(row.state["template_key"], db, user)
+        if value["source"] != row.state["source"]:
+            raise HTTPException(409, "The registered design authority changed. Start a new copy.")
     if policies()[row.state["template_key"]].instance_settings_only != policy_scope(row.state["design"]):
         raise HTTPException(409, "The supported editing scope changed. Start a new copy.")
     if policies()[row.state["template_key"]].structural_append_only != (row.state["design"].get("editing_scope") == "append_bound_operation"):
@@ -383,6 +422,9 @@ def view(row: DesignDraft, db: Session | None = None) -> dict:
     if db is not None and policy_scope(state["design"]):
         from app.services.instance_proposals import settings_context
         result["instance_settings"] = settings_context(row, db)["instances"]
+        if state["design"].get("registered_workflow"):
+            from app.services.registered_parameters import training_input
+            result["registered_configuration"] = {"dataset":training_input(row.owner_id, db),"execution_supported":False}
     return result
 
 
@@ -435,6 +477,9 @@ def guided_capabilities(key: str, design: dict, *, guided: bool) -> dict | None:
 
 def discovery_capability(key: str, db: Session, user: User) -> dict:
     value = template(key, db, user)  # Re-check source sharing, approval and governance.
+    if policies()[key].registered_parameters:
+        from app.services.registered_parameters import capability
+        return capability(value, db, user)
     if policies()[key].qualified_experiment:
         from app.services.qualified_demo import capability
         return capability(key, value, db, user)
@@ -444,8 +489,20 @@ def discovery_capability(key: str, db: Session, user: User) -> dict:
     return {"key": key, "label": "Generate and benchmark a sample electricity grid.", **facts}
 
 
-def start(key: str, db: Session, user: User, *, guided: bool = False, recommended_seed: int | None = None, recommendation_revision: str | None = None) -> dict:
+def start(key: str, db: Session, user: User, *, guided: bool = False, recommended_seed: int | None = None, recommendation_revision: str | None = None, commit: bool = True) -> dict:
     value = template(key, db, user)
+    if policies()[key].registered_parameters:
+        if guided or recommended_seed is not None or recommendation_revision is not None:
+            raise HTTPException(422, "Registered parameter configuration cannot inherit experiment qualification")
+        from app.services.registered_parameters import initial_design
+        design = initial_design(value, db)
+        row = DesignDraft(id=str(uuid4()), owner_id=user.id, revision=0, state={"template_key":key,"source":value["source"],
+            "reference_note":value["reference_note"],"design":design,"validation":validate(design,db,user),
+            "history":[],"edit_history":[],"pending":None,"saved_solution_id":None,"guided_experiment":None,
+            "reserved_solution_id":str(uuid4()),"saved_revision":None,"dirty":True})
+        db.add(row);db.flush()
+        if commit:db.commit()
+        return view(row,db)
     if policies()[key].qualified_experiment:
         from app.services.qualified_demo import lock_template
         lock_template(value, db)
@@ -525,7 +582,7 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User, *,
                 raise HTTPException(422, "Select a structural composition copy before adding an operation")
             from app.services.structural_proposals import append
             design = append(design, edit, allocation or str(uuid4()), db, user)
-        elif policy_scope(design) and edit.kind != "set_node_parameters":
+        elif policy_scope(design) and edit.kind != "set_node_parameters" and not (design.get("registered_workflow") and edit.kind == "set_run_input"):
             raise HTTPException(422, "This copy supports instance-setting changes only; its structure, labels and workflow input stay fixed")
         if edit.kind == "rename":
             if not edit.value.strip() or len(edit.value) > 160:
@@ -541,12 +598,15 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User, *,
                 raise HTTPException(422, "Choose a current service node and a short display label")
             matches[0]["data"]["label"] = edit.value.strip()
         elif edit.kind == "set_run_input":
-            if not design.get("input_policy"):
+            if not design.get("input_policy") and not design.get("registered_workflow"):
                 raise HTTPException(422, "No verified wrapper input is configured for this template")
             try:
                 design["run_input"] = json.loads(edit.value, parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
             except ValueError as exc:
                 raise HTTPException(422, "The proposed run input is not valid JSON") from exc
+            if design.get("registered_workflow"):
+                from app.services.registered_parameters import validate_input
+                design["run_input"] = validate_input(design["run_input"], user, db)
         elif edit.kind == "set_node_parameters":
             matches = [n for n in service_nodes(design["nodes"]) if n["id"] == edit.node_id]
             if len(matches) != 1:
@@ -575,11 +635,19 @@ def propose(draft_id: str, turn: AssistantTurn, db: Session, user: User) -> dict
     row = load_draft(draft_id, db, user, lock=True)
     allocation = str(uuid4())
     design, validation = candidate(row, turn, db, user, allocation=allocation)
+    if design.get("registered_workflow") and design == row.state["design"]:
+        raise HTTPException(422,"The proposed configuration has the same effective values; nothing changed")
     from app.services.instance_proposals import parameter_review
     review = parameter_review(row.state["design"], design, db)
     state = deepcopy(row.state)
     state["pending"] = {"id": str(uuid4()), "base_revision": row.revision, "turn": turn.model_dump(), "design": design, "validation": validation,
                         "parameter_review": review}
+    if design.get("registered_workflow") and design["run_input"] != row.state["design"]["run_input"]:
+        from app.services.registered_parameters import training_input
+        choice = training_input(user.id, db)
+        label = choice["label"] if choice else "Unavailable input"
+        state["pending"]["input_review"] = {"before":label if row.state["design"]["run_input"] else "Not selected",
+            "after":label if design["run_input"] else "Not selected"}
     if row.state["design"].get("editing_scope") == "append_bound_operation":
         from app.services.structural_proposals import review as structural_review
         state["pending"].update(allocation=allocation, structural_review=structural_review(row.state["design"], design, db, user))
@@ -609,6 +677,8 @@ def apply(draft_id: str, revision: int, proposal_id: str, db: Session, user: Use
         raise HTTPException(422, "The proposed change cannot be applied: " + "; ".join(validation["errors"]))
     state = deepcopy(row.state)
     state["history"] = (state["history"] + [{"design": state["design"], "validation": state["validation"]}])[-30:]
+    if design.get("registered_workflow"):
+        state["history"][-1]["reapply_turn"] = pending["turn"]
     state.update(design=design, validation=validation, pending=None, dirty=True)
     state["edit_history"] = (state["edit_history"] + [{"revision": revision + 1, "edits": [e["kind"] for e in pending["turn"]["edits"]]}])[-100:]
     row.state, row.revision, row.updated_at = state, revision + 1, datetime.utcnow()
@@ -623,6 +693,7 @@ def undo(draft_id: str, revision: int, db: Session, user: User) -> dict:
     if not state["history"]:
         raise HTTPException(409, "There is no applied change to undo")
     previous = state["history"].pop()
+    reapply = previous.pop("reapply_turn", None)
     state.update(previous)
     state.update(pending=None, dirty=True)
     if state.get("source", {}).get("kind") == "catalogue_composed" and not state["design"]["nodes"]:
@@ -631,6 +702,8 @@ def undo(draft_id: str, revision: int, db: Session, user: User) -> dict:
     state["edit_history"] = (state["edit_history"] + [{"revision": revision + 1, "edits": ["undo"]}])[-100:]
     row.state, row.revision = state, revision + 1
     db.commit()
+    if reapply and state["design"].get("registered_workflow"):
+        return propose(draft_id, AssistantTurn.model_validate({**reapply,"expected_revision":row.revision}), db, user)
     return view(row, db)
 
 
@@ -644,7 +717,7 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
         require_save(row, db, user)
     state = deepcopy(row.state)
     current_validation = validate(state["design"], db, user)
-    if state.get("guided_experiment") == "qualified_dutch_grid" and state.get("pending"):
+    if (state.get("guided_experiment") == "qualified_dutch_grid" or state["design"].get("registered_workflow")) and state.get("pending"):
         raise HTTPException(409, "Apply the reviewed proposal before saving this experiment")
     if not current_validation["valid"]:
         raise HTTPException(422, "Resolve the draft input or catalogue errors before saving")
@@ -671,6 +744,8 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
     if state["source"].get("kind") == "catalogue_composed":
         solution.design_metadata.update(execution_policy="design_only_catalogue_pair",
             composition_authority=deepcopy(state["composition"]["authority"]))
+    if design.get("execution_policy") == "design_only_registered_parameters":
+        solution.design_metadata["execution_policy"] = design["execution_policy"]
     solution.updated_at = datetime.utcnow()
     state.update(saved_solution_id=solution.id, saved_revision=row.revision, dirty=False,
                  saved_fingerprint=digest(content(solution)), validation=current_validation)

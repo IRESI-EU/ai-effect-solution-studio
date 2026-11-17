@@ -1,5 +1,11 @@
 # Restricted-beta shared accounting (inactive preparation)
 
+**Current17November status:** the original batch is28/28 CLOSED, Portuguese scope3/3
+CLOSED, zero outstanding. Historical transitions below are not production capacity
+or permission to reopen anything. See the [current release preparation](../../docs/RESTRICTED_PRODUCTION_CANDIDATE_2026-11-17.md)
+for the remaining separately reviewed future production-budget policy. No new
+authority, funds, amendment, copied ledger or provider session was created.
+
 This is a separate private authority over the **same existing Windows ledger**.
 No service, policy, tunnel, credential or new allowance was activated by this
 implementation. Defaults are empty/off. Never copy the ledger into a container
@@ -18,6 +24,7 @@ flowchart LR
 |---|---|---|---|
 | New acceptance checkpoint | 13 -> 15 | 2 permits / USD0.010 | USD0.005 |
 | Initial beta, after confirmed acceptance | 15 -> 25 | 10 permits / USD0.050 | USD0.005 |
+| Prepared Portuguese design-only acceptance (inactive) | 25 -> 28 | 3 permits / USD0.015 | USD0.005 |
 
 The global money ceiling stays **USD0.10**. Settled prior charges and all original
 rows/audits remain. Enough original money must remain to fund a phase before its
@@ -49,13 +56,33 @@ overrun stop accounting; do not report that outcome as a bounded provider pass.
 
 ## Integrity, concurrency and uncertainty
 
-The operator supports only the two exact transitions above. Initial activation
+The operator supports only the three exact transitions above. Initial activation
 requires the reviewed canonical path, filesystem identity, file SHA-256, exact
 13 settled rows, open count-exhausted policy and unchanged USD0.10 ceiling. Beta
 requires 15 settled/acknowledged rows, two acceptance permits and an attributable
 acceptance-pass evidence reference. The code does not fabricate that attestation
 or automatically decide that response quality passed. Failed acceptance cannot
 activate beta. Previous checkpoint files are not edited or reopened.
+
+The new `portuguese_acceptance` phase requires exactly 25 settled/acknowledged
+records, ten mapped permits in the exhausted beta scope, the same authority/file,
+open global policy and sufficient original money. It cannot reopen a stopped
+global policy. Its only new scope is `pt-provider-acceptance-20261116`, with one
+consumer `pt-registered-design-review` in `portuguese-sandbox-local`; the explicit
+PostgreSQL fingerprint and new private token hash remain mandatory. The
+`acceptance_evidence` field must be the frozen Portuguese proposal SHA-256,
+not an assertion that the new test already passed. A new attributable owner
+authorization is required before `--apply`. Earlier scopes stay exhausted/inactive;
+no allowance is copied, no checkpoint reopens and no money is added. Dry-run
+is read-only. This phase is implemented/tested on synthetic ledgers only and
+has **not** been applied to the real ledger.
+
+See [the frozen proposal](../portuguese_sandbox/proposed-provider-acceptance-20261116.json)
+and [preparation report](../../docs/PORTUGUESE_PROVIDER_ACCEPTANCE_2026-11-16.md).
+The retained Portuguese API currently has an internal-only Docker network:
+accounting HTTPS host resolution fails. Do not activate this phase or connect a
+provider until the proposed API-only transport configuration passes its own
+non-provider TLS/status preflight. Never widen the Windows listener to the LAN.
 
 New tables are installed transactionally in the existing ledger only during a
 future explicit operator apply. Audit events form an append-only hash chain over

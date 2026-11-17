@@ -85,7 +85,7 @@ def record_for(first, second, db, user):
         if discovery.omit_private_metadata(declared, service) != declared:
             raise HTTPException(422, "Private runtime references cannot be selectable settings")
         operations.append((service, contract, definition))
-    if (operations[0][1].operation_identity == operations[1][1].operation_identity
+    if (operations[0][2]["inputs"] or operations[0][1].operation_identity == operations[1][1].operation_identity
             or len(operations[0][2]["outputs"]) != 1 or len(operations[1][2]["inputs"]) != 1):
         raise HTTPException(422, "A unique source output and downstream input are required")
     output, target = operations[0][2]["outputs"][0], operations[1][2]["inputs"][0]
@@ -317,7 +317,7 @@ def context(row):
 
 def design_only(metadata):
     return bool(metadata and ((metadata.get("source") or {}).get("kind") == KIND
-                              or metadata.get("execution_policy") == "design_only_catalogue_pair"))
+                              or metadata.get("execution_policy") in {"design_only_catalogue_pair", "design_only_registered_parameters"}))
 
 
 def require_execution_allowed(workflow, db, user):

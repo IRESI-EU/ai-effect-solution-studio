@@ -1,4 +1,4 @@
-FROM ai-effect-staging-web:0458b93949a4 AS installed
+FROM ai-effect-beta-candidate-web:002686f04fb5 AS installed
 FROM node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d AS builder
 WORKDIR /app
 COPY --from=installed /app/node_modules ./node_modules

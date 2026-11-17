@@ -3,6 +3,7 @@ export type Message = { role: "user" | "assistant"; content: string };
 export type Clarification = { request: string; question: string };
 export type Activity = { tool: string; status: string; summary: string };
 export type Recommendation = { mechanism?: "registered_workflow" | "catalogue_service" | "catalogue_composed"; source_revision?: string; recommended_seed?: 42 | 43; key?: string; label: string; steps: { title: string; operation: string }[]; connection: string; expected_result_view: string[]; optional_downloads: string[]; availability: string; limitations: string[];
+  configuration_kind?:"registered_parameters";registered_settings?: {first: {name:string;value:string|number|boolean}[];second: {name:string;value:string|number|boolean}[]};
   defaults_used?: string[]; composition_review?: CompositionReviewData; composition_settings?: {first: {name:string;value:string|number|boolean}[];second: {name:string;value:string|number|boolean}[]}; creation_request_id?: string;
   candidate_id?: string; recommendation_revision?: string; creation_supported?: boolean; purpose?: string; contract_resolution?: string; input_requirements_known?: boolean; runtime_checked?: boolean; execution_supported?: boolean;
   required_inputs?: { name: string; purpose?: string; choices?: number[] }[]; supported_settings?: { name: string; title: string; description: string }[] };
@@ -75,7 +76,8 @@ export function readRecommendation(value: unknown): Recommendation | null {
         && typeof item.creation_request_id === "string" && /^[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(item.creation_request_id)
         && validCompositionReview(item.composition_review) && validCompositionSettings(item.composition_settings)
       || item.mechanism === "catalogue_service" && item.candidate_id.startsWith("service-") && !item.creation_supported
-      || item.mechanism === "registered_workflow" && item.candidate_id.startsWith("workflow-") && item.creation_supported && typeof item.recommendation_revision === "string" && /^[a-f0-9]{64}$/.test(item.recommendation_revision) && [42, 43].includes(item.recommended_seed!));
+      || item.mechanism === "registered_workflow" && item.candidate_id.startsWith("workflow-") && item.creation_supported && typeof item.recommendation_revision === "string" && /^[a-f0-9]{64}$/.test(item.recommendation_revision) &&
+        (item.configuration_kind === "registered_parameters" ? item.recommended_seed === undefined && item.execution_supported === false && validCompositionSettings(item.registered_settings) : [42, 43].includes(item.recommended_seed!)));
   const legacy = item && item.candidate_id === undefined && item.key === "dutch" && (!item.mechanism || (item.mechanism === "registered_workflow" && typeof item.source_revision === "string" && [42, 43].includes(item.recommended_seed!)));
   return item && (generic || legacy) && typeof item.label === "string" && typeof item.connection === "string"
     && typeof item.availability === "string" && Array.isArray(item.steps)
@@ -89,6 +91,7 @@ export function recommendationCreation(item: Recommendation | null): Record<stri
   if (item.mechanism === "catalogue_composed") return {candidate_id:item.candidate_id,recommendation_revision:item.recommendation_revision,
     composition_settings:item.composition_settings,creation_request_id:item.creation_request_id};
   if (item.mechanism !== "registered_workflow") return null;
+  if(item.configuration_kind === "registered_parameters") return {candidate_id:item.candidate_id,recommendation_revision:item.recommendation_revision,registered_settings:item.registered_settings};
   return item.candidate_id
     ? { candidate_id: item.candidate_id, recommendation_revision: item.recommendation_revision, recommended_seed: item.recommended_seed }
     : { template_key: item.key, guided: true, recommendation_revision: item.source_revision, recommended_seed: item.recommended_seed };

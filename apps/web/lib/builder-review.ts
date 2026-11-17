@@ -33,7 +33,7 @@ function canonical(value: unknown): unknown {
 }
 export function designFingerprint(name: string, nodes: GraphNode[], edges: GraphEdge[], runInput?: unknown) {
   const clean = (value: Record<string, unknown>, ignored: string[]) => Object.fromEntries(Object.entries(value).filter(([key]) => !ignored.includes(key)));
-  return JSON.stringify(canonical({ name, runInput, nodes: nodes.map(n => clean(n, ["selected", "dragging", "measured", "width", "height", "resizing", "positionAbsolute"])),
+  return JSON.stringify(canonical({ name, runInput: normalizeRunInput(runInput), nodes: nodes.map(n => clean(n, ["selected", "dragging", "measured", "width", "height", "resizing", "positionAbsolute"])),
     edges: edges.map(e => clean(e, ["selected"])) }));
 }
 export function offlineReview(config?: { provider_mode?: string; provider_name?: string } | null, environment = "") {
@@ -41,7 +41,13 @@ export function offlineReview(config?: { provider_mode?: string; provider_name?:
 }
 export function catalogueDesignOnly(metadata: Record<string, unknown> | null) {
   const source = metadata?.source as {kind?: unknown}|undefined;
-  return source?.kind === "catalogue_composed" || metadata?.execution_policy === "design_only_catalogue_pair";
+  return source?.kind === "catalogue_composed" || ["design_only_catalogue_pair", "design_only_registered_parameters"].includes(String(metadata?.execution_policy));
+}
+export type ExecutionPolicy = {available?: boolean; message?: string; mode?: string; service_ids?: string[]};
+export function executionPolicyForServices(policy: ExecutionPolicy | null, ids: string[]) {
+  const applies = policy && (!policy.service_ids || policy.service_ids.some(id => ids.includes(id)));
+  return {message: applies && policy.available === false ? policy.message || "Execution is disabled." : "",
+    supervised: !!applies && policy.mode === "supervised"};
 }
 export type ReviewAction = "add" | "save" | "validate" | "review" | "prepare" | "confirm" | "results";
 export function nextReviewAction(state: { steps: number; dirty: boolean; design: "valid" | "invalid" | null;
@@ -57,5 +63,31 @@ export function nextReviewAction(state: { steps: number; dirty: boolean; design:
 export function reviewInput(mode: "prompt" | "json", text: string): unknown {
   if (!text.trim()) return null;
   if (mode === "prompt") return {prompt:text.trim()};
-  try { return JSON.parse(text); } catch { return {unparsed_input:text, mode}; }
+  try { return normalizeRunInput(JSON.parse(text)); } catch { return {unparsed_input:text, mode}; }
+}
+
+export function normalizeRunInput(value: unknown): unknown {
+  return value == null || (typeof value === "object" && !Array.isArray(value) && !Object.keys(value).length) ? null : value;
+}
+
+export function withRunInput(metadata: Record<string, unknown> | null, input: unknown) {
+  const value = normalizeRunInput(input);
+  return metadata || value !== null ? {...metadata, run_input: value} : null;
+}
+
+export function trainingInputMessage(required: boolean, input: unknown) {
+  return required && !(input && typeof input === "object" && "dataset_ref" in input && typeof input.dataset_ref === "string" && input.dataset_ref.trim())
+    ? "Select a training CSV before validating." : "";
+}
+
+export function portugueseOperationHelp(serviceId: string) {
+  if (serviceId === "pt-experimental-chain-TrainModel") return "Connected workflow: train a new model from Training CSV, then connect to chained GenerateData.";
+  if (serviceId === "pt-experimental-chain-GenerateData") return "Connected workflow: generate sequences using the model_ref from chained TrainModel.";
+  if (serviceId === "pt-experimental-TrainModel") return "Standalone historical operation; use the chained entries for a new connected workflow.";
+  if (serviceId === "pt-experimental-GenerateData") return "Standalone historical operation using the earlier model; use chained GenerateData after training a new model.";
+  return "";
+}
+
+export function reuseSavedForSupervisedReadiness(supervised: boolean, dirty: boolean, id: string | null, updatedAt: string | null) {
+  return supervised && !dirty && !!id && !!updatedAt;
 }

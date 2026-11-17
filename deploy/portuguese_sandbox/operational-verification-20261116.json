@@ -1,0 +1,162 @@
+{
+  "state": "PREPARATION_PASSED_EXECUTION_NOT_AUTHORIZED",
+  "sources": {
+    "portal_web": "642d2594001792a41b82a30dc51abc050ad98dbc",
+    "wp3_adapter_worker": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+    "retained_backend_commit": "75ccb8fd09be477d5517bea26c139011f9436ad6"
+  },
+  "images": {
+    "orchestrator": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+    "ml": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+    "pt-adapter": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+    "api": "sha256:401b6358bbf35a7c8f7bfa4e0c6bc65df4c8f4f54cedb27ad83b00cbc44cfa6e",
+    "web": "sha256:1bb228f840aad90f938faf5b918d6e806a972b8578889b10c046a59015c364ec",
+    "model-observer": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+    "candidate_targeted_worker": "sha256:75dc18e23e464b3b1ad6c4368f965dcf8185d163a20dd0d92276f6408f217bdb",
+    "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+    "redis": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065"
+  },
+  "manual_builder": {
+    "url": "http://127.0.0.1:23124/builder?solutionId=ebde9866-4a03-4911-91fc-21dec22582a5",
+    "saved_revision": "2026-11-16T13:56:39.275449",
+    "assembly": "empty Builder, visible palette/CSV/canvas/published connection/settings; no API writes to prepare",
+    "save_refresh_validate": "passed",
+    "run_input": {
+      "dataset_ref": "pt-approved-synthetic-data"
+    },
+    "instances": [
+      {
+        "instance_id": "service-pt-experimental-chain-TrainModel-7287a699-b01a-4bca-a0f5-f8e289969a7d",
+        "service_id": "pt-experimental-chain-TrainModel",
+        "operation_name": "TrainModel",
+        "node_key": "pt-chain-TrainModel:TrainModel",
+        "task_id": "task_030152d9",
+        "configuration": {
+          "contract_id": "pt-chain-train-v2",
+          "contract_version": "0.2.0",
+          "operation_identity": "urn:aieffect:experimental:portuguese:train-model",
+          "schema_version": "1.0",
+          "parameters": {
+            "epochs": 2,
+            "batch_size": 4
+          },
+          "instance_id": "service-pt-experimental-chain-TrainModel-7287a699-b01a-4bca-a0f5-f8e289969a7d"
+        },
+        "parameter_contract_sha256": "82d8d1a734f4e181d2695ddbdcec2d77d9272aab43d6e806ef630fb28159ceef",
+        "input_bindings": []
+      },
+      {
+        "instance_id": "service-pt-experimental-chain-GenerateData-23d68562-a9c1-42ec-aa70-2675194375c9",
+        "service_id": "pt-experimental-chain-GenerateData",
+        "operation_name": "GenerateData",
+        "node_key": "pt-chain-GenerateData:GenerateData",
+        "task_id": "task_f6c5c14e",
+        "configuration": {
+          "contract_id": "pt-chain-generate-v2",
+          "contract_version": "0.2.0",
+          "operation_identity": "urn:aieffect:experimental:portuguese:generate-data",
+          "schema_version": "1.0",
+          "parameters": {
+            "number_of_examples": 10
+          },
+          "instance_id": "service-pt-experimental-chain-GenerateData-23d68562-a9c1-42ec-aa70-2675194375c9"
+        },
+        "parameter_contract_sha256": "9e4e6e968ec15a295ad5f635499d592e984bf7a792ef1e0bbf033309517e62b3",
+        "input_bindings": [
+          "service-pt-experimental-chain-TrainModel-7287a699-b01a-4bca-a0f5-f8e289969a7d"
+        ]
+      }
+    ],
+    "binding": [
+      {
+        "source": "service-pt-experimental-chain-TrainModel-7287a699-b01a-4bca-a0f5-f8e289969a7d",
+        "target": "service-pt-experimental-chain-GenerateData-23d68562-a9c1-42ec-aa70-2675194375c9",
+        "binding": {
+          "source_slot": "model_ref",
+          "target_slot": "model_ref"
+        }
+      }
+    ],
+    "inspection_only": true,
+    "new_execution": false
+  },
+  "activation": {
+    "kind": "non_executing_real_dependency_probe_not_standby",
+    "transient_dns_then_recovery": true,
+    "healthy_cycles": 24,
+    "probe_has_no_journal_mount": true,
+    "api_recreated": true,
+    "adapter_identity_started_at_unchanged": true,
+    "read_only_probe_uninterrupted_no_restarts": true,
+    "probe_exit_code": 0,
+    "live_authorizations_created": 0,
+    "workflow_creations": 0,
+    "algorithm_reservations": 0,
+    "scope": "Full helper activation/fresh waiting processor proved with disposable unit state only; no live standby or authority created."
+  },
+  "admission": {
+    "runtime_preflight_http": 409,
+    "execution_state": "inspection_only",
+    "unchanged_since_served_source": true,
+    "reused_postgresql_evidence": "4 passed, 50 warnings in 1.70s; prior pt-accept-20261116/postgres-concurrency.log; mocked dispatch, actual disposable PostgreSQL",
+    "backend_tree_object": "def28b353f5278a74f6d55d88d758f6eccaecbd8"
+  },
+  "preservation": {
+    "original_saved_designs_unchanged": 8,
+    "historical_journal_jobs_complete": 7,
+    "all_three_old_scopes_closed": true,
+    "failed_processor_stopped": true,
+    "no_new_live_authority": true,
+    "provider_ledger": {
+      "unchanged": true,
+      "count": 25,
+      "limit": 25,
+      "outstanding": 0,
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b"
+    },
+    "all_existing_containers_retained": 54,
+    "only_recreated": [
+      "/ai-effect-pt-parameters-pt-adapter-1",
+      "/ai-effect-pt-parameters-api-1",
+      "/ai-effect-pt-parameters-web-1"
+    ],
+    "all_existing_mounts_retained": true,
+    "historical_models_outputs_unchanged": true,
+    "unresolved_queues": 0,
+    "new_workflows": 0,
+    "new_algorithm_executions": 0
+  },
+  "tests": {
+    "wp3_probe_supervision_chain": "49 passed, 1 existing warning",
+    "operator": "8 passed",
+    "frontend_helpers": "24 passed; isolated mode avoids host spawn EPERM",
+    "packaged_frontend": "18 passed",
+    "typescript": "passed",
+    "next_production_build": "passed",
+    "adapter_worker_network_disabled_imports": "passed"
+  },
+  "future_execution": {
+    "proposal": "proposed-supervised-operational-20261116.json",
+    "authorization_created": false,
+    "scope": "pt-supervised-operational-20261116-01",
+    "solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+    "saved_revision": "2026-11-16T11:26:14.691950",
+    "request_sha256": "96f346d9e87f5c68bc45b5e35d7c62ad671591a012711d53ef383c50addca00b",
+    "request_unchanged": true,
+    "max_workflows": 1,
+    "max_training": 1,
+    "max_generation": 1,
+    "effective_settings": {
+      "TrainModel": {
+        "epochs": 2,
+        "batch_size": 4
+      },
+      "GenerateData": {
+        "number_of_examples": 10
+      }
+    },
+    "automatic_execution_retries": 0,
+    "replacement_scopes": 0
+  },
+  "limits": "Live authority/fresh standby/API activation and new algorithm run intentionally not exercised; disposable-state orchestration and live read-only probe are distinct. Independent usability, Portuguese-node access and production portability are not established."
+}

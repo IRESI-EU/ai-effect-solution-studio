@@ -171,10 +171,12 @@ def admin_import_wp3_package(
 @app.post("/data-references/preview")
 def preview_data_reference_endpoint(
     payload: DataReferencePreviewRequest,
+    response: Response,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     from app.services.owned_artifact_preview import preview
+    response.headers["Cache-Control"] = "private, no-store"
     return preview(payload, db, user)
 
 
@@ -666,9 +668,25 @@ def restore_service(
 def compile_workflow(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
+    from app.services.registered_parameters import validate_target_input
+    validate_target_input(workflow, db, user)
     return compile_to_wp3_payload(workflow, db)
+
+
+@app.get("/workflows/training-input")
+def builder_training_input(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.core.config import settings
+    from app.services.capability_bindings import sandbox_execution_policy
+    from app.services.registered_parameters import training_input
+    choice = training_input(user.id, db)
+    policy = sandbox_execution_policy()
+    if settings.design_ai_registration_environment and policy is None:
+        from app.services.registered_parameters import SERVICES
+        policy = {"available": False, "service_ids": SERVICES,
+            "message": "INSPECTION ONLY. This registered workflow is available for design review; new experimental execution is disabled."}
+    return {"dataset": choice, "execution": policy}
 
 
 @app.post("/workflows/runtime-preflight")
@@ -677,6 +695,10 @@ def runtime_preflight_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    capability_bindings.require_sandbox_execution_allowed(workflow, user)
+    if capability_bindings.sandbox_profile_enabled():
+        from app.services.portuguese_supervision import preflight
+        return preflight(workflow, db, user)[0]
     from app.services.catalogue_composition import require_execution_allowed
     require_execution_allowed(workflow, db, user)
     compiled = compile_to_wp3_payload(workflow, db)
@@ -696,6 +718,10 @@ def submit_workflow_to_orchestrator_endpoint(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    capability_bindings.require_sandbox_execution_allowed(workflow, user)
+    if capability_bindings.sandbox_profile_enabled():
+        from app.services.portuguese_supervision import submit
+        return submit(workflow, db, user)
     from app.services.catalogue_composition import require_execution_allowed
     require_execution_allowed(workflow, db, user)
     from app.services import execution_journey, qualified_demo
@@ -865,6 +891,7 @@ def validate_workflow(_: User = Depends(get_current_user)):
 
 @app.post("/workflows/submit")
 def submit_workflow(_: User = Depends(get_current_user)):
+    capability_bindings.require_sandbox_execution_allowed()
     return {
         "workflow_id": "demo-workflow-001",
         "status": "submitted",
@@ -873,12 +900,18 @@ def submit_workflow(_: User = Depends(get_current_user)):
 
 
 @app.get("/workflows/{workflow_id}")
-def get_workflow(workflow_id: str, _: User = Depends(get_current_user)):
+def get_workflow(workflow_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if capability_bindings.sandbox_profile_enabled():
+        authorized_deployment(db, user, workflow_id)
+        return get_workflow_status(workflow_id)
     return {"workflow_id": workflow_id, "status": "running"}
 
 
 @app.get("/workflows/{workflow_id}/tasks")
-def get_tasks(workflow_id: str, _: User = Depends(get_current_user)):
+def get_tasks(workflow_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if capability_bindings.sandbox_profile_enabled():
+        authorized_deployment(db, user, workflow_id)
+        return get_workflow_tasks(workflow_id)
     return {
         "workflow_id": workflow_id,
         "tasks": [

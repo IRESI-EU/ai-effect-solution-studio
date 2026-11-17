@@ -1,0 +1,231 @@
+{
+  "version": 1,
+  "status": "PREPARED_BUT_BLOCKED_ON_ACCOUNTING_TRANSPORT_AND_NEW_AUTHORIZATION",
+  "session": "pt-provider-acceptance-20261116",
+  "code_review_commit": "5f87c4c9624baca7670003e27928b54dd2c063e3",
+  "portal_baseline": "cafca7d35eb3b3c957e5763ddf2dfaa9e4d5bd12",
+  "maintained_wp3_baseline": "6107d4ba02ddbdca500750b349b7af2c41920bda",
+  "entry_url": "http://127.0.0.1:23124/design-ai",
+  "cases_file": "provider-acceptance-cases-20261116.json",
+  "cases_sha256": "267eee3f1f8108494c804ac7ab34c6984b173eb5b1228eef519f20371e1f6a36",
+  "case_sha256": {
+    "case_a": "80d18a7ad96dd1c55c974c81a52e340d83768febc05e9a591dc8d5fe306a9978",
+    "case_b": "057ee2290a572bd24fdbdc038b3878985f6ab92567be23884a9295ad80c03782",
+    "case_c": "eaef1a2dc8b35fe41c8abd73a94a9c109809ea9c168efe5ddbbf7e7f4d7a663e"
+  },
+  "hash_format": "SHA-256 of UTF-8 JSON sorted keys, ensure_ascii=false, allow_nan=false, compact separators; no newline",
+  "configuration": {
+    "provider": {
+      "origin": "https://api.openai.com/v1",
+      "model": "gpt-6-luna",
+      "reasoning_effort": "low",
+      "service_tier": "default",
+      "prompt_cache_options": {
+        "ttl": "30m"
+      },
+      "max_output_tokens": 2000,
+      "max_framed_input_tokens": 32000,
+      "store": false,
+      "sdk_retries": 0,
+      "fallback": false,
+      "timeout_seconds": 40,
+      "structured_output": "AssistantTurn"
+    },
+    "authority": {
+      "authority_id": "original-shared-local-20261112",
+      "scope": "pt-provider-acceptance-20261116",
+      "consumer": "pt-registered-design-review",
+      "environment": "portuguese-sandbox-local",
+      "database_scope": "1998faca769907e0a8293f6d8472680e98ece33e0922e21e6fc7017bfc04f2d0",
+      "origin": "https://host.docker.internal:29489",
+      "ca_sha256": "61851071a464b718a3caa8eca0933fa242dd04eaee4bfabded1b6e807a965607"
+    },
+    "reviewer": {
+      "id": "5cc4b476-b97d-41b0-8d75-e381b3dbe581",
+      "login": "pt-sandbox-designer@example.test"
+    },
+    "execution": {
+      "supervised_api": false,
+      "supervised_adapter": false,
+      "grants": false,
+      "start_workers": false
+    },
+    "network_proposal": {
+      "api_only_additional_network": "ai-effect-pt-parameters_provider-egress",
+      "driver": "bridge",
+      "internal": false,
+      "keep_existing_private_network_internal": true,
+      "publish_new_ports": false,
+      "all_other_services_unchanged": true
+    },
+    "current_compose_sha256": "3e95cc69d25cb7ad931a3832e979bd5783a599fc4a2036f8e6c16da3375dbd4a",
+    "system_sha256": "a0bfbfaa06a92a7d69fd8d39538a953f83f8ffa9d059657381144d4726212eef",
+    "schema_sha256": "d10c8d26e88ea6b39bfb0a77f3b19f9f2902761c4d11f7d22b90f29a5a3383e9"
+  },
+  "configuration_sha256": "dfc1da6e9abfc31954adf7e97d84a2a429ac7a1a7b7e8772246ed2c671ecbc58",
+  "registration": {
+    "id": "pt-reviewer-chain-v2-20261116",
+    "candidate_id": "workflow-ac621480df1df1b05633230f",
+    "recommendation_revision": "3494d028405b95bb938e6eb9297bcf559f01426fc4fc84003f43f9f81c2ec8a0",
+    "source_digest": "0ed2580e2174c62e1241a20fc781af2d471c028950cc35277448955dc0ee7281",
+    "source_solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+    "contract_pins": {
+      "pt-chain-train-v2": {
+        "version": "0.2.0",
+        "definition_sha256": "c6d6da49a5a453da0d97af32845365839f523331f7475dc99712601443453831"
+      },
+      "pt-chain-generate-v2": {
+        "version": "0.2.0",
+        "definition_sha256": "7ffa7b38f47f82f0f0920b2b839b01f155afc711635e4e607bd073e5469be030"
+      }
+    },
+    "dataset_ref": "pt-approved-synthetic-data",
+    "dataset_label": "Sandbox test dataset",
+    "dataset_sha256": "36c7721e9254d1abd24cf6999bb693fc6d3ccf28e377431c0562a32d6efe17a8"
+  },
+  "serving": {
+    "api": {
+      "image": "sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e",
+      "source": "25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b",
+      "container_id": "8ada8ca69c690ff3fa5fe87442b93ae43f963669d8b0eb1fcd6e507e9b89574c"
+    },
+    "web": {
+      "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+      "source": "4296ec484542ce9dfa4d1b45e3ce9a897793edc3",
+      "container_id": "9ddf40c4224bfa8ee561684aa6e891791819149d899cae7d8c481674ff654d7c"
+    },
+    "pt-adapter": {
+      "image": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+      "source": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+      "container_id": "f847cb86e0e9e782c34ab11525a03687c4fbd00e560294abfc417bee03312b56"
+    },
+    "ml": {
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "source": null,
+      "container_id": "0fda4afe9bc523164a62a594fd8e39c2653b28528b94a0ad8b1aded990880f81"
+    },
+    "model-observer": {
+      "image": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "source": "30e1ac403c7434149f3ff3568843f2cc75702413",
+      "container_id": "04f971073bdb4f8ea15fa7829fac4bfc879f99861dd72d755b092df1e5991ec8"
+    },
+    "orchestrator": {
+      "image": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+      "source": "a8b529ea25bcfd6a16dbb77ebc893a2b0b22ab77",
+      "container_id": "95fc67a2f6575ef4c43280659eb8b30e2d1524fa25c2029356d48498804ddbb9"
+    },
+    "postgres": {
+      "image": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "source": null,
+      "container_id": "e28c8b8a080a434d6a0614303d4396f3a0785def90b4ee2c958758341ae0c504"
+    },
+    "redis": {
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "source": null,
+      "container_id": "d168d820b3e04a76c4d92c0c7db89f6eda0bfd75feba31e3347a24f3118a10c1"
+    }
+  },
+  "maximum_calls": 3,
+  "per_case_calls": {
+    "A": 1,
+    "B": 1,
+    "C": 1
+  },
+  "followup_calls": 0,
+  "max_input_tokens_per_call": 32000,
+  "max_output_tokens_per_call": 2000,
+  "max_total_input_tokens": 96000,
+  "max_total_output_tokens": 6000,
+  "reservation_per_call_usd": "0.005",
+  "max_lifetime_reservations_and_spend_usd": "0.015",
+  "pricing": {
+    "checked_date": "2026-11-16",
+    "usd_per_million": {
+      "uncached_input": "0.10",
+      "cached_input": "0.01",
+      "30m_cache_write": "0.125",
+      "12h_cache_write": "0.25",
+      "output_including_reasoning": "0.50"
+    },
+    "reservation_accounting": "All input conservatively charged at 0.125/MTok, output including reasoning at 0.50/MTok; no cache discount or double counting reasoning. Explicit 30m TTL. 12h writes/other tiers/regional endpoints prohibited; unexpected usage stops.",
+    "sources": [
+      "https://developers.openai.com/api/docs/models/gpt-6-luna",
+      "https://developers.openai.com/api/docs/pricing"
+    ]
+  },
+  "accounting": {
+    "mechanism": "Existing shared_allowance Authority + amend_shared_allowance.py, new fixed portuguese_acceptance phase; no second ledger",
+    "phase": "portuguese_acceptance",
+    "shared_count_transition": [
+      25,
+      28
+    ],
+    "scope_initial_calls": [
+      0,
+      3
+    ],
+    "unchanged_global_usd_ceiling": "0.10",
+    "current": {
+      "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b",
+      "authority_id": "original-shared-local-20261112",
+      "calls": 25,
+      "max_calls": 25,
+      "held_nano": 10603500,
+      "remaining_nano": 89396500,
+      "outstanding": 0
+    },
+    "authorization": "Existing earlier paid scopes are exhausted and do not authorize this new Portuguese session. New owner approval must explicitly cover 25->28 and this frozen proposal; no activation in preparation.",
+    "reservation": "Status -> fresh UUID reserve -> exactly one dispatch -> settle real numeric usage before parse -> verify durable receipt -> acknowledge. No refunds of permits/lifetime reservations.",
+    "interruption": "Stop all remaining cases. Use same-permit lookup/settlement/acknowledgement from genuine recorded usage only. Uncertain usage retains full hold and globally blocks; never manufacture zero or retry model.",
+    "closure": "Disconnect key first, inspect/settle existing permits, use supported attributable stop on new scope (unused permits stay closed), remove proposed API egress and CA/session configuration, stop native authority. Earlier policy scopes/history remain retained and inactive."
+  },
+  "preflight_order": [
+    "Verify exact sources, serving images, current internal-network config, registration, contracts, dataset/reviewer and preserved designs; stop on drift",
+    "Only under separate approval apply proposed API-only egress/CA configuration with provider key empty; preserve private internal network and all other components",
+    "Verify fresh certificate, hostname and loopback reachability using non-accounting nonce probe; never widen listener, bypass TLS or silently change routing",
+    "Read-only exact-file authority dry-run, history/audit verification, 25 settled records, zero unresolved, original money sufficient; then supported apply only with attributable owner approval",
+    "Start existing native authority on 127.0.0.1:29489 with the new reviewed host operator source; real provider key remains disconnected until verified authenticated status reports 25/28 and new scope 0/3 with zero outstanding",
+    "Revalidate declared context and ensure framed input including actual carried history <=32000 before each fresh reserve. Connect only retained private key to exact restricted reviewer; no metered connectivity/model-list probe",
+    "Run A then B then C only through visible Design with AI controls; all later cases conditional on preceding pass; no arbitrary followup",
+    "No runtime readiness probe, workflow submission, execution grant, worker start or algorithm. All execution restrictions stay enforced",
+    "On response failure, drift, uncertain accounting, deadline or cap stop and close; never reword/retry/repair responses",
+    "Record actual raw sanitized response, structured result, context/revisions, control outcomes, response/model ID, usage/costs/outstanding and immutable preservation checks before closure"
+  ],
+  "preflight_transport": {
+    "verified_tls": false,
+    "blocker": "Retained API has only ai-effect-pt-parameters_private, internal=true; host.docker.internal lookup fails with socket.gaierror [Errno -3] Temporary failure in name resolution. No accounting request reached Windows.",
+    "listener": "127.0.0.1:29489",
+    "listener_stopped_after_probe": true,
+    "no_ledger_opened_by_probe": true,
+    "certificate_sha256": "61851071a464b718a3caa8eca0933fa242dd04eaee4bfabded1b6e807a965607",
+    "certificate_not_after": "2026-11-18T21:42:28+00:00",
+    "provider_key_locally_present": true,
+    "key_connected": false,
+    "provider_authentication_and_model_entitlement": "UNTESTED; no provider endpoint called"
+  },
+  "time_limit": "One supervised session <=30 minutes from activation. Recheck official pricing and unexpired TLS before activation; any changed frozen configuration requires a revised review/approval.",
+  "offline_context_bounds": {
+    "case_a": {
+      "framed_input_bound": 30558,
+      "context_sha256": "9f3b3c85ee858a501be02310e67d952f4ef9dba6f6b70dc76c07327acd143bb7",
+      "fresh_ids_required": false,
+      "context_kind": "actual authorized discovery"
+    },
+    "case_b": {
+      "framed_input_bound": 23606,
+      "context_sha256": "091ac2fe162be7e60816f766663660f2bc2436e6cb896a8d15d29b173691a744",
+      "fresh_ids_required": true,
+      "context_kind": "read-only actual focused schema; substituted declared defaults, fresh UUIDs allocated later"
+    },
+    "case_c": {
+      "framed_input_bound": 23450,
+      "context_sha256": "9d5f0ee331ba6af7d0f8dd857372ce767cb483b9171c8ada9b227639b52509fe",
+      "fresh_ids_required": true,
+      "context_kind": "read-only actual focused schema; substituted declared defaults, fresh UUIDs allocated later"
+    },
+    "system_sha256": "a0bfbfaa06a92a7d69fd8d39538a953f83f8ffa9d059657381144d4726212eef",
+    "schema_sha256": "d10c8d26e88ea6b39bfb0a77f3b19f9f2902761c4d11f7d22b90f29a5a3383e9"
+  },
+  "genuine_provider_results": "UNTESTED",
+  "new_algorithm_calls": 0
+}

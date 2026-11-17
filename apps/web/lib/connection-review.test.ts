@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { bindingSignature, connectionState, connectionSummary, dataLabel, savedBindingSignatures, stepLabel, stepPurpose, type Contract } from "./connection-review.ts";
+import { bindingSignature, connectionState, connectionSummary, publishedConnection, dataLabel, savedBindingSignatures, stepLabel, stepPurpose, type Contract } from "./connection-review.ts";
 
 const source: Contract = {id:"producer-contract",contract_version:"1.0.0",definition:{binding_transport:"whole-output-v1",inputs:[],outputs:[{name:"captured_grid",schema_ref:"urn:test:grid"}]}};
 const target: Contract = {id:"consumer-contract",contract_version:"1.0.0",definition:{binding_transport:"whole-output-v1",inputs:[{name:"captured_grid",schema_ref:"urn:test:grid"}],outputs:[]}};
@@ -14,12 +14,31 @@ const signature = bindingSignature(nodes,edge);
 const input = {binding,sourcePin,targetPin,source,target,loaded:true,signature};
 
 test("summary follows actual endpoints and metadata, including other operations and unknown metadata", () => {
-  assert.equal(connectionSummary(stepLabel(nodes[0]),stepLabel(nodes[1]),binding),"Benchmark generated grid uses the grid from Generate synthetic power grid.");
-  assert.equal(connectionSummary("Topology generator","Drawing renderer",{source_slot:"topology_options",target_slot:"networks"}),"Drawing renderer uses the topology options from Topology generator.");
+  assert.equal(connectionSummary(stepLabel(nodes[0]),stepLabel(nodes[1]),binding),"Generate synthetic power grid → Benchmark generated grid: sends the grid.");
+  assert.equal(connectionSummary("Topology generator","Drawing renderer",{source_slot:"topology_options",target_slot:"networks"}),"Topology generator → Drawing renderer: sends the topology options.");
   assert.equal(stepLabel({id:"unknown",data:{}}),"Unknown step");
   assert.equal(dataLabel("urn:unknown"),"data");
-  assert.equal(connectionSummary("Unknown step","Consumer",{source_slot:"urn:unknown",target_slot:"data"}),"Consumer uses data from Unknown step.");
-  assert.match(connectionSummary("Producer","Consumer"),/Choose its data connection/);
+  assert.equal(connectionSummary("Unknown step","Consumer",{source_slot:"urn:unknown",target_slot:"data"}),"Unknown step → Consumer: sends data.");
+  assert.equal(connectionSummary("GenerateData","TrainModel"),"GenerateData → TrainModel. No data binding selected.");
+});
+
+test("published model binding and reverse dataset input have distinct review messages",()=>{
+  const slot={name:"model_ref",schema_ref:"urn:test:model:2",semantic_concept:"urn:test:model",value_representation:"data_reference",
+    data_reference_protocols:["http"],content_types:["application/json"],min_cardinality:1,max_cardinality:1};
+  const train:Contract={id:"train",contract_version:"0.2.0",definition:{binding_transport:"whole-output-v1",inputs:[{...slot,name:"dataset_ref",source_requirement:"workflow_input"}],outputs:[slot]}};
+  const generate:Contract={id:"gen",contract_version:"0.2.0",definition:{binding_transport:"whole-output-v1",inputs:[{...slot,source_requirement:"upstream_operation"}],outputs:[{...slot,name:"sequences"}]}};
+  assert.equal(publishedConnection(train,generate).supported,true);
+  assert.match(publishedConnection(train,generate).reason,/Required model_ref/);
+  assert.equal(publishedConnection(generate,train).supported,false);
+  assert.match(publishedConnection(generate,train).reason,/dataset_ref.*separate workflow input/);
+  const incompatible=structuredClone(generate);incompatible.definition.inputs[0].data_reference_protocols=["inline"];
+  assert.equal(publishedConnection(train,incompatible).supported,false);
+});
+
+test("training and generation setting edits preserve the selected binding identity",()=>{
+  const edited=nodes.map(n=>({...n,data:{...n.data,configuration:{parameters:{epochs:2,batch_size:4,number_of_examples:10}}}}));
+  assert.equal(bindingSignature(edited,edge),signature);
+  assert.deepEqual(savedBindingSignatures(edited,[edge]),{connection:signature});
 });
 
 test("configured, persisted and checked states remain independent", () => {

@@ -3,6 +3,18 @@ import test from "node:test";
 import { activeDraftId, activeConversationId, conversationUrl, conversationForCopy, conversationKey, designReturnUrl, draftUrl, readConversation, readRecommendation, recommendationCreation } from "./session.ts";
 import {boundedHistory,readClarification} from "./session.ts";
 
+test("registered operation settings retain their separate authority and never become pair or seed settings",()=>{
+  const item={mechanism:"registered_workflow",configuration_kind:"registered_parameters",candidate_id:"workflow-"+"a".repeat(24),
+    recommendation_revision:"b".repeat(64),creation_supported:true,runtime_checked:false,execution_supported:false,
+    label:"Experimental Portuguese chain",steps:[{title:"Train",operation:"TrainModel"},{title:"Generate",operation:"GenerateData"}],
+    required_inputs:[{name:"dataset_ref"}],connection:"model_ref to model_ref",expected_result_view:[],optional_downloads:[],availability:"Inspection only",limitations:[],
+    registered_settings:{first:[{name:"epochs",value:1},{name:"batch_size",value:4}],second:[{name:"number_of_examples",value:20}]}};
+  const value=readRecommendation(item);assert.deepEqual(value,item);
+  assert.deepEqual(recommendationCreation(value),{candidate_id:item.candidate_id,recommendation_revision:item.recommendation_revision,registered_settings:item.registered_settings});
+  for(const change of [{execution_supported:true},{recommended_seed:43},{registered_settings:{first:[],second:[{name:"number_of_examples",value:20},{name:"number_of_examples",value:10}]}}])
+    assert.equal(readRecommendation({...item,...change}),null);
+});
+
 test("bounded history preserves the entire clarification and answer sequence or refuses without truncation",()=>{
   const messages=Array.from({length:10},(_,i)=>({role:i%2?"assistant" as const:"user" as const,content:i===0?"Original benchmark objective":i===6?"What does the sample setting mean?":i===8?"42":"Explanation "+i}));
   assert.deepEqual(boundedHistory(messages),messages);

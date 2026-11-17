@@ -1,0 +1,150 @@
+{
+  "status": "OFFLINE_INTEGRATION_PASS_GENUINE_PROVIDER_UNTESTED",
+  "starting_portal_head": "e252f0221e80781e4b6d1754960eff9d6c3ce54c",
+  "starting_wp3_head": "4a4bdc8f1150d44d809b0b281765a114f695c71d",
+  "download": {
+    "results_url": "http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results",
+    "workflow_id": "wf-717110fb8d5e",
+    "task_id": "task_f6c5c14e",
+    "actual_browser_control": "Download generated CSV",
+    "bytes": 41826,
+    "sha256": "553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540",
+    "recorded_hash_match": true,
+    "browser_download_verified_on_final_build": true,
+    "unauthenticated_and_wrong_owner_denied": "isolated route fixtures",
+    "generic_remote_preview": "unchanged; blocked"
+  },
+  "registration": {
+    "id": "pt-reviewer-chain-v2-20261116",
+    "scope": "Existing active sandbox reviewer only; operator-approved experimental local design configuration, no Portuguese-owner approval, sharing/publication or execution authority",
+    "source_solution_id": "b4e48556-c3a5-4a73-903d-c2a2618756fd",
+    "source_design_digest": "0ed2580e2174c62e1241a20fc781af2d471c028950cc35277448955dc0ee7281",
+    "contract_definition_pins": {
+      "pt-chain-generate-v2": "4739abb0a7bc5795bc70a5cc0c2aee1abb1f03420ab0ab35c0e00c283db67eeb",
+      "pt-chain-train-v2": "2d384fb0ad28f401978d0cd9006087f1ca9e7294118765c8db52293cf6f49c9a"
+    },
+    "candidate_id": "workflow-ac621480df1df1b05633230f",
+    "recommendation_revision": "3494d028405b95bb938e6eb9297bcf559f01426fc4fc84003f43f9f81c2ec8a0",
+    "contract_ids": [
+      "pt-chain-train-v2",
+      "pt-chain-generate-v2"
+    ],
+    "contract_version": "0.2.0",
+    "binding": "model_ref → model_ref / whole-output-v1",
+    "default_settings": {
+      "TrainModel": {
+        "epochs": 1,
+        "batch_size": 4
+      },
+      "GenerateData": {
+        "number_of_examples": 10
+      }
+    },
+    "input_choice": {
+      "label": "Sandbox test dataset",
+      "dataset_ref": "pt-approved-synthetic-data"
+    }
+  },
+  "browser_acceptance": {
+    "ai_design_url": "http://127.0.0.1:23124/design-ai?draftId=91a37168-92af-47a8-b4d3-f28eb9476be8",
+    "builder_url": "http://127.0.0.1:23124/builder?solutionId=07c9449a-48f5-4da4-b06c-b1bc9f765ba8",
+    "saved_revision": "2026-11-16T18:43:00.968204",
+    "draft_revision": 3,
+    "effective_settings": {
+      "TrainModel": {
+        "epochs": 2,
+        "batch_size": 4
+      },
+      "GenerateData": {
+        "number_of_examples": 20
+      }
+    },
+    "instance_identities": {
+      "TrainModel": "a4bfeac0-bff9-461c-9a74-46686ef6a7ca",
+      "GenerateData": "8f7cb1b9-1e4d-4d70-9415-67031cfd8449"
+    },
+    "run_input": {
+      "dataset_ref": "pt-approved-synthetic-data"
+    },
+    "browser_journey": "Actual visible Create, CSV selection, 1/4/10 → 2/4/20 review, Apply, Undo, Apply, Save, refresh, Advanced Builder, refresh, Validate: Checked successfully. No helper/API prepopulation.",
+    "undo_restored_complete_initial_design_and_input": true,
+    "reapply_retained_same_identities": true,
+    "new_deployments": 0,
+    "readiness_denied": 409,
+    "execution_state": "inspection_only",
+    "provider_acceptance": "UNTESTED: provider disconnected; recommendation tested only with isolated deterministic doubles"
+  },
+  "canonical_binding": [
+    {
+      "source": "a4bfeac0-bff9-461c-9a74-46686ef6a7ca",
+      "target": "8f7cb1b9-1e4d-4d70-9415-67031cfd8449",
+      "source_slot": "model_ref",
+      "target_slot": "model_ref",
+      "transport": "whole-output-v1",
+      "schema_ref": "urn:aieffect:experimental:pt:model-reference:2",
+      "source_contract_id": "pt-chain-train-v2",
+      "target_contract_id": "pt-chain-generate-v2"
+    }
+  ],
+  "served": {
+    "backend_source_commit": "25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b",
+    "backend_image": "sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e",
+    "frontend_source_commit": "4296ec484542ce9dfa4d1b45e3ce9a897793edc3",
+    "frontend_image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+    "maintained_runtime_source_commit": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+    "runtime_unchanged": true,
+    "platform": "linux/amd64",
+    "pinned_inputs": [
+      "sha256:22c4994a05dce43bde2472a20f73ee27605a955a28ae6085742364ad32d672be",
+      "sha256:ced615705bfc07ad59fd6489491959d9b0a3ff18a54421ad9a6df6aa37d477f6",
+      "python@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e",
+      "node@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+    ]
+  },
+  "preservation": {
+    "preserved_original_solutions": 10,
+    "current_solutions": 11,
+    "historical_jobs_unchanged": 9,
+    "closed_scopes_unchanged": 4,
+    "all_retained_container_names_mounts_and_other_identities_preserved": true,
+    "retained_container_count": 56,
+    "workers_stopped": true,
+    "queues_unchanged": true,
+    "provider_disconnected": true,
+    "supervision_disabled": true,
+    "ledger_unchanged": "25/25, zero outstanding",
+    "historical_results_verified": true,
+    "all_nine_recorded_output_hashes_revalidated": true,
+    "new_workflows": 0,
+    "new_algorithms": 0,
+    "new_execution_authorities": 0,
+    "changed_components": [
+      "api",
+      "web"
+    ],
+    "configuration_changes_only": "reviewer-scoped design registration"
+  },
+  "verification": {
+    "download_initial_suite": "45 passed",
+    "final_registered_compatibility_evidence_suite": "59 passed",
+    "final_operator_check": "1 passed",
+    "final_create_controls_check": "2 passed",
+    "frontend_session_and_evidence": "16 passed",
+    "frontend_actual_page_recommendation_and_workspace": "19 passed",
+    "typecheck": "passed",
+    "offline_API_web_builds": "passed; installed pinned dependencies, no downloads",
+    "postgresql_concurrency": "Not rerun; SQLite does not establish PostgreSQL concurrency",
+    "real_provider_interpretation": "UNTESTED; no provider call or fake response in the running application",
+    "independent_usability": "unverified",
+    "production_or_hosted_Portuguese_compatibility": "unverified",
+    "final_changed_composer_suite": "53 passed"
+  },
+  "rollback": "Retained previous images/configurations and verified consistent pg_dump; local-backups/pt-ai-download-20261116. Restore only reviewed API/web pins/configuration, never overwrite evidence/database with an old copy.",
+  "future_provider_acceptance_prerequisites": [
+    "Freeze reviewed source/build, registration/candidate revision and active contract pins; recheck existing designer authorization and dataset availability",
+    "Specify bounded positive recommendation/configuration and ambiguity/missing-input cases with unchanged expected outcomes",
+    "Obtain or verify applicable separate spending authorization and supported shared-accounting task allocation; current ledger remains exhausted 25/25, zero outstanding; no amendment or checkpoint activation in this pass",
+    "Verify genuine provider, pinned pricing/model/output/retry controls and authoritative accounting before any spend; keep execution grants disabled and do not execute designs",
+    "Independent human review and Portuguese deployment-specific owner/endpoint/auth/data/resource qualification remain separate"
+  ]
+}

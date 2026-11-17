@@ -53,11 +53,12 @@ class AssistantTurn(StrictModel):
     recommended_seed: Literal[42, 43] | None = None
     discovery: DiscoveryDecision | None = None
     composition_settings: CompositionSettings | None = None
+    registered_settings: CompositionSettings | None = None
 
     @model_validator(mode="after")
     def answer_has_no_authority(self):
         if self.discovery and self.discovery.outcome == "answer_only" and (
-            self.edits or self.template_key is not None or self.recommended_seed is not None or self.composition_settings is not None
+            self.edits or self.template_key is not None or self.recommended_seed is not None or self.composition_settings is not None or self.registered_settings is not None
         ):
             raise ValueError("An answer-only turn cannot select a creation path, supply settings or propose edits")
         return self
@@ -70,6 +71,8 @@ class PendingClarification(StrictModel):
 
 class ChatRequest(StrictModel):
     message: str = Field(min_length=1, max_length=4000)
+    # Optional browser correlation only; never part of model context or authority.
+    conversation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
     draft_id: str | None = None
     revision: int | None = None
     # History is context only. It never supplies authorization or executable state.
@@ -93,6 +96,7 @@ class StartRequest(StrictModel):
     recommended_seed: Literal[42, 43] | None = None
     recommendation_revision: str | None = None
     composition_settings: CompositionSettings | None = None
+    registered_settings: CompositionSettings | None = None
     creation_request_id: str | None = Field(default=None, max_length=36)
 
     @model_validator(mode="after")
@@ -106,3 +110,8 @@ class StartRequest(StrictModel):
 
 class GuidedSettingsRequest(RevisionRequest):
     seed: int
+
+
+class RegisteredConfigurationRequest(RevisionRequest):
+    settings: dict[str, dict] = Field(default_factory=dict, max_length=2)
+    run_input: dict | None = None

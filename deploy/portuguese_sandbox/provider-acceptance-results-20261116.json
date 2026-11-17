@@ -1,0 +1,485 @@
+{
+  "overall_status": "PARTIAL",
+  "behavioral_acceptance": "PASS: all three frozen cases",
+  "evidence_completeness": "PARTIAL: rendered A/C message text and B stored SDK-validated structured turn are retained, not full raw provider wire payloads. Returned model metadata was not retained. Exact requested model/configuration, durable response IDs, real numeric usage and authoritative input bounds are verified. No new request was made to fill this gap.",
+  "authorized_portal_commit": "32f7820e08aa6c0ca7a68bfca121dbdfa4b8a4d6",
+  "proposal_sha256": "ba38c26b4987518abd524e4e187c20b90df56b76e2c0c6be4771ef60b0a0726b",
+  "cases_sha256": "267eee3f1f8108494c804ac7ab34c6984b173eb5b1228eef519f20371e1f6a36",
+  "configuration_sha256": "dfc1da6e9abfc31954adf7e97d84a2a429ac7a1a7b7e8772246ed2c671ecbc58",
+  "owner_approval": {
+    "actor": "as",
+    "at": "2026-11-16T22:42:26.269591+00:00",
+    "portal_commit": "32f7820e08aa6c0ca7a68bfca121dbdfa4b8a4d6",
+    "proposal_sha256": "ba38c26b4987518abd524e4e187c20b90df56b76e2c0c6be4771ef60b0a0726b",
+    "scope": "pt-provider-acceptance-20261116",
+    "approved": "API-only network/CA setup, supported 25->28, 3 attempts maximum, USD0.015, <=30min, zero retries/followups/fallback, design only; execution forbidden"
+  },
+  "activation": {
+    "activated_at": "2026-11-16T22:44:53.731591+00:00",
+    "deadline": "2026-11-16T23:14:53.731591+00:00"
+  },
+  "nonce_preflight": {
+    "dns_resolved": true,
+    "verified_tls": true,
+    "nonce_matched": true,
+    "provider_disconnected": true,
+    "ledger_not_opened": true,
+    "listener_loopback_only": "127.0.0.1:29489",
+    "listener_closed_after_probe": true
+  },
+  "authenticated_pre_spend": {
+    "allowance": {
+      "protocol_version": 1,
+      "authority_id": "original-shared-local-20261112",
+      "scope": "pt-provider-acceptance-20261116",
+      "can_request": true,
+      "blocked_reason": null,
+      "message": "Shared allowance available",
+      "max_calls": 28,
+      "request_count": 25,
+      "remaining_calls": 3,
+      "limit_usd": 0.1,
+      "remaining_usd": 0.0893965,
+      "outstanding_reservations": 0,
+      "scope_count": 0,
+      "scope_max_calls": 3,
+      "scope_reserved_nano": 0,
+      "scope_limit_nano": 15000000
+    },
+    "provider_connected": false,
+    "supervised": false
+  },
+  "post_third_call_denial": {
+    "allowance": {
+      "protocol_version": 1,
+      "authority_id": "original-shared-local-20261112",
+      "scope": "pt-provider-acceptance-20261116",
+      "can_request": false,
+      "blocked_reason": "call_limit",
+      "message": "AI messages paused: call_limit",
+      "max_calls": 28,
+      "request_count": 28,
+      "remaining_calls": 0,
+      "limit_usd": 0.1,
+      "remaining_usd": 0.0875625,
+      "outstanding_reservations": 0,
+      "scope_count": 3,
+      "scope_max_calls": 3,
+      "scope_reserved_nano": 15000000,
+      "scope_limit_nano": 15000000
+    },
+    "provider_connected": true,
+    "supervised": false
+  },
+  "cases": {
+    "A": {
+      "status": "PASS",
+      "calls": 1,
+      "representation": "Rendered DOM textContent; not reconstructed raw Markdown/wire JSON",
+      "visible_messages": [
+        "YouRecommend a workflow that trains a Portuguese synthetic-data model and then generates data using that same model. Explain the required training CSV selection and the declared default settings. Do not execute anything.",
+        "AssistantI recommend Experimental Portuguese training and generation, an existing registered workflow—not an arbitrary composition. It trains a model, then generates sequences from that same model through the published model connection.The required input is a Training CSV selected through the visible control. The advertised choice is Sandbox test dataset; the recommendation does not select it for you. Declared defaults are 1 training epoch, batch size 4, and 10 generated sequences. The generation setting is described as sequences of 100 observations each. These are sandbox settings, not scientific recommendations.This is a design recommendation only. Runtime availability and data availability have not been checked, and execution is not supported here. No result view or optional downloads are advertised. Creating a copy requires the separate Create this experiment action; nothing has been executed."
+      ],
+      "candidate": "workflow-ac621480df1df1b05633230f",
+      "recommendation_revision": "3494d028405b95bb938e6eb9297bcf559f01426fc4fc84003f43f9f81c2ec8a0",
+      "canonical_recommendation_settings": {
+        "first": [
+          {
+            "name": "epochs",
+            "value": 1
+          },
+          {
+            "name": "batch_size",
+            "value": 4
+          }
+        ],
+        "second": [
+          {
+            "name": "number_of_examples",
+            "value": 10
+          }
+        ]
+      },
+      "draft_created_only_after_visible_create": true
+    },
+    "B": {
+      "status": "PASS",
+      "calls": 1,
+      "draft_id": "ba0370ca-381a-4cf2-a9bc-6a4724ac5eb0",
+      "saved_solution_id": "28f62cd4-27c4-4e8d-a933-489e66530389",
+      "saved_revision": "2026-11-16T22:51:44.586882",
+      "draft_revision": 2,
+      "structured_turn_as_stored_by_application": {
+        "edits": [
+          {
+            "kind": "set_node_parameters",
+            "value": "{\"contract_id\":\"pt-chain-train-v2\",\"contract_version\":\"0.2.0\",\"parameters\":{\"epochs\":2}}",
+            "node_id": "b8a39153-8c21-421f-ade8-668c33797af8"
+          },
+          {
+            "kind": "set_node_parameters",
+            "value": "{\"contract_id\":\"pt-chain-generate-v2\",\"contract_version\":\"0.2.0\",\"parameters\":{\"number_of_examples\":20}}",
+            "node_id": "7bb2fb0b-3685-4bd0-a4eb-a735528f86ea"
+          }
+        ],
+        "message": "I propose setting training epochs to 2 and generated sequences to 20 (up to 20). The selected Training CSV and existing model connection are unchanged. These are design changes only; nothing has been executed, and you must use the UI to apply or save them.",
+        "discovery": null,
+        "template_key": null,
+        "recommended_seed": null,
+        "expected_revision": 1,
+        "registered_settings": null,
+        "composition_settings": null
+      },
+      "parameter_review": {
+        "changes": [
+          {
+            "key": "epochs",
+            "after": 2,
+            "label": "EXPERIMENTAL Portuguese chained TrainModel [control / sidecar]",
+            "title": "Training epochs",
+            "before": 1,
+            "node_id": "b8a39153-8c21-421f-ade8-668c33797af8",
+            "description": "Sandbox limit, not a scientific recommendation."
+          },
+          {
+            "key": "number_of_examples",
+            "after": 20,
+            "label": "EXPERIMENTAL Portuguese chained GenerateData [control / sidecar]",
+            "title": "Generated sequences",
+            "before": 10,
+            "node_id": "7bb2fb0b-3685-4bd0-a4eb-a735528f86ea",
+            "description": "Number of time-series sequences; each contains 100 observations in this sandbox."
+          }
+        ],
+        "unchanged": [],
+        "contract_pins": {
+          "7bb2fb0b-3685-4bd0-a4eb-a735528f86ea": {
+            "contract_id": "pt-chain-generate-v2",
+            "contract_version": "0.2.0",
+            "operation_identity": "urn:aieffect:experimental:portuguese:generate-data",
+            "parameter_contract_sha256": "9e4e6e968ec15a295ad5f635499d592e984bf7a792ef1e0bbf033309517e62b3"
+          },
+          "b8a39153-8c21-421f-ade8-668c33797af8": {
+            "contract_id": "pt-chain-train-v2",
+            "contract_version": "0.2.0",
+            "operation_identity": "urn:aieffect:experimental:portuguese:train-model",
+            "parameter_contract_sha256": "82d8d1a734f4e181d2695ddbdcec2d77d9272aab43d6e806ef630fb28159ceef"
+          }
+        }
+      },
+      "applied_before_explicit_apply": false,
+      "sequence": "Visible Create -> select CSV -> Review input-only change -> Apply at0 -> genuine settings request at1 -> Apply -> Save -> refresh -> Advanced Builder -> Validate: Checked successfully",
+      "initial_parameters": [
+        {
+          "parameters": {
+            "epochs": 1,
+            "batch_size": 4
+          },
+          "contract_id": "pt-chain-train-v2",
+          "contract_version": "0.2.0"
+        },
+        {
+          "parameters": {
+            "number_of_examples": 10
+          },
+          "contract_id": "pt-chain-generate-v2",
+          "contract_version": "0.2.0"
+        }
+      ],
+      "persisted_parameters": [
+        {
+          "parameters": {
+            "epochs": 2,
+            "batch_size": 4
+          },
+          "contract_id": "pt-chain-train-v2",
+          "contract_version": "0.2.0"
+        },
+        {
+          "parameters": {
+            "number_of_examples": 20
+          },
+          "contract_id": "pt-chain-generate-v2",
+          "contract_version": "0.2.0"
+        }
+      ],
+      "dataset": {
+        "dataset_ref": "pt-approved-synthetic-data"
+      },
+      "instance_ids": [
+        "b8a39153-8c21-421f-ade8-668c33797af8",
+        "7bb2fb0b-3685-4bd0-a4eb-a735528f86ea"
+      ],
+      "edges": [
+        {
+          "id": "18c47f22-1c40-46d0-8636-447c554c21db",
+          "source": "b70c2360-7e08-4bf9-98c4-3473904290fd",
+          "target": "b8a39153-8c21-421f-ade8-668c33797af8"
+        },
+        {
+          "id": "d3a5695d-fb05-4e9b-9478-1c6cac797266",
+          "data": {
+            "binding": {
+              "source_slot": "model_ref",
+              "target_slot": "model_ref"
+            }
+          },
+          "source": "b8a39153-8c21-421f-ade8-668c33797af8",
+          "target": "7bb2fb0b-3685-4bd0-a4eb-a735528f86ea"
+        },
+        {
+          "id": "f7c035f2-c774-4824-a10e-447bb1da5f83",
+          "source": "7bb2fb0b-3685-4bd0-a4eb-a735528f86ea",
+          "target": "dfb60229-498a-49ba-8bde-7722c98d526b"
+        }
+      ],
+      "dataset_ids_pins_binding_retained": true,
+      "independent_instances_verified": true,
+      "new_deployments": 0,
+      "builder_url": "http://127.0.0.1:23124/builder?solutionId=28f62cd4-27c4-4e8d-a933-489e66530389",
+      "context_measurement": "Operator read-only preflight used rendered carried history (24808 bound); genuine provider source measured original serialized UI history before reserve (24831), retained in row27. No history was replaced in the live application."
+    },
+    "C": {
+      "status": "PASS",
+      "calls": 1,
+      "draft_id": "b2e9a2b4-95f7-4a79-9a55-b27679ed99d3",
+      "representation": "Rendered DOM textContent, not raw provider JSON",
+      "visible_messages": [
+        "YouChange the size to 2.",
+        "Assistant“Size” could mean the number of generated sequences or the training batch size. Which one should I change?"
+      ],
+      "entire_draft_state_equal_before_after": true,
+      "revision": 0,
+      "pending": null,
+      "dataset": null,
+      "application_error": "Select a training CSV before validating.",
+      "clarification_unanswered": true,
+      "apply_save_or_input_selection": false,
+      "url": "http://127.0.0.1:23124/design-ai?draftId=b2e9a2b4-95f7-4a79-9a55-b27679ed99d3"
+    }
+  },
+  "requested_provider": {
+    "origin": "https://api.openai.com/v1",
+    "model": "gpt-6-luna",
+    "reasoning": "low",
+    "service_tier": "default",
+    "cache_ttl": "30m",
+    "max_output_tokens_including_reasoning": 2000,
+    "max_input_framed_tokens": 32000,
+    "sdk_retries": 0,
+    "fallback": false,
+    "returned_model_id": "not retained; no inference or extra retrieval request"
+  },
+  "accounting_and_closure": {
+    "cases": {
+      "A": "PASS",
+      "B": "PASS",
+      "C": "PASS"
+    },
+    "provider_attempts": 3,
+    "session_usage": [
+      {
+        "id": 26,
+        "held": 783125,
+        "reserved": 5000000,
+        "input_bound": 30558,
+        "usage": {
+          "input_tokens": 4941,
+          "input_tokens_details": {
+            "cache_write_tokens": 4938,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 4938
+            },
+            "cached_tokens": 0
+          },
+          "output_tokens": 331,
+          "output_tokens_details": {
+            "reasoning_tokens": 55
+          },
+          "total_tokens": 5272
+        },
+        "status": "settled",
+        "response_id": "resp_0797885a2178895f016afb87ffa25c87d2ab2b271d5a3c80a4",
+        "usage_priced_nano": 783050
+      },
+      {
+        "id": 27,
+        "held": 568375,
+        "reserved": 5000000,
+        "input_bound": 24831,
+        "usage": {
+          "input_tokens": 3315,
+          "input_tokens_details": {
+            "cache_write_tokens": 1038,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 1038
+            },
+            "cached_tokens": 2274
+          },
+          "output_tokens": 308,
+          "output_tokens_details": {
+            "reasoning_tokens": 82
+          },
+          "total_tokens": 3623
+        },
+        "status": "settled",
+        "response_id": "resp_0236af16bc8c4873016afb88c2427087d2bc2c98b8d39cd993",
+        "usage_priced_nano": 306790
+      },
+      {
+        "id": 28,
+        "held": 482500,
+        "reserved": 5000000,
+        "input_bound": 23450,
+        "usage": {
+          "input_tokens": 3060,
+          "input_tokens_details": {
+            "cache_write_tokens": 783,
+            "cache_write_tokens_details": {
+              "ttl_12h_tokens": 0,
+              "ttl_30m_tokens": 783
+            },
+            "cached_tokens": 2274
+          },
+          "output_tokens": 200,
+          "output_tokens_details": {
+            "reasoning_tokens": 130
+          },
+          "total_tokens": 3260
+        },
+        "status": "settled",
+        "response_id": "resp_0984c1651926d7c7016afb89a071e487d2a06f9f25da45e678",
+        "usage_priced_nano": 220915
+      }
+    ],
+    "session_lifetime_reservations_nano": 15000000,
+    "session_accounted_upper_nano": 1834000,
+    "session_usage_priced_nano": 1310755,
+    "billing_note": "Usage-priced estimate from genuine cache/output counters and frozen rates; invoice not independently inspected. Reasoning included once in output. Ledger conservatively prices every input at the 30m write rate.",
+    "global_request_count": 28,
+    "global_call_ceiling": 28,
+    "global_limit_nano": 100000000,
+    "global_held_nano": 12437500,
+    "global_remaining_nano": 87562500,
+    "outstanding_reservations": 0,
+    "new_scope_closed": true,
+    "global_closed": true,
+    "session_seconds_until_scope_stop": 630.123727,
+    "authority_gracefully_stopped": true,
+    "authority_loopback_listener_closed": true,
+    "provider_disconnected": true,
+    "original_compose_byte_identical": true,
+    "api_original_internal_network_only": true,
+    "session_network_removed": true,
+    "session_ca_mount_removed": true,
+    "all_other_55_container_identities_and_all_images_mounts_preserved": true,
+    "retained_container_count": 56,
+    "workers_stopped": true,
+    "supervised_api_adapter_disabled": true,
+    "execution_grants_absent": true,
+    "prior_25_usage_rows_audit_prefix_and_scopes_unchanged": true,
+    "protected_saved_solutions": 11,
+    "current_saved_solutions": 12,
+    "protected_ai_draft_unchanged": true,
+    "nine_journal_jobs_and_four_closed_execution_scopes_unchanged": true,
+    "queues_unchanged_no_unresolved_work": true,
+    "historical_completed_results_accessible": true,
+    "new_workflows": 0,
+    "new_algorithm_calls": 0,
+    "new_execution_scopes": 0,
+    "new_design": {
+      "draft_id": "ba0370ca-381a-4cf2-a9bc-6a4724ac5eb0",
+      "saved_solution_id": "28f62cd4-27c4-4e8d-a933-489e66530389"
+    },
+    "ambiguity_draft_id": "b2e9a2b4-95f7-4a79-9a55-b27679ed99d3"
+  },
+  "screenshots": {
+    "case-a-recommendation.jpg": {
+      "sha256": "c6e49726036f26f01a5ccc5d46bac13824551b1c6b628d18e590e3ef6312d5a5",
+      "bytes": 106699,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-b-proposal.jpg": {
+      "sha256": "97d3e044198f43905122b8762275daf510348e97866922c6dd30e4a9677ead2f",
+      "bytes": 122440,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-b-saved-refreshed.jpg": {
+      "sha256": "da24de15de3959b0b10501b6a0fac88e439e73c799560379a8f5df52a92e2404",
+      "bytes": 122705,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-b-builder-validated.jpg": {
+      "sha256": "c62e749055f315bc39d2d63111f9d9580c5ab7747f8f1ad791b5c62da7535a3c",
+      "bytes": 96698,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-b-training-persisted.jpg": {
+      "sha256": "1a4e6dd2728a918435a631ca7d8bf0199a7581fc1849db3b4d523a6d18f487b0",
+      "bytes": 95210,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-b-generation-persisted.jpg": {
+      "sha256": "68785ebdc2ff743bd6648a5d1895e8be1b8374879435b6f2f475715e00d6c65d",
+      "bytes": 95110,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-b-binding-pins.jpg": {
+      "sha256": "afe455f5755d45cdb17b7cd2e112943e3f2c9cb868c227038246fef730095e15",
+      "bytes": 80745,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-c-clarification-paused.jpg": {
+      "sha256": "2caa030ccfd7eb99cf17e37bf78e9e439e111ff78360f28fb016fb266ff6fc37",
+      "bytes": 105376,
+      "format": "JPEG, native screenshot bytes unchanged"
+    },
+    "case-c-closed-disconnected.jpg": {
+      "sha256": "cc9dd019a1266917a64a6a17087cc2f5076df1d1461fdd7bcf243b8caeb13f5e",
+      "bytes": 105447,
+      "format": "JPEG, native screenshot bytes unchanged"
+    }
+  },
+  "tests": "No new test suite/build: this pass is genuine browser acceptance; prior focused75 and final10-overlapping tests are preserved in preparation. No algorithms or PostgreSQL concurrency test repeated.",
+  "independent_usability": "UNVERIFIED; agent-operated supervised session only",
+  "portuguese_hosted_or_production_qualification": "UNVERIFIED",
+  "original_ml_and_wp3_runtime": "unchanged",
+  "final_ledger_sha256": "7d6fe0bfb75488f767492dfcc70264781366f46c59ef7e51a9541974e3324bf7",
+  "final_authority_audit_head": "486fcca1eacf68dc5bc6d4fc39d9161439251c65e78e7b3c605a488a5313725e",
+  "serving_after_closure": {
+    "api": {
+      "image": "sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e",
+      "source": "25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b"
+    },
+    "web": {
+      "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+      "source": "4296ec484542ce9dfa4d1b45e3ce9a897793edc3"
+    },
+    "pt-adapter": {
+      "image": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+      "source": "c98b454b1a9ce9b9a154ad82ef104678ba78b443"
+    },
+    "ml": {
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "source": null
+    },
+    "model-observer": {
+      "image": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "source": "30e1ac403c7434149f3ff3568843f2cc75702413"
+    },
+    "orchestrator": {
+      "image": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+      "source": "a8b529ea25bcfd6a16dbb77ebc893a2b0b22ab77"
+    },
+    "postgres": {
+      "image": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "source": null
+    },
+    "redis": {
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "source": null
+    }
+  }
+}

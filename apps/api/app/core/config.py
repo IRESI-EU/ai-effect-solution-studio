@@ -5,6 +5,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://solution_studio:solution_studio@postgres:5432/solution_studio"
     orchestrator_base_url: str = "http://host.docker.internal:18000"
     orchestrator_api_key: str = ""
+    # Server-only per-workflow service credential; never a Builder parameter or snapshot field.
+    orchestrator_services_api_key: str = ""
     session_cookie_name: str = "ai_effect_session"
     session_hours: int = 12
     secure_cookies: bool = False
@@ -20,6 +22,8 @@ class Settings(BaseSettings):
     design_ai_reviewer_ids: str = ""
     # Explicitly shared, operator-selected templates; never inferred by an LLM.
     design_ai_templates: str = "{}"
+    # Explicit target design registration, independent of spending/runtime scope.
+    design_ai_registration_environment: str = ""
     openai_api_key: str = ""
     design_ai_model: str = ""
     design_ai_reasoning_effort: str = ""
@@ -48,6 +52,15 @@ class Settings(BaseSettings):
     local_dutch_capture_runtime: str = ""
     # Separate disposable AIE-18 proof only; never enabled by default.
     aie18_evidence_root: str = ""
+    # Opt-in read-only experimental Portuguese capture; never a Dutch profile.
+    portuguese_evidence_root: str = ""
+    portuguese_model_root: str = ""
+    portuguese_evidence_owner_id: str = ""
+    portuguese_training_dataset_ref: str = ""
+    # Explicit operator opt-in only; no grant creation, fallback or activation.
+    portuguese_supervised_mode: bool = False
+    portuguese_supervised_authorization_id: str = ""
+    portuguese_supervised_adapter_url: str = ""
     # A separate local qualification database/network, never the guarded demos.
     aie37_qualification: bool = False
     # Additive, opt-in journey on the existing isolated AIE-37 catalogue/runtime.

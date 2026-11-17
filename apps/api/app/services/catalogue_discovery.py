@@ -128,7 +128,7 @@ def registered(db, user):
     """Adapt operator registrations to generic candidate IDs, without new creation paths."""
     workflows = []
     for key, policy in sorted(design_ai.policies().items()):
-        if not policy.qualified_experiment:
+        if not policy.qualified_experiment and not policy.registered_parameters:
             continue  # Legacy templates remain available through their unchanged explicit path.
         try:
             value = design_ai.template(key, db, user)
@@ -138,6 +138,12 @@ def registered(db, user):
             if facts.get("mechanism") != "registered_workflow" or any(not eligible(s, user) or contract_for(db, s)[0] is None for s in services):
                 continue
             fingerprint = revision(db, user, services, {"source": value["source"], "policy": policy.model_dump()})
+            if policy.registered_parameters:
+                item = {**facts,"candidate_id":identifier("workflow",value["source"]["solution_id"]),"revision":fingerprint,
+                    "kind":"registered_workflow","creation_supported":True,"purpose":text(value["description"])}
+                for service in services:item=omit_private_metadata(item,service)
+                workflows.append({**item,"_key":key,"_facts":facts})
+                continue
             item = {"candidate_id": identifier("workflow", value["source"]["solution_id"]),
                 "revision": fingerprint, "kind": "registered_workflow", "label": text(facts["label"], 160),
                 "purpose": text(value["description"]), "creation_supported": True,
@@ -210,7 +216,7 @@ def selected(turn, advertised, db, user):
     if decision.candidate_id is not None and decision.candidate_id not in old:
         raise HTTPException(422, "The assistant selected a capability that was not advertised")
     if decision.outcome != "supported_recommendation":
-        if turn.recommended_seed is not None or turn.composition_settings is not None:
+        if turn.recommended_seed is not None or turn.composition_settings is not None or turn.registered_settings is not None:
             raise HTTPException(422, "Only a registered workflow recommendation can contain settings")
         actor(db, user)
         return None
@@ -220,7 +226,7 @@ def selected(turn, advertised, db, user):
     if not item or item["revision"] != old[decision.candidate_id]["revision"]:
         raise HTTPException(409, "This capability changed or is no longer accessible. Ask for a new recommendation; no draft was created.")
     if item["kind"] == "catalogue_composed":
-        if turn.recommended_seed is not None:
+        if turn.recommended_seed is not None or turn.registered_settings is not None:
             raise HTTPException(422, "A catalogue pair cannot use registered-workflow settings or qualification")
         from app.services.catalogue_composition import resolve, recommendation
         record = resolve(item["candidate_id"], db, user)
@@ -230,6 +236,13 @@ def selected(turn, advertised, db, user):
     if turn.composition_settings is not None:
         raise HTTPException(422, "Pair settings apply only to an advertised operation pair")
     if item["kind"] == "registered_workflow":
+        if item.get("configuration_kind") == "registered_parameters":
+            if turn.recommended_seed is not None:
+                raise HTTPException(422,"This workflow has no seed setting")
+            from app.services.registered_parameters import recommendation
+            return recommendation(item,turn.registered_settings)
+        if turn.registered_settings is not None:
+            raise HTTPException(422,"Registered operation settings are unsupported for this workflow")
         seed = turn.recommended_seed
         if seed is None:
             seed = item["required_inputs"][0].get("default")
@@ -240,7 +253,7 @@ def selected(turn, advertised, db, user):
         return {**registered_item["_facts"], **item, "recommended_seed": seed,
             "defaults_used": ["seed"] if turn.recommended_seed is None else [],
             "recommendation_revision": item["revision"]}
-    if turn.recommended_seed is not None:
+    if turn.recommended_seed is not None or turn.registered_settings is not None:
         raise HTTPException(422, "A catalogue service has no registered workflow settings")
     operation = next((op for op in current["operations"] if op["service_candidate_id"] == item["candidate_id"]), None)
     return {**item, "mechanism": "catalogue_service", "supported_settings": operation["settings"] if operation else [],
@@ -253,7 +266,7 @@ def selected(turn, advertised, db, user):
 def create(payload, db, user):
     """Explicit Create only; lock and recheck all authority before delegating."""
     if payload.candidate_id.startswith("pair-"):
-        if payload.recommended_seed is not None or payload.guided:
+        if payload.recommended_seed is not None or payload.guided or payload.registered_settings is not None:
             raise HTTPException(422, "Catalogue composition is design-only; registered qualification cannot be attached")
         from app.services.catalogue_composition import create as create_pair
         return create_pair(payload, db, user)
@@ -264,6 +277,23 @@ def create(payload, db, user):
     if not item:
         raise HTTPException(409, "This recommendation has no current supported creation path")
     value = design_ai.template(item["_key"], db, user)
+    if item.get("configuration_kind") == "registered_parameters":
+        from app.models.solution import Solution
+        from app.services.registered_parameters import propose_recommendation, recommendation
+        db.query(Solution).filter(Solution.id==value["source"]["solution_id"]).populate_existing().with_for_update().one()
+        db.query(OperationContract).filter(OperationContract.service_id.in_([n["data"]["service"]["id"] for n in design_ai.service_nodes(value["nodes"])])).populate_existing().with_for_update().all()
+        item=next((w for w in registered(db,actor(db,user)) if w["candidate_id"]==payload.candidate_id),None)
+        if not item or payload.recommendation_revision!=item["revision"]:
+            raise HTTPException(409,"The registered recommendation changed; no draft was created")
+        if payload.recommended_seed is not None or payload.guided:
+            raise HTTPException(422,"Registered configuration carries no experiment qualification")
+        reviewed=recommendation(item,payload.registered_settings)
+        result=design_ai.start(item["_key"],db,user,commit=False)
+        result=propose_recommendation(result,reviewed["registered_settings"],db,user)
+        db.commit()
+        return result
+    if payload.registered_settings is not None:
+        raise HTTPException(422,"This workflow does not support registered operation settings")
     from app.services.qualified_demo import lock_template
     lock_template(value, db)
     item = next((w for w in registered(db, actor(db, user)) if w["candidate_id"] == payload.candidate_id), None)

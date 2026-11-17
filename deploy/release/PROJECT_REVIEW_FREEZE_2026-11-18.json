@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "freeze_date": "2026-11-17",
+  "review_date": "2026-11-18",
+  "timezone": "Europe/Dublin",
+  "decision": "PAUSE_DEVELOPMENT_STABLE_REVIEW_CHECKPOINT_NOT_PRODUCTION_READY",
+  "evidence_basis": "GitHub source and published acceptance records; no fresh Windows runtime or private-backup inspection in this freeze-writing session",
+  "portal_evidence_head": "747b4d08b159799da1cbcf7194ea839f07d8c535",
+  "maintained_wp3_head": "d533219426af9ea6defaf0bc78956741201a5109",
+  "staging_application_source": "349f45166f319c040b2b3f2b98c4cefb9b537aa3",
+  "staging_config_fix": "c7ee549396614e08c5a6719083edbb5b211a6491",
+  "primary_demo": {
+    "origin": "http://127.0.0.1:23124",
+    "recommendation_url": "http://127.0.0.1:23124/design-ai?conversationId=146618a1-7c78-43d0-87e4-824bd59fa045",
+    "ai_draft_url": "http://127.0.0.1:23124/design-ai?draftId=ba0370ca-381a-4cf2-a9bc-6a4724ac5eb0",
+    "ai_saved_design_url": "http://127.0.0.1:23124/builder?solutionId=28f62cd4-27c4-4e8d-a933-489e66530389",
+    "historical_results_url": "http://127.0.0.1:23124/deployments/wf-717110fb8d5e#results",
+    "clarification_url": "http://127.0.0.1:23124/design-ai?draftId=b2e9a2b4-95f7-4a79-9a55-b27679ed99d3",
+    "disposable_builder_url": "http://127.0.0.1:23124/builder?solutionId=e26923cd-0c19-4c53-92d5-b5384a86ac2b",
+    "live_availability_this_session": "NOT RECHECKED; local freeze/rehearsal required",
+    "images_from_latest_provider_closure": {
+      "api": {
+        "image": "sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e",
+        "source": "25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b"
+      },
+      "web": {
+        "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+        "source": "4296ec484542ce9dfa4d1b45e3ce9a897793edc3"
+      },
+      "pt-adapter": {
+        "image": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+        "source": "c98b454b1a9ce9b9a154ad82ef104678ba78b443"
+      },
+      "ml": {
+        "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+        "source": null
+      },
+      "model-observer": {
+        "image": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+        "source": "30e1ac403c7434149f3ff3568843f2cc75702413"
+      },
+      "orchestrator": {
+        "image": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+        "source": "a8b529ea25bcfd6a16dbb77ebc893a2b0b22ab77"
+      },
+      "postgres": {
+        "image": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+        "source": null
+      },
+      "redis": {
+        "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+        "source": null
+      }
+    },
+    "chat_history_requirement": "Retained reviewer browser/profile; fall back to original rendered evidence if missing"
+  },
+  "claims": {
+    "genuine_ai_cases": {
+      "A": "PASS",
+      "B": "PASS",
+      "C": "PASS",
+      "overall": "PARTIAL evidence; missing returned model metadata/full wire capture"
+    },
+    "completed_run": {
+      "workflow": "wf-717110fb8d5e",
+      "requested": {
+        "TrainModel": {
+          "epochs": 2
+        },
+        "GenerateData": {}
+      },
+      "effective": {
+        "TrainModel": {
+          "epochs": 2,
+          "batch_size": 4
+        },
+        "GenerateData": {
+          "number_of_examples": 10
+        }
+      },
+      "observed": {
+        "TrainModel": {
+          "batch_size": 4,
+          "epochs": 2
+        },
+        "GenerateData": {
+          "number_of_examples": 10
+        }
+      },
+      "training_executions": 1,
+      "generation_executions": 1,
+      "same_exact_model": true,
+      "csv_rows": 1000,
+      "csv_sha256": "553c7acca074de4dde804dfcf4af25f23252987df79dc31f20da39f6bbb05540",
+      "csv_bytes": 41826
+    },
+    "new_ai_design": {
+      "training_epochs": 2,
+      "batch_size": 4,
+      "generation_sequences": 20,
+      "deployments": 0,
+      "results_inherited": false
+    }
+  },
+  "staging": {
+    "origin": "https://127.0.0.1:24443",
+    "images": {
+      "api": "sha256:29a48dae5efceac7fbab0b151909803a70ccec74843159b3fbe2349d55ea6e67",
+      "web": "sha256:57cf29da97ab875de93e78fa2068551ba6c44062233358de410a82c490ddc6c0",
+      "postgres": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "gateway": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10"
+    },
+    "build_id": "EY9BALGRvOJYRAkWG_pgJ",
+    "api_fixture_not_browser_acceptance": "908f8d2c-fd7e-44bf-8c9f-84016b68b012",
+    "binary_rollback": "PASS in published record",
+    "backup_bytes": 36627,
+    "backup_sha256": "sha256:a82c14b3bad98f67764243b13fd2130ef3d592d7307bb263fef10486500d83cc",
+    "browser_acceptance": "PENDING",
+    "synthetic_design_fixtures": true,
+    "new_workflows": 0,
+    "new_algorithms": 0
+  },
+  "accounting": {
+    "calls": 28,
+    "call_limit": 28,
+    "scope_calls": 3,
+    "scope_limit": 3,
+    "scope_closed": true,
+    "global_closed": true,
+    "outstanding": 0,
+    "provider_disconnected": true,
+    "authority_stopped": true,
+    "final_ledger_sha256": "7d6fe0bfb75488f767492dfcc70264781366f46c59ef7e51a9541974e3324bf7",
+    "final_audit_head": "486fcca1eacf68dc5bc6d4fc39d9161439251c65e78e7b3c605a488a5313725e",
+    "live_inspection_this_session": false
+  },
+  "local_worktree_backup_checks": {
+    "status": "MUST BE COMPLETED IN LOCAL WINDOWS CODEX",
+    "guide": "docs/PROJECT_REVIEW_LOCAL_FREEZE_2026-11-18.md",
+    "uncommitted_windows_files_inspected": false,
+    "private_backup_readability_verified_here": false,
+    "durable_sync_verified_here": false
+  },
+  "resume_gates": [
+    "visible staging HTTPS/browser acceptance",
+    "independent human usability",
+    "full Portal PR8-22 and maintained WP3 PR2-4 code/check review",
+    "normal production sign-in/reviewer",
+    "owner-approved target service contracts/source/input registration",
+    "separately reviewed production accounting capacity and transport",
+    "ingress protection, backup and target deployment acceptance"
+  ],
+  "allowed_during_pause": [
+    "read-only inspection and backup verification",
+    "necessary safe retained-review startup only",
+    "non-executing rehearsal on disposable designs",
+    "documentation and checkpoint commits"
+  ],
+  "not_authorized": [
+    "feature development",
+    "provider requests or allowance reopening",
+    "algorithm execution or new execution scopes",
+    "production migration/deployment or PR merge"
+  ]
+}

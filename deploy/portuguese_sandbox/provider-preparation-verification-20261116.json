@@ -1,0 +1,109 @@
+{
+  "status": "PREPARED_BUT_BLOCKED_ON_ACCOUNTING_TRANSPORT_AND_NEW_AUTHORIZATION",
+  "proposal_sha256": "ba38c26b4987518abd524e4e187c20b90df56b76e2c0c6be4771ef60b0a0726b",
+  "cases_sha256": "267eee3f1f8108494c804ac7ab34c6984b173eb5b1228eef519f20371e1f6a36",
+  "configuration_sha256": "dfc1da6e9abfc31954adf7e97d84a2a429ac7a1a7b7e8772246ed2c671ecbc58",
+  "offline_cases": "PASS: deterministic doubles only, no model interpretation claim",
+  "tests": {
+    "focused_run": "75 passed; shared/protocol/preparation allocation and provider-context tests",
+    "final_changed_tests": "10 passed; overlaps 75, not additive",
+    "not_run": "No full suite, frontend rebuild, algorithms, live model or PostgreSQL concurrency inventory"
+  },
+  "operator_dry_run": {
+    "applied": false,
+    "before_calls": 25,
+    "after_calls": 28,
+    "scope_max_calls": 3,
+    "scope_reservation_nano": 15000000,
+    "original_ledger_byte_identical": true
+  },
+  "transport": {
+    "verified_tls": false,
+    "blocker": "Retained API has only ai-effect-pt-parameters_private, internal=true; host.docker.internal lookup fails with socket.gaierror [Errno -3] Temporary failure in name resolution. No accounting request reached Windows.",
+    "listener": "127.0.0.1:29489",
+    "listener_stopped_after_probe": true,
+    "no_ledger_opened_by_probe": true,
+    "certificate_sha256": "61851071a464b718a3caa8eca0933fa242dd04eaee4bfabded1b6e807a965607",
+    "certificate_not_after": "2026-11-18T21:42:28+00:00",
+    "provider_key_locally_present": true,
+    "key_connected": false,
+    "provider_authentication_and_model_entitlement": "UNTESTED; no provider endpoint called"
+  },
+  "preservation": {
+    "protected_solutions": 11,
+    "journal_jobs": 9,
+    "closed_scopes": 4,
+    "workers_stopped": true,
+    "queues_unchanged": true,
+    "provider_disconnected": true,
+    "supervision_disabled": true
+  },
+  "ledger": {
+    "sha256": "cf9fa12e87633b9e260d3983a3dd9e5c51df346c04237b3babd255ee66cd7d2b",
+    "authority_id": "original-shared-local-20261112",
+    "calls": 25,
+    "max_calls": 25,
+    "held_nano": 10603500,
+    "remaining_nano": 89396500,
+    "outstanding": 0
+  },
+  "actual_new_calls": 0,
+  "actual_new_spend_usd": "0",
+  "actual_new_workflows": 0,
+  "actual_new_execution_scopes": 0,
+  "serving": {
+    "api": {
+      "image": "sha256:802fb23b14152d5043659b8e7c254926c87b5c26cbeade1cdced7acb3440ea6e",
+      "source": "25dda8b1e9bfda78790dbe27e1b1ab38e7556c2b",
+      "container_id": "8ada8ca69c690ff3fa5fe87442b93ae43f963669d8b0eb1fcd6e507e9b89574c"
+    },
+    "web": {
+      "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+      "source": "4296ec484542ce9dfa4d1b45e3ce9a897793edc3",
+      "container_id": "9ddf40c4224bfa8ee561684aa6e891791819149d899cae7d8c481674ff654d7c"
+    },
+    "pt-adapter": {
+      "image": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+      "source": "c98b454b1a9ce9b9a154ad82ef104678ba78b443",
+      "container_id": "f847cb86e0e9e782c34ab11525a03687c4fbd00e560294abfc417bee03312b56"
+    },
+    "ml": {
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "source": null,
+      "container_id": "0fda4afe9bc523164a62a594fd8e39c2653b28528b94a0ad8b1aded990880f81"
+    },
+    "model-observer": {
+      "image": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "source": "30e1ac403c7434149f3ff3568843f2cc75702413",
+      "container_id": "04f971073bdb4f8ea15fa7829fac4bfc879f99861dd72d755b092df1e5991ec8"
+    },
+    "orchestrator": {
+      "image": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+      "source": "a8b529ea25bcfd6a16dbb77ebc893a2b0b22ab77",
+      "container_id": "95fc67a2f6575ef4c43280659eb8b30e2d1524fa25c2029356d48498804ddbb9"
+    },
+    "postgres": {
+      "image": "sha256:5d143123fdf80462d1778cd4f24b9f7ca13c87174bca19141fb194c5a1ebca59",
+      "source": null,
+      "container_id": "e28c8b8a080a434d6a0614303d4396f3a0785def90b4ee2c958758341ae0c504"
+    },
+    "redis": {
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "source": null,
+      "container_id": "d168d820b3e04a76c4d92c0c7db89f6eda0bfd75feba31e3347a24f3118a10c1"
+    }
+  },
+  "final_preservation": {
+    "all_11_saved_designs_and_protected_ai_draft_unchanged": true,
+    "nine_jobs_four_scopes_audits_queues_unchanged": true,
+    "all_retained_containers_images_mounts_states_unchanged": 56,
+    "profile_configuration_byte_identical": true,
+    "ledger_byte_identical_25_of_25_zero_outstanding": true,
+    "provider_disconnected": true,
+    "execution_disabled_workers_stopped": true,
+    "authority_listener_not_started": true,
+    "new_live_drafts": 0,
+    "new_workflows": 0,
+    "provider_requests": 0
+  }
+}

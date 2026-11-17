@@ -1,0 +1,40 @@
+# Preparation only: overlay docker-compose.prod.yml after review. No activation.
+# Existing production networks, database, mounts and worker behavior are inherited.
+services:
+  api:
+    image: ${BETA_API_IMAGE:?Supply the reviewed immutable candidate API image}
+    environment:
+      BOOTSTRAP_ADMIN_EMAIL: ""
+      BOOTSTRAP_ADMIN_PASSWORD: ""
+      DESIGN_AI_ENABLED: ${BETA_ENABLED:-false}
+      DESIGN_AI_RESTRICTED_BETA: "true"
+      DESIGN_AI_REVIEWER_IDS: ${BETA_REVIEWER_IDS:-}
+      DESIGN_AI_TEMPLATES: ${BETA_TEMPLATES:-}
+      DESIGN_AI_REGISTRATION_ENVIRONMENT: ${BETA_REGISTRATION_ENVIRONMENT:-}
+      DESIGN_AI_MODEL: gpt-6-luna
+      DESIGN_AI_REASONING_EFFORT: low
+      DESIGN_AI_MAX_OUTPUT_TOKENS: "2000"
+      DESIGN_AI_TIMEOUT_SECONDS: "40"
+      OPENAI_API_KEY: ""
+      DESIGN_AI_ACCEPTANCE_BUDGET_FILE: ""
+      DESIGN_AI_ACCEPTANCE_TASK_LIMIT_FILE: ""
+      DESIGN_AI_BUDGET_AUTHORITY_URL: ${BETA_AUTHORITY_URL:-}
+      DESIGN_AI_BUDGET_AUTHORITY_SOCKET: ${BETA_AUTHORITY_SOCKET:-}
+      DESIGN_AI_BUDGET_AUTHORITY_TOKEN: ""
+      DESIGN_AI_BUDGET_AUTHORITY_CA_FILE: ""
+      DESIGN_AI_BUDGET_AUTHORITY_ID: ${BETA_AUTHORITY_ID:-}
+      DESIGN_AI_BUDGET_SCOPE: ${BETA_ACCOUNTING_SCOPE:-}
+      DESIGN_AI_BUDGET_CONSUMER: ${BETA_ACCOUNTING_CONSUMER:-}
+      DESIGN_AI_BUDGET_ENVIRONMENT: ${BETA_ACCOUNTING_ENVIRONMENT:-}
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ""
+      PORTUGUESE_SUPERVISED_MODE: "false"
+      PORTUGUESE_SUPERVISED_AUTHORIZATION_ID: ""
+      PORTUGUESE_SUPERVISED_ADAPTER_URL: ""
+      PORTUGUESE_EVIDENCE_OWNER_ID: ""
+      PORTUGUESE_TRAINING_DATASET_REF: ""
+    volumes:
+      - ${BETA_AUDIT_DIRECTORY:?Prepare an owner-private writable UID10001 directory}:/acceptance-audit
+      - ${BETA_AUDIT_CONFIG:?Absolute reviewed provider-audit.json path}:/etc/provider-audit.json:ro
+    command: [uvicorn, app.main:app, --host, 0.0.0.0, --port, "8080", --log-config, /etc/provider-audit.json]
+  web:
+    image: ${BETA_WEB_IMAGE:?Supply the reviewed immutable candidate web image}

@@ -16,6 +16,7 @@ def main():
     parser.add_argument("--ledger",type=Path,required=True)
     operation=parser.add_mutually_exclusive_group(required=True)
     operation.add_argument("--request",type=Path,help="Private reviewed JSON: phase, scope_id, authority_id, bindings, expected_sha256, expected_ledger_path, expected_file_identity, operator, authorization_ref, optional acceptance_evidence")
+    operation.add_argument("--review-request",type=Path,help="Private new review approval: authority_id, bindings, exact ledger identity/fingerprint, operator, authorization_ref, proposal_sha256; dated extra USD0.05/10-call budget, old batch stays closed")
     operation.add_argument("--inspect",action="store_true",help="Read-only audit head and unresolved reservations; never releases capacity")
     operation.add_argument("--stop-request",type=Path,help="Private scope_id/expected_sha256/operator/authorization_ref; closes without refund or reopening")
     parser.add_argument("--apply",action="store_true",help="Apply only after release prerequisites pass; omitted is read-only")
@@ -28,8 +29,9 @@ def main():
         if not args.apply:
             print(json.dumps({"applied":False,"stop_proposal":values},indent=2));return
         print(json.dumps(Authority(args.ledger).stop(**values),indent=2));return
-    values=json.loads(args.request.read_text())
-    print(json.dumps(Authority(args.ledger).activate(**values,apply=args.apply),indent=2))
+    values=json.loads((args.review_request or args.request).read_text())
+    method=Authority(args.ledger).activate_review_demo if args.review_request else Authority(args.ledger).activate
+    print(json.dumps(method(**values,apply=args.apply),indent=2))
 
 
 if __name__=="__main__":main()

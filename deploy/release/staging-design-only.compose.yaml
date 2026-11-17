@@ -1,0 +1,27 @@
+# Explicit adaptation of deploy/staging/compose.yaml. Never apply to production.
+# New independent staging data/credentials only; no sandbox mounts or authority.
+services:
+  api:
+    volumes:
+      - ${REVIEW_SYNTHETIC_SEED_FILE:?Absolute existing deploy/staging/synthetic_seed.py}:/opt/staging/synthetic_seed.py:ro
+    environment:
+      DESIGN_AI_ENABLED: ${REVIEW_CONTROLS_ENABLED:-false}
+      DESIGN_AI_RESTRICTED_BETA: "true"
+      DESIGN_AI_REVIEWER_IDS: ${REVIEW_EXISTING_REVIEWER_IDS:-}
+      DESIGN_AI_TEMPLATES: ${REVIEW_TARGET_TEMPLATES:-}
+      DESIGN_AI_REGISTRATION_ENVIRONMENT: ${REVIEW_REGISTRATION_ENVIRONMENT:-}
+      OPENAI_API_KEY: ""
+      DESIGN_AI_BUDGET_AUTHORITY_URL: ""
+      DESIGN_AI_BUDGET_AUTHORITY_SOCKET: ""
+      DESIGN_AI_BUDGET_AUTHORITY_TOKEN: ""
+      PORTUGUESE_SUPERVISED_MODE: "false"
+      DESIGN_AI_DEMO_EXECUTION_GRANT_FILE: ""
+  gateway:
+    # Docker 29 does not publish ports for an internal-only network. Only the
+    # HTTPS gateway joins this edge bridge; API/web/DB retain the internal net.
+    networks: [private, review_edge]
+    volumes:
+      - ${REVIEW_DESIGN_GATEWAY_CONFIG:?Absolute reviewed staging-design-only.nginx.conf}:/etc/nginx/conf.d/default.conf:ro
+networks:
+  review_edge:
+    internal: false

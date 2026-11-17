@@ -97,6 +97,13 @@
 .ai-guided-settings { padding-top:10px; font-size:12px; }
 .ai-guided-settings input,.ai-guided-settings select { padding:6px; max-width:100%; }
 .ai-guided-settings p { margin:8px 0; }
+.ai-registered-settings { flex-shrink:0; max-height:38%; overflow:auto; padding:10px 14px; border-top:1px solid #eeeaf5; font-size:12px; }
+.ai-workflow:has(.ai-registered-settings) { overflow-y:auto; }
+.ai-registered-settings summary { cursor:pointer; font-weight:650; }
+.ai-registered-settings fieldset { margin:10px 0; padding:8px; border:1px solid #e5dfef; }
+.ai-registered-settings label { display:block; margin:8px 0; }
+.ai-registered-settings input { display:block; width:100%; }
+.ai-registered-settings small { display:block; color:#695b83; line-height:1.5; }
 .ai-studio summary { cursor:pointer; }
 .ai-studio .builder-review-dialog { width:700px; max-width:calc(100vw - 32px); max-height:80dvh; border:1px solid #d8ceea; border-radius:14px; padding:0; background:white; color:#312342; }
 .ai-studio .builder-review-dialog::backdrop { background:#20152d66; }
