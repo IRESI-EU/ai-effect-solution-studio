@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import ReviewDialog from "./review-dialog";
 import type { Node, Edge } from "@xyflow/react";
 import { bindingSignature, connectionState, connectionSummary, publishedConnection, stepLabel, type Binding, type Contract, type Pin } from "../lib/connection-review";
-import { trainingInputMessage } from "../lib/builder-review";
+import { trainingInputMessage, executionPolicyForServices, type ExecutionPolicy } from "../lib/builder-review";
 
 export default function CapabilityBindings({ nodes, edges, onBind, saved, checked, selectedEdgeId, runInput, onTrainingInput, onTrainingRequired, onExecutionPolicy }: {
   nodes: Node[]; edges: Edge[]; saved: Record<string, string>; checked: Record<string, string>; selectedEdgeId: string | null;
@@ -16,6 +16,7 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [dataset, setDataset] = useState<{label: string; dataset_ref: string} | null>(null);
+  const [executionPolicy, setExecutionPolicy] = useState<ExecutionPolicy | null>(null);
   const ids = [...new Set(nodes.map(n => (n.data.service as { id?: string } | undefined)?.id).filter(Boolean))].sort().join(",");
   useEffect(() => {
     let active = true;
@@ -32,9 +33,13 @@ export default function CapabilityBindings({ nodes, edges, onBind, saved, checke
   useEffect(() => {
     let active = true;
     fetch("/api/workflows/training-input").then(r => r.ok ? r.json() : null)
-      .then(value => { if (active) { setDataset(value?.dataset || null); onExecutionPolicy(value?.execution?.available === false ? value.execution.message : "", value?.execution?.mode === "supervised"); } }).catch(() => {});
+      .then(value => { if (active) { setDataset(value?.dataset || null); setExecutionPolicy(value?.execution || null); } }).catch(() => {});
     return () => { active = false; };
   }, [onExecutionPolicy]);
+  useEffect(() => {
+    const policy = executionPolicyForServices(executionPolicy, ids.split(","));
+    onExecutionPolicy(policy.message, policy.supervised);
+  }, [executionPolicy, ids, onExecutionPolicy]);
   const trainingRequired = Object.values(contracts).some(c => c.definition.inputs.some(s => s.name === "dataset_ref" && s.required && s.source_requirement === "workflow_input"));
   useEffect(() => { onTrainingRequired(trainingRequired); }, [trainingRequired, onTrainingRequired]);
   const selectedDataset = runInput && typeof runInput === "object" && "dataset_ref" in runInput ? runInput.dataset_ref : "";

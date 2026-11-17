@@ -19,16 +19,68 @@ SERVICES = ["pt-experimental-chain-TrainModel", "pt-experimental-chain-GenerateD
 PINS = ["pt-chain-train-v2", "pt-chain-generate-v2"]
 
 
+def input_choice(registration, user_id):
+    deployment = registration.deployment_design_input
+    if deployment is None:
+        return capability_bindings.sandbox_training_input(user_id)
+    from app.core.config import settings
+    from app.services.shared_allowance import database_scope
+    try:
+        matches = (not capability_bindings.sandbox_profile_enabled()
+            and settings.design_ai_registration_environment == deployment.environment
+            and database_scope(settings.database_url) == deployment.database_scope
+            and user_id == registration.reviewer_id)
+    except ValueError:
+        matches = False
+    return {"label": deployment.label, "dataset_ref": deployment.dataset_ref} if matches else None
+
+
+def training_input(user_id, db):
+    """Reuse registry authority; expose only the current actor's label/reference."""
+    sandbox = capability_bindings.sandbox_training_input(user_id)
+    if sandbox is not None:
+        return sandbox
+    from app.services import design_ai
+    try:
+        policy = design_ai.policies().get("portugal")
+        if not policy or not policy.registered_parameters or not policy.registered_parameters.deployment_design_input:
+            return None
+        from app.models.user import User
+        current = db.get(User, user_id)
+        if current is None or input_choice(policy.registered_parameters, user_id) is None:
+            return None
+        source = design_ai.source_solution("portugal", db)
+        authority("portugal", policy, source, db, current)
+        return input_choice(policy.registered_parameters, user_id)
+    except HTTPException:
+        return None
+
+
+def validate_target_input(workflow, db, user):
+    from app.core.config import settings
+    if (not settings.design_ai_registration_environment or capability_bindings.sandbox_profile_enabled()
+        or not any(n.service_id in SERVICES for n in workflow.nodes)):
+        return
+    from app.services import design_ai
+    design_ai.template("portugal", db, user)
+    policy = design_ai.policies()["portugal"].registered_parameters
+    if not policy or not policy.deployment_design_input:
+        raise HTTPException(403, "This environment has no approved experimental design registration")
+    choice = input_choice(policy, user.id)
+    if choice is None or workflow.run_input != {"dataset_ref": choice["dataset_ref"]}:
+        raise HTTPException(422, "Select the authorized training CSV before validating.")
+
+
 def authority(key, policy, source, db, user):
     from app.services import design_ai
     from app.services.catalogue_discovery import actor, eligible
     from app.models.service import Service
     registration = policy.registered_parameters
     current = actor(db,user)
-    if (key != "portugal" or not capability_bindings.sandbox_profile_enabled()
+    if (key != "portugal"
         or current.id != registration.reviewer_id or source.created_by_user_id != current.id
-        or capability_bindings.sandbox_training_input(current.id) is None):
-        raise HTTPException(403,"This experimental workflow is registered only for its configured sandbox reviewer")
+        or input_choice(registration, current.id) is None):
+        raise HTTPException(403,"This experimental workflow is registered only for its configured environment and reviewer")
     if design_ai.digest(design_ai.content(source)) != registration.source_revision:
         raise HTTPException(409,"The registered source changed; operator review is required")
     nodes = design_ai.ordered_services(source.nodes,source.edges,instance_settings_only=True)
@@ -65,12 +117,13 @@ def initial_design(value,db):
             **({"data":{"binding":deepcopy(e["data"]["binding"])}} if e.get("data",{}).get("binding") else {})} for e in edges]
     return {"name":"Portuguese registered workflow — AI design","description":"Experimental sandbox design; no execution has occurred.",
         "nodes":nodes,"edges":edges,"run_input":None,"input_policy":None,"editing_scope":"instance_settings",
-        "registered_workflow":value["source"]["registration_id"]}
+        "registered_workflow":value["source"]["registration_id"],
+        **({"execution_policy":value["source"]["execution_policy"]} if value["source"].get("execution_policy") else {})}
 
 
-def validate_input(value,user):
+def validate_input(value,user,db=None):
     if value is None or value=={}:return None
-    choice=capability_bindings.sandbox_training_input(user.id)
+    choice=training_input(user.id,db)
     if not choice or value!={"dataset_ref":choice["dataset_ref"]}:
         raise HTTPException(422,"Select the authorized sandbox training CSV; other data references are unsupported")
     return deepcopy(value)
@@ -88,7 +141,7 @@ def validation(design,db,user):
     from app.services.solution_design import hydrate_solution_service_references
     from app.services.workflow_compiler import compile_to_wp3_payload
     try:
-        validate_input(design.get("run_input"),user)
+        validate_input(design.get("run_input"),user,db)
         hydrate_solution_service_references(db,design["nodes"],user)
         capability_bindings.validate_builder(design["nodes"],design["edges"],db)
         if design.get("run_input") is None:
@@ -109,7 +162,7 @@ def capability(value,db,user):
         "steps":[{"title":"Train a model","operation":"TrainModel"},{"title":"Generate sequences from that model","operation":"GenerateData"}],
         "connection":"Published model_ref → model_ref whole-output-v1 binding; generation uses the model from this design's training step.",
         "required_inputs":[{"name":"dataset_ref","required":True,"source":"visible_selection","label":"Training CSV",
-            "choices":[capability_bindings.sandbox_training_input(user.id)]}],
+            "choices":[training_input(user.id,db)]}],
         "registered_operations":[{"step":index, "operation":item["operation_name"],"parameters":{
             **item["definition"],"properties":{name:{**spec,"title":text(spec["title"],120),"description":text(spec["description"],240)}
                 for name,spec in item["definition"]["properties"].items()}}}
@@ -124,7 +177,7 @@ def configuration_turn(row,settings,run_input,db,user):
     from app.services import design_ai
     if not row.state["design"].get("registered_workflow"):
         raise HTTPException(422,"This design has no registered configuration controls")
-    values=validate_input(run_input,user)
+    values=validate_input(run_input,user,db)
     nodes=design_ai.service_nodes(row.state["design"]["nodes"])
     if set(settings)-{n["id"] for n in nodes}:
         raise HTTPException(422,"Choose a current registered operation instance")

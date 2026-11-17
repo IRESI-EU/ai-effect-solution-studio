@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     design_ai_reviewer_ids: str = ""
     # Explicitly shared, operator-selected templates; never inferred by an LLM.
     design_ai_templates: str = "{}"
+    # Explicit target design registration, independent of spending/runtime scope.
+    design_ai_registration_environment: str = ""
     openai_api_key: str = ""
     design_ai_model: str = ""
     design_ai_reasoning_effort: str = ""

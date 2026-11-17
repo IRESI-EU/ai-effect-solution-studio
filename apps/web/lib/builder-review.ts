@@ -41,7 +41,13 @@ export function offlineReview(config?: { provider_mode?: string; provider_name?:
 }
 export function catalogueDesignOnly(metadata: Record<string, unknown> | null) {
   const source = metadata?.source as {kind?: unknown}|undefined;
-  return source?.kind === "catalogue_composed" || metadata?.execution_policy === "design_only_catalogue_pair";
+  return source?.kind === "catalogue_composed" || ["design_only_catalogue_pair", "design_only_registered_parameters"].includes(String(metadata?.execution_policy));
+}
+export type ExecutionPolicy = {available?: boolean; message?: string; mode?: string; service_ids?: string[]};
+export function executionPolicyForServices(policy: ExecutionPolicy | null, ids: string[]) {
+  const applies = policy && (!policy.service_ids || policy.service_ids.some(id => ids.includes(id)));
+  return {message: applies && policy.available === false ? policy.message || "Execution is disabled." : "",
+    supervised: !!applies && policy.mode === "supervised"};
 }
 export type ReviewAction = "add" | "save" | "validate" | "review" | "prepare" | "confirm" | "results";
 export function nextReviewAction(state: { steps: number; dirty: boolean; design: "valid" | "invalid" | null;

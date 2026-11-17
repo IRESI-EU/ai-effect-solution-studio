@@ -42,6 +42,15 @@ class InputPolicy(BaseModel):
     json_schema: dict
 
 
+class DeploymentDesignInput(BaseModel):
+    """Owner-selected target metadata only; no storage path or execution grant."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    environment: str = Field(pattern=r"^[a-z0-9-]{1,80}$")
+    database_scope: str = Field(pattern=r"^[a-f0-9]{64}$")
+    dataset_ref: str = Field(pattern=r"^[a-zA-Z0-9_-]{1,100}$")
+    label: str = Field(min_length=1, max_length=100)
+
+
 class RegisteredParameters(BaseModel):
     """Operator-selected, private experimental design authority; never a grant."""
     model_config = ConfigDict(extra="forbid")
@@ -49,6 +58,7 @@ class RegisteredParameters(BaseModel):
     reviewer_id: str = Field(min_length=1)
     source_revision: str = Field(pattern=r"^[a-f0-9]{64}$")
     contract_definitions: dict[str, str]
+    deployment_design_input: DeploymentDesignInput | None = None
 
 
 class TemplatePolicy(BaseModel):
@@ -232,6 +242,8 @@ def template(key: str, db: Session, user: User) -> dict:
                 if policy.structural_append_only else "Copied saved design. No immutable deployment snapshot is stored by this platform; previous execution equivalence is unverified.")}
     if policy.registered_parameters:
         result["source"]["registration_id"] = policy.registered_parameters.registration_id
+        if policy.registered_parameters.deployment_design_input:
+            result["source"]["execution_policy"] = "design_only_registered_parameters"
         result["reference_note"] = "Reviewer-scoped experimental registered design. New identities, declared defaults and separate CSV selection; no inherited results or execution authority. Portuguese-owner approval and hosted compatibility unverified."
     return result
 
@@ -411,8 +423,8 @@ def view(row: DesignDraft, db: Session | None = None) -> dict:
         from app.services.instance_proposals import settings_context
         result["instance_settings"] = settings_context(row, db)["instances"]
         if state["design"].get("registered_workflow"):
-            from app.services.capability_bindings import sandbox_training_input
-            result["registered_configuration"] = {"dataset":sandbox_training_input(row.owner_id),"execution_supported":False}
+            from app.services.registered_parameters import training_input
+            result["registered_configuration"] = {"dataset":training_input(row.owner_id, db),"execution_supported":False}
     return result
 
 
@@ -594,7 +606,7 @@ def candidate(row: DesignDraft, turn: AssistantTurn, db: Session, user: User, *,
                 raise HTTPException(422, "The proposed run input is not valid JSON") from exc
             if design.get("registered_workflow"):
                 from app.services.registered_parameters import validate_input
-                design["run_input"] = validate_input(design["run_input"], user)
+                design["run_input"] = validate_input(design["run_input"], user, db)
         elif edit.kind == "set_node_parameters":
             matches = [n for n in service_nodes(design["nodes"]) if n["id"] == edit.node_id]
             if len(matches) != 1:
@@ -631,8 +643,11 @@ def propose(draft_id: str, turn: AssistantTurn, db: Session, user: User) -> dict
     state["pending"] = {"id": str(uuid4()), "base_revision": row.revision, "turn": turn.model_dump(), "design": design, "validation": validation,
                         "parameter_review": review}
     if design.get("registered_workflow") and design["run_input"] != row.state["design"]["run_input"]:
-        state["pending"]["input_review"] = {"before":"Sandbox test dataset" if row.state["design"]["run_input"] else "Not selected",
-            "after":"Sandbox test dataset" if design["run_input"] else "Not selected"}
+        from app.services.registered_parameters import training_input
+        choice = training_input(user.id, db)
+        label = choice["label"] if choice else "Unavailable input"
+        state["pending"]["input_review"] = {"before":label if row.state["design"]["run_input"] else "Not selected",
+            "after":label if design["run_input"] else "Not selected"}
     if row.state["design"].get("editing_scope") == "append_bound_operation":
         from app.services.structural_proposals import review as structural_review
         state["pending"].update(allocation=allocation, structural_review=structural_review(row.state["design"], design, db, user))
@@ -729,6 +744,8 @@ def save(draft_id: str, revision: int, db: Session, user: User, *, explicit_save
     if state["source"].get("kind") == "catalogue_composed":
         solution.design_metadata.update(execution_policy="design_only_catalogue_pair",
             composition_authority=deepcopy(state["composition"]["authority"]))
+    if design.get("execution_policy") == "design_only_registered_parameters":
+        solution.design_metadata["execution_policy"] = design["execution_policy"]
     solution.updated_at = datetime.utcnow()
     state.update(saved_solution_id=solution.id, saved_revision=row.revision, dirty=False,
                  saved_fingerprint=digest(content(solution)), validation=current_validation)

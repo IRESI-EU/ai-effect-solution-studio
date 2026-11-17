@@ -666,15 +666,25 @@ def restore_service(
 def compile_workflow(
     workflow: WorkflowSubmitRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
+    from app.services.registered_parameters import validate_target_input
+    validate_target_input(workflow, db, user)
     return compile_to_wp3_payload(workflow, db)
 
 
 @app.get("/workflows/training-input")
-def builder_training_input(user: User = Depends(get_current_user)):
-    from app.services.capability_bindings import sandbox_training_input, sandbox_execution_policy
-    return {"dataset": sandbox_training_input(user.id), "execution": sandbox_execution_policy()}
+def builder_training_input(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    from app.core.config import settings
+    from app.services.capability_bindings import sandbox_execution_policy
+    from app.services.registered_parameters import training_input
+    choice = training_input(user.id, db)
+    policy = sandbox_execution_policy()
+    if settings.design_ai_registration_environment and policy is None:
+        from app.services.registered_parameters import SERVICES
+        policy = {"available": False, "service_ids": SERVICES,
+            "message": "INSPECTION ONLY. This registered workflow is available for design review; new experimental execution is disabled."}
+    return {"dataset": choice, "execution": policy}
 
 
 @app.post("/workflows/runtime-preflight")

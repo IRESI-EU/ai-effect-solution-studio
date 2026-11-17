@@ -42,6 +42,12 @@ def sandbox_execution_policy():
 
 
 def require_sandbox_execution_allowed(workflow=None, user=None):
+    # This exact experimental family has no qualified execution path outside
+    # its original sandbox, even if target registration is later disabled.
+    if workflow is not None and not sandbox_profile_enabled():
+        from app.services.registered_parameters import SERVICES
+        if any(node.service_id in SERVICES for node in workflow.nodes):
+            raise HTTPException(403, "Experimental registered workflows are design-only in this environment; execution is disabled.")
     policy = sandbox_execution_policy()
     if policy:
         from app.core.config import settings

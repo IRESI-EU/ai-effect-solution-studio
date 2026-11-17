@@ -317,7 +317,7 @@ def context(row):
 
 def design_only(metadata):
     return bool(metadata and ((metadata.get("source") or {}).get("kind") == KIND
-                              or metadata.get("execution_policy") == "design_only_catalogue_pair"))
+                              or metadata.get("execution_policy") in {"design_only_catalogue_pair", "design_only_registered_parameters"}))
 
 
 def require_execution_allowed(workflow, db, user):

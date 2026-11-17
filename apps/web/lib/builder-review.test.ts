@@ -1,5 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {catalogueDesignOnly, executionPolicyForServices} from "./builder-review.ts";
+
+test("target experimental denial preserves other workflows and retained sandbox scope", () => {
+  const policy={available:false,message:"Design only",service_ids:["pt-experimental-chain-TrainModel"]};
+  assert.equal(executionPolicyForServices(policy,["existing-production-service"]).message,"");
+  assert.equal(executionPolicyForServices(policy,["pt-experimental-chain-TrainModel"]).message,"Design only");
+  assert.equal(executionPolicyForServices({...policy,service_ids:undefined},[]).message,"Design only");
+  assert.equal(catalogueDesignOnly({execution_policy:"design_only_registered_parameters"}),true);
+});
 import { designFingerprint, nextReviewAction, offlineReview, workflowReview, reviewInput, withRunInput, trainingInputMessage, portugueseOperationHelp, reuseSavedForSupervisedReadiness } from "./builder-review.ts";
 
 const producer = {id:"p", position:{x:20,y:40}, data:{label:"Stored producer",service:{id:"service-p",name:"Generate sample images"},configuration:{parameters:{seed:42}},operation_contract:{contract_id:"p-pin",contract_version:"1"}}};
