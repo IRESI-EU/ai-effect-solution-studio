@@ -1,6 +1,5 @@
 import asyncio
 import json
-import logging
 import re
 from typing import Protocol
 
@@ -11,6 +10,7 @@ from sqlalchemy.engine import make_url
 
 from app.core.config import settings
 from app.schemas.design_ai import AssistantTurn
+from app.services import provider_evidence
 
 
 SYSTEM = """You are the AI-EFFECT Studio design assistant. Explain in plain language.
@@ -203,6 +203,7 @@ class OpenAIProvider:
             # byte), plus a deliberately large schema/message framing allowance.
             input_bound = len(serialized.encode("utf-8")) + len(SYSTEM.encode("utf-8")) + len(json.dumps(AssistantTurn.model_json_schema()).encode("utf-8")) + 8192
             reservation = budget.reserve(input_bound, output_limit)
+        evidence, payload, response, validated, request_id = None, None, None, None, None
         try:
             # No environment-selectable base URL, hosted tools, network fetching or automatic retries.
             async with AsyncOpenAI(api_key=settings.openai_api_key, base_url="https://api.openai.com/v1", max_retries=0, timeout=timeout) as client:
@@ -214,32 +215,21 @@ class OpenAIProvider:
                         # Match the reviewed USD0.125/MTok conservative write bound;
                         # no 12-hour cache writes or regional/priority endpoint.
                         kwargs["prompt_cache_options"]={"ttl":"30m"}
+                    evidence = provider_evidence.begin(kwargs, reservation, remote, timeout)
                     if budget:
                         # Record usage even for refusals, incomplete output or a
                         # parser failure, before running the strict SDK parser.
                         raw = await client.responses.with_raw_response.parse(**kwargs)
                         payload = raw.http_response.json()
+                        request_id = provider_evidence.request_identifier(raw) if evidence is not None else None
                         budget.settle(reservation, payload)
-                        # Disabled by default. An isolated acceptance process may
-                        # retain sanitized conversation input and visible output
-                        # privately even if strict parsing fails. Never log this to
-                        # the spending ledger or public application logs.
-                        audit = logging.getLogger("design_ai.provider.audit")
-                        if audit.isEnabledFor(logging.DEBUG):
-                            texts = [content.get("text", content.get("refusal", ""))
-                                for item in (payload.get("output") or []) if item.get("type") == "message"
-                                for content in (item.get("content") or []) if content.get("type") in {"output_text", "refusal"}]
-                            audit.debug(json.dumps({"audit_format_version": 2,
-                                "conversation_input": redact_context({k: context[k] for k in ("request", "history", "pending_clarification") if k in context}),
-                                "id": payload.get("id"), "model": payload.get("model"),
-                                "status": payload.get("status"), "service_tier": payload.get("service_tier"),
-                                "usage": payload.get("usage"), "visible_output": redact_context(texts)}))
                         response = raw.parse()
                     else:
                         response = await client.responses.parse(**kwargs)
             if response.output_parsed is None:
                 raise HTTPException(502, "The AI provider did not return a supported proposal. Try rephrasing your request.")
-            return AssistantTurn.model_validate(response.output_parsed)
+            validated = AssistantTurn.model_validate(response.output_parsed)
+            return validated
         except (TimeoutError, APITimeoutError) as exc:
             if budget:
                 budget.failed(reservation, "timeout_usage_unknown")
@@ -250,6 +240,7 @@ class OpenAIProvider:
                 budget.failed(reservation, "http_" + str(getattr(exc, "status_code", "unknown")))
             raise HTTPException(502, "The AI provider could not return a valid proposal. Your draft is unchanged.") from exc
         finally:
+            provider_evidence.finish(evidence, payload=payload, response=response, request_id=request_id, validated=validated)
             if budget and reservation is not None:
                 budget.failed(reservation, "usage_unknown_or_cancelled")
 

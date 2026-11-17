@@ -140,5 +140,6 @@ def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp
     assert report['token_usage']['reasoning_tokens']==10  # Included in output, not added twice.
     audit = json.loads(next(record.message for record in caplog.records if record.name == "design_ai.provider.audit"))
     assert audit['visible_output'] == ['invalid structured JSON']
-    assert audit['id'] == 'resp_budget_test' and audit['usage']['total_tokens'] == 1100
+    assert audit['response_id'] == 'resp_budget_test' and audit['usage']['total_tokens'] == 1100
+    assert audit['validated_response'] is None and 'validated_response' in audit['unavailable_fields']
     assert 'input' not in audit  # No prompt/context or hidden reasoning is logged.

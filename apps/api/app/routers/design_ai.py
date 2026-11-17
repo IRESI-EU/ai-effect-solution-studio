@@ -193,8 +193,10 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
                         context["draft"] = {"id": row.id, "revision": row.revision, "editing_scope": "append_bound_operation"}
         context = redact_context(context)
         try:
-            async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
-                turn = AssistantTurn.model_validate(await provider.respond(context))
+            from app.services.provider_evidence import correlation
+            with correlation(conversation_id=payload.conversation_id, draft_id=payload.draft_id, revision=base_revision):
+                async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
+                    turn = AssistantTurn.model_validate(await provider.respond(context))
         except TimeoutError as exc:
             raise HTTPException(504, "The AI provider timed out. Your draft is unchanged; retry when ready.") from exc
         except (ValidationError, ValueError) as exc:

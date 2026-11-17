@@ -71,6 +71,8 @@ class PendingClarification(StrictModel):
 
 class ChatRequest(StrictModel):
     message: str = Field(min_length=1, max_length=4000)
+    # Optional browser correlation only; never part of model context or authority.
+    conversation_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
     draft_id: str | None = None
     revision: int | None = None
     # History is context only. It never supplies authorization or executable state.

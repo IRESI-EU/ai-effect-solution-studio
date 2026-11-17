@@ -112,7 +112,9 @@ def test_unreviewed_transport_or_embedded_credentials_are_denied(setup,monkeypat
 
 @pytest.mark.parametrize('mode',['valid','malformed'])
 @pytest.mark.parametrize('qualified',[False,True])
-def test_provider_uses_normal_sdk_only_after_fresh_reservation_and_settles_before_parse(setup,monkeypatch,mode,qualified):
+def test_provider_uses_normal_sdk_only_after_fresh_reservation_and_settles_before_parse(setup,monkeypatch,mode,qualified,caplog):
+    import logging
+    caplog.set_level(logging.DEBUG, logger='design_ai.provider.audit')
     path,transport,calls,server=setup
     from app.services import allowance_client
     original=allowance_client.Client
@@ -146,6 +148,14 @@ def test_provider_uses_normal_sdk_only_after_fresh_reservation_and_settles_befor
     assert [c[0] for c in calls]==['/v1/reserve','/v1/settle','/v1/acknowledge']
     settled=calls[-2][1]['payload'];assert set(settled)=={'id','usage','service_tier'}
     assert 'Synthetic test' not in json.dumps(settled)
+    audit=json.loads(next(r.message for r in caplog.records if r.name=='design_ai.provider.audit'))
+    assert audit['correlation']['accounting_permit']==calls[0][1]['request_key']==calls[-2][1]['request_key']
+    for key in ('scope','consumer_id','environment'):
+        assert audit['correlation'][key]==claims()[key]
+    assert audit['response_id']==settled['id'] and audit['usage']==settled['usage']
+    assert (audit['validated_response'] is not None)==(mode=='valid')
+    assert audit['returned_model'] is None and 'returned_model' in audit['unavailable_fields']
+    assert TOKEN not in json.dumps(audit)
 
 
 def test_provider_never_constructs_sdk_when_authority_is_unavailable(setup,monkeypatch):

@@ -120,12 +120,14 @@ test('actual form sends one numeric answer with complete history and pending cla
   const old=global.fetch;
   global.fetch=async(url,options)=>{calls.push({url,body:options?.body&&JSON.parse(options.body)});return {ok:true,json:async()=>url.endsWith('/chat')?{message:'OFFLINE response',recommendation:null,draft:null,activity:[],clarification:null}:{enabled:true,provider_configured:true}};};
   try {
-    const ui=routeHarness({messages,prompt:'42',clarification:pending});
+    const conversationId='12345678-1234-4234-8234-123456789abc';
+    const ui=routeHarness({messages,prompt:'42',clarification:pending,params:new URLSearchParams({conversationId})});
     ui.form().onSubmit({preventDefault(){}});
     await new Promise(resolve=>setImmediate(resolve));
     const chat=calls.filter(v=>v.url.endsWith('/chat'));
     assert.equal(chat.length,1);
     assert.equal(chat[0].body.message,'42');
+    assert.equal(chat[0].body.conversation_id,conversationId);
     assert.deepEqual(chat[0].body.history,messages);
     assert.deepEqual(chat[0].body.clarification,pending);
     assert.equal(ui.state[21],null);

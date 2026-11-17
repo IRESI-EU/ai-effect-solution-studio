@@ -213,7 +213,7 @@ function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; 
     await action("Thinking", async () => {
       const abort = new AbortController(); controller.current = abort;
       try {
-        const value = await api("/chat", { message: text, draft_id: draft?.id || null, revision: draft?.revision ?? null,
+        const value = await api("/chat", { message: text, conversation_id: conversationId || null, draft_id: draft?.id || null, revision: draft?.revision ?? null,
           history, clarification }, abort.signal);
         setMessages((current) => [...current, { role: "assistant", content: value.message }]);
         setActivity((current) => [...current, ...value.activity].slice(-60));
