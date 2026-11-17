@@ -4,6 +4,8 @@ services:
   api:
     image: ${BETA_API_IMAGE:?Supply the reviewed immutable candidate API image}
     environment:
+      BOOTSTRAP_ADMIN_EMAIL: ""
+      BOOTSTRAP_ADMIN_PASSWORD: ""
       DESIGN_AI_ENABLED: ${BETA_ENABLED:-false}
       DESIGN_AI_RESTRICTED_BETA: "true"
       DESIGN_AI_REVIEWER_IDS: ${BETA_REVIEWER_IDS:-}

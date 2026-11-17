@@ -1,5 +1,11 @@
 # Restricted-beta shared accounting (inactive preparation)
 
+**Current17November status:** the original batch is28/28 CLOSED, Portuguese scope3/3
+CLOSED, zero outstanding. Historical transitions below are not production capacity
+or permission to reopen anything. See the [current release preparation](../../docs/RESTRICTED_PRODUCTION_CANDIDATE_2026-11-17.md)
+for the remaining separately reviewed future production-budget policy. No new
+authority, funds, amendment, copied ledger or provider session was created.
+
 This is a separate private authority over the **same existing Windows ledger**.
 No service, policy, tunnel, credential or new allowance was activated by this
 implementation. Defaults are empty/off. Never copy the ledger into a container

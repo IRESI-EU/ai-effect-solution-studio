@@ -1,5 +1,10 @@
 # Production release readiness — 17 November 2026
 
+Separate later local preparation: [actual production inventory, built candidate,
+portability fixes, migration rehearsal and remaining gates](RESTRICTED_PRODUCTION_CANDIDATE_2026-11-17.md).
+The source-only assessment below is preserved as its original observation, not
+a current claim that inventory/builds remain unperformed. No cutover occurred.
+
 **Decision: proceed with production inventory and release-candidate preparation. Public cutover is not ready.**
 
 The target is a restricted, design-only production beta for selected existing users, preserving existing production journeys. Portuguese experimental execution remains excluded. This assessment freezes source for review; it does not identify a deployed release candidate or authorize spending, migration, merge or cutover.

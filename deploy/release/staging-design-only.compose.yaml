@@ -2,6 +2,8 @@
 # New independent staging data/credentials only; no sandbox mounts or authority.
 services:
   api:
+    volumes:
+      - ${REVIEW_SYNTHETIC_SEED_FILE:?Absolute existing deploy/staging/synthetic_seed.py}:/opt/staging/synthetic_seed.py:ro
     environment:
       DESIGN_AI_ENABLED: ${REVIEW_CONTROLS_ENABLED:-false}
       DESIGN_AI_RESTRICTED_BETA: "true"
