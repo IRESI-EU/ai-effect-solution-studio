@@ -1,0 +1,32 @@
+{
+  "status": "PASS",
+  "catalogue_metadata_copies": 37,
+  "accounts": 6,
+  "provider_nodes": [
+    "denmark",
+    "dutch",
+    "germany",
+    "portugal"
+  ],
+  "frontend_build_and_proxy": true,
+  "normal_provider_login": true,
+  "distinct_cookie": true,
+  "discovered": [
+    "sequence_len",
+    "batch_size",
+    "epochs"
+  ],
+  "draft_saved": true,
+  "published_contract": false,
+  "cross_node_ownership_denied": true,
+  "runtime_publication_execution_chat_blocked": true,
+  "source_files_preserved": true,
+  "limitations": [
+    "Native processes and SQLite; not PostgreSQL/Docker qualification",
+    "HTTP proxy checks; no browser acceptance",
+    "Not installed on the user Windows computer",
+    "No paid provider calls or ML/runtime execution",
+    "Production and retained demo unchanged"
+  ],
+  "clean_shutdown": true
+}

@@ -79,3 +79,7 @@ Run the focused backend suite with `PYTHONPATH=apps/api WP3_SOURCE_ROOT=/absolut
 From `apps/web`, run `npm run build` and `node --test app/publish/parameter-review.test.cjs app/design-ai/page.test.cjs components/saved-solution-assistant.test.cjs components/discovery-recommendation.test.cjs`. No browser or PostgreSQL acceptance is claimed by the portable API/component suite.
 
 A daily development checkpoint is scheduled around 08:00 Europe/Dublin from 19 November. Each run must inspect actual current work, pursue one concrete user-visible slice when the environment permits, and report demonstrated behavior, implementation/local/production status, evidence, blockers and the next target. It must not claim unattended progress when an environment or owner dependency prevents it. The automation inherits the thread environment when available; its creation does not verify future environment availability.
+
+## Later user review and new test workspace
+
+The user has completed the retained-demo inspection; [its accepted scope](USER_REVIEW_2026-11-18.md) is recorded without claiming a new execution. A separate launcher now prepares the actual current provider-review API and frontend with copied metadata and fresh normal-role accounts. Follow [the plain-language new test](START_PROVIDER_REVIEW.md). It is prepared, not already installed or browser-verified on the user's Windows computer. The old 23124 instance remains the retained demonstration.
