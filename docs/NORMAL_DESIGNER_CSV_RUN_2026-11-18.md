@@ -1,5 +1,10 @@
 # Normal saved CSV input and owned results — 18 November 2026
 
+Later Windows continuation: [normal browser designer Runs with fresh real DGAN and
+generic verified observations](WINDOWS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md).
+The API/source/assistant-double boundaries and historical results below remain
+unchanged; the later real runs carry their own new model and output evidence.
+
 This increment reviews and builds on Portal `72e440c7003f6c210f3a13e7dd0d2c4b6b19c550` and WP3 `7e16c810bd928a4bc13df16cb0fb7d712e6f57d8`. Both published commits and the full Windows qualification report were inspected through GitHub. The reported DGAN probe calls the actual model implementation and inspects its newly saved configuration and weights; its model qualification remains separate from the fixture task observations used by the earlier Portal result test. No SharePoint access was needed.
 
 ## Completed connections

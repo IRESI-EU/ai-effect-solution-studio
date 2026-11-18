@@ -137,6 +137,17 @@ def inspect(row, node, task, db, tasks):
                     or not rows or any(not r.get('example') for r in rows)
                     or len({r['example'] for r in rows}) != receipt['observed_sequence_count']):
                 raise ValueError('CSV sequence observation differs from output bytes')
+        observation = None
+        if 'runtime_observation' in receipt:
+            from app.services import runtime_observation
+            document = receipt['runtime_observation']
+            if ('algorithm-settings-v1' not in target.get('observation_contracts', [])
+                    or runtime_observation.digest(document) != receipt.get('runtime_observation_sha256')):
+                raise ValueError('Runtime observation is not explicitly trusted or its digest differs')
+            observed = runtime_observation.validate(document, workflow_id=row.workflow_id, task_id=node['task_id'],
+                configuration=configuration, parameter_contract_sha256=node['parameter_contract_sha256'],
+                input_sha256=receipt['input_sha256'], source_response_sha256=receipt['source_response_sha256'])
+            observation = document
         receipt_hash = digest(canonical(receipt))
         old = db.get(InstanceEvidenceReceipt, (row.id, node['task_id']))
         if old and old.manifest_sha256 != receipt_hash:
@@ -158,6 +169,10 @@ def inspect(row, node, task, db, tasks):
                      output_sha256=digest(raw), manifest_sha256=receipt_hash,
                      upstream_interface_sha256=receipt['upstream_interface_sha256'],
                      summary={k: receipt[k] for k in ('observed_sequence_count', 'csv_data_rows') if k in receipt})
+        if observation is not None:
+            proof.update(algorithm_consumed=observed, observation_sha256=receipt['runtime_observation_sha256'],
+                model_sha256=document['model']['sha256'], weights_sha256=document['model']['weights_sha256'],
+                instrumentation=document['basis'], evidence_level='authenticated_algorithm_observation')
         if input_content_verified: proof["input_binding_verified"] = True
         return raw, proof
     except (ValueError, KeyError, TypeError, OSError, IndexError, AttributeError):

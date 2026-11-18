@@ -34,7 +34,7 @@ export function submittedEvidenceStatus(proof: any, evidence: any, kind: "parame
 
 // Delivery receipts establish transport, never algorithm consumption.
 export function submittedDelivery(proof: any) {
-  return proof?.state === "available" && proof.evidence_level === "authenticated_runtime_receipt"
+  return proof?.state === "available" && ["authenticated_runtime_receipt", "authenticated_algorithm_observation"].includes(proof.evidence_level)
     && proof.delivered_parameters && typeof proof.delivered_parameters === "object"
     ? proof.delivered_parameters : null;
 }

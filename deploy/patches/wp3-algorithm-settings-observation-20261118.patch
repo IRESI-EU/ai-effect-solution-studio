@@ -1,0 +1,1140 @@
+From cbe1bbd8064dbd57655d28073bfec622aebbd752 Mon Sep 17 00:00:00 2001
+From: Adarsh S <adarshsunil@gmail.com>
+Date: Wed, 18 Nov 2026 21:52:12 +0000
+Subject: [PATCH 1/2] feat: bind optional algorithm observations to configured
+ runtime tasks
+
+---
+ ...GORITHM_SETTINGS_OBSERVATION_2026-11-18.md | 51 ++++++++++++
+ ...ORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md |  6 ++
+ tests/test_portuguese_runtime_observation.py  | 79 +++++++++++++++++++
+ .../common/configured_synthetic.py            | 39 +++++++--
+ .../common/runtime_observation.py             | 44 +++++++++++
+ .../common/configured_synthetic.py            | 39 +++++++--
+ .../common/runtime_observation.py             | 44 +++++++++++
+ 7 files changed, 292 insertions(+), 10 deletions(-)
+ create mode 100644 docs/ALGORITHM_SETTINGS_OBSERVATION_2026-11-18.md
+ create mode 100644 tests/test_portuguese_runtime_observation.py
+ create mode 100644 use-cases/portugal-node-integrated/common/runtime_observation.py
+ create mode 100644 use-cases/portugal-node-sidecar/common/runtime_observation.py
+
+diff --git a/docs/ALGORITHM_SETTINGS_OBSERVATION_2026-11-18.md b/docs/ALGORITHM_SETTINGS_OBSERVATION_2026-11-18.md
+new file mode 100644
+index 0000000..057f19e
+--- /dev/null
++++ b/docs/ALGORITHM_SETTINGS_OBSERVATION_2026-11-18.md
+@@ -0,0 +1,51 @@
++# Optional task-bound algorithm observation
++
++The connector can opt into `algorithm-settings-v1` independently of its existing
++delivery receipt. Without explicit observation configuration, behavior is unchanged
++and delivery establishes no model-consumption claim.
++
++Install `SYNTHETIC_DATA_OBSERVATION_URL` as the trusted private runtime observation
++base and `SYNTHETIC_DATA_OBSERVATION_KEY` as a separate private key. The source API
++must implement the reviewed recorder; merely returning a successful HTTP response
++does not satisfy this contract. The raw ML API stays private.
++
++For each source request the connector sends `X-AI-Effect-Execution` containing only
++the immutable workflow, logical/physical task, configuration, parameter-contract
++digest and input digest. The separate key is sent in its own header, never the
++document. After synchronous completion it reads the physical task's observation
++with bearer authentication. No browser/catalogue URL installs this authority.
++
++The exact top-level document fields are `schema_version: "1.0"`,
++`kind: "algorithm-settings-v1"`, `binding`, `requested_parameters`,
++`observed_parameters`, `model`, `implementation` and `basis`. The shared validator
++checks all workflow/task/instance/operation/configuration/contract/input/source-response
++bindings, exact parameter keys, finite numeric/type compatibility, actual model
++file and weight SHA-256 values, positive weight-element count, implementation
++source/image digests and a stated observation basis. Requested and observed
++values can differ: a clamped batch remains a separately reported observation.
++
++`model` carries `sha256`, `weights_sha256`, `weight_elements`. `implementation`
++carries `name`, `source_sha256`, `image_sha256`. `binding` carries `workflow_id`,
++`task_id`, `instance_id`, `operation_identity`, `configuration_sha256`,
++`parameter_contract_sha256`, `input_sha256`, `source_response_sha256`.
++Canonical JSON is UTF-8, sorted keys, compact separators and no nonfinite values.
++
++An invalid/missing observation after a dispatched source call leaves an uncertain
++outcome. No output is published and no retry bypasses reconciliation. Valid
++observations and their digest are embedded in the existing immutable authenticated
++receipt. Receipt/model-output storage and cross-workflow model restrictions remain.
++
++The Portal requires a separately installed target declaration allowing this exact
++observation contract, then revalidates ownership, immutable submission, endpoint,
++task/input/output associations, receipt digest and bytes before projecting
++`algorithm_consumed`. Delivery alone never populates that field. There are no
++service-ID or workflow exceptions.
++
++Windows software-fixture acceptance used the real DGAN image ending `1f1f61f`,
++fresh models and the normal browser designer path. The Portal development branch
++contains the recorder, independent saved-model reinspection and sanitised report.
++The source/API double tests here verify transport and tamper rejection, not model
++or browser acceptance. Provider scientific/data/index approval, production runtime
++installation, PostgreSQL/release acceptance and paid assistant acceptance remain
++separate gates. This opt-in recorder is development instrumentation, not a signature
++from an independent scientific authority.
+diff --git a/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md b/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md
+index 2d178b0..bfd1088 100644
+--- a/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md
++++ b/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md
+@@ -1,5 +1,11 @@
+ # Portuguese source-API configuration connector — 18 November 2026
+ 
++Later continuation: selected inline CSV input is implemented, and the optional
++[task-bound algorithm observation](ALGORITHM_SETTINGS_OBSERVATION_2026-11-18.md)
++connects separately observed real-model settings to authenticated receipts. The
++historical source-wiring status below is unchanged; current Windows browser/model
++software-fixture evidence is published in the paired Portal development branch.
++
+ Status: implemented and source-wiring verified. Real DGAN/model, Docker, Windows and independent user qualification remain pending. This is a node connector for the existing shared `http-parameters-v1` contract, not a new Portal workflow architecture. The original fixed-value handlers and source ML API are unchanged.
+ 
+ ## Supported mapping
+diff --git a/tests/test_portuguese_runtime_observation.py b/tests/test_portuguese_runtime_observation.py
+new file mode 100644
+index 0000000..cb66607
+--- /dev/null
++++ b/tests/test_portuguese_runtime_observation.py
+@@ -0,0 +1,79 @@
++"""Observation transport/association tests with explicit source and model doubles.
++
++Real DGAN/browser acceptance is recorded separately in the Portal report.
++"""
++from copy import deepcopy
++import hashlib
++import json
++
++import httpx
++import pytest
++
++from test_portuguese_configured_runtime import runtime, request, finished, COMMON, ROOT
++from configured_portugal_test import runtime_observation as observation
++
++
++def install(runtime, mutation=None):
++    delegate = runtime.connector.transport
++    records = {}
++    class ObservedTransport(httpx.BaseTransport):
++        def handle_request(self, req):
++            if req.url.path.startswith('/runtime-observations/'):
++                assert req.headers['authorization'] == 'Bearer observation-fixture-key'
++                value = deepcopy(records[req.url.path.rsplit('/', 1)[-1]])
++                if mutation: mutation(value)
++                return httpx.Response(200, json=value)
++            response = delegate.handle_request(req)
++            if req.url.path in {'/train', '/generate'}:
++                assert req.headers['x-ai-effect-observation-key'] == 'observation-fixture-key'
++                context = json.loads(req.headers['x-ai-effect-execution'])
++                config = context['configuration']
++                assert 'observation-fixture-key' not in json.dumps(context)
++                observed = dict(config['parameters'])
++                if 'batch_size' in observed: observed['batch_size'] = 2
++                records[context['service_task_id']] = {
++                    'schema_version':'1.0', 'kind':'algorithm-settings-v1',
++                    'binding':{'workflow_id':context['workflow_id'],'task_id':context['task_id'],
++                        'instance_id':config['instance_id'],'operation_identity':config['operation_identity'],
++                        'configuration_sha256':observation.digest(config),
++                        'parameter_contract_sha256':context['parameter_contract_sha256'],
++                        'input_sha256':context['input_sha256'],
++                        'source_response_sha256':hashlib.sha256(response.read()).hexdigest()},
++                    'requested_parameters':config['parameters'], 'observed_parameters':observed,
++                    'model':{'sha256':'a'*64,'weights_sha256':'b'*64,'weight_elements':12},
++                    'implementation':{'name':'EXPLICIT TEST DOUBLE','source_sha256':'c'*64,'image_sha256':'sha256:'+'d'*64},
++                    'basis':'Synthetic observation for connector association tests only'}
++            return response
++    runtime.connector.transport = ObservedTransport()
++    runtime.connector.environment.update(SYNTHETIC_DATA_OBSERVATION_URL='http://source.test/runtime-observations',
++        SYNTHETIC_DATA_OBSERVATION_KEY='observation-fixture-key')
++    return records
++
++
++def test_opt_in_observation_retains_requested_and_different_observed_values(runtime):
++    install(runtime)
++    train = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    assert train['state'] == 'complete', train
++    assert train['configuration']['parameters']['batch_size'] == train['delivered_query']['batch_size'] == 4
++    assert train['runtime_observation']['observed_parameters']['batch_size'] == 2
++    assert observation.digest(train['runtime_observation']) == train['runtime_observation_sha256']
++    generated = finished(runtime, runtime.client.post('/control/execute',json=request(runtime,'GenerateData','generate',ref=train['output'],number_of_examples=2)))
++    assert generated['state'] == 'complete', generated
++    assert generated['input_sha256'] == train['output_sha256']
++    assert generated['runtime_observation']['model'] == train['runtime_observation']['model']
++    assert 'observation-fixture-key' not in json.dumps(generated)
++
++
++@pytest.mark.parametrize('field',['workflow_id','task_id','instance_id','operation_identity','configuration_sha256','parameter_contract_sha256','input_sha256','source_response_sha256'])
++def test_wrong_observation_never_publishes_output_or_redispatches(runtime,field):
++    install(runtime,lambda value: value['binding'].update({field:'wrong'}))
++    record = finished(runtime,runtime.client.post('/control/execute',json=request(runtime)))
++    assert record['state'] == 'uncertain'
++    assert 'runtime_observation' not in record and not record.get('output')
++    assert runtime.client.get('/control/data/'+record['service_task_id']).status_code == 409
++    assert runtime.client.post('/control/execute',json=request(runtime,task='no-retry')).status_code == 409
++    assert len(runtime.calls) == 1
++
++
++def test_both_connectors_share_exact_generic_observation_validator():
++    assert (COMMON/'runtime_observation.py').read_bytes() == (ROOT/'use-cases/portugal-node-integrated/common/runtime_observation.py').read_bytes()
+diff --git a/use-cases/portugal-node-integrated/common/configured_synthetic.py b/use-cases/portugal-node-integrated/common/configured_synthetic.py
+index d77db9c..980b76a 100644
+--- a/use-cases/portugal-node-integrated/common/configured_synthetic.py
++++ b/use-cases/portugal-node-integrated/common/configured_synthetic.py
+@@ -23,6 +23,8 @@ from uuid import uuid4
+ import httpx
+ from fastapi import HTTPException
+ 
++from . import runtime_observation
++
+ from .parameter_contract import match_wrapper_configuration, parameter_contract_digest
+ 
+ TYPES = {"TrainModel": {"epochs": "integer", "batch_size": "integer", "sequence_len": "integer"},
+@@ -217,6 +219,7 @@ class Runtime:
+         else:
+             raise ValueError('Select a configured model reference or a declared shared-model reference')
+         if len(raw) > 16000: raise ValueError('Model reference is too large')
++        reference_hash = hashlib.sha256(raw).hexdigest()
+         value = json.loads(raw)
+         if set(value) != {'model_ref'} or not isinstance(value['model_ref'], str): raise ValueError('Model input must be an opaque model_ref')
+         key = hashlib.sha256(value['model_ref'].encode()).hexdigest()
+@@ -224,12 +227,34 @@ class Runtime:
+         if local.is_file():
+             model = json.loads(local.read_text())
+             if model['workflow_id'] != workflow_id: raise ValueError('A private model belongs to a different workflow')
+-            return model
++            return {**model, '_input_sha256': reference_hash}
+         catalogue = self.environment.get('SYNTHETIC_DATA_SHARED_MODELS_FILE')
+         shared = json.loads(Path(catalogue).read_text()).get(value['model_ref']) if catalogue else None
+         if not shared or shared.get('share_scope') != 'service_callers': raise ValueError('Model reference is not authorised')
+         if not SAFE_ID.fullmatch(shared['user_id']) or not SAFE_ID.fullmatch(shared['model_name']): raise ValueError('Shared model identity is invalid')
+-        return {'user_id': shared['user_id'], 'model_name': shared['model_name'], 'shared_reference': value['model_ref']}
++        return {'user_id': shared['user_id'], 'model_name': shared['model_name'], 'shared_reference': value['model_ref'], '_input_sha256': reference_hash}
++
++    def observation_headers(self, value):
++        if not self.environment.get('SYNTHETIC_DATA_OBSERVATION_URL'):
++            return {}
++        token = self.environment.get('SYNTHETIC_DATA_OBSERVATION_KEY', '')
++        if not token: raise ValueError('Observation authority must be explicitly installed')
++        context = {key: value[key] for key in ('workflow_id', 'task_id', 'service_task_id', 'configuration', 'parameter_contract_sha256', 'input_sha256')}
++        return {'X-AI-Effect-Execution': json.dumps(context, separators=(',', ':')), 'X-AI-Effect-Observation-Key': token}
++
++    def collect_observation(self, value, client):
++        endpoint = self.environment.get('SYNTHETIC_DATA_OBSERVATION_URL')
++        if not endpoint: return
++        response = client.get(base_url(endpoint) + '/' + value['service_task_id'],
++            headers={'Authorization': 'Bearer ' + self.environment['SYNTHETIC_DATA_OBSERVATION_KEY']})
++        response.raise_for_status()
++        if len(response.content) > 128000: raise ValueError('Runtime observation exceeds byte ceiling')
++        document = response.json()
++        runtime_observation.validate(document, workflow_id=value['workflow_id'], task_id=value['task_id'],
++            configuration=value['configuration'], parameter_contract_sha256=value['parameter_contract_sha256'],
++            input_sha256=value['input_sha256'], source_response_sha256=value['source_response_sha256'])
++        value['runtime_observation'] = document
++        value['runtime_observation_sha256'] = runtime_observation.digest(document)
+ 
+     def run(self, identity, reference):
+         value = self.read(identity); value['state'] = 'running'
+@@ -248,8 +273,10 @@ class Runtime:
+                             'overwrite': False, **parameters}
+                     value.update(input_sha256=hashlib.sha256(data).hexdigest(), delivered_query=args, dispatch_started=True)
+                     self.write(self.path(identity), value)
+-                    response = client.post(self.upstream + '/train', params=args, files={'uploaded_file': ('selected.csv', data, 'text/csv')})
++                    response = client.post(self.upstream + '/train', params=args, files={'uploaded_file': ('selected.csv', data, 'text/csv')}, headers=self.observation_headers(value))
+                     if response.status_code != 200: raise ValueError('Synchronous training did not establish completion')
++                    value['source_response_sha256'] = hashlib.sha256(response.content).hexdigest()
++                    self.collect_observation(value, client)
+                     models = client.get(self.upstream + '/models', params={'user_id': self.namespace}); models.raise_for_status()
+                     if args['model_name'] not in [m.get('name') for m in models.json()]: raise ValueError('The completed model was not listed')
+                     model_ref = 'urn:aieffect:configured-model:' + uuid4().hex
+@@ -260,9 +287,9 @@ class Runtime:
+                 else:
+                     model = self.resolve_model(reference, value['workflow_id'])
+                     args = {'user_id': model['user_id'], 'model_name': model['model_name'], 'return_csv': True, **parameters}
+-                    value.update(model_binding=model, delivered_query=args, dispatch_started=True)
++                    value.update(model_binding={k:v for k,v in model.items() if not k.startswith('_')}, input_sha256=model['_input_sha256'], delivered_query=args, dispatch_started=True)
+                     self.write(self.path(identity), value)
+-                    with client.stream('GET', self.upstream + '/generate', params=args) as response:
++                    with client.stream('GET', self.upstream + '/generate', params=args, headers=self.observation_headers(value)) as response:
+                         if response.status_code != 200 or response.headers.get('content-type', '').split(';')[0] != 'text/csv':
+                             raise ValueError('Generation did not return the declared CSV representation')
+                         collected = bytearray()
+@@ -270,6 +297,8 @@ class Runtime:
+                             collected.extend(chunk)
+                             if len(collected) > 20_000_000: raise ValueError('Generation response exceeds the connector output byte ceiling')
+                         data, fmt = bytes(collected), 'csv'
++                    value['source_response_sha256'] = hashlib.sha256(data).hexdigest()
++                    self.collect_observation(value, client)
+                     rows = list(csv.DictReader(io.StringIO(data.decode('utf-8'))))
+                     if not rows or any(not row.get('example') for row in rows): raise ValueError('CSV lacks source-declared example markers')
+                     observed = len({row['example'] for row in rows})
+diff --git a/use-cases/portugal-node-integrated/common/runtime_observation.py b/use-cases/portugal-node-integrated/common/runtime_observation.py
+new file mode 100644
+index 0000000..ce7252d
+--- /dev/null
++++ b/use-cases/portugal-node-integrated/common/runtime_observation.py
+@@ -0,0 +1,44 @@
++"""Explicit algorithm-settings-v1 observations, separate from delivery receipts."""
++import hashlib
++import json
++import math
++import re
++
++
++def canonical(value):
++    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
++
++
++def digest(value):
++    return hashlib.sha256(canonical(value)).hexdigest()
++
++
++def validate(document, *, workflow_id, task_id, configuration, parameter_contract_sha256,
++             input_sha256, source_response_sha256):
++    if not isinstance(document, dict) or set(document) != {'schema_version', 'kind', 'binding', 'requested_parameters', 'observed_parameters', 'model', 'implementation', 'basis'}:
++        raise ValueError('Unsupported runtime observation shape')
++    if document['schema_version'] != '1.0' or document['kind'] != 'algorithm-settings-v1':
++        raise ValueError('Unsupported runtime observation contract')
++    expected = {'workflow_id': workflow_id, 'task_id': task_id, 'instance_id': configuration['instance_id'],
++        'operation_identity': configuration['operation_identity'], 'configuration_sha256': digest(configuration),
++        'parameter_contract_sha256': parameter_contract_sha256, 'input_sha256': input_sha256,
++        'source_response_sha256': source_response_sha256}
++    if canonical(document['binding']) != canonical(expected) or canonical(document['requested_parameters']) != canonical(configuration['parameters']):
++        raise ValueError('Runtime observation binding differs from immutable task')
++    observed = document['observed_parameters']
++    if not isinstance(observed, dict) or set(observed) != set(configuration['parameters']):
++        raise ValueError('Runtime observation parameter keys differ')
++    for key, value in observed.items():
++        requested = configuration['parameters'][key]
++        numeric = type(requested) in (int, float)
++        if ((numeric and (type(value) not in (int, float) or not math.isfinite(value)))
++                or (not numeric and type(value) is not type(requested))):
++            raise ValueError('Runtime observation parameter types differ')
++    model = document['model']; implementation = document['implementation']
++    for value in (model['sha256'], model['weights_sha256'], implementation['source_sha256'],
++                  implementation['image_sha256'].removeprefix('sha256:'), input_sha256, source_response_sha256):
++        if not isinstance(value, str) or not re.fullmatch('[a-f0-9]{64}', value):
++            raise ValueError('Runtime observation digest is invalid')
++    if type(model['weight_elements']) is not int or model['weight_elements'] <= 0 or not implementation.get('name') or not document['basis']:
++        raise ValueError('Runtime observation lacks actual model evidence')
++    return observed
+diff --git a/use-cases/portugal-node-sidecar/common/configured_synthetic.py b/use-cases/portugal-node-sidecar/common/configured_synthetic.py
+index d77db9c..980b76a 100644
+--- a/use-cases/portugal-node-sidecar/common/configured_synthetic.py
++++ b/use-cases/portugal-node-sidecar/common/configured_synthetic.py
+@@ -23,6 +23,8 @@ from uuid import uuid4
+ import httpx
+ from fastapi import HTTPException
+ 
++from . import runtime_observation
++
+ from .parameter_contract import match_wrapper_configuration, parameter_contract_digest
+ 
+ TYPES = {"TrainModel": {"epochs": "integer", "batch_size": "integer", "sequence_len": "integer"},
+@@ -217,6 +219,7 @@ class Runtime:
+         else:
+             raise ValueError('Select a configured model reference or a declared shared-model reference')
+         if len(raw) > 16000: raise ValueError('Model reference is too large')
++        reference_hash = hashlib.sha256(raw).hexdigest()
+         value = json.loads(raw)
+         if set(value) != {'model_ref'} or not isinstance(value['model_ref'], str): raise ValueError('Model input must be an opaque model_ref')
+         key = hashlib.sha256(value['model_ref'].encode()).hexdigest()
+@@ -224,12 +227,34 @@ class Runtime:
+         if local.is_file():
+             model = json.loads(local.read_text())
+             if model['workflow_id'] != workflow_id: raise ValueError('A private model belongs to a different workflow')
+-            return model
++            return {**model, '_input_sha256': reference_hash}
+         catalogue = self.environment.get('SYNTHETIC_DATA_SHARED_MODELS_FILE')
+         shared = json.loads(Path(catalogue).read_text()).get(value['model_ref']) if catalogue else None
+         if not shared or shared.get('share_scope') != 'service_callers': raise ValueError('Model reference is not authorised')
+         if not SAFE_ID.fullmatch(shared['user_id']) or not SAFE_ID.fullmatch(shared['model_name']): raise ValueError('Shared model identity is invalid')
+-        return {'user_id': shared['user_id'], 'model_name': shared['model_name'], 'shared_reference': value['model_ref']}
++        return {'user_id': shared['user_id'], 'model_name': shared['model_name'], 'shared_reference': value['model_ref'], '_input_sha256': reference_hash}
++
++    def observation_headers(self, value):
++        if not self.environment.get('SYNTHETIC_DATA_OBSERVATION_URL'):
++            return {}
++        token = self.environment.get('SYNTHETIC_DATA_OBSERVATION_KEY', '')
++        if not token: raise ValueError('Observation authority must be explicitly installed')
++        context = {key: value[key] for key in ('workflow_id', 'task_id', 'service_task_id', 'configuration', 'parameter_contract_sha256', 'input_sha256')}
++        return {'X-AI-Effect-Execution': json.dumps(context, separators=(',', ':')), 'X-AI-Effect-Observation-Key': token}
++
++    def collect_observation(self, value, client):
++        endpoint = self.environment.get('SYNTHETIC_DATA_OBSERVATION_URL')
++        if not endpoint: return
++        response = client.get(base_url(endpoint) + '/' + value['service_task_id'],
++            headers={'Authorization': 'Bearer ' + self.environment['SYNTHETIC_DATA_OBSERVATION_KEY']})
++        response.raise_for_status()
++        if len(response.content) > 128000: raise ValueError('Runtime observation exceeds byte ceiling')
++        document = response.json()
++        runtime_observation.validate(document, workflow_id=value['workflow_id'], task_id=value['task_id'],
++            configuration=value['configuration'], parameter_contract_sha256=value['parameter_contract_sha256'],
++            input_sha256=value['input_sha256'], source_response_sha256=value['source_response_sha256'])
++        value['runtime_observation'] = document
++        value['runtime_observation_sha256'] = runtime_observation.digest(document)
+ 
+     def run(self, identity, reference):
+         value = self.read(identity); value['state'] = 'running'
+@@ -248,8 +273,10 @@ class Runtime:
+                             'overwrite': False, **parameters}
+                     value.update(input_sha256=hashlib.sha256(data).hexdigest(), delivered_query=args, dispatch_started=True)
+                     self.write(self.path(identity), value)
+-                    response = client.post(self.upstream + '/train', params=args, files={'uploaded_file': ('selected.csv', data, 'text/csv')})
++                    response = client.post(self.upstream + '/train', params=args, files={'uploaded_file': ('selected.csv', data, 'text/csv')}, headers=self.observation_headers(value))
+                     if response.status_code != 200: raise ValueError('Synchronous training did not establish completion')
++                    value['source_response_sha256'] = hashlib.sha256(response.content).hexdigest()
++                    self.collect_observation(value, client)
+                     models = client.get(self.upstream + '/models', params={'user_id': self.namespace}); models.raise_for_status()
+                     if args['model_name'] not in [m.get('name') for m in models.json()]: raise ValueError('The completed model was not listed')
+                     model_ref = 'urn:aieffect:configured-model:' + uuid4().hex
+@@ -260,9 +287,9 @@ class Runtime:
+                 else:
+                     model = self.resolve_model(reference, value['workflow_id'])
+                     args = {'user_id': model['user_id'], 'model_name': model['model_name'], 'return_csv': True, **parameters}
+-                    value.update(model_binding=model, delivered_query=args, dispatch_started=True)
++                    value.update(model_binding={k:v for k,v in model.items() if not k.startswith('_')}, input_sha256=model['_input_sha256'], delivered_query=args, dispatch_started=True)
+                     self.write(self.path(identity), value)
+-                    with client.stream('GET', self.upstream + '/generate', params=args) as response:
++                    with client.stream('GET', self.upstream + '/generate', params=args, headers=self.observation_headers(value)) as response:
+                         if response.status_code != 200 or response.headers.get('content-type', '').split(';')[0] != 'text/csv':
+                             raise ValueError('Generation did not return the declared CSV representation')
+                         collected = bytearray()
+@@ -270,6 +297,8 @@ class Runtime:
+                             collected.extend(chunk)
+                             if len(collected) > 20_000_000: raise ValueError('Generation response exceeds the connector output byte ceiling')
+                         data, fmt = bytes(collected), 'csv'
++                    value['source_response_sha256'] = hashlib.sha256(data).hexdigest()
++                    self.collect_observation(value, client)
+                     rows = list(csv.DictReader(io.StringIO(data.decode('utf-8'))))
+                     if not rows or any(not row.get('example') for row in rows): raise ValueError('CSV lacks source-declared example markers')
+                     observed = len({row['example'] for row in rows})
+diff --git a/use-cases/portugal-node-sidecar/common/runtime_observation.py b/use-cases/portugal-node-sidecar/common/runtime_observation.py
+new file mode 100644
+index 0000000..ce7252d
+--- /dev/null
++++ b/use-cases/portugal-node-sidecar/common/runtime_observation.py
+@@ -0,0 +1,44 @@
++"""Explicit algorithm-settings-v1 observations, separate from delivery receipts."""
++import hashlib
++import json
++import math
++import re
++
++
++def canonical(value):
++    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
++
++
++def digest(value):
++    return hashlib.sha256(canonical(value)).hexdigest()
++
++
++def validate(document, *, workflow_id, task_id, configuration, parameter_contract_sha256,
++             input_sha256, source_response_sha256):
++    if not isinstance(document, dict) or set(document) != {'schema_version', 'kind', 'binding', 'requested_parameters', 'observed_parameters', 'model', 'implementation', 'basis'}:
++        raise ValueError('Unsupported runtime observation shape')
++    if document['schema_version'] != '1.0' or document['kind'] != 'algorithm-settings-v1':
++        raise ValueError('Unsupported runtime observation contract')
++    expected = {'workflow_id': workflow_id, 'task_id': task_id, 'instance_id': configuration['instance_id'],
++        'operation_identity': configuration['operation_identity'], 'configuration_sha256': digest(configuration),
++        'parameter_contract_sha256': parameter_contract_sha256, 'input_sha256': input_sha256,
++        'source_response_sha256': source_response_sha256}
++    if canonical(document['binding']) != canonical(expected) or canonical(document['requested_parameters']) != canonical(configuration['parameters']):
++        raise ValueError('Runtime observation binding differs from immutable task')
++    observed = document['observed_parameters']
++    if not isinstance(observed, dict) or set(observed) != set(configuration['parameters']):
++        raise ValueError('Runtime observation parameter keys differ')
++    for key, value in observed.items():
++        requested = configuration['parameters'][key]
++        numeric = type(requested) in (int, float)
++        if ((numeric and (type(value) not in (int, float) or not math.isfinite(value)))
++                or (not numeric and type(value) is not type(requested))):
++            raise ValueError('Runtime observation parameter types differ')
++    model = document['model']; implementation = document['implementation']
++    for value in (model['sha256'], model['weights_sha256'], implementation['source_sha256'],
++                  implementation['image_sha256'].removeprefix('sha256:'), input_sha256, source_response_sha256):
++        if not isinstance(value, str) or not re.fullmatch('[a-f0-9]{64}', value):
++            raise ValueError('Runtime observation digest is invalid')
++    if type(model['weight_elements']) is not int or model['weight_elements'] <= 0 or not implementation.get('name') or not document['basis']:
++        raise ValueError('Runtime observation lacks actual model evidence')
++    return observed
+-- 
+2.48.1.windows.1
+
+
+From 69f7408e12908eb85a5de50af037e4f134e2be49 Mon Sep 17 00:00:00 2001
+From: Adarsh S <adarshsunil@gmail.com>
+Date: Wed, 18 Nov 2026 21:57:29 +0000
+Subject: [PATCH 2/2] docs: publish sanitised normal designer real DGAN
+ evidence
+
+---
+ ...WS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md |  50 +++
+ ...ndows-normal-designer-checks-20261118.json |  17 +
+ ...ws-normal-designer-real-dgan-20261118.json | 395 ++++++++++++++++++
+ ...ndows-normal-designer-source-20261118.json | 170 ++++++++
+ 4 files changed, 632 insertions(+)
+ create mode 100644 docs/WINDOWS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md
+ create mode 100644 docs/verification/windows-normal-designer-checks-20261118.json
+ create mode 100644 docs/verification/windows-normal-designer-real-dgan-20261118.json
+ create mode 100644 docs/verification/windows-normal-designer-source-20261118.json
+
+diff --git a/docs/WINDOWS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md b/docs/WINDOWS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md
+new file mode 100644
+index 0000000..f02f84d
+--- /dev/null
++++ b/docs/WINDOWS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md
+@@ -0,0 +1,50 @@
++# Windows normal designer / real DGAN software fixture evidence
++
++The selected-CSV patch was verified against its canonical Git SHA-256
++`eec0045eaf3eca8bf230c8b00a19786a5c7bb243f6c98c7408f068e67bb5a511` and applied
++to `7e16c810bd928a4bc13df16cb0fb7d712e6f57d8` as
++`e038f55f23af66f5e93175fbc24560a5aab9ba71`, reproducing exact tree
++`8aa7bab50d9d934ed9f333b4a8fda98ed89147e0`. Observation code is commit
++`cbe1bbd8064dbd57655d28073bfec622aebbd752`, tree
++`463d07484c65f1e7fb28a5143fb3e2d19e4c2c6c`. No old branch was overwritten.
++
++Two fresh workflows were created exclusively by the normal Portal browser designer
++Run action on the same saved solution and selected synthetic CSV. There were no
++seeded task observations or Control POST replacements for these Runs. Separate
++normal-route provider/admin fixture qualification calls are explicitly distinguished.
++
++- `wf-c155a6dd6853`: requested/delivered epochs 1, batch 16, sequence 4;
++  actual saved configuration epochs 1, batch 8, sequence 4; generation 2 / 8 rows.
++- `wf-6066f56dcf4b`: requested/delivered epochs 2, batch 16, sequence 4;
++  actual saved configuration epochs 2, batch 8, sequence 4; generation 3 / 12 rows.
++
++Both used actual DGAN image
++`sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f`,
++fresh volumes/namespace/keys, authenticated configured Control and a private raw ML
++network. Real saved model/configuration/weight/input/output hashes and task bindings
++are in the [sanitised run evidence](verification/windows-normal-designer-real-dgan-20261118.json).
++An independent read-only process reloaded fresh models and confirmed configuration
++and weight hashes. Each run's observations are new; batch 8 was not borrowed from
++the previous qualification or inferred from delivery.
++
++Normal role/routes published only explicitly labelled DEVELOPMENT SOFTWARE FIXTURES.
++Actual Portuguese provider contracts remain draft and require owner confirmation.
++The source-derived shape and fixture limits/defaults are not scientific approval.
++The original result remained unchanged after the second Run. Invalid epoch 0 was
++rejected before saving/dispatch; only two designer workflows exist. Another designer
++was denied owned snapshot, evidence, real tasks and preview access. Retained demos
++at 23124/23125, dirty originals and all old model/state/evidence volumes were preserved.
++
++WP3 focused tests: **106 passed** (source API/DGAN and observation doubles clearly
++labelled). These tests are distinct from the two real browser/model Runs. Portal
++checks: 146; rendered components: 9; Next build including TypeScript and canonical
++validator/provenance checks passed. [Test boundaries](verification/windows-normal-designer-checks-20261118.json)
++and [actual serving source hashes](verification/windows-normal-designer-source-20261118.json)
++are included. Windows line-ending differences are explicitly recorded.
++
++The full [Portal report and user demonstration](https://github.com/IRESI-EU/ai-effect-solution-studio/blob/codex/normal-designer-run-20261118/docs/WINDOWS_NORMAL_DESIGNER_REAL_DGAN_2026-11-18.md)
++describes the serving workspace, shared Builder/Design with AI path and proposed
++bounded genuine-conversation acceptance. Assistant checks use explicit doubles;
++no paid call or successful LLM response is claimed. Owner scientific/data/index
++approval, human acceptance, PostgreSQL/staging/migrations/rollback, production release
++and separate paid acceptance remain open. No merge, production deployment or force push.
+diff --git a/docs/verification/windows-normal-designer-checks-20261118.json b/docs/verification/windows-normal-designer-checks-20261118.json
+new file mode 100644
+index 0000000..7976e35
+--- /dev/null
++++ b/docs/verification/windows-normal-designer-checks-20261118.json
+@@ -0,0 +1,17 @@
++{
++  "boundary": "Fresh Windows check results; model and browser evidence are separate from tests",
++  "portal_observation_owned_csv_assistant": {"passed": 64, "doubles": "Explicit observation/provider doubles where labelled"},
++  "portal_parameter_onboarding_compatibility_discovery_instances": {"passed": 63, "initial_source_path_skip": 1},
++  "source_snapshot_rerun_with_wp3_path": {"passed": 1, "resolves_initial_skip": true},
++  "older_csv_preflight_capabilities": {"passed": 2, "doubles": "Explicit HTTP response doubles; no dispatch"},
++  "existing_native_instance_evidence": {"passed": 16},
++  "portal_verified_checks_total": 146,
++  "wp3_source_observation_control_client_configuration": {"passed": 106, "doubles": "Real source API with explicit DGAN double; observation contract fixtures"},
++  "rendered_csv_results_assistant_components": {"passed": 9, "additional_submitted_settings_module_assertions": true},
++  "next_production_build_including_typescript": "passed",
++  "canonical_parameter_validator_all_five_exports": "passed",
++  "frozen_source_hash_manifest": "windows-normal-designer-source-20261118.json",
++  "fresh_real_model_browser_workflows": ["wf-c155a6dd6853", "wf-6066f56dcf4b"],
++  "paid_provider_calls": 0,
++  "limitations": ["No scientific provider acceptance", "No unaided human acceptance", "No PostgreSQL/staging/release acceptance", "No genuine paid conversation acceptance"]
++}
+diff --git a/docs/verification/windows-normal-designer-real-dgan-20261118.json b/docs/verification/windows-normal-designer-real-dgan-20261118.json
+new file mode 100644
+index 0000000..f906dc0
+--- /dev/null
++++ b/docs/verification/windows-normal-designer-real-dgan-20261118.json
+@@ -0,0 +1,395 @@
++{
++  "date": "2026-11-18",
++  "boundary": "Real local DGAN; normal browser Run as an independent designer account; synthetic software fixture, no scientific partner acceptance",
++  "fixture": {
++    "name": "DEVELOPMENT-SOFTWARE-FIXTURE.csv",
++    "sha256": "ad68eb1be631c27bc794f65a45c37a3897fe54f96d2f0d25d999a65c474b8f5c",
++    "rows": 32,
++    "columns": [
++      "datetime",
++      "load",
++      "temperature"
++    ],
++    "index": "datetime",
++    "finite_numeric_features": true
++  },
++  "runs": [
++    {
++      "label": "first-run",
++      "workflow_id": "wf-c155a6dd6853",
++      "solution_id": "aef401a4-80f7-427e-8ebe-75a52a1d33cc",
++      "submission_id": "a093ed47-f667-4300-9639-0131b4481b30",
++      "submitted_sha256": "170d6d31ef63af831d85d1ac8f864e69be8f550470203dc9e3a337f11cf9502b",
++      "selected_file": "DEVELOPMENT-SOFTWARE-FIXTURE.csv",
++      "tasks": [
++        {
++          "task_id": "task_546fc74d",
++          "physical_task_id": "cfg-8fe22581b70499ea8a54a5dab7a8a07c501165d491f62494c720be1d9b995a05",
++          "instance_id": "service-dev-fixture-129cff6ae65642b1baecdef0411201fe-f8b9e1af-6a06-48cc-96f9-bb478127f49c",
++          "operation": "TrainModel",
++          "configuration": {
++            "contract_id": "9fa3a3a9-09df-4e18-93a4-b68dc4392e9e",
++            "contract_version": "1.0.0",
++            "instance_id": "service-dev-fixture-129cff6ae65642b1baecdef0411201fe-f8b9e1af-6a06-48cc-96f9-bb478127f49c",
++            "operation_identity": "urn:development-software-fixture:trainmodel",
++            "parameters": {
++              "batch_size": 16,
++              "epochs": 1,
++              "sequence_len": 4
++            },
++            "schema_version": "1.0"
++          },
++          "configuration_sha256": "0be65b36a035d5152907f1ae7547733837c8ec1177228fdc09ccbb91128bf191",
++          "parameter_contract_sha256": "89047a93dafd538dcfd2c248c12eebae6dcaf864b92cf467bec3242cda994e48",
++          "requested_parameters": {
++            "batch_size": 16,
++            "epochs": 1,
++            "sequence_len": 4
++          },
++          "delivered_parameters": {
++            "batch_size": 16,
++            "epochs": 1,
++            "sequence_len": 4
++          },
++          "observed_parameters": {
++            "batch_size": 8,
++            "epochs": 1,
++            "sequence_len": 4
++          },
++          "model": {
++            "sha256": "6a5579cc5a4a333ab216d6ea9846ccdacfb4aadf6f2c75f532030c44228eecad",
++            "weight_elements": 510707,
++            "weights_sha256": "4fef7b1d3377c39bd41e9ed233476ad34261780ccf5a2d4a40318a4d08f05d51"
++          },
++          "reloaded_model_configuration_sha256": "eb5d102b8f1fc95c92b37ee3fd6268c01f4d93a21fb07a7c995298dd10895894",
++          "reloaded_model_configuration": {
++            "epochs": 1,
++            "batch_size": 8,
++            "max_sequence_len": 4
++          },
++          "implementation": {
++            "image_sha256": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
++            "name": "gretel_synthetics.timeseries_dgan.dgan.DGAN",
++            "source_sha256": "0a027576bb25656e4541dd822bf0f2395a79bb1cb377e1d11fb509dca9f79d54"
++          },
++          "observation_basis": "Actual DGAN training returned; freshly saved model config and real trained weight tensors inspected",
++          "input_sha256": "ad68eb1be631c27bc794f65a45c37a3897fe54f96d2f0d25d999a65c474b8f5c",
++          "source_response_sha256": "9c6378522960a5faa2c4ee731766193674f69c50f29aa5dcc23841118050963d",
++          "output_sha256": "17dc9a38ee981be072540f136370158c2efaf968393494117df0b90837eea595",
++          "output_bytes": 79,
++          "observation_sha256": "5f508cd631459fbfdca8141858d675f73e937c669ba1f58d1929e67cc0f359e0",
++          "csv_observations": {},
++          "independent_saved_model_reload_verified": true
++        },
++        {
++          "task_id": "task_e2b0ea1f",
++          "physical_task_id": "cfg-e1851d3b79ed07c1c1058f80decadbc36149df973625675d409118d15c884863",
++          "instance_id": "service-dev-fixture-34d25f298b4045199f9fefa6c332b690-22f199bc-a61c-4fb0-a86c-53278a07f6cd",
++          "operation": "GenerateData",
++          "configuration": {
++            "contract_id": "497b5c2c-2b01-4ba7-ba02-1a4170305851",
++            "contract_version": "1.0.0",
++            "instance_id": "service-dev-fixture-34d25f298b4045199f9fefa6c332b690-22f199bc-a61c-4fb0-a86c-53278a07f6cd",
++            "operation_identity": "urn:development-software-fixture:generatedata",
++            "parameters": {
++              "number_of_examples": 2
++            },
++            "schema_version": "1.0"
++          },
++          "configuration_sha256": "e9c091ad227f7c6378620e71ad067a03f2455481dbbf45352379a26f9e695257",
++          "parameter_contract_sha256": "8d487a9b9d98f5a032e0b62d9b1c951193bd08889ee55761a219889840265d9b",
++          "requested_parameters": {
++            "number_of_examples": 2
++          },
++          "delivered_parameters": {
++            "number_of_examples": 2
++          },
++          "observed_parameters": {
++            "number_of_examples": 2
++          },
++          "model": {
++            "sha256": "6a5579cc5a4a333ab216d6ea9846ccdacfb4aadf6f2c75f532030c44228eecad",
++            "weight_elements": 510707,
++            "weights_sha256": "4fef7b1d3377c39bd41e9ed233476ad34261780ccf5a2d4a40318a4d08f05d51"
++          },
++          "reloaded_model_configuration_sha256": "eb5d102b8f1fc95c92b37ee3fd6268c01f4d93a21fb07a7c995298dd10895894",
++          "reloaded_model_configuration": {
++            "epochs": 1,
++            "batch_size": 8,
++            "max_sequence_len": 4
++          },
++          "implementation": {
++            "image_sha256": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
++            "name": "gretel_synthetics.timeseries_dgan.dgan.DGAN",
++            "source_sha256": "0a027576bb25656e4541dd822bf0f2395a79bb1cb377e1d11fb509dca9f79d54"
++          },
++          "observation_basis": "Actual DGAN generate call and freshly loaded model weights inspected; output CSV counted separately",
++          "input_sha256": "17dc9a38ee981be072540f136370158c2efaf968393494117df0b90837eea595",
++          "source_response_sha256": "d7e43cff63a43f703a9388a00a46a430ce7b44027f81e9e6f5313b115d905fe4",
++          "output_sha256": "d7e43cff63a43f703a9388a00a46a430ce7b44027f81e9e6f5313b115d905fe4",
++          "output_bytes": 371,
++          "observation_sha256": "d285c31233ff83f3633256147dcf60f292d7b4285621d32c20863751664ec446",
++          "csv_observations": {
++            "observed_sequence_count": 2,
++            "csv_data_rows": 8
++          },
++          "independent_saved_model_reload_verified": true
++        }
++      ],
++      "cross_owner_denials": {
++        "submitted-configuration": 403,
++        "instance-evidence": 403,
++        "orchestrator_tasks": 403,
++        "preview": 403
++      }
++    },
++    {
++      "label": "second-run",
++      "workflow_id": "wf-6066f56dcf4b",
++      "solution_id": "aef401a4-80f7-427e-8ebe-75a52a1d33cc",
++      "submission_id": "c2e1ca81-7c21-4206-afa1-dcb539d92c72",
++      "submitted_sha256": "87ee1ad20f596682fdd6c61a262aab501f2399a050f31971ec106e3e4ba4ebc8",
++      "selected_file": "DEVELOPMENT-SOFTWARE-FIXTURE.csv",
++      "tasks": [
++        {
++          "task_id": "task_546fc74d",
++          "physical_task_id": "cfg-3c794bfc8c5caeb6f09a1614e7fdd20af7e1b4e43e836623d6c74fd0c9d2ec37",
++          "instance_id": "service-dev-fixture-129cff6ae65642b1baecdef0411201fe-f8b9e1af-6a06-48cc-96f9-bb478127f49c",
++          "operation": "TrainModel",
++          "configuration": {
++            "contract_id": "9fa3a3a9-09df-4e18-93a4-b68dc4392e9e",
++            "contract_version": "1.0.0",
++            "instance_id": "service-dev-fixture-129cff6ae65642b1baecdef0411201fe-f8b9e1af-6a06-48cc-96f9-bb478127f49c",
++            "operation_identity": "urn:development-software-fixture:trainmodel",
++            "parameters": {
++              "batch_size": 16,
++              "epochs": 2,
++              "sequence_len": 4
++            },
++            "schema_version": "1.0"
++          },
++          "configuration_sha256": "9325e83bad5c1a935b5e175fe581d7c2289285bfb306425c03ccfd380c6b688b",
++          "parameter_contract_sha256": "89047a93dafd538dcfd2c248c12eebae6dcaf864b92cf467bec3242cda994e48",
++          "requested_parameters": {
++            "batch_size": 16,
++            "epochs": 2,
++            "sequence_len": 4
++          },
++          "delivered_parameters": {
++            "batch_size": 16,
++            "epochs": 2,
++            "sequence_len": 4
++          },
++          "observed_parameters": {
++            "batch_size": 8,
++            "epochs": 2,
++            "sequence_len": 4
++          },
++          "model": {
++            "sha256": "9f6a045afc9c4088da0003df38e1ec9fd22efc9edecb3a942b3492bbde46cc99",
++            "weight_elements": 510707,
++            "weights_sha256": "0f618b3101f6f22866de07e033cb631a7d8dc8a18f934220513bb559229837f6"
++          },
++          "reloaded_model_configuration_sha256": "dabf225d43fbafb2f9f986db90dcbd2d7204733c5a67b7592dfd02758d551a58",
++          "reloaded_model_configuration": {
++            "epochs": 2,
++            "batch_size": 8,
++            "max_sequence_len": 4
++          },
++          "implementation": {
++            "image_sha256": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
++            "name": "gretel_synthetics.timeseries_dgan.dgan.DGAN",
++            "source_sha256": "0a027576bb25656e4541dd822bf0f2395a79bb1cb377e1d11fb509dca9f79d54"
++          },
++          "observation_basis": "Actual DGAN training returned; freshly saved model config and real trained weight tensors inspected",
++          "input_sha256": "ad68eb1be631c27bc794f65a45c37a3897fe54f96d2f0d25d999a65c474b8f5c",
++          "source_response_sha256": "4035f604f08df084da20afcb5770667ea4823973133ebc2ef31838893300e59c",
++          "output_sha256": "31fd6efec75a07522bebce655efd232afa7191a002da8e5d60a24808d91d4446",
++          "output_bytes": 79,
++          "observation_sha256": "ad77ce072f44f77c20828bd2419e2d98b48b3e749a62e61f978c6d981e9e88f0",
++          "csv_observations": {},
++          "independent_saved_model_reload_verified": true
++        },
++        {
++          "task_id": "task_e2b0ea1f",
++          "physical_task_id": "cfg-c60e39a08cbb2fc1e7fd56f38aa6c0f37f1bf62aa488c9ac12eccff8f4146047",
++          "instance_id": "service-dev-fixture-34d25f298b4045199f9fefa6c332b690-22f199bc-a61c-4fb0-a86c-53278a07f6cd",
++          "operation": "GenerateData",
++          "configuration": {
++            "contract_id": "497b5c2c-2b01-4ba7-ba02-1a4170305851",
++            "contract_version": "1.0.0",
++            "instance_id": "service-dev-fixture-34d25f298b4045199f9fefa6c332b690-22f199bc-a61c-4fb0-a86c-53278a07f6cd",
++            "operation_identity": "urn:development-software-fixture:generatedata",
++            "parameters": {
++              "number_of_examples": 3
++            },
++            "schema_version": "1.0"
++          },
++          "configuration_sha256": "a3f2a4e6bf79fde0d707514c5dfc8735700faf4c693f6f4dcb671d5197330bb2",
++          "parameter_contract_sha256": "8d487a9b9d98f5a032e0b62d9b1c951193bd08889ee55761a219889840265d9b",
++          "requested_parameters": {
++            "number_of_examples": 3
++          },
++          "delivered_parameters": {
++            "number_of_examples": 3
++          },
++          "observed_parameters": {
++            "number_of_examples": 3
++          },
++          "model": {
++            "sha256": "9f6a045afc9c4088da0003df38e1ec9fd22efc9edecb3a942b3492bbde46cc99",
++            "weight_elements": 510707,
++            "weights_sha256": "0f618b3101f6f22866de07e033cb631a7d8dc8a18f934220513bb559229837f6"
++          },
++          "reloaded_model_configuration_sha256": "dabf225d43fbafb2f9f986db90dcbd2d7204733c5a67b7592dfd02758d551a58",
++          "reloaded_model_configuration": {
++            "epochs": 2,
++            "batch_size": 8,
++            "max_sequence_len": 4
++          },
++          "implementation": {
++            "image_sha256": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
++            "name": "gretel_synthetics.timeseries_dgan.dgan.DGAN",
++            "source_sha256": "0a027576bb25656e4541dd822bf0f2395a79bb1cb377e1d11fb509dca9f79d54"
++          },
++          "observation_basis": "Actual DGAN generate call and freshly loaded model weights inspected; output CSV counted separately",
++          "input_sha256": "31fd6efec75a07522bebce655efd232afa7191a002da8e5d60a24808d91d4446",
++          "source_response_sha256": "5c923986ae6cd23c02a88c157b5603cdc1438eb747a3fcb75bc3e3432b3f3a20",
++          "output_sha256": "5c923986ae6cd23c02a88c157b5603cdc1438eb747a3fcb75bc3e3432b3f3a20",
++          "output_bytes": 537,
++          "observation_sha256": "64990b7677c172620386c121afe22afd584f561ebef7cfc3df7a4801d1897102",
++          "csv_observations": {
++            "observed_sequence_count": 3,
++            "csv_data_rows": 12
++          },
++          "independent_saved_model_reload_verified": true
++        }
++      ],
++      "cross_owner_denials": {
++        "submitted-configuration": 403,
++        "instance-evidence": 403,
++        "orchestrator_tasks": 403,
++        "preview": 403
++      }
++    }
++  ],
++  "containers": [
++    {
++      "id": "a981c00894be24fa30cf91cbb509f8456e20d26b261ba3d0ffb48236dfce17f2",
++      "name": "/aie-normal-96b1d3a9e1c6-ml-1",
++      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
++      "status": "running",
++      "mounts": [
++        {
++          "type": "bind",
++          "destination": "/observation-contract",
++          "read_only": true
++        },
++        {
++          "type": "bind",
++          "destination": "/qualification",
++          "read_only": true
++        },
++        {
++          "type": "volume",
++          "destination": "/qualification-evidence",
++          "read_only": false
++        },
++        {
++          "type": "volume",
++          "destination": "/app/models",
++          "read_only": false
++        }
++      ],
++      "ports": {}
++    },
++    {
++      "id": "75ef883f8bbd64c26980186eb07c24f00303e04eecc510e173c70e0964ed6cd6",
++      "name": "/aie-normal-96b1d3a9e1c6-connector-1",
++      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
++      "status": "running",
++      "mounts": [
++        {
++          "type": "bind",
++          "destination": "/connector-entry",
++          "read_only": true
++        },
++        {
++          "type": "bind",
++          "destination": "/contracts",
++          "read_only": true
++        },
++        {
++          "type": "bind",
++          "destination": "/qualification-source",
++          "read_only": true
++        },
++        {
++          "type": "volume",
++          "destination": "/state",
++          "read_only": false
++        }
++      ],
++      "ports": {
++        "8080/tcp": [
++          {
++            "HostIp": "127.0.0.1",
++            "HostPort": "28193"
++          }
++        ]
++      }
++    },
++    {
++      "id": "4be2ff907647ac5830637bc8c02d1d756f9e4bbcb07249e0663a6b958f0a2f23",
++      "name": "/aie-normal-96b1d3a9e1c6-redis-1",
++      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
++      "status": "running",
++      "mounts": [
++        {
++          "type": "volume",
++          "destination": "/data",
++          "read_only": false
++        },
++        {
++          "type": "bind",
++          "destination": "/private/redis.conf",
++          "read_only": true
++        }
++      ],
++      "ports": {
++        "6379/tcp": [
++          {
++            "HostIp": "127.0.0.1",
++            "HostPort": "26380"
++          }
++        ]
++      }
++    },
++    {
++      "id": "9ddf40c4224bfa8ee561684aa6e891791819149d899cae7d8c481674ff654d7c",
++      "name": "/ai-effect-pt-parameters-web-1",
++      "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
++      "status": "running",
++      "mounts": [],
++      "ports": {
++        "3000/tcp": [
++          {
++            "HostIp": "127.0.0.1",
++            "HostPort": "23124"
++          }
++        ]
++      }
++    }
++  ],
++  "first_run_unchanged_after_second": true,
++  "invalid_epoch_zero_rejected_by_normal_save": true,
++  "designer_execution_count": 2,
++  "paid_provider_calls": 0,
++  "actual_portuguese_provider_contracts_changed": 0,
++  "limitations": [
++    "Software fixture limits/defaults only",
++    "Browser automation as independent account; human acceptance not claimed",
++    "SQLite development workspace, not PostgreSQL/staging/release acceptance",
++    "Assistant tests use an explicit double; genuine paid conversation pending"
++  ]
++}
+diff --git a/docs/verification/windows-normal-designer-source-20261118.json b/docs/verification/windows-normal-designer-source-20261118.json
+new file mode 100644
+index 0000000..a495400
+--- /dev/null
++++ b/docs/verification/windows-normal-designer-source-20261118.json
+@@ -0,0 +1,170 @@
++{
++  "portal_baseline": "744df92b04a1a6361491085995be95dfc82eb985",
++  "wp3_code_commit": "cbe1bbd8064dbd57655d28073bfec622aebbd752",
++  "wp3_code_tree": "463d07484c65f1e7fb28a5143fb3e2d19e4c2c6c",
++  "frontend_source_sha256": "8d49ec7749a9a121200a1dc3f430cfbe1011a4233319a612d82e424371d29991",
++  "frozen_serving_source_sha256": {
++    "orchestrator/src/main.py": {
++      "serving_sha256": "4b291a3b49c50580aa88eebc9721c89f4715326f13e40ba6c3f2d5e6e93f8729",
++      "committed_sha256": "d936d5e1028cdc6d4a27ed635404db9f2e88de3c1d7ba82266f1614213b62e33"
++    },
++    "orchestrator/src/worker_cli.py": {
++      "serving_sha256": "ac7e683265d9434803c925406f8c0ea83466651511ba18d968df7cd43cdd5e57",
++      "committed_sha256": "e56eea10de38c956e6fae1dad3c0c2f5ecd41dc57ac36c4faddbb6dbc1934faa"
++    },
++    "orchestrator/src/worker_daemon.py": {
++      "serving_sha256": "87a773ce2554eb52e9558971a6f1bdded239dcdd3a4c03c8a1de1ea69d6921e8",
++      "committed_sha256": "3d4be1c2af445054f4444a254b8f30bf0d3bc83df2b57f0f4c3d4326a6d1b42d"
++    },
++    "orchestrator/src/__init__.py": {
++      "serving_sha256": "d161ca4d5918a2b422b37ac5a317681571b589826ea4b7be0bb0077d432959be",
++      "committed_sha256": "d161ca4d5918a2b422b37ac5a317681571b589826ea4b7be0bb0077d432959be"
++    },
++    "orchestrator/src/api/app.py": {
++      "serving_sha256": "b3232d922040f2f6331405bfc55ab5291f54f182163d88270c4c5096ece9d1aa",
++      "committed_sha256": "9dba9a504ca740d1d96c79a351757dc5ea034d468af586c66b0cb24f3a81c5fb"
++    },
++    "orchestrator/src/api/models.py": {
++      "serving_sha256": "bc36b7c33d8a263459c2cd99fb74629104586a85f5c25e4268b84c379874cc5f",
++      "committed_sha256": "1c232eaa12f5a6b4d17e88caa1a1decedf554fe4ca2461bb37bfbfafa8188779"
++    },
++    "orchestrator/src/api/__init__.py": {
++      "serving_sha256": "d9ac99e32eddd245b6da0f163ee55c7134ea0debae134a777170aedbb52f2649",
++      "committed_sha256": "3924bf9e65358968496f526c4935ea6a79ff3e7524fbb9c8a2d902400d88820f"
++    },
++    "orchestrator/src/models/data_reference.py": {
++      "serving_sha256": "975da96d26c3073c692cfb0a8b55980842b4ce94a4b1bbe3b44ab87f040e1b38",
++      "committed_sha256": "66d075567d881ba53a5f30b8c0abc54201e44de41ee1a9aa30cd7eeafbf52ebe"
++    },
++    "orchestrator/src/models/graph.py": {
++      "serving_sha256": "172199bc94cb92de7d357ec612ceac62fc6227d90191ac0542ae0f1c378dc72e",
++      "committed_sha256": "ca9a5874af2ca1dbef585b557e2db6e22d5c32853c6608f35efe3797fd63b1e0"
++    },
++    "orchestrator/src/models/node.py": {
++      "serving_sha256": "66317533a93be8c7e959ee115de34fa8c8551144e567ea304b2b4b1988d465f3",
++      "committed_sha256": "933d3f90d9dc7fd867f8095f3eb368ab1af769427fb91a7539079d17996af254"
++    },
++    "orchestrator/src/models/state.py": {
++      "serving_sha256": "c6c8c86a5fe928766726127852048f6e632f36dd13df2fb5a22c748b926e18b1",
++      "committed_sha256": "044ea2c224f581802491154498ddc74be6bcecb9c47c9334ededd950e4f188fd"
++    },
++    "orchestrator/src/models/__init__.py": {
++      "serving_sha256": "5550350716366133f65e12acbe534e1e3ba3f19636c6c7f9a76c933ee1898039",
++      "committed_sha256": "867ef7eab26cdfc21ae57c3b4744e28a136be929838c14976e257350130bfa87"
++    },
++    "orchestrator/src/services/blueprint_parser.py": {
++      "serving_sha256": "2e93e47e049e06b66eac319e0fffd0cf5f504af6327d221a9ce6e07042341360",
++      "committed_sha256": "518c36fe66da052b5799b72cd9dd0d1811607e689025bb4642858f9338b4986c"
++    },
++    "orchestrator/src/services/configuration_readiness.py": {
++      "serving_sha256": "eec722a6c3c7ebaa022a49a447565d78db32a5ed1a7149c2782837aea1fc9b6d",
++      "committed_sha256": "327e6177cc3ba3fe0f42236424722eeb5c3a615549da6a49c84d5e9a85fb4d0e"
++    },
++    "orchestrator/src/services/control_client.py": {
++      "serving_sha256": "8af34eb5a75d8174fd7a101c42a532b343601970938bf817ee2fbd1a76d35f92",
++      "committed_sha256": "c56087af05021fd81bb093e4371b140bb46422224ea806e16f21222b78b88e59"
++    },
++    "orchestrator/src/services/dockerinfo_parser.py": {
++      "serving_sha256": "acaefb3cd12e232374ed27510db792148ff968227022738865244acc82b7a708",
++      "committed_sha256": "448e3e8ee1ea3b3e73ed1f98ff60134670b96b876e560a7235f2008a23a36c3c"
++    },
++    "orchestrator/src/services/log_service.py": {
++      "serving_sha256": "4be7f91b03d517c8e5d28e926c1397c6e98a5d2abb7120b94113cff938ac442f",
++      "committed_sha256": "2ad98fcb35f4e6bc071c5678f03039b5b416467782ac3ab7f26b1da77836c042"
++    },
++    "orchestrator/src/services/parameter_contract.py": {
++      "serving_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
++      "committed_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa"
++    },
++    "orchestrator/src/services/state_store.py": {
++      "serving_sha256": "8e11c8590a987ecbd1ec6f340e0d9b73a8ff7d02a4c90270f9300f787cff33a6",
++      "committed_sha256": "4bae8d8350c05e180111c34f47e1610ffa9ac15066600aa48e475cded358f6f5"
++    },
++    "orchestrator/src/services/task_queue.py": {
++      "serving_sha256": "789a49583cd2a1b6976d68a503a53f1296584090586d8cfaf6bb8aedb971f576",
++      "committed_sha256": "2b8a69c1704a43c4492805d45cf5313668718e6a894ce1d8f9a23fdb91dd1540"
++    },
++    "orchestrator/src/services/worker.py": {
++      "serving_sha256": "7d77960b82de1783941c29936b252f5023b79b4785822dbee9dd8cf288bf5f8f",
++      "committed_sha256": "306284af79fa44925be77c5df06c227d96b0902a477085fbd1b7c88fce463586"
++    },
++    "orchestrator/src/services/workflow_engine.py": {
++      "serving_sha256": "b0076af0f15a3cdea57929380caa053dc00a0e1f74f1360967608bd2e8dd79d2",
++      "committed_sha256": "980c05cf45e5fd6a39f7ace01452a361fe66878e9ab26d203cac91b907bbaaf1"
++    },
++    "orchestrator/src/services/__init__.py": {
++      "serving_sha256": "e2958a7d29c690ececcbee9071e7cdf69f58d4a4427c382f2268f1c8e5a225d6",
++      "committed_sha256": "ca43df77a89039a6b8ed59863bb32e5c03733fea03012297eac9d039bbc9c5e5"
++    },
++    "orchestrator/src/utils/__init__.py": {
++      "serving_sha256": "a50574212694e9c8c8e752e5eed6cf110a262ea64ec223b159447513cabc818c",
++      "committed_sha256": "a50574212694e9c8c8e752e5eed6cf110a262ea64ec223b159447513cabc818c"
++    },
++    "use-cases/portugal-node-sidecar/common/configured_synthetic.py": {
++      "serving_sha256": "5a4fccf0012e09a7ab9bedc503cc24d4bf117ba2b1cba3fe2d5a8cc31fc8cd41",
++      "committed_sha256": "5a4fccf0012e09a7ab9bedc503cc24d4bf117ba2b1cba3fe2d5a8cc31fc8cd41"
++    },
++    "use-cases/portugal-node-sidecar/common/control_interface.py": {
++      "serving_sha256": "e9fc8b59c103f46f05e3af0573f4d64889defec164b0c0cc0dcd8909970b30a0",
++      "committed_sha256": "d0cc16e77aa6f2385523ab5604dfef34b9a34e04ee938214af169ff4b8c4a876"
++    },
++    "use-cases/portugal-node-sidecar/common/parameter_contract.py": {
++      "serving_sha256": "3d6212b9468caf6646442cb0b9e5064c18305f3cffbd92c68e8614e230bf8ef8",
++      "committed_sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa"
++    },
++    "use-cases/portugal-node-sidecar/common/runtime_observation.py": {
++      "serving_sha256": "816fcdb01bc44943172703b234c5fe4cc5a0b3c6a4a39984359d669e1ce57599",
++      "committed_sha256": "816fcdb01bc44943172703b234c5fe4cc5a0b3c6a4a39984359d669e1ce57599"
++    },
++    "use-cases/portugal-node-sidecar/common/task_manager.py": {
++      "serving_sha256": "ca2de87aa88fb7eac631dee5c1ebd8bc1bb682081683e80d71c57989f02be796",
++      "committed_sha256": "20442618e15293c1c621e34ab193315550fd6627138210307163082614ff8585"
++    },
++    "use-cases/portugal-node-sidecar/common/tef_operations.py": {
++      "serving_sha256": "d4175900cce5934b5e7c3cc82b32646631c37fbcd619b56c1f8486bab7482aba",
++      "committed_sha256": "3939f4536fa9dcc540d302d0b6c20b670a9b84d3e5bc2f99679b3cf0b4087239"
++    },
++    "use-cases/portugal-node-sidecar/common/__init__.py": {
++      "serving_sha256": "7dc451a6ac365e4948a45436bdfb654391c63ff14b30c3302a27104e52e9e85b",
++      "committed_sha256": "188b110df8a75c099231d7f8a7136a5366cdd4b4704bdc0ce7c7641907183f74"
++    },
++    "Portal/apps/api/app/services/owned_control_result.py": "265fab5495fe537051ab74a703db2a7a7b7ecfde8d9663171b6336ad1437fe67",
++    "Portal/apps/api/app/services/runtime_observation.py": "816fcdb01bc44943172703b234c5fe4cc5a0b3c6a4a39984359d669e1ce57599",
++    "Portal/deploy/normal_designer_workspace/ml_observer.py": "843ff76e68d58c15429e3d41e85b458593ba80f62376e0e5f59b0500ccd10093",
++    "Portal/deploy/portuguese_qualification/connector.py": "51079cbd4a49d4038e4253791dece9eb5898d53f8140c69c2c25991f2368706a"
++  },
++  "frozen_wp3_matches_committed_source_except_line_endings": true,
++  "line_ending_only_byte_differences": [
++    "orchestrator/src/main.py",
++    "orchestrator/src/worker_cli.py",
++    "orchestrator/src/worker_daemon.py",
++    "orchestrator/src/api/app.py",
++    "orchestrator/src/api/models.py",
++    "orchestrator/src/api/__init__.py",
++    "orchestrator/src/models/data_reference.py",
++    "orchestrator/src/models/graph.py",
++    "orchestrator/src/models/node.py",
++    "orchestrator/src/models/state.py",
++    "orchestrator/src/models/__init__.py",
++    "orchestrator/src/services/blueprint_parser.py",
++    "orchestrator/src/services/configuration_readiness.py",
++    "orchestrator/src/services/control_client.py",
++    "orchestrator/src/services/dockerinfo_parser.py",
++    "orchestrator/src/services/log_service.py",
++    "orchestrator/src/services/state_store.py",
++    "orchestrator/src/services/task_queue.py",
++    "orchestrator/src/services/worker.py",
++    "orchestrator/src/services/workflow_engine.py",
++    "orchestrator/src/services/__init__.py",
++    "use-cases/portugal-node-sidecar/common/control_interface.py",
++    "use-cases/portugal-node-sidecar/common/parameter_contract.py",
++    "use-cases/portugal-node-sidecar/common/task_manager.py",
++    "use-cases/portugal-node-sidecar/common/tef_operations.py",
++    "use-cases/portugal-node-sidecar/common/__init__.py"
++  ],
++  "designer_workflow_ids": [
++    "wf-6066f56dcf4b",
++    "wf-c155a6dd6853"
++  ],
++  "designer_workflow_count_after_invalid_edit": 2
++}
+-- 
+2.48.1.windows.1
+

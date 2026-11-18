@@ -1,1 +1,2 @@
 apps/api/app/services/parameter_values.py text eol=lf
+deploy/patches/*.patch text eol=lf

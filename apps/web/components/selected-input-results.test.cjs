@@ -39,7 +39,7 @@ test('late file reads cannot replace a newer selection',async()=>{
 function results({consumed,conflicting=false}={}){
  const node={instance_id:'train',task_id:'task-1',node_key:'service:Train',operation_name:'Train',configuration:{parameters:{batch_size:16}},input_bindings:[]};
  const snapshot={id:'sub-1',workflow_id:'wf-1',submitted:{request:{nodes:[{node_id:'train',configuration:{parameters:{batch_size:16}}}],run_input:selected.csvInput('chosen.csv','x\n1\n')},compiled:{solution_studio_metadata:{execution_instances:[node]}}}};
- const proof={...node,state:'available',evidence_level:'authenticated_runtime_receipt',delivered_parameters:{batch_size:16},algorithm_consumption:'Independent model evidence required',input_references_verified:true,summary:{observed_sequence_count:3,csv_data_rows:12},...(consumed?{algorithm_consumed:consumed}:{})};
+ const proof={...node,state:'available',evidence_level:consumed?'authenticated_algorithm_observation':'authenticated_runtime_receipt',delivered_parameters:{batch_size:16},algorithm_consumption:'Independent model evidence required',input_references_verified:true,summary:{observed_sequence_count:3,csv_data_rows:12},...(consumed?{algorithm_consumed:consumed,model_sha256:'model-fixture-hash',weights_sha256:'weights-fixture-hash',observation_sha256:'observation-fixture-hash'}:{})};
  let i=0;const values=[snapshot,{workflow_id:conflicting?'other':'wf-1',submission_id:'sub-1',instances:[proof]},''];
  const Component=load(path.join(__dirname,'submitted-configuration.tsx'),{react:{...React,useEffect:()=>{},useState:()=>[values[i++],()=>{}]},'../lib/selected-input':selected,'../lib/submitted-settings':settings}).default;
  return renderToStaticMarkup(React.createElement(Component,{workflowId:'wf-1',status:'completed',onConfigured:()=>{}}));
@@ -48,6 +48,7 @@ test('delivery and CSV counts are visible without claiming algorithm consumption
  const html=results();assert.match(html,/Selected CSV:/);assert.match(html,/chosen.csv/);assert.match(html,/Delivered to service:/);assert.match(html,/Generated sequences: 3/);assert.match(html,/CSV rows: 12/);assert.match(html,/Algorithm consumed: Unavailable/);assert.ok(!html.includes('Algorithm consumed: Verified'));
 });
 test('separately verified clamped values remain different from submitted values',()=>{
- const html=results({consumed:{batch_size:8}});assert.match(html,/Validated submitted settings:/);assert.match(html,/Algorithm consumed: Verified/);assert.match(html,/&quot;batch_size&quot;:16/);assert.match(html,/&quot;batch_size&quot;:8/);
+ const html=results({consumed:{batch_size:8}});assert.match(html,/Validated submitted settings:/);assert.match(html,/Delivered to service:/);assert.match(html,/Algorithm consumed: Verified/);assert.match(html,/&quot;batch_size&quot;:16/);assert.match(html,/&quot;batch_size&quot;:8/);
+ assert.match(html,/Model SHA-256: model-fixture-hash/);assert.match(html,/Weights SHA-256: weights-fixture-hash/);assert.match(html,/Runtime observation SHA-256: observation-fixture-hash/);
  const bad=results({conflicting:true});assert.ok(!bad.includes('Delivered to service:'));assert.ok(!bad.includes('Generated sequences: 3'));
 });

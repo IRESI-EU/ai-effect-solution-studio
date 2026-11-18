@@ -24,6 +24,32 @@ def test_csv_is_data_not_a_json_wrapped_setting():
     assert legacy['format'] == 'json' and json.loads(base64.b64decode(legacy['uri'])) == {'prompt': 'Existing JSON input'}
 
 
+@pytest.mark.parametrize('older', ['wp3', 'connector'])
+def test_old_csv_capability_rejected_without_any_dispatch(monkeypatch, older):
+    """Explicit HTTP-response doubles at the preflight adapter boundary."""
+    from types import SimpleNamespace
+    from app.services.orchestrator_adapter import require_parameter_transport
+    config={'operation_identity':'urn:fixture:train','contract_version':'1.0.0','schema_version':'1.0'}
+    node={'node_key':'fixture:Train','configuration':config,'parameter_contract_sha256':'a'*64,'input_bindings':[]}
+    compiled={'inputs':[{'protocol':'inline','format':'csv','uri':'eAoxCg=='}],
+        'solution_studio_metadata':{'execution_instances':[node]}}
+    capability={'capability_schema_version':'1.0','transports':['http-parameters-v1'],'parameter_validation':'wrapper-contract-v1'}
+    if older=='connector':capability['input_transport_validation']='wrapper-input-v1'
+    calls=[]
+    def get(url,**kwargs):
+        calls.append(('GET',url));assert url.endswith('/capabilities')
+        return SimpleNamespace(status_code=200,json=lambda:capability)
+    def post(url,**kwargs):
+        calls.append(('POST',url));assert url.endswith('/workflows/check-compatibility')
+        return SimpleNamespace(status_code=200,json=lambda:{'status':'ready',
+            'checks':{'fixture:Train':{**config,'parameter_contract_sha256':'a'*64}},'input_checks':{}})
+    monkeypatch.setattr('app.services.orchestrator_adapter.requests.get',get)
+    monkeypatch.setattr('app.services.orchestrator_adapter.requests.post',post)
+    with pytest.raises(HTTPException) as error:require_parameter_transport(compiled)
+    assert error.value.status_code==409
+    assert len(calls)==(1 if older=='wp3' else 2)
+
+
 @pytest.mark.parametrize('change', ['url', 'path', 'huge', 'version', 'name', 'header', 'rows', 'nul', 'extra'])
 def test_invalid_csv_or_reference_rejected_before_compilation(change):
     value = csv_input()

@@ -1,0 +1,17 @@
+{
+  "selected_csv_patch": {
+    "path": "deploy/patches/wp3-selected-csv-input-20261118.patch",
+    "sha256": "eec0045eaf3eca8bf230c8b00a19786a5c7bb243f6c98c7408f068e67bb5a511",
+    "parent": "7e16c810bd928a4bc13df16cb0fb7d712e6f57d8",
+    "result_commit": "e038f55f23af66f5e93175fbc24560a5aab9ba71",
+    "result_tree": "8aa7bab50d9d934ed9f333b4a8fda98ed89147e0"
+  },
+  "observation_patch": {
+    "path": "deploy/patches/wp3-algorithm-settings-observation-20261118.patch",
+    "sha256": "6b2cde7704612126aeaf80ab225d29be56dd5122423751cd8c6927fc6c842256",
+    "parent": "e038f55f23af66f5e93175fbc24560a5aab9ba71",
+    "source_commit": "69f7408e12908eb85a5de50af037e4f134e2be49",
+    "result_tree": "7d5db96b182241546baafcb38b88bd2b031f56d3"
+  },
+  "note": "Canonical Git patch bytes; patches are kept LF on Windows for hash reproducibility"
+}
