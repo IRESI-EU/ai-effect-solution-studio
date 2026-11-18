@@ -22,7 +22,9 @@ def owned_solution(solution_id, db, user, *, lock=False):
 
 
 def update(solution_id, payload, db, user, *, commit=True):
+    from app.services.selected_input import validate_metadata
     solution = owned_solution(solution_id, db, user, lock=True)
+    validate_metadata(payload.design_metadata)
     if solution.status == "archived":
         raise HTTPException(400, "Archived solutions cannot be edited. Restore the solution first.")
     if payload.design_metadata is not None:
@@ -57,6 +59,9 @@ def require_saved_input(solution, workflow):
     metadata = solution.design_metadata or {}
     # Legacy designs without a saved input declaration retain their established
     # explicit run-time input path. All new assistant/input edits persist this key.
+    from app.services.selected_input import KEY
+    if isinstance(workflow.run_input, dict) and KEY in workflow.run_input and "run_input" not in metadata:
+        raise HTTPException(409, "Save the selected CSV in this solution before running.")
     if "run_input" in metadata:
         canonical = lambda value: json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
         if canonical(metadata["run_input"]) != canonical(workflow.run_input):

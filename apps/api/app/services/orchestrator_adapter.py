@@ -28,6 +28,10 @@ def _service_authorized_payload(payload):
     return wire
 
 
+def requires_csv_transport(compiled):
+    return any(ref.get("protocol") == "inline" and ref.get("format") == "csv" for ref in compiled.get("inputs", []))
+
+
 def require_parameter_transport(compiled):
     try:
         response = requests.get(f"{settings.orchestrator_base_url}/capabilities", headers=_orchestrator_headers(), timeout=5)
@@ -37,9 +41,14 @@ def require_parameter_transport(compiled):
                 or "http-parameters-v1" not in capability["transports"]
                 or capability.get("parameter_validation") != "wrapper-contract-v1"):
             raise ValueError("Runtime cannot verify target-wrapper parameter contracts")
+        csv_input = requires_csv_transport(compiled)
+        if csv_input and capability.get("input_transport_validation") != "wrapper-input-v1":
+            raise ValueError("Runtime cannot verify selected CSV input support")
         # This endpoint is read-only: it never initializes tasks or starts a workflow.
+        wire_keys = ["blueprint", "dockerinfo", "task_configurations", "services_api_key"]
+        if csv_input: wire_keys.append("inputs")
         checked = requests.post(f"{settings.orchestrator_base_url}/workflows/check-compatibility",
-            json=_service_authorized_payload({key: compiled[key] for key in ("blueprint", "dockerinfo", "task_configurations", "services_api_key") if key in compiled}),
+            json=_service_authorized_payload({key: compiled[key] for key in wire_keys if key in compiled}),
             headers=_orchestrator_headers(), timeout=20)
         report = checked.json() if checked.status_code == 200 else None
         expected = {node["node_key"]: node for node in compiled["solution_studio_metadata"]["execution_instances"] if node["configuration"]}
@@ -51,6 +60,11 @@ def require_parameter_transport(compiled):
                 raise ValueError("Target wrapper operation/contract version differs from the saved instance")
             if check.get("parameter_contract_sha256") != node["parameter_contract_sha256"]:
                 raise ValueError("Target wrapper parameter definition differs from the operation registry")
+        if csv_input:
+            roots = {node["node_key"] for node in compiled["solution_studio_metadata"]["execution_instances"] if not node["input_bindings"]}
+            checks = report.get("input_checks", {})
+            if not roots or set(checks) != roots or any(checks[key].get("verified") != ["inline-csv-v1"] for key in roots):
+                raise ValueError("Selected CSV input is not supported by each start operation")
         return report
     except (requests.RequestException, ValueError, TypeError, KeyError, AttributeError):
         raise HTTPException(409, "Parameter compatibility could not be confirmed for this runtime and its target wrappers. Check the declared operation/contract/protocol versions; no workflow was submitted.") from None

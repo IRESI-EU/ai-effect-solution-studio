@@ -1,0 +1,122 @@
+{
+  "date": "2026-11-18",
+  "source_baselines": {
+    "portal": "72e440c7003f6c210f3a13e7dd0d2c4b6b19c550",
+    "wp3": "7e16c810bd928a4bc13df16cb0fb7d712e6f57d8"
+  },
+  "wp3_source_commit": "e837d12365be7cd8bcc872db845f9f4211a704ec",
+  "wp3_source_tree": "8aa7bab50d9d934ed9f333b4a8fda98ed89147e0",
+  "wp3_patch_sha256": "eec0045eaf3eca8bf230c8b00a19786a5c7bb243f6c98c7408f068e67bb5a511",
+  "patch_roundtrip_verified": true,
+  "journeys": {
+    "manual": {
+      "boundary": "normal authenticated API -> real HTTP WP3/Redis/Worker/Control/source API -> owned HTTP results",
+      "algorithm_double": true,
+      "assistant_double": false,
+      "fixture_limits_approvals": true,
+      "browser_acceptance": false,
+      "runs": [
+        {
+          "workflow_id": "wf-ab6add091aa1",
+          "delivered": {
+            "batch_size": 16,
+            "epochs": 1,
+            "sequence_len": 4
+          },
+          "csv": {
+            "observed_sequence_count": 2,
+            "csv_data_rows": 8
+          },
+          "output_sha256": "c96a929a0cfb77cbca9dae909000f295648f460c7868619fad6c28156690682d"
+        },
+        {
+          "workflow_id": "wf-39fb650153c1",
+          "delivered": {
+            "batch_size": 16,
+            "epochs": 2,
+            "sequence_len": 4
+          },
+          "csv": {
+            "observed_sequence_count": 3,
+            "csv_data_rows": 12
+          },
+          "output_sha256": "e3d00d3cb1b0a0141776f3a7e9a0f0e264ef71ecb542f2056e6bf12afba18811"
+        }
+      ],
+      "history_unchanged": true,
+      "cross_owner_denied": true,
+      "changed_input_denied_before_dispatch": true,
+      "paid_calls": 0
+    },
+    "assistant": {
+      "boundary": "normal authenticated API -> real HTTP WP3/Redis/Worker/Control/source API -> owned HTTP results",
+      "algorithm_double": true,
+      "assistant_double": true,
+      "fixture_limits_approvals": true,
+      "browser_acceptance": false,
+      "runs": [
+        {
+          "workflow_id": "wf-83b88b83b315",
+          "delivered": {
+            "batch_size": 16,
+            "epochs": 1,
+            "sequence_len": 4
+          },
+          "csv": {
+            "observed_sequence_count": 2,
+            "csv_data_rows": 8
+          },
+          "output_sha256": "c96a929a0cfb77cbca9dae909000f295648f460c7868619fad6c28156690682d"
+        },
+        {
+          "workflow_id": "wf-6709063b2b54",
+          "delivered": {
+            "batch_size": 16,
+            "epochs": 2,
+            "sequence_len": 4
+          },
+          "csv": {
+            "observed_sequence_count": 3,
+            "csv_data_rows": 12
+          },
+          "output_sha256": "e3d00d3cb1b0a0141776f3a7e9a0f0e264ef71ecb542f2056e6bf12afba18811"
+        }
+      ],
+      "history_unchanged": true,
+      "cross_owner_denied": true,
+      "changed_input_denied_before_dispatch": true,
+      "paid_calls": 0
+    }
+  },
+  "checks": {
+    "portal": 148,
+    "wp3_client_configuration": 54,
+    "wp3_source_runtimes": 42,
+    "ui_components_helpers": 26,
+    "next_production_build": "PASS",
+    "canonical_validator_copies": 5
+  },
+  "limits": {
+    "selected_csv_bytes": 60000,
+    "saved_input_json_bytes": 65536,
+    "workflow_start_input": "one initial reference for each start operation"
+  },
+  "limitations": [
+    "DGAN dependency is an explicit double in this new API journey",
+    "Assistant response is an explicit double in assistant mode",
+    "No Windows runtime or browser/independent user acceptance in this pass",
+    "No production/provider scientific approval",
+    "No new paid calls or deployment",
+    "Runtime-effective model settings are not inferred from delivery receipts"
+  ],
+  "portal_files_sha256": {
+    "apps/api/app/services/selected_input.py": "360a04c9a98166e224d7061a0e47e459b34e768a8889eaf2480252ef2be3fe8c",
+    "apps/api/app/services/workflow_compiler.py": "e32f1c35c1a9c9bef2c46131e05c0e9ef450608d1c15fe1011c6045dca6a2149",
+    "apps/api/app/services/orchestrator_adapter.py": "b2f727e2f8c41d975eced4001d517955f6abd5640137a2f9dcff194c196c3bd5",
+    "apps/api/app/services/owned_control_result.py": "05c4ce1c1cf6c98e8dd9acdc3519a1700ac05cdce204927bf31c21a939122442",
+    "apps/api/app/services/solution_editing.py": "3dbc67bc2e640ce2cd9f4cdb99ce049acb415a3a09e38a12d9579e4e271aa47a",
+    "apps/web/components/selected-csv-input.tsx": "2549d9a8e9d1ebf7b6dcb4dd5618db91cf7bd19168fcf602bb89841342f7716d",
+    "apps/web/components/submitted-configuration.tsx": "eda0edf9368a3ed60a8176ede4fc2b9421f191fd227f5782d7ff29e946bf9be3",
+    "apps/api/tests/test_portuguese_normal_execution.py": "f70515ce390bb34b5d68ea156af4e2e5eb36b83c21793926dd6e516c20b7d0e3"
+  }
+}

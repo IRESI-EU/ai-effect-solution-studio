@@ -116,3 +116,25 @@ def test_uninstalled_target_and_logged_out_user_never_fetch(remote, monkeypatch)
     assert preview(remote).status_code == 409 and remote.remote['calls'] == []
     remote.client.post('/auth/logout')
     assert preview(remote).status_code == 401 and remote.remote['calls'] == []
+
+
+@pytest.mark.parametrize('changed_bytes', [False, True])
+def test_selected_inline_csv_is_matched_to_received_bytes(remote, changed_bytes):
+    import base64
+    snapshot = deepcopy(remote.row.submitted)
+    reference = {'protocol': 'inline', 'format': 'csv', 'uri': base64.b64encode(b'x\n1\n').decode()}
+    snapshot['compiled']['inputs'] = [reference]
+    remote.row.submitted = snapshot
+    remote.row.submitted_sha256 = hashlib.sha256(json.dumps(snapshot, sort_keys=True, ensure_ascii=False, allow_nan=False).encode()).hexdigest()
+    remote.db.commit()
+    remote.observed['tasks'][0]['input_refs'] = [reference]
+    receipt = deepcopy(remote.remote['receipt']); receipt['input_sha256'] = control.digest(b'x\n2\n' if changed_bytes else b'x\n1\n')
+    remote.remote['responses']['/control/receipt/' + remote.remote['physical']] = (200, json.dumps(receipt).encode())
+    result = preview(remote)
+    if changed_bytes:
+        assert result.status_code == 409
+        assert [path for path,_ in remote.remote['calls']] == ['/control/receipt/' + remote.remote['physical']]
+    else:
+        assert result.status_code == 200, result.text
+        assert result.json()['evidence']['input_content_verified'] is True
+        assert 'algorithm_consumed' not in result.json()['evidence']

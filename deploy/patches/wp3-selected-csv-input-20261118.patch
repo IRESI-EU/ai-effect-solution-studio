@@ -1,0 +1,257 @@
+From e837d12365be7cd8bcc872db845f9f4211a704ec Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 18 Nov 2026 17:26:36 +0000
+Subject: [PATCH] feat: negotiate selected inline CSV input before configured
+ execution
+
+---
+ docs/SELECTED_CSV_INPUT_2026-11-18.md         | 13 +++++++++++
+ orchestrator/src/api/app.py                   |  6 ++---
+ .../src/services/configuration_readiness.py   | 15 ++++++++++---
+ orchestrator/src/services/control_client.py   | 22 +++++++++++++++++++
+ .../tests/unit/test_instance_configuration.py | 16 ++++++++++++++
+ tests/test_portuguese_configured_runtime.py   | 18 ++++++++++++++-
+ .../common/configured_synthetic.py            | 12 +++++++++-
+ .../common/configured_synthetic.py            | 12 +++++++++-
+ 8 files changed, 105 insertions(+), 9 deletions(-)
+ create mode 100644 docs/SELECTED_CSV_INPUT_2026-11-18.md
+
+diff --git a/docs/SELECTED_CSV_INPUT_2026-11-18.md b/docs/SELECTED_CSV_INPUT_2026-11-18.md
+new file mode 100644
+index 0000000..e30bf67
+--- /dev/null
++++ b/docs/SELECTED_CSV_INPUT_2026-11-18.md
+@@ -0,0 +1,13 @@
++# Selected CSV input through normal saved solutions
++
++This increment pairs with Portal branch `codex/normal-designer-run-20261118`, based on its published `72e440c` checkpoint. WP3 starts from published `7e16c81`. It is development source, not an installed runtime or a new real-DGAN qualification.
++
++The normal Portal compiler can send a small designer-selected CSV as an existing `inline` / `csv` DataReference. The configured Portuguese training connector now decodes those bytes under its existing operator input-byte ceiling, records their hash and submits them as the source API's multipart CSV. It does not interpret the data as settings, a path or a remote URL. Its file/approved-origin modes remain available. Node-specific scientific data/index requirements still belong to the provider.
++
++The connector advertises `input_transports: ["inline-csv-v1"]` for its implemented training operation. This is runtime capability metadata; it does not alter the provider's versioned parameter definitions. Other compatible services may advertise the same transport without Portal service-ID branches. They must actually implement its bounded base64 CSV handling.
++
++WP3 advertises `input_transport_validation: "wrapper-input-v1"`. Read-only compatibility and workflow submission verify selected CSV support on every graph start operation before creating tasks or worker state. The Control client checks the same capability before dispatch. An older runtime or wrapper without the declaration rejects this new input path. JSON and existing legacy requests retain their current path. The graph still receives one initial input across its start operations; independently selected per-step datasets and larger managed datasets remain future work.
++
++Source verification: the Portuguese API test executes the unchanged FastAPI source with an explicit DGAN dependency double. The shared Danish tests execute their real enumerator/renderer. The paired Portal test additionally uses normal provider/admin/designer API routes, real HTTP WP3/Redis/Worker/Control, saved CSV selection and owned HTTP result ingestion. Assistant mode substitutes the assistant provider response. These establish integration boundaries, not actual DGAN/browser/partner acceptance.
++
++The previous Windows real-DGAN evidence remains historical qualification of its exact inspected tree/image. This increment must be installed separately in a new development execution workspace, preserving the retained demo, review-only workspace, existing journals, models and closed grants. No paid call or production deployment is included.
+diff --git a/orchestrator/src/api/app.py b/orchestrator/src/api/app.py
+index c867e8b..3d16d81 100644
+--- a/orchestrator/src/api/app.py
++++ b/orchestrator/src/api/app.py
+@@ -75,14 +75,14 @@ class OrchestratorAPI:
+         @app.get("/capabilities", dependencies=[Depends(_verify_orchestrator_key)])
+         def capabilities():
+             return {"capability_schema_version": "1.0", "transports": ["http-parameters-v1"],
+-                    "parameter_validation": "wrapper-contract-v1", "runtime": "wp3-aie18-integration-v2"}
++                    "parameter_validation": "wrapper-contract-v1", "input_transport_validation": "wrapper-input-v1", "runtime": "wp3-aie18-integration-v2"}
+ 
+         @app.post("/workflows/check-compatibility", dependencies=[Depends(_verify_orchestrator_key)])
+         def check_compatibility(request: WorkflowSubmitRequest):
+             try:
+                 graph = self._blueprint_parser.parse_json(request.blueprint)
+                 endpoints = self._dockerinfo_parser.parse_json(request.dockerinfo)
+-                return check_configurations(graph, endpoints, request.task_configurations, request.services_api_key)
++                return check_configurations(graph, endpoints, request.task_configurations, request.services_api_key, request.inputs)
+             except (BlueprintParseError, DockerInfoParseError, ControlClientError, ValueError) as exc:
+                 raise HTTPException(409, f"Configuration compatibility rejected: {exc}") from exc
+ 
+@@ -115,7 +115,7 @@ class OrchestratorAPI:
+                 raise HTTPException(status_code=400, detail=f"Invalid dockerinfo: {e}")
+ 
+             try:
+-                check_configurations(graph, endpoints, request.task_configurations, request.services_api_key)
++                check_configurations(graph, endpoints, request.task_configurations, request.services_api_key, request.inputs)
+             except (ControlClientError, ValueError) as exc:
+                 raise HTTPException(409, f"Configuration compatibility rejected: {exc}") from exc
+ 
+diff --git a/orchestrator/src/services/configuration_readiness.py b/orchestrator/src/services/configuration_readiness.py
+index e231443..b1ac3aa 100644
+--- a/orchestrator/src/services/configuration_readiness.py
++++ b/orchestrator/src/services/configuration_readiness.py
+@@ -4,8 +4,9 @@ from services.parameter_contract import validate_configuration_envelope
+ import hashlib
+ 
+ 
+-def check_configurations(graph, endpoints, configurations, api_key=None):
+-    if not configurations:
++def check_configurations(graph, endpoints, configurations, api_key=None, inputs=None):
++    selected_csv = any(ref.get("protocol") == "inline" and ref.get("format") == "csv" for ref in (inputs or []))
++    if not configurations and not selected_csv:
+         return {"status": "ready", "checks": {}, "mode": "legacy"}
+     if set(configurations) - set(graph.all_nodes):
+         raise ValueError("Configuration targets an unknown graph instance")
+@@ -23,4 +24,12 @@ def check_configurations(graph, endpoints, configurations, api_key=None):
+             raise ValueError("Configured instance has no runtime endpoint")
+         checks[key] = client.check_configuration(f"http://{endpoint.address}:{endpoint.port}",
+             node.operation.operation_signature.operation_name, configuration)
+-    return {"status": "ready", "checks": checks, "mode": "configured"}
++    result = {"status": "ready", "checks": checks, "mode": "configured"}
++    if selected_csv:
++        result["input_checks"] = {}
++        for node in graph.start_nodes:
++            endpoint = endpoints.get(node.node.container_name)
++            if endpoint is None: raise ValueError("Selected input has no start-node endpoint")
++            result["input_checks"][node.key] = client.check_inputs(f"http://{endpoint.address}:{endpoint.port}",
++                node.operation.operation_signature.operation_name, inputs, configurations.get(node.key))
++    return result
+diff --git a/orchestrator/src/services/control_client.py b/orchestrator/src/services/control_client.py
+index 7d252c8..afd0fb5 100644
+--- a/orchestrator/src/services/control_client.py
++++ b/orchestrator/src/services/control_client.py
+@@ -107,6 +107,9 @@ class ControlClient:
+                 raise ValueError("Legacy parameters and validated configuration are mutually exclusive")
+             self.check_configuration(base_url, method, configuration)
+ 
++        if any(ref.protocol.value == "inline" and ref.format == "csv" for ref in (inputs or [])):
++            self.check_inputs(base_url, method, [ref.model_dump(mode="json") for ref in inputs], configuration)
++
+         request = ExecuteRequest(
+             method=method,
+             workflow_id=workflow_id,
+@@ -151,6 +154,25 @@ class ControlClient:
+         except (httpx.RequestError, ValueError, TypeError, KeyError) as exc:
+             raise ControlClientError(f"Configuration compatibility rejected: {exc}") from exc
+ 
++    def check_inputs(self, base_url, method, inputs, configuration=None):
++        """Read-only opt-in for selected inline CSV; no data is sent in this probe."""
++        if not any(ref.get("protocol") == "inline" and ref.get("format") == "csv" for ref in (inputs or [])):
++            return {"verified": []}
++        try:
++            with httpx.Client(timeout=min(self._timeout, 5)) as client:
++                response = client.get(f"{base_url.rstrip('/')}/control/capabilities", headers=self._headers)
++            if response.status_code != 200: raise ValueError("Input capabilities unavailable")
++            capability = response.json()
++            if capability.get("capability_schema_version") != "1.0" or not isinstance(capability.get("operations"), list):
++                raise ValueError("Unsupported input capability version")
++            matches = [op for op in capability.get("operations", []) if op.get("operation_name") == method
++                       and (configuration is None or all(op.get(key) == configuration[key] for key in ("operation_identity", "contract_version")))]
++            if len(matches) != 1 or not isinstance(matches[0].get("input_transports"), list) or "inline-csv-v1" not in matches[0]["input_transports"]:
++                raise ValueError("This operation does not advertise selected inline CSV input")
++            return {"verified": ["inline-csv-v1"]}
++        except (httpx.RequestError, ValueError, TypeError, KeyError, AttributeError) as exc:
++            raise ControlClientError(f"Input compatibility rejected: {exc}") from exc
++
+     def get_status(self, base_url: str, task_id: str) -> StatusResponse:
+         """Call GET /control/status/{task_id}."""
+         if not base_url or not base_url.strip():
+diff --git a/orchestrator/tests/unit/test_instance_configuration.py b/orchestrator/tests/unit/test_instance_configuration.py
+index 9276fee..b44dd94 100644
+--- a/orchestrator/tests/unit/test_instance_configuration.py
++++ b/orchestrator/tests/unit/test_instance_configuration.py
+@@ -185,3 +185,19 @@ def test_concurrent_workflows_have_independent_configurations():
+         return engine.get_instance_configuration(f"wf-{index}", "first:Process")["parameters"]["seed"]
+     with ThreadPoolExecutor(max_workers=4) as pool:
+         assert list(pool.map(save, range(12))) == [42, 43] * 6
++
++
++@pytest.mark.parametrize('declaration', [None, 'inline-csv-v1', [], ['inline-csv-v1']])
++def test_inline_csv_transport_is_negotiated_before_dispatch(httpx_mock, declaration):
++    from models.data_reference import DataReference
++    cap = deepcopy(CAPABILITY)
++    if declaration is not None: cap['operations'][0]['input_transports'] = declaration
++    httpx_mock.add_response(method='GET', url='http://fixture/control/capabilities', json=cap)
++    data = DataReference(protocol='inline', format='csv', uri='eAoxCg==')
++    if declaration == ['inline-csv-v1']:
++        httpx_mock.add_response(method='POST', url='http://fixture/control/execute', json={'status': 'complete'})
++        assert ControlClient().execute('http://fixture', 'Process', 'wf-csv', 'task-csv', inputs=[data]).status == 'complete'
++    else:
++        with pytest.raises(ControlClientError, match='Input compatibility rejected'):
++            ControlClient().execute('http://fixture', 'Process', 'wf-csv', 'task-csv', inputs=[data])
++        assert all(req.method == 'GET' for req in httpx_mock.get_requests())
+diff --git a/tests/test_portuguese_configured_runtime.py b/tests/test_portuguese_configured_runtime.py
+index 107539d..9ed05c7 100644
+--- a/tests/test_portuguese_configured_runtime.py
++++ b/tests/test_portuguese_configured_runtime.py
+@@ -118,7 +118,9 @@ def runtime(tmp_path, monkeypatch):
+ 
+ def test_reviewed_values_bind_to_actual_source_api_and_keep_configured_results(runtime):
+     original = runtime.csv.read_bytes(); earlier = None; runs = []
+-    assert runtime.client.get('/control/capabilities').json() == CAPABILITY
++    expected_capability = deepcopy(CAPABILITY)
++    expected_capability['operations'][0]['input_transports'] = ['inline-csv-v1']
++    assert runtime.client.get('/control/capabilities').json() == expected_capability
+     for task, epochs, sequences in [('first', 2, 2), ('second', 3, 4)]:
+         payload = request(runtime, task=task, epochs=epochs, batch_size=4, sequence_len=3)
+         train = finished(runtime, runtime.client.post('/control/execute', json=payload))
+@@ -361,3 +363,17 @@ def test_receipt_read_and_atomic_replace_share_a_lock(runtime, monkeypatch):
+         reader.join(3)
+         if writer.ident is not None: writer.join(3)
+     assert replacing.is_set() and not reader.is_alive() and not writer.is_alive()
++
++
++def test_inline_csv_selected_in_normal_builder_reaches_source_without_paths(runtime):
++    import base64
++    raw = b'datetime,value\n2026-01-01,2\n'
++    ref = {'protocol': 'inline', 'format': 'csv', 'uri': base64.b64encode(raw).decode()}
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, ref=ref)))
++    assert record['state'] == 'complete', record
++    assert record['input_sha256'] == hashlib.sha256(raw).hexdigest()
++    assert runtime.calls == [('train', {'index_col': 'datetime', 'sequence_len': 3, 'batch_size': 4, 'epochs': 2})]
++    for key, bad in [('wrong-base64', '%%%'), ('oversized', base64.b64encode(b'x'*(runtime.connector.max_bytes+1)).decode())]:
++        failure = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, task=key, ref={**ref, 'uri': bad})))
++        assert failure['state'] == 'failed' and failure['dispatch_started'] is False
++    assert len(runtime.calls) == 1
+diff --git a/use-cases/portugal-node-integrated/common/configured_synthetic.py b/use-cases/portugal-node-integrated/common/configured_synthetic.py
+index 2a2bdb9..d77db9c 100644
+--- a/use-cases/portugal-node-integrated/common/configured_synthetic.py
++++ b/use-cases/portugal-node-integrated/common/configured_synthetic.py
+@@ -105,7 +105,9 @@ class Runtime:
+                 if method == 'TrainModel' and not self.index_column:
+                     raise ValueError('Declare the training dataset index column separately from settings')
+                 parameter_contract_digest(operation['execution_parameters'])
+-                operations.append(deepcopy(operation))
++                advertised = deepcopy(operation)
++                if method == 'TrainModel': advertised['input_transports'] = ['inline-csv-v1']
++                operations.append(advertised)
+         identities = [(o['operation_name'], o['operation_identity'], o['contract_version']) for o in operations]
+         if not operations or len(set(identities)) != len(identities): raise ValueError('Missing or ambiguous installed operations')
+         result = {'capability_schema_version': '1.0', 'transports': ['http-parameters-v1'], 'operations': operations}
+@@ -175,6 +177,14 @@ class Runtime:
+         return hashlib.sha256(document.content).hexdigest()
+ 
+     def input_bytes(self, reference, client):
++        if reference.get('protocol') == 'inline' and reference.get('format') == 'csv':
++            if len(reference.get('uri', '')) > ((self.max_bytes + 2) // 3) * 4:
++                raise ValueError('Selected input exceeds the operator byte ceiling')
++            raw = base64.b64decode(reference['uri'], validate=True)
++            if not raw or len(raw) > self.max_bytes:
++                raise ValueError('Selected input exceeds the operator byte ceiling')
++            raw.decode('utf-8')
++            return raw
+         if reference.get('protocol') == 'file' and self.input_root:
+             path = Path(reference['uri']).resolve()
+             if self.input_root not in path.parents or not path.is_file() or path.stat().st_size > self.max_bytes:
+diff --git a/use-cases/portugal-node-sidecar/common/configured_synthetic.py b/use-cases/portugal-node-sidecar/common/configured_synthetic.py
+index 2a2bdb9..d77db9c 100644
+--- a/use-cases/portugal-node-sidecar/common/configured_synthetic.py
++++ b/use-cases/portugal-node-sidecar/common/configured_synthetic.py
+@@ -105,7 +105,9 @@ class Runtime:
+                 if method == 'TrainModel' and not self.index_column:
+                     raise ValueError('Declare the training dataset index column separately from settings')
+                 parameter_contract_digest(operation['execution_parameters'])
+-                operations.append(deepcopy(operation))
++                advertised = deepcopy(operation)
++                if method == 'TrainModel': advertised['input_transports'] = ['inline-csv-v1']
++                operations.append(advertised)
+         identities = [(o['operation_name'], o['operation_identity'], o['contract_version']) for o in operations]
+         if not operations or len(set(identities)) != len(identities): raise ValueError('Missing or ambiguous installed operations')
+         result = {'capability_schema_version': '1.0', 'transports': ['http-parameters-v1'], 'operations': operations}
+@@ -175,6 +177,14 @@ class Runtime:
+         return hashlib.sha256(document.content).hexdigest()
+ 
+     def input_bytes(self, reference, client):
++        if reference.get('protocol') == 'inline' and reference.get('format') == 'csv':
++            if len(reference.get('uri', '')) > ((self.max_bytes + 2) // 3) * 4:
++                raise ValueError('Selected input exceeds the operator byte ceiling')
++            raw = base64.b64decode(reference['uri'], validate=True)
++            if not raw or len(raw) > self.max_bytes:
++                raise ValueError('Selected input exceeds the operator byte ceiling')
++            raw.decode('utf-8')
++            return raw
+         if reference.get('protocol') == 'file' and self.input_root:
+             path = Path(reference['uri']).resolve()
+             if self.input_root not in path.parents or not path.is_file() or path.stat().st_size > self.max_bytes:
+-- 
+2.52.0
+

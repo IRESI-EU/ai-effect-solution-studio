@@ -5,6 +5,7 @@ catalogue record. An HTTP receipt establishes delivered settings and byte
 integrity, not independent model consumption. Existing receipt rows pin bytes.
 """
 import hashlib
+import base64
 import csv
 import io
 import json
@@ -108,7 +109,7 @@ def inspect(row, node, task, db, tasks):
         output = {'protocol': urlsplit(target['base_url']).scheme,
                   'uri': target['base_url'] + '/control/data/' + physical,
                   'format': task['output_refs'][0]['format']}
-        if task['output_refs'] != [output] or output['format'] not in {'json', 'csv'}:
+        if core(task['output_refs']) != [output] or output['format'] not in {'json', 'csv'}:
             raise ValueError('Observed output is not the exact configured task output')
         receipt_raw = fetch(target, '/control/receipt/' + physical, 256_000)
         receipt = json.loads(receipt_raw)
@@ -119,6 +120,12 @@ def inspect(row, node, task, db, tasks):
                 or not re.fullmatch('[a-f0-9]{64}', receipt.get('upstream_interface_sha256', ''))
                 or any(canonical(receipt['delivered_query'].get(k)) != canonical(v) for k, v in configuration['parameters'].items())):
             raise ValueError('Receipt differs from submitted task or delivered settings')
+        input_content_verified = False
+        if len(expected) == 1 and expected[0].get('protocol') == 'inline' and expected[0].get('format') == 'csv':
+            selected = base64.b64decode(expected[0]['uri'], validate=True)
+            if receipt.get('input_sha256') != digest(selected):
+                raise ValueError('Received CSV bytes differ from the selected input')
+            input_content_verified = True
         raw = fetch(target, '/control/data/' + physical, MAX_BYTES)
         if digest(raw) != receipt['output_sha256'] or len(raw) != receipt['output_bytes']:
             raise ValueError('Control output bytes differ from receipt')
@@ -145,11 +152,13 @@ def inspect(row, node, task, db, tasks):
                     raise ValueError('Concurrent Control receipt differs')
         proof = {key: node[key] for key in ('instance_id', 'task_id', 'node_key', 'operation_name')}
         proof.update(state='available', evidence_level='authenticated_runtime_receipt',
+                     input_references_verified=True, input_content_verified=input_content_verified,
                      wrapper_received=configuration['parameters'], delivered_parameters={k: receipt['delivered_query'][k] for k in configuration['parameters']},
                      algorithm_consumption='Not established by this receipt; independent model/runtime evidence is required',
                      output_sha256=digest(raw), manifest_sha256=receipt_hash,
                      upstream_interface_sha256=receipt['upstream_interface_sha256'],
                      summary={k: receipt[k] for k in ('observed_sequence_count', 'csv_data_rows') if k in receipt})
+        if input_content_verified: proof["input_binding_verified"] = True
         return raw, proof
     except (ValueError, KeyError, TypeError, OSError, IndexError, AttributeError):
         raise HTTPException(409, 'Control result failed endpoint, task, configuration or integrity validation') from None

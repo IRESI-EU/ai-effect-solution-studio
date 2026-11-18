@@ -708,7 +708,8 @@ def runtime_preflight_endpoint(
     compiled = compile_to_wp3_payload(workflow, db)
     result = run_runtime_preflight(workflow.nodes, db)
     result["design_compatibility"] = compiled["solution_studio_metadata"]["capability_bindings"]
-    if result["status"] == "ready" and any("configuration" in n.model_fields_set for n in workflow.nodes):
+    from app.services.orchestrator_adapter import requires_csv_transport
+    if result["status"] == "ready" and (any("configuration" in n.model_fields_set for n in workflow.nodes) or requires_csv_transport(compiled)):
         from app.services.orchestrator_adapter import require_parameter_transport
         result["parameter_compatibility"] = require_parameter_transport(compiled)
     if result["status"] == "ready":
@@ -776,7 +777,9 @@ def submit_workflow_to_orchestrator_endpoint(
             if saved_edges != sorted((e.source, e.target, json.dumps(e.binding.model_dump() if e.binding else None, sort_keys=True)) for e in workflow.edges):
                 raise HTTPException(409, "Submitted bindings must match the saved solution")
 
-    if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)) and not workflow.solution_id:
+    from app.services.selected_input import KEY as SELECTED_INPUT_KEY
+    if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)
+            or (isinstance(workflow.run_input, dict) and SELECTED_INPUT_KEY in workflow.run_input)) and not workflow.solution_id:
         raise HTTPException(422, "Configured execution requires an owned saved solution")
 
     preflight = run_runtime_preflight(workflow.nodes, db)
@@ -802,10 +805,12 @@ def submit_workflow_to_orchestrator_endpoint(
 
     if "inputs" in compiled_payload:
         orchestrator_payload["inputs"] = compiled_payload["inputs"]
-    if "task_configurations" in compiled_payload:
+    from app.services.orchestrator_adapter import requires_csv_transport
+    if "task_configurations" in compiled_payload or requires_csv_transport(compiled_payload):
         from app.services.orchestrator_adapter import require_parameter_transport
         compiled_payload["solution_studio_metadata"]["parameter_compatibility"] = require_parameter_transport(compiled_payload)
-        orchestrator_payload["task_configurations"] = compiled_payload["task_configurations"]
+        if "task_configurations" in compiled_payload:
+            orchestrator_payload["task_configurations"] = compiled_payload["task_configurations"]
 
     if "services_api_key" in compiled_payload:
         orchestrator_payload["services_api_key"] = compiled_payload["services_api_key"]
@@ -957,6 +962,8 @@ def create_solution(
     user: User = Depends(get_current_user),
 ):
     validate_builder_configurations(db, payload.nodes, payload.edges, user)
+    from app.services.selected_input import validate_metadata
+    validate_metadata(payload.design_metadata)
     solution = Solution(
         id=str(uuid4()),
         name=payload.name,

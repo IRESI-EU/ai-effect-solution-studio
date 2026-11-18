@@ -31,3 +31,10 @@ export function submittedEvidenceStatus(proof: any, evidence: any, kind: "parame
   const labels: Record<string, string> = { pending: "Pending", delayed: "Pending", inaccessible: "Inaccessible", conflicting: "Conflicting", invalid: "Invalid", collection_failed: "Invalid", unavailable: "Unavailable" };
   return { label: labels[state] || "Unavailable", message: proof?.message || evidence?.message || "No validated evidence is available for this instance." };
 }
+
+// Delivery receipts establish transport, never algorithm consumption.
+export function submittedDelivery(proof: any) {
+  return proof?.state === "available" && proof.evidence_level === "authenticated_runtime_receipt"
+    && proof.delivered_parameters && typeof proof.delivered_parameters === "object"
+    ? proof.delivered_parameters : null;
+}

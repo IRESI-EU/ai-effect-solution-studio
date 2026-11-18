@@ -24,6 +24,8 @@ import { apiErrorMessage } from "../../lib/solution-design";
 import { deploymentResultsUrl, executionLabel, isDutchExperiment } from "../../lib/experiment-journey";
 import { designReturnUrl } from "../design-ai/session";
 import SavedSolutionAssistant from "../../components/saved-solution-assistant";
+import SelectedCsvInput from "../../components/selected-csv-input";
+import { selectedCsv } from "../../lib/selected-input";
 import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
@@ -168,7 +170,7 @@ function BuilderContent() {
   const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
   const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
   const [designMetadata, setDesignMetadata] = useState<Record<string, unknown> | null>(null);
-  const [runInputMode, setRunInputMode] = useState<"prompt" | "json">("prompt");
+  const [runInputMode, setRunInputMode] = useState<"prompt" | "json" | "csv">("prompt");
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
   const [trainingInputRequired, setTrainingInputRequired] = useState(false);
@@ -304,7 +306,7 @@ function BuilderContent() {
         setEdges(body.edges || []);
         setDesignMetadata(body.design_metadata || null);
         if (body.design_metadata?.run_input != null) {
-          setRunInputMode("json");
+          setRunInputMode(selectedCsv(body.design_metadata.run_input) ? "csv" : "json");
           setRunInput(JSON.stringify(body.design_metadata.run_input, null, 2));
         } else { setRunInputMode("prompt"); setRunInput(""); }
       } catch (error) {
@@ -941,8 +943,10 @@ function BuilderContent() {
         <p>{offline ? "Execution is unavailable in this offline profile." : "These inputs are sent only after the required readiness check and explicit deployment confirmation."}</p>
         {guidedDutch ? <p>Saved experiment settings: seed <strong>{String((designMetadata?.run_input as Record<string, unknown>)?.seed)}</strong>. Review settings in Design with AI before preparing a run.</p> : <>
           <label htmlFor="run-input-mode">Run input (optional)</label>
-          <select id="run-input-mode" value={runInputMode} onChange={event => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); invalidateWorkflowResults(); }}><option value="prompt">Prompt</option><option value="json">JSON object</option></select>
-          <textarea aria-label="Run input" value={runInput} onChange={event => { setRunInput(event.target.value); setRunInputError(""); invalidateWorkflowResults(); }} rows={5} />
+          <select id="run-input-mode" value={runInputMode} onChange={event => { setRunInputMode(event.target.value as "prompt" | "json" | "csv"); if (event.target.value === "csv" || runInputMode === "csv") setRunInput(""); setRunInputError(""); invalidateWorkflowResults(); }}><option value="prompt">Prompt</option><option value="json">JSON object</option><option value="csv">CSV data</option></select>
+          {runInputMode === "csv" ? <SelectedCsvInput value={reviewInput(runInputMode, runInput)} onChange={value => {
+            setRunInput(value ? JSON.stringify(value) : ""); setRunInputError(""); invalidateWorkflowResults();
+          }} /> : <textarea aria-label="Run input" value={runInput} onChange={event => { setRunInput(event.target.value); setRunInputError(""); invalidateWorkflowResults(); }} rows={5} />}
           <p>Leave empty to use the service default. Required input errors are shown next to the review action.</p>
         </>}
         {runInputError && <p role="alert">{runInputError}</p>}

@@ -60,7 +60,7 @@ export function nextReviewAction(state: { steps: number; dirty: boolean; design:
   return state.readiness === "ready" && state.confirmationReady ? "confirm" : "prepare";
 }
 
-export function reviewInput(mode: "prompt" | "json", text: string): unknown {
+export function reviewInput(mode: "prompt" | "json" | "csv", text: string): unknown {
   if (!text.trim()) return null;
   if (mode === "prompt") return {prompt:text.trim()};
   try { return normalizeRunInput(JSON.parse(text)); } catch { return {unparsed_input:text, mode}; }

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { submittedEvidenceStatus, submittedSettings } from "../lib/submitted-settings";
+import { selectedCsv } from "../lib/selected-input";
+import { submittedDelivery, submittedEvidenceStatus, submittedSettings } from "../lib/submitted-settings";
 
 export default function SubmittedConfiguration({ workflowId, status, onConfigured, resultsAvailable = false }: { workflowId: string; status: string; resultsAvailable?: boolean; onConfigured: (value: boolean) => void }) {
   const [snapshot, setSnapshot] = useState<any>(null);
@@ -31,13 +32,15 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
     <h2>Recorded instance settings</h2>
     {error && <p role="status">{error}</p>}
     {snapshot && <>
-      <p>Validated settings from the immutable submission. Algorithm consumption is verified separately for each instance.</p>
+      <p>Saved settings submitted for this run. Service delivery and algorithm consumption are checked separately.</p>
+      {selectedCsv(snapshot.submitted.request?.run_input) && <p>Selected CSV: <strong>{selectedCsv(snapshot.submitted.request?.run_input)!.name}</strong></p>}
       {evidence?.source && <p>Evidence source: {evidence.source}. {evidence.historical && "Historical files and associations are revalidated on inspection."}</p>}
       {evidence?.observation_source && <p>Task observation: {evidence.observation_source}.</p>}
       {snapshot.submitted.compiled.solution_studio_metadata.capability_bindings?.status === "verified" && <details><summary>Recorded data connections</summary><ul>{snapshot.submitted.compiled.solution_studio_metadata.capability_bindings.bindings.map((binding: any, index: number) => <li key={index}>{binding.source} / {binding.source_slot} → {binding.target} / {binding.target_slot}<br />Schema: {binding.schema_ref}</li>)}</ul></details>}
       {snapshot.submitted.compiled.solution_studio_metadata.execution_instances.map((node: any) => {
         const { requested, effective, consumed, proof } = submittedSettings(snapshot, evidence, node);
         const parameters = submittedEvidenceStatus(proof, evidence, "parameters");
+        const delivered = submittedDelivery(proof);
         const input = submittedEvidenceStatus(proof, evidence, "input");
         const metadata = snapshot.submitted.compiled.solution_studio_metadata;
         const published = metadata.capability_bindings?.contracts?.[node.instance_id];
@@ -50,15 +53,18 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
             <p>This operation has no editable settings.</p>
           </> : <>
           <p>Requested overrides: {requested != null ? <code>{JSON.stringify(requested)}</code> : "Not recorded"}</p>
-          <p>Validated effective settings: {effective != null ? <code>{JSON.stringify(effective)}</code> : "Legacy caller — service defaults were not recorded as instance parameters"}</p>
+          <p>Validated submitted settings: {effective != null ? <code>{JSON.stringify(effective)}</code> : "Legacy caller — service defaults were not recorded as instance parameters"}</p>
+          {delivered && <p>Delivered to service: <code>{JSON.stringify(delivered)}</code></p>}
           <p>Algorithm consumed: {consumed != null ? <>Verified — <code>{JSON.stringify(consumed)}</code></> : <>{parameters.label} — {parameters.message}</>}</p>
           </>}
-          {node.input_bindings.length > 0 && <p>Data input: {input.label} — {input.message}</p>}
+          {proof?.state === "available" && proof.input_references_verified && <p>Input references match this submitted run.</p>}
+          {node.input_bindings.length > 0 && (!proof?.input_references_verified || proof?.input_binding_verified) && <p>Data input: {input.label} — {input.message}</p>}
+          {proof?.state === "available" && proof.summary?.observed_sequence_count != null && <p>Generated sequences: {proof.summary.observed_sequence_count} · CSV rows: {proof.summary.csv_data_rows}</p>}
           {proof?.state === "available" && proof.summary?.generated_examples != null && <p>Generated sequences: {proof.summary.generated_examples} · Observations per sequence: {proof.summary.observations_per_example} · CSV rows: {proof.summary.csv_rows}</p>}
           {proof?.state === "available" && proof.download_url === `/api/deployments/by-workflow/${workflowId}/tasks/${node.task_id}/generated-csv` && <p><a className="btn btn-primary" href={proof.download_url} download>Download generated CSV</a></p>}
           {proof?.state === "available" && proof.model_binding && <p>Model association: TrainModel task {proof.model_binding.producer_task_id} in this workflow. Model SHA-256: <code>{proof.model_binding.model_sha256}</code></p>}
           {proof?.summary?.topology_count != null && <p>Topologies generated: {proof.summary.topology_count}</p>}
-          {proof?.state === "available" && <details><summary>Evidence details</summary><p>{proof.instrumentation}</p><p style={{ overflowWrap: "anywhere" }}>Output SHA-256: {proof.output_sha256}</p></details>}
+          {proof?.state === "available" && <details><summary>Evidence details</summary><p>{proof.instrumentation || proof.algorithm_consumption}</p><p style={{ overflowWrap: "anywhere" }}>Output SHA-256: {proof.output_sha256}</p></details>}
         </div>;
       })}
     </>}
