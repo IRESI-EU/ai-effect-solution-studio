@@ -10,11 +10,21 @@
 
 **Production deployed:** no. The Windows retained demo, saved designs/results, production and old spending scopes were not changed. This is a development-branch feature, not a production demonstration invitation.
 
+## Correct file and environment
+
+**Do not paste `portugal-source-openapi.json` into Production → Publish → Advanced import → Paste JSON.** That field expects a complete **AI-EFFECT service manifest**, with top-level `service`, `runtime` and `interface` objects. The linked file is a standalone **OpenAPI interface description**, so those missing-field errors are expected. It cannot register a Docker service on its own.
+
+A read-only production OpenAPI check on 18 November returned HTTP 200, SHA-256 `4f453bf534f76c0dced0f2b33f540a5358121c3032822490bb80a366e4cd2e03`. It exposes none of the new `parameter-onboarding` routes or saved-solution assistant routes, and no `ExecutionParameterContract` schema. The new workflow below is **not available on https://platform.ai-effect.eu/** at this checkpoint. Retrying or adding parameter-looking JSON fields will not enable it. A GitHub development commit is not a production deployment.
+
+In the development version, select an **already registered, owned service** in Publish's existing-service selector and use the separate **Adjustable service settings → Supply an interface description → Interface description file** control. This is where the OpenAPI file belongs. It is not the Advanced import Manifest JSON field. For a new service, first supply its complete real service manifest; the development importer may also accept OpenAPI nested under `interface.openapi` with `interface.openapi_operation_id`. Do not fabricate its image, network address or runtime mapping to make validation pass.
+
+The source file contains candidate declarations, not activated parameter definitions. Provider review, runtime qualification, normal service approval and publication are still required before designer controls and real execution can use those settings.
+
 ## What can be demonstrated
 
 In the development version, use normal provider authentication and Publish's existing-service selector. Choose the service whose actual upstream operation is being reviewed; this is not a service-ID registration script.
 
-1. Upload [portugal-source-openapi.json](parameter-onboarding/portugal-source-openapi.json), an **input-signature export** from the pinned integrated Portuguese source. It is not observed live OpenAPI and does not claim deployed-version equivalence.
+1. In **Adjustable service settings → Supply an interface description → Interface description file**, upload [portugal-source-openapi.json](parameter-onboarding/portugal-source-openapi.json), an **input-signature export** from the pinned integrated Portuguese source. It is not observed live OpenAPI and does not claim deployed-version equivalence.
 2. Select the real `POST /train` or `GET /generate` operation from the supplied document. The Portal no longer requires guessing its operation ID from the Control method name.
 3. Inspect discovered candidates, exact schema pointers and query/body locations. CSV upload, model reference, account identity, overwrite and response format remain separate from algorithm settings. Unsupported dataset-column free text stays unselectable until a supported provider description exists.
 4. Select settings, review meanings/defaults/limits and record actual algorithm mapping. Save a versioned draft without claiming runtime tests that have not happened. A non-Control interface can save definitions too; it cannot publish execution settings without a supported configuration connector.

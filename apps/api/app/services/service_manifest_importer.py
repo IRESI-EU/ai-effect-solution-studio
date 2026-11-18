@@ -135,7 +135,15 @@ def normalize_manifest(
     branch: str,
     manifest_path: str,
     validation: list[ValidationMessage],
-) -> NormalizedImportedService:
+) -> NormalizedImportedService | None:
+    if "openapi" in manifest and not all(isinstance(manifest.get(key), dict) for key in ("service", "runtime", "interface")):
+        validation.append(ValidationMessage(level="error", message=(
+            "This JSON is an OpenAPI interface description, not an AI-EFFECT service manifest. "
+            "Advanced import > Paste JSON requires service, runtime and interface objects with actual runtime details. "
+            "Use the separate Adjustable service settings review for interface descriptions in deployments that include parameter onboarding. "
+            "Uploading an OpenAPI file does not publish or enable parameter controls."
+        )))
+        return None
     schema_version = manifest.get("schema_version")
     if not schema_version:
         validation.append(ValidationMessage(level="warning", message="schema_version is missing."))
