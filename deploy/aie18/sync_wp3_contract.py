@@ -21,6 +21,9 @@ destinations = [
     (target / "src/services/parameter_contract.py", target / "parameter_contract_provenance.json"),
     (args.wp3_root.resolve() / "use-cases/common/parameter_contract.py", args.wp3_root.resolve() / "use-cases/common/parameter_contract_provenance.json"),
     (args.wp3_root.resolve() / "use-cases/denmark-node/common/parameter_contract.py", args.wp3_root.resolve() / "use-cases/denmark-node/common/parameter_contract_provenance.json"),
+    *[(args.wp3_root.resolve() / f"use-cases/{family}/common/parameter_contract.py",
+       args.wp3_root.resolve() / f"use-cases/{family}/common/parameter_contract_provenance.json")
+      for family in ("portugal-node-sidecar", "portugal-node-integrated")],
 ]
 for destination, record in destinations:
     if args.check:

@@ -1,0 +1,1500 @@
+From 56f9ab98395ed73c6b753720699621b47b70222d Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 18 Nov 2026 13:23:14 +0000
+Subject: [PATCH] feat: deliver reviewed settings to Portuguese source API with
+ durable receipts
+
+---
+ ...ORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md |  60 ++++
+ tests/test_portuguese_configured_runtime.py   | 328 ++++++++++++++++++
+ .../common/configured_synthetic.py            | 270 ++++++++++++++
+ .../common/control_interface.py               |  65 +++-
+ .../common/parameter_contract.py              | 119 +++++++
+ .../common/parameter_contract_provenance.json |   7 +
+ .../common/configured_synthetic.py            | 270 ++++++++++++++
+ .../common/control_interface.py               |  65 +++-
+ .../common/parameter_contract.py              | 119 +++++++
+ .../common/parameter_contract_provenance.json |   7 +
+ 10 files changed, 1296 insertions(+), 14 deletions(-)
+ create mode 100644 docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md
+ create mode 100644 tests/test_portuguese_configured_runtime.py
+ create mode 100644 use-cases/portugal-node-integrated/common/configured_synthetic.py
+ create mode 100644 use-cases/portugal-node-integrated/common/parameter_contract.py
+ create mode 100644 use-cases/portugal-node-integrated/common/parameter_contract_provenance.json
+ create mode 100644 use-cases/portugal-node-sidecar/common/configured_synthetic.py
+ create mode 100644 use-cases/portugal-node-sidecar/common/parameter_contract.py
+ create mode 100644 use-cases/portugal-node-sidecar/common/parameter_contract_provenance.json
+
+diff --git a/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md b/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md
+new file mode 100644
+index 0000000..2d178b0
+--- /dev/null
++++ b/docs/PORTUGUESE_CONFIGURED_RUNTIME_2026-11-18.md
+@@ -0,0 +1,60 @@
++# Portuguese source-API configuration connector — 18 November 2026
++
++Status: implemented and source-wiring verified. Real DGAN/model, Docker, Windows and independent user qualification remain pending. This is a node connector for the existing shared `http-parameters-v1` contract, not a new Portal workflow architecture. The original fixed-value handlers and source ML API are unchanged.
++
++## Supported mapping
++
++| Reviewed setting | Source endpoint and argument |
++| --- | --- |
++| `epochs` | `POST /train` query `epochs`, passed to `train(..., epochs=...)` |
++| `batch_size` | `POST /train` query `batch_size`, passed to `train(..., batch_size=...)` |
++| `sequence_len` | `POST /train` query `sequence_len`, passed to `train(..., sequence_len=...)` |
++| `number_of_examples` | `GET /generate` query `number_of_examples`, passed to `generate(..., num_examples=...)` |
++
++The legacy adapter's `username`/`max_epochs` query names differ from this source API's `user_id`/`epochs`. Enabling this opt-in connector avoids that mismatch. It does not modify a retained legacy deployment.
++
++No scientific limits, approved defaults, service IDs, reviewer IDs or fixed workflows are installed in code. Contracts supply meanings, values, limits, identity and version. Dataset bytes and model selection remain separate input references. `return_csv=true`, unique model naming, `overwrite=false`, namespace and the dataset index column are connector/operator behavior, not invented user-adjustable parameters.
++
++The connector checks the actual upstream OpenAPI query names/types before dispatch. This establishes interface agreement, not implementation/version equivalence. Operators still need image/source provenance and actual algorithm evidence.
++
++## Isolated operator configuration
++
++Both `portugal-node-sidecar/common` and `portugal-node-integrated/common` carry the identical connector and maintained portable validator. The existing sidecar Dockerfile already copies the complete `common/` package. No compose file, running image or old service volume has been changed.
++
++| Environment | Required meaning |
++| --- | --- |
++| `SERVICE_PARAMETER_CONTRACT_DIR` | Read-only directory containing only the normal Portal capability exports for installed operations. Without it, the legacy runtime remains selected. |
++| `CONTROL_PARAMETER_STATE_DIR` | New, dedicated, persistent writable directory. Existing unrecognised nonempty directories and symlink roots are refused. One running connector process per directory. |
++| `SERVICE_API_KEY` | Private Control bearer key, provided through the deployment's secret mechanism; never a parameter or exported definition. Use the existing WP3 `services_api_key` transport. |
++| `SYNTHETIC_DATA_URL` | Exact upstream source-API base URL, reachable on a private network. Its direct training/generation endpoints must not be exposed as an unauthenticated public bypass. |
++| `SELF_URL` | Reachable configured connector base URL, used for output references. |
++| `SYNTHETIC_DATA_USER_NAMESPACE` | Fresh operator-owned namespace for qualification; never reuse the retained demo's models or namespace. |
++| `SYNTHETIC_DATA_INDEX_COLUMN` | Actual selected training CSV index column, required when training is installed. |
++| `SYNTHETIC_DATA_INPUT_ROOT` | Optional approved directory for separately selected local CSVs; paths outside it are refused. |
++| `SYNTHETIC_DATA_INPUT_ORIGINS` | Optional comma-separated exact HTTP(S) origins for separately selected remote data. Redirects are refused. |
++| `SYNTHETIC_DATA_INPUT_TOKEN` | Optional separate data-provider bearer token; ML/Control keys are not forwarded to a data provider. |
++| `SYNTHETIC_DATA_API_KEY` | Optional upstream ML API bearer token. |
++| `CONTROL_PARAMETER_QUALIFICATION_MODE=true` | Required to install exports marked `qualification_only`. Use only in a separate qualification runtime. This does not publish a draft or make it available to normal designers. |
++| `SYNTHETIC_DATA_SHARED_MODELS_FILE` | Optional operator-installed JSON mapping opaque model references to explicit `service_callers` shares and source model identities. Enables standalone generation without a mandatory training step. |
++
++Runtime capability exports require normal reviewed/active contracts. Draft qualification exports come from the existing authenticated `/operation-contracts/{id}/qualification-capability` endpoint and stay isolated. Do not tick provider attestations based on these source-wiring fixtures.
++
++## Dispatch and result behavior
++
++A configured request must contain the exact reviewed effective values in its configuration envelope and one separate input reference. Invalid types, versions, unknown keys, unsupported mappings, legacy parameter mixing and missing configuration for an installed operation are rejected before dispatch. Other unconfigured deployments retain their existing path.
++
++Workflow and logical task identities produce a unique physical task ID. The connector writes a durable acceptance journal before queueing. Repeated requests cannot overwrite a result or redispatch, including after restart. A single worker serialises source operations. A restart with unresolved work, a timeout, an unexpected synchronous response or an inconsistent output leaves an uncertain result; new and already queued work stop until an operator reconciles it. No automatic retry is performed. Reconciliation tooling is not implemented: preserve the directory and resolve the upstream outcome before an operator-led recovery; do not erase it or select a fresh directory to bypass uncertainty.
++
++Training completion requires synchronous HTTP 200 plus the new model appearing in `/models`. Progress counters do not establish completion. Outputs expose an opaque model reference; a private model may only be consumed inside its originating workflow. An explicitly declared shared model can instead be selected for a standalone generation operation. Generated CSVs must contain source-declared `example` markers and the requested sequence count. Downloaded inputs and streamed outputs have operator/connector byte ceilings, separate from scientific limits.
++
++Authenticated `/control/receipt/{physical_task_id}` records the immutable envelope, delivered query, source OpenAPI hash, input hash, task association, output hash and CSV observations. `/control/data/{id}` verifies output bytes against their recorded hash. An HTTP acknowledgement never produces an `algorithm consumed: verified` claim. Real model inspection/instrumentation is still necessary.
++
++Normal Portal result inspection currently qualifies owned file/inline references. These new authenticated HTTP references and runtime receipts are **not yet integrated into that normal preview/evidence path**. Do not expose unrestricted remote fetching or remove ownership guards. This is an explicit remaining connection after runtime qualification.
++
++## Verification and remaining dependencies
++
++`tests/test_portuguese_configured_runtime.py` loads the unchanged real Portuguese FastAPI source, executes its query/multipart binding, training dispatch, model listing and CSV construction, and substitutes only the DGAN dependency with an explicit double. It verifies two different configurations, retained output bytes, model associations, standalone declared-model generation, failure/authentication/ownership/uncertainty cases and both deployment copies. Synthetic bounds and model files are labelled fixtures. This is not real ML training or scientific acceptance.
++
++Run with the node's pandas dependency and test dependencies available: `pytest -q tests/test_portuguese_configured_runtime.py tests/test_native_control_parameters.py`. The accompanying Portal evidence file records delivered arguments and CSV observations without credentials. The canonical validator can be checked from Portal with `python deploy/aie18/sync_wp3_contract.py --wp3-root /path/to/wp3 --check`.
++
++The actual DGAN package/image, its observed effective batch handling, fresh persisted model/output access, owner-confirmed limits/defaults, index/data suitability and runtime provenance require Windows/node inspection. Docker, a real model run, Portal HTTP result/receipt ingestion and normal-user acceptance are not established by these tests. Production and paid-model acceptance remain separate.
+diff --git a/tests/test_portuguese_configured_runtime.py b/tests/test_portuguese_configured_runtime.py
+new file mode 100644
+index 0000000..633b92e
+--- /dev/null
++++ b/tests/test_portuguese_configured_runtime.py
+@@ -0,0 +1,328 @@
++"""Source-API wiring checks, with an explicit ML double (not model qualification).
++
++The real Portuguese FastAPI source binds requests and builds CSVs. Only its
++DGAN dependency is replaced; fixture bounds are not Portuguese owner approval.
++"""
++import base64
++from copy import deepcopy
++import hashlib
++import importlib.util
++import json
++import os
++from pathlib import Path
++import sys
++import time
++import threading
++from types import ModuleType, SimpleNamespace
++
++import httpx
++import pandas as pd
++import pytest
++from fastapi.testclient import TestClient
++
++ROOT = Path(__file__).resolve().parents[1]
++COMMON = ROOT / 'use-cases/portugal-node-sidecar/common'
++spec = importlib.util.spec_from_file_location('configured_portugal_test', COMMON / '__init__.py', submodule_search_locations=[str(COMMON)])
++package = importlib.util.module_from_spec(spec)
++sys.modules[spec.name] = package
++spec.loader.exec_module(package)
++from configured_portugal_test import control_interface as control
++from configured_portugal_test.configured_synthetic import Runtime
++
++CAPABILITY = {'capability_schema_version': '1.0', 'transports': ['http-parameters-v1'], 'operations': [
++    {'operation_name': method, 'operation_identity': 'urn:test:source-api:' + method, 'contract_version': '1.0.0',
++     'execution_parameters': {'schema_version': '1.0', 'transport': 'http-parameters-v1', 'properties': {
++         name: {'type': 'integer', 'minimum': 1, 'maximum': 10, 'required': True,
++                'title': name, 'description': 'Synthetic test bounds, not owner approval'} for name in names}}}
++    for method, names in [('TrainModel', ['epochs', 'batch_size', 'sequence_len']), ('GenerateData', ['number_of_examples'])]]}
++
++
++def configuration(method, values):
++    return {'contract_id': 'test-contract-' + method, 'operation_identity': 'urn:test:source-api:' + method,
++            'contract_version': '1.0.0', 'schema_version': '1.0', 'instance_id': 'test-instance-' + method, 'parameters': values}
++
++
++def request(runtime, method='TrainModel', task='train', workflow='wf-test', ref=None, **values):
++    return {'method': method, 'workflow_id': workflow, 'task_id': task,
++            'inputs': [ref or {'protocol': 'file', 'uri': str(runtime.csv), 'format': 'csv'}],
++            'configuration': configuration(method, values or {'epochs': 2, 'batch_size': 4, 'sequence_len': 3})}
++
++
++def finished(runtime, response):
++    assert response.status_code == 200, response.text
++    identity = response.json()['task_id']
++    deadline = time.monotonic() + 5
++    while time.monotonic() < deadline:
++        record = runtime.client.get('/control/receipt/' + identity).json()
++        if record['state'] not in {'queued', 'running'}:
++            return record
++        time.sleep(.01)
++    pytest.fail('Configured task failed to reach a terminal state')
++
++
++@pytest.fixture
++def runtime(tmp_path, monkeypatch):
++    calls = []; requests = []; model_settings = {}
++    # An explicit algorithm double; execute the unchanged real API around it.
++    dgan = ModuleType('dgan')
++    def train(frame, **kwargs):
++        calls.append(('train', {key: value for key, value in kwargs.items() if key != 'progress_callback'}))
++        return {'sequence_len': kwargs['sequence_len']}
++    def save(value, path):
++        folder = Path(path); folder.mkdir(parents=True); (folder / 'model.pt').write_text('TEST DOUBLE, NOT A MODEL')
++        model_settings[str(folder)] = value
++    def generate(value, num_examples):
++        calls.append(('generate', num_examples))
++        return [pd.DataFrame({'datetime': list(range(value['sequence_len'])), 'value': [1] * value['sequence_len']}) for _ in range(num_examples)]
++    dgan.train = train; dgan.save_train_result = save; dgan.load_train_result = lambda path: model_settings[str(Path(path))]; dgan.generate = generate
++    source = ROOT / 'use-cases/portugal-node-integrated/synthetic_data_generation/main.py'
++    module_spec = importlib.util.spec_from_file_location('portuguese_source_api_test', source)
++    module = importlib.util.module_from_spec(module_spec)
++    with monkeypatch.context() as imports:
++        imports.setitem(sys.modules, 'dgan', dgan)
++        imports.setitem(sys.modules, 'common', ModuleType('common'))  # Disable source's optional legacy Control router only.
++        module_spec.loader.exec_module(module)
++    module.model_Root = str(tmp_path / 'source-models')
++    upstream = TestClient(module.app)
++    behavior = {'train_status': None, 'wrong_schema': False, 'extra_csv': False, 'train_gate': None}
++    class SourceTransport(httpx.BaseTransport):
++        def handle_request(self, req):
++            requests.append((req.method, req.url.path, dict(req.url.params)))
++            if req.url.path == '/openapi.json' and behavior['wrong_schema']:
++                doc = deepcopy(module.app.openapi())
++                doc['paths']['/train']['post']['parameters'] = [p for p in doc['paths']['/train']['post']['parameters'] if p['name'] != 'epochs']
++                return httpx.Response(200, json=doc)
++            if req.url.path == '/train' and behavior['train_gate']:
++                entered, released = behavior['train_gate']; entered.set(); assert released.wait(5)
++            if req.url.path == '/train' and behavior['train_status']:
++                return httpx.Response(behavior['train_status'], text='Not a completed synchronous response')
++            if req.url.path == '/generate' and behavior['extra_csv']:
++                return httpx.Response(200, text='example,value\n1,2\n', headers={'content-type': 'text/csv'})
++            return upstream.send(req)
++    contract_dir = tmp_path / 'contracts'; contract_dir.mkdir(); (contract_dir / 'reviewed.json').write_text(json.dumps(CAPABILITY))
++    input_dir = tmp_path / 'inputs'; input_dir.mkdir(); csv = input_dir / 'selected.csv'; csv.write_text('datetime,value\n2026-01-01,1\n2026-01-02,2\n')
++    env = {'SERVICE_PARAMETER_CONTRACT_DIR': str(contract_dir), 'CONTROL_PARAMETER_STATE_DIR': str(tmp_path / 'state'),
++           'SYNTHETIC_DATA_URL': 'http://source.test', 'SELF_URL': 'https://adapter.test', 'SERVICE_API_KEY': 'private-test-key',
++           'SYNTHETIC_DATA_USER_NAMESPACE': 'disposable_test', 'SYNTHETIC_DATA_INDEX_COLUMN': 'datetime', 'SYNTHETIC_DATA_INPUT_ROOT': str(input_dir)}
++    handlers = {method: lambda req: pytest.fail('Configured operation fell through to legacy fixed values') for method in ['TrainModel', 'GenerateData']}
++    connector = Runtime(env, handlers, transport=SourceTransport())
++    monkeypatch.setenv('SERVICE_API_KEY', env['SERVICE_API_KEY'])
++    monkeypatch.setattr(Runtime, 'from_environment', classmethod(lambda cls, ignored: connector))
++    client = TestClient(control.create_app(handlers)); client.headers['Authorization'] = 'Bearer ' + env['SERVICE_API_KEY']
++    result = SimpleNamespace(client=client, connector=connector, csv=csv, calls=calls, requests=requests, env=env,
++                             handlers=handlers, behavior=behavior, upstream=upstream, root=tmp_path)
++    yield result
++    connector.pool.shutdown(wait=True); client.close(); upstream.close()
++
++
++def test_reviewed_values_bind_to_actual_source_api_and_keep_configured_results(runtime):
++    original = runtime.csv.read_bytes(); earlier = None; runs = []
++    assert runtime.client.get('/control/capabilities').json() == CAPABILITY
++    for task, epochs, sequences in [('first', 2, 2), ('second', 3, 4)]:
++        payload = request(runtime, task=task, epochs=epochs, batch_size=4, sequence_len=3)
++        train = finished(runtime, runtime.client.post('/control/execute', json=payload))
++        assert train['state'] == 'complete', train
++        assert train['configuration'] == payload['configuration']
++        assert train['delivered_query']['epochs'] == epochs
++        assert set(train['delivered_query']) == {'user_id', 'model_name', 'index_col', 'overwrite', 'epochs', 'batch_size', 'sequence_len'}
++        assert 'Not established' in train['algorithm_consumption']
++        assert train['upstream_interface_sha256']
++        assert runtime.calls[-1] == ('train', {'index_col': 'datetime', 'sequence_len': 3, 'batch_size': 4, 'epochs': epochs})
++        ref = train['output']
++        assert ref['protocol'] == 'https'
++        generated = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, 'GenerateData', task + '-generate', ref=ref, number_of_examples=sequences)))
++        assert generated['state'] == 'complete', generated
++        assert generated['observed_sequence_count'] == sequences and generated['csv_data_rows'] == sequences * 3
++        assert runtime.calls[-1] == ('generate', sequences)
++        assert generated['model_binding']['producer_task_id'] == train['service_task_id']
++        assert runtime.client.get('/control/output/' + generated['service_task_id']).json()['output'] == generated['output']
++        data = runtime.client.get('/control/data/' + generated['service_task_id']).content
++        assert hashlib.sha256(data).hexdigest() == generated['output_sha256']
++        if earlier:
++            identity, old_bytes = earlier
++            assert runtime.client.get('/control/data/' + identity).content == old_bytes
++        earlier = generated['service_task_id'], data
++        runs.append({'configuration': train['configuration'], 'source_train_function_arguments': runtime.calls[-2][1],
++                     'source_generate_function_num_examples': sequences,
++                     'observed_csv_sequences': generated['observed_sequence_count'],
++                     'observed_csv_rows': generated['csv_data_rows'], 'output_sha256': generated['output_sha256'],
++                     'training_task': train['service_task_id'], 'generation_task': generated['service_task_id']})
++    assert runtime.csv.read_bytes() == original
++    assert len([c for c in runtime.calls if c[0] == 'train']) == 2
++    if os.environ.get('AIE_PT_WIRING_EVIDENCE_PATH'):
++        evidence = {'date': '2026-11-18', 'boundary': 'Real unchanged source API with explicit DGAN dependency double',
++                    'status': 'WIRING_VERIFIED_MODEL_QUALIFICATION_PENDING', 'runs': runs,
++                    'source_api_sha256': hashlib.sha256((ROOT / 'use-cases/portugal-node-integrated/synthetic_data_generation/main.py').read_bytes()).hexdigest(),
++                    'source_api_unchanged_from_baseline': True,
++                    'limitations': ['No real ML training or algorithm acceptance', 'Fixture bounds are not provider approval',
++                                    'No Windows, Docker, browser or normal-user acceptance',
++                                    'No paid AI requests, production deployment or retained demo changes',
++                                    'Portal authenticated remote-result preview and runtime receipt ingestion still need integration']}
++        Path(os.environ['AIE_PT_WIRING_EVIDENCE_PATH']).write_text(json.dumps(evidence, indent=2) + '\n')
++
++
++@pytest.mark.parametrize('mutation', ['null', 'mixed', 'type', 'unknown', 'range', 'version', 'omitted', 'path', 'input-count'])
++def test_invalid_requests_never_dispatch_or_use_legacy_settings(runtime, mutation):
++    payload = request(runtime)
++    if mutation == 'null': payload['configuration'] = None
++    if mutation == 'mixed': payload['parameters'] = {}
++    if mutation == 'type': payload['configuration']['parameters']['epochs'] = True
++    if mutation == 'unknown': payload['configuration']['parameters']['max_epochs'] = 3
++    if mutation == 'range': payload['configuration']['parameters']['epochs'] = 99
++    if mutation == 'version': payload['configuration']['contract_version'] = 'unknown'
++    if mutation == 'omitted': payload.pop('configuration')
++    if mutation == 'path': payload['workflow_id'] = '../outside'
++    if mutation == 'input-count': payload['inputs'] = []
++    assert runtime.client.post('/control/execute', json=payload).status_code == 422
++    assert runtime.calls == [] and runtime.requests == []
++    assert list(runtime.connector.storage.glob('cfg-*.json')) == []
++
++
++def test_same_task_is_not_redispatched_after_completion_or_restart(runtime):
++    payload = request(runtime)
++    record = finished(runtime, runtime.client.post('/control/execute', json=payload))
++    assert record['state'] == 'complete'
++    assert runtime.client.post('/control/execute', json=payload).status_code == 409
++    runtime.connector.pool.shutdown(wait=True)
++    other = Runtime(runtime.env, runtime.handlers, transport=runtime.connector.transport)
++    try:
++        with pytest.raises(Exception) as rejected: other.submit(control.ExecuteRequest(**payload))
++        assert rejected.value.status_code == 409
++    finally: other.pool.shutdown(wait=True)
++    assert len(runtime.calls) == 1
++
++
++def test_acknowledgement_is_not_completion_and_unknown_outcome_blocks_new_attempts(runtime):
++    runtime.behavior['train_status'] = 202
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    assert record['state'] == 'uncertain' and 'algorithm_consumption' not in record
++    assert runtime.client.get('/control/status/' + record['service_task_id']).json()['status'] == 'failed'
++    assert runtime.client.get('/control/output/' + record['service_task_id']).status_code == 409
++    assert runtime.client.post('/control/execute', json=request(runtime, task='different-id')).status_code == 409
++    assert [path for _, path, _ in runtime.requests] == ['/openapi.json', '/train']
++    assert runtime.calls == []
++
++
++def test_incompatible_live_interface_fails_before_algorithm(runtime):
++    runtime.behavior['wrong_schema'] = True
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    assert record['state'] == 'failed' and record['dispatch_started'] is False
++    assert runtime.calls == [] and [path for _, path, _ in runtime.requests] == ['/openapi.json']
++
++
++def test_private_model_cannot_be_used_in_another_workflow_and_outputs_are_checked(runtime):
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    generated = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, 'GenerateData', 'generate', workflow='other-workflow', ref=record['output'], number_of_examples=2)))
++    assert generated['state'] == 'failed' and not generated['dispatch_started']
++    runtime.connector.path(record['service_task_id'], 'data').write_text('changed')
++    assert runtime.client.get('/control/data/' + record['service_task_id']).status_code == 409
++    generated = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, 'GenerateData', 'tamper', ref=record['output'], number_of_examples=2)))
++    assert generated['state'] == 'failed' and 'changed' in generated['error']
++    assert len(runtime.calls) == 1
++
++
++def test_explicitly_shared_model_supports_standalone_generation(runtime):
++    folder = runtime.root / 'source-models' / 'shared_test' / 'declared_model'
++    folder.mkdir(parents=True); (folder / 'model.pt').write_text('TEST DOUBLE')
++    # Explicit fixture preparation through source's ML double, not a hidden training operation.
++    endpoint = next(r.endpoint for r in runtime.upstream.app.routes if getattr(r, 'path', '') == '/generate')
++    endpoint.__globals__['load_train_result'] = lambda path: {'sequence_len': 3}
++    shared = runtime.root / 'shared.json'
++    shared.write_text(json.dumps({'urn:test:shared:model': {'share_scope': 'service_callers', 'user_id': 'shared_test', 'model_name': 'declared_model'}}))
++    runtime.connector.environment['SYNTHETIC_DATA_SHARED_MODELS_FILE'] = str(shared)
++    ref = {'protocol': 'inline', 'format': 'json', 'uri': base64.b64encode(json.dumps({'model_ref': 'urn:test:shared:model'}).encode()).decode()}
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, 'GenerateData', 'standalone', ref=ref, number_of_examples=2)))
++    assert record['state'] == 'complete', record
++    assert runtime.calls == [('generate', 2)] and record['observed_sequence_count'] == 2
++
++
++def test_restart_with_unresolved_job_is_uncertain_and_cannot_be_bypassed(runtime):
++    identity = 'cfg-' + 'a' * 64
++    runtime.connector.path(identity).write_text(json.dumps({'state': 'running', 'boot': 'earlier-boot'}))
++    assert runtime.connector.read(identity)['state'] == 'uncertain'
++    assert runtime.client.post('/control/execute', json=request(runtime)).status_code == 409
++    assert runtime.requests == []
++
++
++def test_control_records_and_data_require_service_authorization(runtime):
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    runtime.client.headers.pop('Authorization')
++    for path in ['capabilities', 'receipt/' + record['service_task_id'], 'status/' + record['service_task_id'], 'output/' + record['service_task_id'], 'data/' + record['service_task_id']]:
++        assert runtime.client.get('/control/' + path).status_code == 401
++    assert runtime.client.post('/control/execute', json=request(runtime, task='denied')).status_code == 401
++    assert len(runtime.calls) == 1
++
++
++def test_data_outside_approved_root_is_not_read_or_dispatched(runtime):
++    outside = runtime.root / 'private.csv'; outside.write_text('PRIVATE')
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, ref={'protocol': 'file', 'uri': str(outside), 'format': 'csv'})))
++    assert record['state'] == 'failed' and not record['dispatch_started']
++    assert runtime.calls == []
++
++
++def test_wrong_csv_sequence_count_does_not_claim_a_configured_result(runtime):
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    runtime.behavior['extra_csv'] = True
++    generated = finished(runtime, runtime.client.post('/control/execute', json=request(runtime, 'GenerateData', 'bad-csv', ref=record['output'], number_of_examples=2)))
++    assert generated['state'] == 'uncertain' and 'sequence count' in generated['error']
++    assert generated['output'] is None
++
++
++def test_legacy_runtime_is_unchanged_and_configuration_is_never_silently_ignored(monkeypatch):
++    monkeypatch.delenv('SERVICE_PARAMETER_CONTRACT_DIR', raising=False); monkeypatch.delenv('SERVICE_API_KEY', raising=False)
++    calls = []
++    with TestClient(control.create_app({'Echo': lambda req: (calls.append(req) or control.ExecuteResponse(status='complete'))})) as client:
++        value = {'method': 'Echo', 'workflow_id': 'wf', 'task_id': 'old-task', 'inputs': []}
++        assert client.post('/control/execute', json=value).json()['status'] == 'complete'
++        assert client.get('/control/status/old-task').json()['status'] == 'complete'
++        assert client.get('/control/capabilities').status_code == 409
++        value['configuration'] = configuration('TrainModel', {'epochs': 2})
++        assert client.post('/control/execute', json=value).status_code == 409
++    assert len(calls) == 1
++
++
++def test_both_deployments_use_identical_connector_and_canonical_validator():
++    for name in ['control_interface.py', 'configured_synthetic.py', 'parameter_contract.py', 'parameter_contract_provenance.json']:
++        assert (COMMON / name).read_bytes() == (ROOT / 'use-cases/portugal-node-integrated/common' / name).read_bytes()
++    canonical = ROOT / 'orchestrator/src/services/parameter_contract.py'
++    assert (COMMON / 'parameter_contract.py').read_bytes() == canonical.read_bytes()
++    assert json.loads((COMMON / 'parameter_contract_provenance.json').read_text())['sha256'] == hashlib.sha256(canonical.read_bytes()).hexdigest()
++
++
++def test_already_queued_work_stops_after_an_uncertain_dispatch(runtime):
++    entered, released = threading.Event(), threading.Event()
++    runtime.behavior.update(train_status=202, train_gate=(entered, released))
++    first = runtime.client.post('/control/execute', json=request(runtime))
++    try:
++        assert entered.wait(3)
++        second = runtime.client.post('/control/execute', json=request(runtime, task='already-queued'))
++    finally:
++        released.set()
++    assert finished(runtime, first)['state'] == 'uncertain'
++    queued = finished(runtime, second)
++    assert queued['state'] == 'failed' and not queued['dispatch_started']
++    assert [path for _, path, _ in runtime.requests] == ['/openapi.json', '/train']
++
++
++def test_operator_must_choose_new_state_and_install_supported_contracts(runtime):
++    unsafe = runtime.root / 'old-state'; unsafe.mkdir(); (unsafe / 'retain.txt').write_text('RETAIN')
++    with pytest.raises(ValueError, match='existing data is preserved'):
++        Runtime({**runtime.env, 'CONTROL_PARAMETER_STATE_DIR': str(unsafe)}, runtime.handlers)
++    assert (unsafe / 'retain.txt').read_text() == 'RETAIN'
++    with pytest.raises(ValueError, match='private SERVICE_API_KEY'):
++        Runtime({**runtime.env, 'SERVICE_API_KEY': ''}, runtime.handlers)
++    invalid = deepcopy(CAPABILITY)
++    invalid['operations'][0]['execution_parameters']['properties']['not_implemented'] = {'type': 'integer'}
++    path = runtime.root / 'contracts/reviewed.json'; path.write_text(json.dumps(invalid))
++    assert runtime.client.post('/control/execute', json=request(runtime)).status_code == 422
++    assert runtime.requests == []
++
++
++def test_draft_export_requires_explicit_isolated_qualification_mode(runtime):
++    document = {**CAPABILITY, 'qualification_only': True}
++    (runtime.root / 'contracts/reviewed.json').write_text(json.dumps(document))
++    assert runtime.client.post('/control/execute', json=request(runtime)).status_code == 422
++    runtime.connector.qualification = True
++    assert runtime.client.get('/control/capabilities').json()['qualification_only'] is True
++    record = finished(runtime, runtime.client.post('/control/execute', json=request(runtime)))
++    assert record['state'] == 'complete'  # Source wiring double only, no publication.
+diff --git a/use-cases/portugal-node-integrated/common/configured_synthetic.py b/use-cases/portugal-node-integrated/common/configured_synthetic.py
+new file mode 100644
+index 0000000..4ab39fc
+--- /dev/null
++++ b/use-cases/portugal-node-integrated/common/configured_synthetic.py
+@@ -0,0 +1,270 @@
++"""Opt-in configuration for the source-declared Synthetic Data API.
++
++No service IDs, saved workflows, reviewer IDs, scientific limits or parameter
++values are registered here. Operators install provider-reviewed contract exports.
++The canonical parameter validator is shared with Studio and WP3.
++"""
++from __future__ import annotations
++
++import base64
++import csv
++import io
++from concurrent.futures import ThreadPoolExecutor
++from copy import deepcopy
++import hashlib
++import json
++import os
++from pathlib import Path
++import re
++import threading
++from urllib.parse import urlsplit
++from uuid import uuid4
++
++import httpx
++from fastapi import HTTPException
++
++from .parameter_contract import match_wrapper_configuration, parameter_contract_digest
++
++TYPES = {"TrainModel": {"epochs": "integer", "batch_size": "integer", "sequence_len": "integer"},
++         "GenerateData": {"number_of_examples": "integer"}}
++SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
++
++
++def atomic_json(path, value):
++    temporary = path.with_suffix('.' + uuid4().hex + '.tmp')
++    try:
++        with temporary.open('x', encoding='utf-8') as stream:
++            json.dump(value, stream, sort_keys=True, allow_nan=False); stream.flush(); os.fsync(stream.fileno())
++        os.replace(temporary, path)
++    finally:
++        if temporary.exists(): temporary.unlink()
++
++
++def base_url(value):
++    parsed = urlsplit(value)
++    if parsed.scheme not in {'http', 'https'} or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
++        raise ValueError('Declare an HTTP service base URL without credentials, query or fragment')
++    return value.rstrip('/')
++
++
++class Runtime:
++    def __init__(self, environment, handlers, transport=None):
++        self.environment = dict(environment)
++        self.contract_directory = Path(environment['SERVICE_PARAMETER_CONTRACT_DIR']).resolve()
++        raw_storage = Path(environment['CONTROL_PARAMETER_STATE_DIR'])
++        if raw_storage.is_symlink(): raise ValueError('Use a dedicated non-symlink state directory')
++        self.storage = raw_storage.resolve()
++        self.upstream = base_url(environment['SYNTHETIC_DATA_URL'])
++        self.self_url = base_url(environment['SELF_URL'])
++        self.namespace = environment.get('SYNTHETIC_DATA_USER_NAMESPACE', '')
++        if not re.fullmatch(r'[A-Za-z0-9_-]{1,100}', self.namespace):
++            raise ValueError('Declare an operator-controlled Synthetic Data user namespace')
++        if not environment.get('SERVICE_API_KEY'):
++            raise ValueError('Configured Control requires a private SERVICE_API_KEY')
++        self.index_column = environment.get('SYNTHETIC_DATA_INDEX_COLUMN', '')
++        self.input_root = Path(environment['SYNTHETIC_DATA_INPUT_ROOT']).resolve() if environment.get('SYNTHETIC_DATA_INPUT_ROOT') else None
++        self.origins = set(filter(None, environment.get('SYNTHETIC_DATA_INPUT_ORIGINS', '').split(',')))
++        self.max_bytes = int(environment.get('CONTROL_MAX_INPUT_BYTES', '2000000'))
++        if not 1 <= self.max_bytes <= 100_000_000: raise ValueError('Invalid operator input byte ceiling')
++        self.storage.mkdir(parents=True, exist_ok=True)
++        marker = self.storage / 'configured-state-v1.json'
++        if marker.exists():
++            if json.loads(marker.read_text()).get('kind') != 'configured-synthetic-v1': raise ValueError('State directory belongs to another runtime')
++        else:
++            if any(self.storage.iterdir()): raise ValueError('Choose a new empty state directory; existing data is preserved')
++            with marker.open('x') as stream: json.dump({'kind': 'configured-synthetic-v1'}, stream)
++        self.qualification = environment.get('CONTROL_PARAMETER_QUALIFICATION_MODE') == 'true'
++        self.handlers = handlers; self.transport = transport
++        self.boot = uuid4().hex; self.lock = threading.Lock()
++        self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix='configured-synthetic')
++        self.capabilities()  # Reject incomplete operator configuration before serving.
++
++    @classmethod
++    def from_environment(cls, handlers):
++        if not os.environ.get('SERVICE_PARAMETER_CONTRACT_DIR'): return None
++        try: return cls(os.environ, handlers)
++        except (ValueError, KeyError, OSError, TypeError) as exc:
++            raise RuntimeError('Configured Synthetic Data setup is incomplete or incompatible: ' + str(exc)) from exc
++
++    def capabilities(self):
++        operations = []; qualification_only = False
++        for path in sorted(self.contract_directory.glob('*.json')):
++            if path.stat().st_size > 256000: raise ValueError('Contract export exceeds byte ceiling')
++            document = json.loads(path.read_text())
++            if document.get('capability_schema_version') != '1.0' or document.get('transports') != ['http-parameters-v1']:
++                raise ValueError('Unsupported provider capability export')
++            if document.get('qualification_only'):
++                if not self.qualification: raise ValueError('Draft exports require an explicitly enabled isolated qualification runtime')
++                qualification_only = True
++            for operation in document['operations']:
++                method = operation['operation_name']; properties = operation['execution_parameters']['properties']
++                if method not in self.handlers or method not in TYPES or not properties:
++                    raise ValueError('No verified parameter mapping for this operation')
++                if any(name not in TYPES[method] or spec['type'] != TYPES[method][name] for name, spec in properties.items()):
++                    raise ValueError('Runtime does not implement the exported parameter mapping')
++                if method == 'TrainModel' and not self.index_column:
++                    raise ValueError('Declare the training dataset index column separately from settings')
++                parameter_contract_digest(operation['execution_parameters'])
++                operations.append(deepcopy(operation))
++        identities = [(o['operation_name'], o['operation_identity'], o['contract_version']) for o in operations]
++        if not operations or len(set(identities)) != len(identities): raise ValueError('Missing or ambiguous installed operations')
++        result = {'capability_schema_version': '1.0', 'transports': ['http-parameters-v1'], 'operations': operations}
++        if qualification_only: result['qualification_only'] = True
++        return result
++
++    def path(self, identity, suffix='json'):
++        if not re.fullmatch(r'cfg-[a-f0-9]{64}', identity): raise HTTPException(404, 'Unknown configured task')
++        return self.storage / (identity + '.' + suffix)
++
++    def read(self, identity):
++        path = self.path(identity)
++        if not path.is_file() or path.is_symlink(): raise HTTPException(404, 'Unknown configured task')
++        value = json.loads(path.read_text())
++        if value['state'] in {'queued', 'running'} and value['boot'] != self.boot:
++            value.update(state='uncertain', error='Service restarted with an unresolved execution. Reconcile upstream before creating another attempt.')
++        return value
++
++    def submit(self, request):
++        if not SAFE_ID.fullmatch(request.workflow_id) or not SAFE_ID.fullmatch(request.task_id):
++            raise HTTPException(422, 'Configured workflow/task identities must be safe identifiers')
++        try:
++            capability = self.capabilities()
++            match = match_wrapper_configuration(request.method, request.configuration, capability)
++        except (ValueError, KeyError, TypeError) as exc:
++            raise HTTPException(422, 'Configuration differs from installed reviewed definitions') from exc
++        if len(request.inputs) != 1: raise HTTPException(422, 'This operation needs exactly one separately selected input reference')
++        identity = 'cfg-' + hashlib.sha256((request.workflow_id + '\0' + request.task_id).encode()).hexdigest()
++        value = {'workflow_id': request.workflow_id, 'task_id': request.task_id, 'service_task_id': identity,
++                 'method': request.method, 'configuration': deepcopy(request.configuration),
++                 'parameter_contract_sha256': match['parameter_contract_sha256'], 'boot': self.boot,
++                 'state': 'queued', 'dispatch_started': False, 'output': None}
++        with self.lock:
++            # Unresolved earlier dispatches must be reconciled, not worked around
++            # by sending the same algorithm under a different task identity.
++            if any(self.read(p.stem)['state'] == 'uncertain' for p in self.storage.glob('cfg-*.json')):
++                raise HTTPException(409, 'An earlier upstream outcome is unresolved; reconcile it before dispatch')
++            try:
++                with self.path(identity).open('x', encoding='utf-8') as stream:
++                    json.dump(value, stream); stream.flush(); os.fsync(stream.fileno())
++            except FileExistsError as exc:
++                raise HTTPException(409, 'Configured task already accepted; inspect it, do not redispatch') from exc
++        self.pool.submit(self.run, identity, deepcopy(request.inputs[0]))
++        return {'status': 'running', 'task_id': identity}
++
++    def client(self):
++        token = self.environment.get('SYNTHETIC_DATA_API_KEY', '')
++        return httpx.Client(timeout=600, follow_redirects=False, trust_env=False, transport=self.transport,
++                            headers={'Authorization': 'Bearer ' + token} if token else {})
++
++    def verify_query_interface(self, client, method, parameters):
++        document = client.get(self.upstream + '/openapi.json'); document.raise_for_status()
++        path, verb = ('/train', 'post') if method == 'TrainModel' else ('/generate', 'get')
++        operation = document.json()['paths'][path][verb]
++        declarations = {p['name']: p for p in operation.get('parameters', []) if p.get('in') == 'query'}
++        needed = set(parameters) | ({'user_id', 'model_name', 'index_col', 'overwrite'} if method == 'TrainModel' else {'user_id', 'model_name', 'return_csv'})
++        if not needed <= set(declarations): raise ValueError('Upstream query names differ from the reviewed connector; no algorithm dispatched')
++        if any(declarations[name].get('schema', {}).get('type') != TYPES[method][name] for name in parameters):
++            raise ValueError('Upstream parameter types differ; no algorithm dispatched')
++        return hashlib.sha256(document.content).hexdigest()
++
++    def input_bytes(self, reference, client):
++        if reference.get('protocol') == 'file' and self.input_root:
++            path = Path(reference['uri']).resolve()
++            if self.input_root not in path.parents or not path.is_file() or path.stat().st_size > self.max_bytes:
++                raise ValueError('Selected input is outside the operator-approved input directory or byte ceiling')
++            return path.read_bytes()
++        if reference.get('protocol') in {'http', 'https'}:
++            parsed = urlsplit(reference['uri'])
++            origin = parsed.scheme + '://' + parsed.netloc
++            if origin not in self.origins or parsed.username or parsed.password or parsed.fragment:
++                raise ValueError('Selected input origin is not operator-approved')
++            # Never forward an ML service key to a data provider.
++            token = self.environment.get('SYNTHETIC_DATA_INPUT_TOKEN', '')
++            with httpx.Client(timeout=60, follow_redirects=False, trust_env=False, transport=self.transport) as reader:
++                with reader.stream('GET', reference['uri'], headers={'Authorization': 'Bearer ' + token} if token else {}) as response:
++                    response.raise_for_status(); data = bytearray()
++                    for chunk in response.iter_bytes():
++                        data.extend(chunk)
++                        if len(data) > self.max_bytes: raise ValueError('Selected input exceeds the operator byte ceiling')
++                    return bytes(data)
++        raise ValueError('Select a supported, operator-authorised data reference; data is not a parameter')
++
++    def resolve_model(self, reference, workflow_id):
++        if reference.get('protocol') == 'inline' and reference.get('format') == 'json':
++            raw = base64.b64decode(reference['uri'], validate=True)
++        elif reference.get('protocol') in {'http', 'https'} and reference['uri'].startswith(self.self_url + '/control/data/'):
++            producer = self.read(reference['uri'].removeprefix(self.self_url + '/control/data/'))
++            if producer['state'] != 'complete' or producer['method'] != 'TrainModel': raise ValueError('Model producer is not complete')
++            raw = self.path(producer['service_task_id'], 'data').read_bytes()
++            if hashlib.sha256(raw).hexdigest() != producer['output_sha256']: raise ValueError('Model producer output changed')
++        else:
++            raise ValueError('Select a configured model reference or a declared shared-model reference')
++        if len(raw) > 16000: raise ValueError('Model reference is too large')
++        value = json.loads(raw)
++        if set(value) != {'model_ref'} or not isinstance(value['model_ref'], str): raise ValueError('Model input must be an opaque model_ref')
++        key = hashlib.sha256(value['model_ref'].encode()).hexdigest()
++        local = self.storage / ('model-' + key + '.json')
++        if local.is_file():
++            model = json.loads(local.read_text())
++            if model['workflow_id'] != workflow_id: raise ValueError('A private model belongs to a different workflow')
++            return model
++        catalogue = self.environment.get('SYNTHETIC_DATA_SHARED_MODELS_FILE')
++        shared = json.loads(Path(catalogue).read_text()).get(value['model_ref']) if catalogue else None
++        if not shared or shared.get('share_scope') != 'service_callers': raise ValueError('Model reference is not authorised')
++        if not SAFE_ID.fullmatch(shared['user_id']) or not SAFE_ID.fullmatch(shared['model_name']): raise ValueError('Shared model identity is invalid')
++        return {'user_id': shared['user_id'], 'model_name': shared['model_name'], 'shared_reference': value['model_ref']}
++
++    def run(self, identity, reference):
++        value = self.read(identity); value['state'] = 'running'
++        atomic_json(self.path(identity), value)
++        try:
++            with self.lock:
++                if any(p.stem != identity and self.read(p.stem)['state'] == 'uncertain'
++                       for p in self.storage.glob('cfg-*.json')):
++                    raise ValueError('An earlier upstream outcome became unresolved; queued work was not dispatched')
++            with self.client() as client:
++                parameters = value['configuration']['parameters']
++                value['upstream_interface_sha256'] = self.verify_query_interface(client, value['method'], parameters)
++                if value['method'] == 'TrainModel':
++                    data = self.input_bytes(reference, client)
++                    args = {'user_id': self.namespace, 'model_name': 'model_' + identity[4:36], 'index_col': self.index_column,
++                            'overwrite': False, **parameters}
++                    value.update(input_sha256=hashlib.sha256(data).hexdigest(), delivered_query=args, dispatch_started=True)
++                    atomic_json(self.path(identity), value)
++                    response = client.post(self.upstream + '/train', params=args, files={'uploaded_file': ('selected.csv', data, 'text/csv')})
++                    if response.status_code != 200: raise ValueError('Synchronous training did not establish completion')
++                    models = client.get(self.upstream + '/models', params={'user_id': self.namespace}); models.raise_for_status()
++                    if args['model_name'] not in [m.get('name') for m in models.json()]: raise ValueError('The completed model was not listed')
++                    model_ref = 'urn:aieffect:configured-model:' + uuid4().hex
++                    atomic_json(self.storage / ('model-' + hashlib.sha256(model_ref.encode()).hexdigest() + '.json'),
++                                {'user_id': self.namespace, 'model_name': args['model_name'], 'workflow_id': value['workflow_id'], 'producer_task_id': identity})
++                    data, fmt = json.dumps({'model_ref': model_ref}).encode(), 'json'
++                    value['completion_basis'] = 'Synchronous HTTP 200 plus model listing; not progress counters'
++                else:
++                    model = self.resolve_model(reference, value['workflow_id'])
++                    args = {'user_id': model['user_id'], 'model_name': model['model_name'], 'return_csv': True, **parameters}
++                    value.update(model_binding=model, delivered_query=args, dispatch_started=True)
++                    atomic_json(self.path(identity), value)
++                    with client.stream('GET', self.upstream + '/generate', params=args) as response:
++                        if response.status_code != 200 or response.headers.get('content-type', '').split(';')[0] != 'text/csv':
++                            raise ValueError('Generation did not return the declared CSV representation')
++                        collected = bytearray()
++                        for chunk in response.iter_bytes():
++                            collected.extend(chunk)
++                            if len(collected) > 20_000_000: raise ValueError('Generation response exceeds the connector output byte ceiling')
++                        data, fmt = bytes(collected), 'csv'
++                    rows = list(csv.DictReader(io.StringIO(data.decode('utf-8'))))
++                    if not rows or any(not row.get('example') for row in rows): raise ValueError('CSV lacks source-declared example markers')
++                    observed = len({row['example'] for row in rows})
++                    if 'number_of_examples' in parameters and observed != parameters['number_of_examples']:
++                        raise ValueError('CSV sequence count differs from the delivered configuration')
++                    value.update(observed_sequence_count=observed, csv_data_rows=len(rows))
++                with self.path(identity, 'data').open('xb') as stream:
++                    stream.write(data); stream.flush(); os.fsync(stream.fileno())
++                value.update(state='complete', output={'protocol': urlsplit(self.self_url).scheme, 'uri': self.self_url + '/control/data/' + identity, 'format': fmt},
++                             output_sha256=hashlib.sha256(data).hexdigest(), output_bytes=len(data),
++                             algorithm_consumption='Not established by HTTP acknowledgement; qualify against the actual model/runtime evidence')
++        except Exception as exc:
++            value.update(state='uncertain' if value['dispatch_started'] else 'failed', error_kind=type(exc).__name__,
++                         error=str(exc) if isinstance(exc, ValueError) else 'Configured processing did not establish completion; inspect private operator logs and upstream state')
++        atomic_json(self.path(identity), value)
+diff --git a/use-cases/portugal-node-integrated/common/control_interface.py b/use-cases/portugal-node-integrated/common/control_interface.py
+index 1dcc80b..0aa9b0e 100644
+--- a/use-cases/portugal-node-integrated/common/control_interface.py
++++ b/use-cases/portugal-node-integrated/common/control_interface.py
+@@ -21,11 +21,12 @@ from __future__ import annotations
+ 
+ import logging
+ import os
++import secrets
+ from typing import Callable
+ 
+ import uvicorn
+-from fastapi import APIRouter, FastAPI, HTTPException, Response
+-from pydantic import BaseModel
++from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Response
++from pydantic import BaseModel, Field, model_validator
+ 
+ from .task_manager import task_manager
+ 
+@@ -52,7 +53,16 @@ class ExecuteRequest(BaseModel):
+     method: str
+     workflow_id: str
+     task_id: str
+-    inputs: list[dict] = []
++    inputs: list[dict] = Field(default_factory=list)
++    configuration: dict | None = None
++
++    @model_validator(mode="before")
++    @classmethod
++    def explicit_configuration(cls, value):
++        if isinstance(value, dict) and "configuration" in value:
++            if not isinstance(value["configuration"], dict) or set(value) - {"method", "workflow_id", "task_id", "inputs", "configuration"}:
++                raise ValueError("Configured requests require one explicit configuration envelope, without legacy parameters")
++        return value
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -99,10 +109,36 @@ def create_control_router(
+     Returns:
+         FastAPI APIRouter with /control/* endpoints.
+     """
++    from .configured_synthetic import Runtime
++    configured = Runtime.from_environment(execute_handlers)
+     router = APIRouter()
+ 
+-    @router.post("/execute", response_model=ExecuteResponse)
++    def authorize(authorization: str = Header(default="")):
++        token = os.environ.get("SERVICE_API_KEY", "")
++        if token and not secrets.compare_digest(authorization, "Bearer " + token):
++            raise HTTPException(401, "Control service authorization required")
++
++    def configured_runtime():
++        if configured is None or not os.environ.get("SERVICE_API_KEY"):
++            raise HTTPException(409, "Install reviewed parameter exports and a private Control key before configured execution")
++        return configured
++
++    @router.get("/capabilities", dependencies=[Depends(authorize)])
++    def capabilities():
++        return configured_runtime().capabilities()
++
++    @router.get("/receipt/{task_id}", dependencies=[Depends(authorize)])
++    def receipt(task_id: str):
++        return configured_runtime().read(task_id)
++
++    @router.post("/execute", response_model=ExecuteResponse, dependencies=[Depends(authorize)])
+     def execute(request: ExecuteRequest) -> ExecuteResponse:
++        if "configuration" in request.model_fields_set:
++            return ExecuteResponse(**configured_runtime().submit(request))
++        if configured is not None and (request.task_id.startswith("cfg-") or any(
++            operation["operation_name"] == request.method for operation in configured.capabilities()["operations"]
++        )):
++            raise HTTPException(422, "This installed operation requires its reviewed configuration envelope")
+         logger.info(f"Execute: method={request.method}, task={request.task_id}")
+ 
+         handler = execute_handlers.get(request.method)
+@@ -128,8 +164,12 @@ def create_control_router(
+             task_manager.register(request.task_id, status="failed", error=str(e))
+             return ExecuteResponse(status="failed", error=str(e), task_id=request.task_id)
+ 
+-    @router.get("/status/{task_id}", response_model=StatusResponse)
++    @router.get("/status/{task_id}", response_model=StatusResponse, dependencies=[Depends(authorize)])
+     def status(task_id: str) -> StatusResponse:
++        if task_id.startswith("cfg-"):
++            value = configured_runtime().read(task_id)
++            return StatusResponse(status="running" if value["state"] in {"queued", "running"} else "failed" if value["state"] == "uncertain" else value["state"],
++                                  progress=100 if value["state"] == "complete" else 0, error=value.get("error"))
+         task = task_manager.get_status(task_id)
+         if task is None:
+             raise HTTPException(status_code=404, detail=f"Task not found: {task_id}")
+@@ -140,8 +180,12 @@ def create_control_router(
+             error=task.get("error"),
+         )
+ 
+-    @router.get("/output/{task_id}", response_model=OutputResponse)
++    @router.get("/output/{task_id}", response_model=OutputResponse, dependencies=[Depends(authorize)])
+     def output(task_id: str) -> OutputResponse:
++        if task_id.startswith("cfg-"):
++            value = configured_runtime().read(task_id)
++            if value["state"] != "complete": raise HTTPException(409, "Configured output is not complete")
++            return OutputResponse(output=DataReference(**value["output"]))
+         task = task_manager.get_status(task_id)
+         if task is None:
+             raise HTTPException(status_code=404, detail=f"Task not found: {task_id}")
+@@ -155,9 +199,16 @@ def create_control_router(
+ 
+         return OutputResponse(output=output)
+ 
+-    @router.get("/data/{task_id}")
++    @router.get("/data/{task_id}", dependencies=[Depends(authorize)])
+     def get_data(task_id: str) -> Response:
+         """Serve raw data for HTTP URL references."""
++        if task_id.startswith("cfg-"):
++            runtime = configured_runtime(); value = runtime.read(task_id)
++            if value["state"] != "complete": raise HTTPException(409, "Configured data is not complete")
++            data = runtime.path(task_id, "data").read_bytes()
++            import hashlib
++            if hashlib.sha256(data).hexdigest() != value["output_sha256"]: raise HTTPException(409, "Configured output changed after completion")
++            return Response(content=data, media_type=_get_content_type(value["output"]["format"]))
+         result = task_manager.get_data(task_id)
+         if result is None:
+             raise HTTPException(status_code=404, detail=f"Data not found: {task_id}")
+diff --git a/use-cases/portugal-node-integrated/common/parameter_contract.py b/use-cases/portugal-node-integrated/common/parameter_contract.py
+new file mode 100644
+index 0000000..e8e700b
+--- /dev/null
++++ b/use-cases/portugal-node-integrated/common/parameter_contract.py
+@@ -0,0 +1,119 @@
++"""Portable parameter validation shared by Studio and isolated node wrappers.
++
++No paths, deployment commands, environment variables or secrets are interpreted.
++"""
++from copy import deepcopy
++import math
++import hashlib
++import json
++
++
++def effective_parameters(definition, requested):
++    if not isinstance(requested, dict):
++        raise ValueError("Parameters must be a JSON object; null is not supported")
++    properties = definition.get("properties", {})
++    unknown = set(requested) - set(properties)
++    if unknown:
++        raise ValueError("Unsupported parameters: " + ", ".join(sorted(unknown)))
++    result = {}
++    for name, spec in properties.items():
++        if name in requested:
++            value = requested[name]
++        elif "default" in spec:
++            value = deepcopy(spec["default"])
++        elif spec.get("required"):
++            raise ValueError(f"{name}: a value is required")
++        else:
++            continue
++        kind = spec["type"]
++        valid = ((kind == "integer" and type(value) is int)
++                 or (kind == "number" and type(value) in (int, float) and math.isfinite(value))
++                 or (kind == "boolean" and type(value) is bool)
++                 or (kind == "string" and type(value) is str))
++        if not valid:
++            raise ValueError(f"{name}: expected {kind}; null is not supported")
++        if "enum" in spec and value not in spec["enum"]:
++            raise ValueError(f"{name}: choose one of {spec['enum']}")
++        if kind in ("integer", "number"):
++            if spec.get("minimum") is not None and value < spec["minimum"]:
++                raise ValueError(f"{name}: minimum is {spec['minimum']}")
++            if spec.get("maximum") is not None and value > spec["maximum"]:
++                raise ValueError(f"{name}: maximum is {spec['maximum']}")
++        result[name] = deepcopy(value)
++    return result
++
++
++TRANSPORT = "http-parameters-v1"
++CAPABILITY_SCHEMA = "1.0"
++
++
++def parameter_contract_digest(definition):
++    """Stable digest for the registry export, including labels and constraints.
++
++    Stored Pydantic defaults and JSON numeric spelling do not create a second
++    contract identity. Explicit null defaults remain invalid, not omitted.
++    """
++    if (not isinstance(definition, dict) or definition.get("schema_version") != "1.0"
++            or definition.get("transport") != TRANSPORT or not isinstance(definition.get("properties"), dict)
++            or set(definition) - {"schema_version", "transport", "properties"}):
++        raise ValueError("Unsupported execution parameter contract/protocol version")
++    properties = {}
++    for name, original in definition["properties"].items():
++        if not isinstance(original, dict):
++            raise ValueError("Malformed parameter definition")
++        spec = {k: deepcopy(v) for k, v in original.items() if v is not None or k == "default"}
++        if spec.get("required") is False:
++            spec.pop("required")
++        if spec.get("type") not in {"integer", "number", "boolean", "string"}:
++            raise ValueError("Unsupported parameter type")
++        for bound in ("minimum", "maximum"):
++            if bound in spec:
++                value = spec[bound]
++                if type(value) not in (int, float) or not math.isfinite(value):
++                    raise ValueError("Parameter bounds must be finite numbers")
++                if value == int(value):
++                    spec[bound] = int(value)
++        for value in ([spec["default"]] if "default" in spec else []) + spec.get("enum", []):
++            effective_parameters({"properties": {name: spec}}, {name: value})
++        properties[name] = spec
++    canonical = {"schema_version": "1.0", "transport": TRANSPORT, "properties": properties}
++    return hashlib.sha256(json.dumps(canonical, sort_keys=True, ensure_ascii=False, allow_nan=False,
++                                     separators=(",", ":")).encode()).hexdigest()
++
++
++def validate_configuration_envelope(configuration):
++    keys = {"contract_id", "contract_version", "operation_identity", "schema_version", "parameters", "instance_id"}
++    if not isinstance(configuration, dict) or set(configuration) != keys:
++        raise ValueError("Unsupported instance configuration envelope")
++    if configuration["schema_version"] != "1.0":
++        raise ValueError("Unsupported parameter schema version")
++    for key in keys - {"parameters"}:
++        if not isinstance(configuration[key], str) or not configuration[key].strip() or len(configuration[key]) > 300:
++            raise ValueError(f"Invalid configuration {key}")
++    if not isinstance(configuration["parameters"], dict):
++        raise ValueError("Parameters must be a JSON object")
++    json.dumps(configuration, allow_nan=False)
++    return deepcopy(configuration)
++
++
++def match_wrapper_configuration(method, configuration, capability):
++    """Generic protocol negotiation; no Dutch/Danish definitions live here."""
++    configuration = validate_configuration_envelope(configuration)
++    if (not isinstance(capability, dict) or capability.get("capability_schema_version") != CAPABILITY_SCHEMA
++            or not isinstance(capability.get("transports"), list)
++            or TRANSPORT not in capability["transports"]
++            or not isinstance(capability.get("operations"), list)):
++        raise ValueError("Wrapper does not declare a supported configuration protocol")
++    matches = [op for op in capability.get("operations", []) if isinstance(op, dict)
++               and op.get("operation_name") == method
++               and op.get("operation_identity") == configuration["operation_identity"]
++               and op.get("contract_version") == configuration["contract_version"]]
++    if len(matches) != 1:
++        raise ValueError("Wrapper operation/contract version is incompatible or ambiguous")
++    definition = matches[0].get("execution_parameters")
++    digest = parameter_contract_digest(definition)
++    effective = effective_parameters(definition, configuration["parameters"])
++    if effective != configuration["parameters"]:
++        raise ValueError("Submitted parameters must already contain validated effective values")
++    return {"operation_identity": configuration["operation_identity"], "contract_version": configuration["contract_version"],
++            "schema_version": "1.0", "parameter_contract_sha256": digest}
+diff --git a/use-cases/portugal-node-integrated/common/parameter_contract_provenance.json b/use-cases/portugal-node-integrated/common/parameter_contract_provenance.json
+new file mode 100644
+index 0000000..732f665
+--- /dev/null
++++ b/use-cases/portugal-node-integrated/common/parameter_contract_provenance.json
+@@ -0,0 +1,7 @@
++{
++  "owner": "Solution Studio Operation Contract Registry",
++  "source": "apps/api/app/services/parameter_values.py",
++  "validator_version": "1.0",
++  "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
++  "note": "Exact vendored release artifact; regenerate with deploy/aie18/sync_wp3_contract.py, do not edit independently"
++}
+diff --git a/use-cases/portugal-node-sidecar/common/configured_synthetic.py b/use-cases/portugal-node-sidecar/common/configured_synthetic.py
+new file mode 100644
+index 0000000..4ab39fc
+--- /dev/null
++++ b/use-cases/portugal-node-sidecar/common/configured_synthetic.py
+@@ -0,0 +1,270 @@
++"""Opt-in configuration for the source-declared Synthetic Data API.
++
++No service IDs, saved workflows, reviewer IDs, scientific limits or parameter
++values are registered here. Operators install provider-reviewed contract exports.
++The canonical parameter validator is shared with Studio and WP3.
++"""
++from __future__ import annotations
++
++import base64
++import csv
++import io
++from concurrent.futures import ThreadPoolExecutor
++from copy import deepcopy
++import hashlib
++import json
++import os
++from pathlib import Path
++import re
++import threading
++from urllib.parse import urlsplit
++from uuid import uuid4
++
++import httpx
++from fastapi import HTTPException
++
++from .parameter_contract import match_wrapper_configuration, parameter_contract_digest
++
++TYPES = {"TrainModel": {"epochs": "integer", "batch_size": "integer", "sequence_len": "integer"},
++         "GenerateData": {"number_of_examples": "integer"}}
++SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
++
++
++def atomic_json(path, value):
++    temporary = path.with_suffix('.' + uuid4().hex + '.tmp')
++    try:
++        with temporary.open('x', encoding='utf-8') as stream:
++            json.dump(value, stream, sort_keys=True, allow_nan=False); stream.flush(); os.fsync(stream.fileno())
++        os.replace(temporary, path)
++    finally:
++        if temporary.exists(): temporary.unlink()
++
++
++def base_url(value):
++    parsed = urlsplit(value)
++    if parsed.scheme not in {'http', 'https'} or not parsed.netloc or parsed.username or parsed.password or parsed.query or parsed.fragment:
++        raise ValueError('Declare an HTTP service base URL without credentials, query or fragment')
++    return value.rstrip('/')
++
++
++class Runtime:
++    def __init__(self, environment, handlers, transport=None):
++        self.environment = dict(environment)
++        self.contract_directory = Path(environment['SERVICE_PARAMETER_CONTRACT_DIR']).resolve()
++        raw_storage = Path(environment['CONTROL_PARAMETER_STATE_DIR'])
++        if raw_storage.is_symlink(): raise ValueError('Use a dedicated non-symlink state directory')
++        self.storage = raw_storage.resolve()
++        self.upstream = base_url(environment['SYNTHETIC_DATA_URL'])
++        self.self_url = base_url(environment['SELF_URL'])
++        self.namespace = environment.get('SYNTHETIC_DATA_USER_NAMESPACE', '')
++        if not re.fullmatch(r'[A-Za-z0-9_-]{1,100}', self.namespace):
++            raise ValueError('Declare an operator-controlled Synthetic Data user namespace')
++        if not environment.get('SERVICE_API_KEY'):
++            raise ValueError('Configured Control requires a private SERVICE_API_KEY')
++        self.index_column = environment.get('SYNTHETIC_DATA_INDEX_COLUMN', '')
++        self.input_root = Path(environment['SYNTHETIC_DATA_INPUT_ROOT']).resolve() if environment.get('SYNTHETIC_DATA_INPUT_ROOT') else None
++        self.origins = set(filter(None, environment.get('SYNTHETIC_DATA_INPUT_ORIGINS', '').split(',')))
++        self.max_bytes = int(environment.get('CONTROL_MAX_INPUT_BYTES', '2000000'))
++        if not 1 <= self.max_bytes <= 100_000_000: raise ValueError('Invalid operator input byte ceiling')
++        self.storage.mkdir(parents=True, exist_ok=True)
++        marker = self.storage / 'configured-state-v1.json'
++        if marker.exists():
++            if json.loads(marker.read_text()).get('kind') != 'configured-synthetic-v1': raise ValueError('State directory belongs to another runtime')
++        else:
++            if any(self.storage.iterdir()): raise ValueError('Choose a new empty state directory; existing data is preserved')
++            with marker.open('x') as stream: json.dump({'kind': 'configured-synthetic-v1'}, stream)
++        self.qualification = environment.get('CONTROL_PARAMETER_QUALIFICATION_MODE') == 'true'
++        self.handlers = handlers; self.transport = transport
++        self.boot = uuid4().hex; self.lock = threading.Lock()
++        self.pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix='configured-synthetic')
++        self.capabilities()  # Reject incomplete operator configuration before serving.
++
++    @classmethod
++    def from_environment(cls, handlers):
++        if not os.environ.get('SERVICE_PARAMETER_CONTRACT_DIR'): return None
++        try: return cls(os.environ, handlers)
++        except (ValueError, KeyError, OSError, TypeError) as exc:
++            raise RuntimeError('Configured Synthetic Data setup is incomplete or incompatible: ' + str(exc)) from exc
++
++    def capabilities(self):
++        operations = []; qualification_only = False
++        for path in sorted(self.contract_directory.glob('*.json')):
++            if path.stat().st_size > 256000: raise ValueError('Contract export exceeds byte ceiling')
++            document = json.loads(path.read_text())
++            if document.get('capability_schema_version') != '1.0' or document.get('transports') != ['http-parameters-v1']:
++                raise ValueError('Unsupported provider capability export')
++            if document.get('qualification_only'):
++                if not self.qualification: raise ValueError('Draft exports require an explicitly enabled isolated qualification runtime')
++                qualification_only = True
++            for operation in document['operations']:
++                method = operation['operation_name']; properties = operation['execution_parameters']['properties']
++                if method not in self.handlers or method not in TYPES or not properties:
++                    raise ValueError('No verified parameter mapping for this operation')
++                if any(name not in TYPES[method] or spec['type'] != TYPES[method][name] for name, spec in properties.items()):
++                    raise ValueError('Runtime does not implement the exported parameter mapping')
++                if method == 'TrainModel' and not self.index_column:
++                    raise ValueError('Declare the training dataset index column separately from settings')
++                parameter_contract_digest(operation['execution_parameters'])
++                operations.append(deepcopy(operation))
++        identities = [(o['operation_name'], o['operation_identity'], o['contract_version']) for o in operations]
++        if not operations or len(set(identities)) != len(identities): raise ValueError('Missing or ambiguous installed operations')
++        result = {'capability_schema_version': '1.0', 'transports': ['http-parameters-v1'], 'operations': operations}
++        if qualification_only: result['qualification_only'] = True
++        return result
++
++    def path(self, identity, suffix='json'):
++        if not re.fullmatch(r'cfg-[a-f0-9]{64}', identity): raise HTTPException(404, 'Unknown configured task')
++        return self.storage / (identity + '.' + suffix)
++
++    def read(self, identity):
++        path = self.path(identity)
++        if not path.is_file() or path.is_symlink(): raise HTTPException(404, 'Unknown configured task')
++        value = json.loads(path.read_text())
++        if value['state'] in {'queued', 'running'} and value['boot'] != self.boot:
++            value.update(state='uncertain', error='Service restarted with an unresolved execution. Reconcile upstream before creating another attempt.')
++        return value
++
++    def submit(self, request):
++        if not SAFE_ID.fullmatch(request.workflow_id) or not SAFE_ID.fullmatch(request.task_id):
++            raise HTTPException(422, 'Configured workflow/task identities must be safe identifiers')
++        try:
++            capability = self.capabilities()
++            match = match_wrapper_configuration(request.method, request.configuration, capability)
++        except (ValueError, KeyError, TypeError) as exc:
++            raise HTTPException(422, 'Configuration differs from installed reviewed definitions') from exc
++        if len(request.inputs) != 1: raise HTTPException(422, 'This operation needs exactly one separately selected input reference')
++        identity = 'cfg-' + hashlib.sha256((request.workflow_id + '\0' + request.task_id).encode()).hexdigest()
++        value = {'workflow_id': request.workflow_id, 'task_id': request.task_id, 'service_task_id': identity,
++                 'method': request.method, 'configuration': deepcopy(request.configuration),
++                 'parameter_contract_sha256': match['parameter_contract_sha256'], 'boot': self.boot,
++                 'state': 'queued', 'dispatch_started': False, 'output': None}
++        with self.lock:
++            # Unresolved earlier dispatches must be reconciled, not worked around
++            # by sending the same algorithm under a different task identity.
++            if any(self.read(p.stem)['state'] == 'uncertain' for p in self.storage.glob('cfg-*.json')):
++                raise HTTPException(409, 'An earlier upstream outcome is unresolved; reconcile it before dispatch')
++            try:
++                with self.path(identity).open('x', encoding='utf-8') as stream:
++                    json.dump(value, stream); stream.flush(); os.fsync(stream.fileno())
++            except FileExistsError as exc:
++                raise HTTPException(409, 'Configured task already accepted; inspect it, do not redispatch') from exc
++        self.pool.submit(self.run, identity, deepcopy(request.inputs[0]))
++        return {'status': 'running', 'task_id': identity}
++
++    def client(self):
++        token = self.environment.get('SYNTHETIC_DATA_API_KEY', '')
++        return httpx.Client(timeout=600, follow_redirects=False, trust_env=False, transport=self.transport,
++                            headers={'Authorization': 'Bearer ' + token} if token else {})
++
++    def verify_query_interface(self, client, method, parameters):
++        document = client.get(self.upstream + '/openapi.json'); document.raise_for_status()
++        path, verb = ('/train', 'post') if method == 'TrainModel' else ('/generate', 'get')
++        operation = document.json()['paths'][path][verb]
++        declarations = {p['name']: p for p in operation.get('parameters', []) if p.get('in') == 'query'}
++        needed = set(parameters) | ({'user_id', 'model_name', 'index_col', 'overwrite'} if method == 'TrainModel' else {'user_id', 'model_name', 'return_csv'})
++        if not needed <= set(declarations): raise ValueError('Upstream query names differ from the reviewed connector; no algorithm dispatched')
++        if any(declarations[name].get('schema', {}).get('type') != TYPES[method][name] for name in parameters):
++            raise ValueError('Upstream parameter types differ; no algorithm dispatched')
++        return hashlib.sha256(document.content).hexdigest()
++
++    def input_bytes(self, reference, client):
++        if reference.get('protocol') == 'file' and self.input_root:
++            path = Path(reference['uri']).resolve()
++            if self.input_root not in path.parents or not path.is_file() or path.stat().st_size > self.max_bytes:
++                raise ValueError('Selected input is outside the operator-approved input directory or byte ceiling')
++            return path.read_bytes()
++        if reference.get('protocol') in {'http', 'https'}:
++            parsed = urlsplit(reference['uri'])
++            origin = parsed.scheme + '://' + parsed.netloc
++            if origin not in self.origins or parsed.username or parsed.password or parsed.fragment:
++                raise ValueError('Selected input origin is not operator-approved')
++            # Never forward an ML service key to a data provider.
++            token = self.environment.get('SYNTHETIC_DATA_INPUT_TOKEN', '')
++            with httpx.Client(timeout=60, follow_redirects=False, trust_env=False, transport=self.transport) as reader:
++                with reader.stream('GET', reference['uri'], headers={'Authorization': 'Bearer ' + token} if token else {}) as response:
++                    response.raise_for_status(); data = bytearray()
++                    for chunk in response.iter_bytes():
++                        data.extend(chunk)
++                        if len(data) > self.max_bytes: raise ValueError('Selected input exceeds the operator byte ceiling')
++                    return bytes(data)
++        raise ValueError('Select a supported, operator-authorised data reference; data is not a parameter')
++
++    def resolve_model(self, reference, workflow_id):
++        if reference.get('protocol') == 'inline' and reference.get('format') == 'json':
++            raw = base64.b64decode(reference['uri'], validate=True)
++        elif reference.get('protocol') in {'http', 'https'} and reference['uri'].startswith(self.self_url + '/control/data/'):
++            producer = self.read(reference['uri'].removeprefix(self.self_url + '/control/data/'))
++            if producer['state'] != 'complete' or producer['method'] != 'TrainModel': raise ValueError('Model producer is not complete')
++            raw = self.path(producer['service_task_id'], 'data').read_bytes()
++            if hashlib.sha256(raw).hexdigest() != producer['output_sha256']: raise ValueError('Model producer output changed')
++        else:
++            raise ValueError('Select a configured model reference or a declared shared-model reference')
++        if len(raw) > 16000: raise ValueError('Model reference is too large')
++        value = json.loads(raw)
++        if set(value) != {'model_ref'} or not isinstance(value['model_ref'], str): raise ValueError('Model input must be an opaque model_ref')
++        key = hashlib.sha256(value['model_ref'].encode()).hexdigest()
++        local = self.storage / ('model-' + key + '.json')
++        if local.is_file():
++            model = json.loads(local.read_text())
++            if model['workflow_id'] != workflow_id: raise ValueError('A private model belongs to a different workflow')
++            return model
++        catalogue = self.environment.get('SYNTHETIC_DATA_SHARED_MODELS_FILE')
++        shared = json.loads(Path(catalogue).read_text()).get(value['model_ref']) if catalogue else None
++        if not shared or shared.get('share_scope') != 'service_callers': raise ValueError('Model reference is not authorised')
++        if not SAFE_ID.fullmatch(shared['user_id']) or not SAFE_ID.fullmatch(shared['model_name']): raise ValueError('Shared model identity is invalid')
++        return {'user_id': shared['user_id'], 'model_name': shared['model_name'], 'shared_reference': value['model_ref']}
++
++    def run(self, identity, reference):
++        value = self.read(identity); value['state'] = 'running'
++        atomic_json(self.path(identity), value)
++        try:
++            with self.lock:
++                if any(p.stem != identity and self.read(p.stem)['state'] == 'uncertain'
++                       for p in self.storage.glob('cfg-*.json')):
++                    raise ValueError('An earlier upstream outcome became unresolved; queued work was not dispatched')
++            with self.client() as client:
++                parameters = value['configuration']['parameters']
++                value['upstream_interface_sha256'] = self.verify_query_interface(client, value['method'], parameters)
++                if value['method'] == 'TrainModel':
++                    data = self.input_bytes(reference, client)
++                    args = {'user_id': self.namespace, 'model_name': 'model_' + identity[4:36], 'index_col': self.index_column,
++                            'overwrite': False, **parameters}
++                    value.update(input_sha256=hashlib.sha256(data).hexdigest(), delivered_query=args, dispatch_started=True)
++                    atomic_json(self.path(identity), value)
++                    response = client.post(self.upstream + '/train', params=args, files={'uploaded_file': ('selected.csv', data, 'text/csv')})
++                    if response.status_code != 200: raise ValueError('Synchronous training did not establish completion')
++                    models = client.get(self.upstream + '/models', params={'user_id': self.namespace}); models.raise_for_status()
++                    if args['model_name'] not in [m.get('name') for m in models.json()]: raise ValueError('The completed model was not listed')
++                    model_ref = 'urn:aieffect:configured-model:' + uuid4().hex
++                    atomic_json(self.storage / ('model-' + hashlib.sha256(model_ref.encode()).hexdigest() + '.json'),
++                                {'user_id': self.namespace, 'model_name': args['model_name'], 'workflow_id': value['workflow_id'], 'producer_task_id': identity})
++                    data, fmt = json.dumps({'model_ref': model_ref}).encode(), 'json'
++                    value['completion_basis'] = 'Synchronous HTTP 200 plus model listing; not progress counters'
++                else:
++                    model = self.resolve_model(reference, value['workflow_id'])
++                    args = {'user_id': model['user_id'], 'model_name': model['model_name'], 'return_csv': True, **parameters}
++                    value.update(model_binding=model, delivered_query=args, dispatch_started=True)
++                    atomic_json(self.path(identity), value)
++                    with client.stream('GET', self.upstream + '/generate', params=args) as response:
++                        if response.status_code != 200 or response.headers.get('content-type', '').split(';')[0] != 'text/csv':
++                            raise ValueError('Generation did not return the declared CSV representation')
++                        collected = bytearray()
++                        for chunk in response.iter_bytes():
++                            collected.extend(chunk)
++                            if len(collected) > 20_000_000: raise ValueError('Generation response exceeds the connector output byte ceiling')
++                        data, fmt = bytes(collected), 'csv'
++                    rows = list(csv.DictReader(io.StringIO(data.decode('utf-8'))))
++                    if not rows or any(not row.get('example') for row in rows): raise ValueError('CSV lacks source-declared example markers')
++                    observed = len({row['example'] for row in rows})
++                    if 'number_of_examples' in parameters and observed != parameters['number_of_examples']:
++                        raise ValueError('CSV sequence count differs from the delivered configuration')
++                    value.update(observed_sequence_count=observed, csv_data_rows=len(rows))
++                with self.path(identity, 'data').open('xb') as stream:
++                    stream.write(data); stream.flush(); os.fsync(stream.fileno())
++                value.update(state='complete', output={'protocol': urlsplit(self.self_url).scheme, 'uri': self.self_url + '/control/data/' + identity, 'format': fmt},
++                             output_sha256=hashlib.sha256(data).hexdigest(), output_bytes=len(data),
++                             algorithm_consumption='Not established by HTTP acknowledgement; qualify against the actual model/runtime evidence')
++        except Exception as exc:
++            value.update(state='uncertain' if value['dispatch_started'] else 'failed', error_kind=type(exc).__name__,
++                         error=str(exc) if isinstance(exc, ValueError) else 'Configured processing did not establish completion; inspect private operator logs and upstream state')
++        atomic_json(self.path(identity), value)
+diff --git a/use-cases/portugal-node-sidecar/common/control_interface.py b/use-cases/portugal-node-sidecar/common/control_interface.py
+index 1dcc80b..0aa9b0e 100644
+--- a/use-cases/portugal-node-sidecar/common/control_interface.py
++++ b/use-cases/portugal-node-sidecar/common/control_interface.py
+@@ -21,11 +21,12 @@ from __future__ import annotations
+ 
+ import logging
+ import os
++import secrets
+ from typing import Callable
+ 
+ import uvicorn
+-from fastapi import APIRouter, FastAPI, HTTPException, Response
+-from pydantic import BaseModel
++from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Response
++from pydantic import BaseModel, Field, model_validator
+ 
+ from .task_manager import task_manager
+ 
+@@ -52,7 +53,16 @@ class ExecuteRequest(BaseModel):
+     method: str
+     workflow_id: str
+     task_id: str
+-    inputs: list[dict] = []
++    inputs: list[dict] = Field(default_factory=list)
++    configuration: dict | None = None
++
++    @model_validator(mode="before")
++    @classmethod
++    def explicit_configuration(cls, value):
++        if isinstance(value, dict) and "configuration" in value:
++            if not isinstance(value["configuration"], dict) or set(value) - {"method", "workflow_id", "task_id", "inputs", "configuration"}:
++                raise ValueError("Configured requests require one explicit configuration envelope, without legacy parameters")
++        return value
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -99,10 +109,36 @@ def create_control_router(
+     Returns:
+         FastAPI APIRouter with /control/* endpoints.
+     """
++    from .configured_synthetic import Runtime
++    configured = Runtime.from_environment(execute_handlers)
+     router = APIRouter()
+ 
+-    @router.post("/execute", response_model=ExecuteResponse)
++    def authorize(authorization: str = Header(default="")):
++        token = os.environ.get("SERVICE_API_KEY", "")
++        if token and not secrets.compare_digest(authorization, "Bearer " + token):
++            raise HTTPException(401, "Control service authorization required")
++
++    def configured_runtime():
++        if configured is None or not os.environ.get("SERVICE_API_KEY"):
++            raise HTTPException(409, "Install reviewed parameter exports and a private Control key before configured execution")
++        return configured
++
++    @router.get("/capabilities", dependencies=[Depends(authorize)])
++    def capabilities():
++        return configured_runtime().capabilities()
++
++    @router.get("/receipt/{task_id}", dependencies=[Depends(authorize)])
++    def receipt(task_id: str):
++        return configured_runtime().read(task_id)
++
++    @router.post("/execute", response_model=ExecuteResponse, dependencies=[Depends(authorize)])
+     def execute(request: ExecuteRequest) -> ExecuteResponse:
++        if "configuration" in request.model_fields_set:
++            return ExecuteResponse(**configured_runtime().submit(request))
++        if configured is not None and (request.task_id.startswith("cfg-") or any(
++            operation["operation_name"] == request.method for operation in configured.capabilities()["operations"]
++        )):
++            raise HTTPException(422, "This installed operation requires its reviewed configuration envelope")
+         logger.info(f"Execute: method={request.method}, task={request.task_id}")
+ 
+         handler = execute_handlers.get(request.method)
+@@ -128,8 +164,12 @@ def create_control_router(
+             task_manager.register(request.task_id, status="failed", error=str(e))
+             return ExecuteResponse(status="failed", error=str(e), task_id=request.task_id)
+ 
+-    @router.get("/status/{task_id}", response_model=StatusResponse)
++    @router.get("/status/{task_id}", response_model=StatusResponse, dependencies=[Depends(authorize)])
+     def status(task_id: str) -> StatusResponse:
++        if task_id.startswith("cfg-"):
++            value = configured_runtime().read(task_id)
++            return StatusResponse(status="running" if value["state"] in {"queued", "running"} else "failed" if value["state"] == "uncertain" else value["state"],
++                                  progress=100 if value["state"] == "complete" else 0, error=value.get("error"))
+         task = task_manager.get_status(task_id)
+         if task is None:
+             raise HTTPException(status_code=404, detail=f"Task not found: {task_id}")
+@@ -140,8 +180,12 @@ def create_control_router(
+             error=task.get("error"),
+         )
+ 
+-    @router.get("/output/{task_id}", response_model=OutputResponse)
++    @router.get("/output/{task_id}", response_model=OutputResponse, dependencies=[Depends(authorize)])
+     def output(task_id: str) -> OutputResponse:
++        if task_id.startswith("cfg-"):
++            value = configured_runtime().read(task_id)
++            if value["state"] != "complete": raise HTTPException(409, "Configured output is not complete")
++            return OutputResponse(output=DataReference(**value["output"]))
+         task = task_manager.get_status(task_id)
+         if task is None:
+             raise HTTPException(status_code=404, detail=f"Task not found: {task_id}")
+@@ -155,9 +199,16 @@ def create_control_router(
+ 
+         return OutputResponse(output=output)
+ 
+-    @router.get("/data/{task_id}")
++    @router.get("/data/{task_id}", dependencies=[Depends(authorize)])
+     def get_data(task_id: str) -> Response:
+         """Serve raw data for HTTP URL references."""
++        if task_id.startswith("cfg-"):
++            runtime = configured_runtime(); value = runtime.read(task_id)
++            if value["state"] != "complete": raise HTTPException(409, "Configured data is not complete")
++            data = runtime.path(task_id, "data").read_bytes()
++            import hashlib
++            if hashlib.sha256(data).hexdigest() != value["output_sha256"]: raise HTTPException(409, "Configured output changed after completion")
++            return Response(content=data, media_type=_get_content_type(value["output"]["format"]))
+         result = task_manager.get_data(task_id)
+         if result is None:
+             raise HTTPException(status_code=404, detail=f"Data not found: {task_id}")
+diff --git a/use-cases/portugal-node-sidecar/common/parameter_contract.py b/use-cases/portugal-node-sidecar/common/parameter_contract.py
+new file mode 100644
+index 0000000..e8e700b
+--- /dev/null
++++ b/use-cases/portugal-node-sidecar/common/parameter_contract.py
+@@ -0,0 +1,119 @@
++"""Portable parameter validation shared by Studio and isolated node wrappers.
++
++No paths, deployment commands, environment variables or secrets are interpreted.
++"""
++from copy import deepcopy
++import math
++import hashlib
++import json
++
++
++def effective_parameters(definition, requested):
++    if not isinstance(requested, dict):
++        raise ValueError("Parameters must be a JSON object; null is not supported")
++    properties = definition.get("properties", {})
++    unknown = set(requested) - set(properties)
++    if unknown:
++        raise ValueError("Unsupported parameters: " + ", ".join(sorted(unknown)))
++    result = {}
++    for name, spec in properties.items():
++        if name in requested:
++            value = requested[name]
++        elif "default" in spec:
++            value = deepcopy(spec["default"])
++        elif spec.get("required"):
++            raise ValueError(f"{name}: a value is required")
++        else:
++            continue
++        kind = spec["type"]
++        valid = ((kind == "integer" and type(value) is int)
++                 or (kind == "number" and type(value) in (int, float) and math.isfinite(value))
++                 or (kind == "boolean" and type(value) is bool)
++                 or (kind == "string" and type(value) is str))
++        if not valid:
++            raise ValueError(f"{name}: expected {kind}; null is not supported")
++        if "enum" in spec and value not in spec["enum"]:
++            raise ValueError(f"{name}: choose one of {spec['enum']}")
++        if kind in ("integer", "number"):
++            if spec.get("minimum") is not None and value < spec["minimum"]:
++                raise ValueError(f"{name}: minimum is {spec['minimum']}")
++            if spec.get("maximum") is not None and value > spec["maximum"]:
++                raise ValueError(f"{name}: maximum is {spec['maximum']}")
++        result[name] = deepcopy(value)
++    return result
++
++
++TRANSPORT = "http-parameters-v1"
++CAPABILITY_SCHEMA = "1.0"
++
++
++def parameter_contract_digest(definition):
++    """Stable digest for the registry export, including labels and constraints.
++
++    Stored Pydantic defaults and JSON numeric spelling do not create a second
++    contract identity. Explicit null defaults remain invalid, not omitted.
++    """
++    if (not isinstance(definition, dict) or definition.get("schema_version") != "1.0"
++            or definition.get("transport") != TRANSPORT or not isinstance(definition.get("properties"), dict)
++            or set(definition) - {"schema_version", "transport", "properties"}):
++        raise ValueError("Unsupported execution parameter contract/protocol version")
++    properties = {}
++    for name, original in definition["properties"].items():
++        if not isinstance(original, dict):
++            raise ValueError("Malformed parameter definition")
++        spec = {k: deepcopy(v) for k, v in original.items() if v is not None or k == "default"}
++        if spec.get("required") is False:
++            spec.pop("required")
++        if spec.get("type") not in {"integer", "number", "boolean", "string"}:
++            raise ValueError("Unsupported parameter type")
++        for bound in ("minimum", "maximum"):
++            if bound in spec:
++                value = spec[bound]
++                if type(value) not in (int, float) or not math.isfinite(value):
++                    raise ValueError("Parameter bounds must be finite numbers")
++                if value == int(value):
++                    spec[bound] = int(value)
++        for value in ([spec["default"]] if "default" in spec else []) + spec.get("enum", []):
++            effective_parameters({"properties": {name: spec}}, {name: value})
++        properties[name] = spec
++    canonical = {"schema_version": "1.0", "transport": TRANSPORT, "properties": properties}
++    return hashlib.sha256(json.dumps(canonical, sort_keys=True, ensure_ascii=False, allow_nan=False,
++                                     separators=(",", ":")).encode()).hexdigest()
++
++
++def validate_configuration_envelope(configuration):
++    keys = {"contract_id", "contract_version", "operation_identity", "schema_version", "parameters", "instance_id"}
++    if not isinstance(configuration, dict) or set(configuration) != keys:
++        raise ValueError("Unsupported instance configuration envelope")
++    if configuration["schema_version"] != "1.0":
++        raise ValueError("Unsupported parameter schema version")
++    for key in keys - {"parameters"}:
++        if not isinstance(configuration[key], str) or not configuration[key].strip() or len(configuration[key]) > 300:
++            raise ValueError(f"Invalid configuration {key}")
++    if not isinstance(configuration["parameters"], dict):
++        raise ValueError("Parameters must be a JSON object")
++    json.dumps(configuration, allow_nan=False)
++    return deepcopy(configuration)
++
++
++def match_wrapper_configuration(method, configuration, capability):
++    """Generic protocol negotiation; no Dutch/Danish definitions live here."""
++    configuration = validate_configuration_envelope(configuration)
++    if (not isinstance(capability, dict) or capability.get("capability_schema_version") != CAPABILITY_SCHEMA
++            or not isinstance(capability.get("transports"), list)
++            or TRANSPORT not in capability["transports"]
++            or not isinstance(capability.get("operations"), list)):
++        raise ValueError("Wrapper does not declare a supported configuration protocol")
++    matches = [op for op in capability.get("operations", []) if isinstance(op, dict)
++               and op.get("operation_name") == method
++               and op.get("operation_identity") == configuration["operation_identity"]
++               and op.get("contract_version") == configuration["contract_version"]]
++    if len(matches) != 1:
++        raise ValueError("Wrapper operation/contract version is incompatible or ambiguous")
++    definition = matches[0].get("execution_parameters")
++    digest = parameter_contract_digest(definition)
++    effective = effective_parameters(definition, configuration["parameters"])
++    if effective != configuration["parameters"]:
++        raise ValueError("Submitted parameters must already contain validated effective values")
++    return {"operation_identity": configuration["operation_identity"], "contract_version": configuration["contract_version"],
++            "schema_version": "1.0", "parameter_contract_sha256": digest}
+diff --git a/use-cases/portugal-node-sidecar/common/parameter_contract_provenance.json b/use-cases/portugal-node-sidecar/common/parameter_contract_provenance.json
+new file mode 100644
+index 0000000..732f665
+--- /dev/null
++++ b/use-cases/portugal-node-sidecar/common/parameter_contract_provenance.json
+@@ -0,0 +1,7 @@
++{
++  "owner": "Solution Studio Operation Contract Registry",
++  "source": "apps/api/app/services/parameter_values.py",
++  "validator_version": "1.0",
++  "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
++  "note": "Exact vendored release artifact; regenerate with deploy/aie18/sync_wp3_contract.py, do not edit independently"
++}
+-- 
+2.52.0
+

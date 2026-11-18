@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-18",
+  "boundary": "Real unchanged source API with explicit DGAN dependency double",
+  "status": "WIRING_VERIFIED_MODEL_QUALIFICATION_PENDING",
+  "runs": [
+    {
+      "configuration": {
+        "contract_id": "test-contract-TrainModel",
+        "contract_version": "1.0.0",
+        "instance_id": "test-instance-TrainModel",
+        "operation_identity": "urn:test:source-api:TrainModel",
+        "parameters": {
+          "batch_size": 4,
+          "epochs": 2,
+          "sequence_len": 3
+        },
+        "schema_version": "1.0"
+      },
+      "source_train_function_arguments": {
+        "index_col": "datetime",
+        "sequence_len": 3,
+        "batch_size": 4,
+        "epochs": 2
+      },
+      "source_generate_function_num_examples": 2,
+      "observed_csv_sequences": 2,
+      "observed_csv_rows": 6,
+      "output_sha256": "068a37b06aa9a82e2ff527a73e66cc3abf7c3fbce06da1ac8b726dafa0a0551a",
+      "training_task": "cfg-9ea0137d89eb0d63cdba780088b789b1ba1ab0619cfcddc0af981e2d07a53aaa",
+      "generation_task": "cfg-a534ca4e558b491bd448f16ff651a484fc2e183d1f725929793d70da59ee15ab"
+    },
+    {
+      "configuration": {
+        "contract_id": "test-contract-TrainModel",
+        "contract_version": "1.0.0",
+        "instance_id": "test-instance-TrainModel",
+        "operation_identity": "urn:test:source-api:TrainModel",
+        "parameters": {
+          "batch_size": 4,
+          "epochs": 3,
+          "sequence_len": 3
+        },
+        "schema_version": "1.0"
+      },
+      "source_train_function_arguments": {
+        "index_col": "datetime",
+        "sequence_len": 3,
+        "batch_size": 4,
+        "epochs": 3
+      },
+      "source_generate_function_num_examples": 4,
+      "observed_csv_sequences": 4,
+      "observed_csv_rows": 12,
+      "output_sha256": "ef8f9eaae53ae511136f81f50949cea44815c6d5c1e3a4ccb1853ebca6f839b2",
+      "training_task": "cfg-eafbb4a5c6bb029f919d0e0ada5550c1d84ccf62a062c6efa3a2119b098303a4",
+      "generation_task": "cfg-68ccf344e58e0b7824f5ed25206ef3cd0c95f0080308feeb7f0d6a7ac729ba3f"
+    }
+  ],
+  "source_api_sha256": "0e4caddd200e5366b504c3cce2df957fbd6a97beb4418b25613fa8d778e6e322",
+  "source_api_unchanged_from_baseline": true,
+  "limitations": [
+    "No real ML training or algorithm acceptance",
+    "Fixture bounds are not provider approval",
+    "No Windows, Docker, browser or normal-user acceptance",
+    "No paid AI requests, production deployment or retained demo changes",
+    "Portal authenticated remote-result preview and runtime receipt ingestion still need integration"
+  ],
+  "implementation_source": {
+    "wp3_commit": "56f9ab98395ed73c6b753720699621b47b70222d",
+    "wp3_tree": "d54bbfc62fa6f054a7e1d276ae1ab4092dcb980b",
+    "patch_sha256": "6f85f87d68a23398613952020021a558866c3dd2ead8c5d6baa89f3093ace40c",
+    "patch_roundtrip_base": "d533219426af9ea6defaf0bc78956741201a5109",
+    "patch_roundtrip_tree_match": true,
+    "files_sha256": {
+      "use-cases/portugal-node-sidecar/common/control_interface.py": "d0cc16e77aa6f2385523ab5604dfef34b9a34e04ee938214af169ff4b8c4a876",
+      "use-cases/portugal-node-sidecar/common/configured_synthetic.py": "def51298bd14aa54ade39a4a65e46ab8bae6820a3f0f6723c445da849c78aeaa",
+      "use-cases/portugal-node-sidecar/common/parameter_contract.py": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
+      "tests/test_portuguese_configured_runtime.py": "d1683bc6ff58c3ec8b23a86830b5972eba85c9e213190cbb537bcd91e650e09d"
+    }
+  },
+  "regressions": {
+    "portuguese_source_wiring": 24,
+    "danish_real_source_runtime": 16,
+    "wp3_control_and_instance_configuration": 50,
+    "portal_onboarding_and_parameters": 64,
+    "canonical_validator_destinations": 5,
+    "paid_calls": 0,
+    "production_deployments": 0
+  }
+}
