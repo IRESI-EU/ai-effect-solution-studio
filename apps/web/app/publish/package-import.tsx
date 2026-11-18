@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import { ParameterReview } from "./parameter-review";
 
 type Operation = { operation_name: string; input_message_name: string; output_message_name: string; compatible_with_proto: boolean; compatibility_message: string };
 type Service = {
@@ -26,6 +27,7 @@ export function PackageImportPanel() {
   const [busy, setBusy] = useState<"preview" | "confirm" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
+  const [parameterServiceId, setParameterServiceId] = useState("");
 
   async function inspectPackage() {
     if (!file) return;
@@ -121,7 +123,12 @@ export function PackageImportPanel() {
       <button type="button" style={primaryButtonStyle} disabled={!acknowledged || selectedBlocked || selectedKeys.size === 0 || (createSolution && unresolved.length > 0) || busy !== null} onClick={confirm}>{busy === "confirm" ? "Registering atomically…" : "Submit selected services for approval"}</button>
     </div>}
     {error && <div className="package-errors">{error}</div>}
-    {result && <div className="package-success"><strong>{result.message}</strong><p>{result.services?.map((service: any) => service.name).join(", ")}</p>{result.solution && <p>Draft solution created: {result.solution.name}</p>}</div>}
+    {result && <div className="package-success"><strong>{result.message}</strong><p>{result.services?.map((service: any) => service.name).join(", ")}</p>{result.solution && <p>Draft solution created: {result.solution.name}</p>}
+      <label style={labelStyle}>Review settings for an imported service<select value={parameterServiceId} onChange={event => setParameterServiceId(event.target.value)} style={inputStyle}>
+        <option value="">Select a service</option>{result.services?.map((service: {id: string; name: string}) => <option key={service.id} value={service.id}>{service.name}</option>)}
+      </select></label>
+      {parameterServiceId && <ParameterReview key={parameterServiceId} serviceId={parameterServiceId} />}
+    </div>}
   </div>;
 }
 

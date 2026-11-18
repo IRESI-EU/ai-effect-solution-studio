@@ -22,7 +22,7 @@ def utc_now() -> datetime:
 def get_service_or_404(service_id: str, db: Session, *, for_update: bool = False) -> Service:
     query = db.query(Service).filter(Service.id == service_id)
     if for_update:
-        query = query.with_for_update()
+        query = query.with_for_update().populate_existing()
     service = query.first()
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
@@ -54,6 +54,8 @@ def create_contract(
     service_id: str,
     payload: OperationContractCreate,
     db: Session,
+    *,
+    commit: bool = True,
 ) -> OperationContract:
     get_service_or_404(service_id, db)
     _ensure_version_is_unique(
@@ -69,8 +71,11 @@ def create_contract(
         **_write_values(payload),
     )
     db.add(contract)
-    _commit_changes(db)
-    db.refresh(contract)
+    if commit:
+        _commit_changes(db)
+        db.refresh(contract)
+    else:
+        db.flush()
     return contract
 
 
@@ -125,6 +130,14 @@ def activate_contract(contract_id: str, db: Session) -> OperationContract:
             )
 
         _ensure_service_is_deployment_eligible(service)
+
+        review = (service.interface_contract or {}).get("parameter_reviews", {}).get(contract.id)
+        if review:
+            from app.services.parameter_discovery import reviewed_contract_digest, reviewed_service_digest
+            if (review.get("reviewed_contract_sha256") != reviewed_contract_digest(contract)
+                    or review.get("reviewed_service_sha256") != reviewed_service_digest(service)
+                    or service.operation_name != contract.runtime_operation_name):
+                raise HTTPException(409, "The reviewed definition or runtime operation changed. Repeat provider review before activation.")
 
         now = utc_now()
         active_contracts = (

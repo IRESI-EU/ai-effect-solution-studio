@@ -13,6 +13,7 @@ import {
 } from "./guided-manifest";
 import { workshopExamples, type WorkshopExample } from "./workshop-examples";
 import { PackageImportPanel } from "./package-import";
+import { ParameterReview } from "./parameter-review";
 
 const API_BASE_URL = "/api";
 
@@ -94,6 +95,7 @@ export default function PublishServicePage() {
   const [examplePreviewOnly, setExamplePreviewOnly] = useState<WorkshopExample | null>(null);
   const [copyNotice, setCopyNotice] = useState<string | null>(null);
   const [managedServices, setManagedServices] = useState<ManagedRuntimeService[]>([]);
+  const [parameterServiceId, setParameterServiceId] = useState("");
 
   const generatedManifest = useMemo(() => buildGuidedManifest(form), [form]);
   const generatedJson = useMemo(() => JSON.stringify(generatedManifest, null, 2), [generatedManifest]);
@@ -110,7 +112,7 @@ export default function PublishServicePage() {
     const response = await fetch("/api/services?include_archived=true", { cache: "no-store" });
     if (!response.ok) return;
     const data = await response.json();
-    setManagedServices(Array.isArray(data) ? data : []);
+    setManagedServices(Array.isArray(data) ? data.filter(service => user.role === "platform_admin" || (user.node && service.owner_node === user.node)) : []);
   }
 
   useEffect(() => {
@@ -240,6 +242,7 @@ export default function PublishServicePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(formatApiError(data?.detail) || "Submission failed.");
       setConfirmed(data);
+      void loadManagedServices();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Submission failed.");
     } finally {
@@ -459,12 +462,26 @@ export default function PublishServicePage() {
                   <li>Only an administrator can approve and activate the service.</li>
                 </ol>
               </div>
+              <ParameterReview key={confirmed.id} serviceId={confirmed.id} />
               <Link href="/catalogue" style={secondaryButtonStyle}>Open catalogue</Link>
               {user?.role === "platform_admin" && <Link href="/admin" style={primaryLinkStyle}>Review in Admin</Link>}
             </section>
           )}
         </div>
       </div>
+      {managedServices.length > 0 && (
+        <section style={{ ...cardStyle, marginTop: 24 }}>
+          <h2>Publish settings for a registered service</h2>
+          <p>Continue provider review for a service registered by form, manifest or package.</p>
+          <label style={labelStyle}>Your service
+            <select value={parameterServiceId} onChange={event => setParameterServiceId(event.target.value)} style={inputStyle}>
+              <option value="">Select a service</option>
+              {managedServices.map(service => <option key={service.id} value={service.id}>{service.name} · {service.operation_name}</option>)}
+            </select>
+          </label>
+          {parameterServiceId && <ParameterReview key={parameterServiceId} serviceId={parameterServiceId} />}
+        </section>
+      )}
       {managedServices.length > 0 && (
         <details style={{ ...cardStyle, marginTop: 24 }}>
           <summary style={{ cursor: "pointer", fontWeight: 850, fontSize: 18 }}>Manage and verify existing service runtimes</summary>

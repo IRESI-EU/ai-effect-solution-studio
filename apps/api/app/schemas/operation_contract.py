@@ -148,6 +148,7 @@ class ParameterDefinition(StrictContractModel):
     type: Literal["integer", "number", "boolean", "string"]
     title: str = Field(min_length=1, max_length=120)
     description: str = Field(min_length=1, max_length=1000)
+    unit: str | None = Field(default=None, max_length=80)
     required: bool = False
     default: Any = None
     minimum: float | None = None

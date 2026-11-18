@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 export type InstanceConfiguration = { contract_id: string; contract_version: string; parameters: Record<string, unknown> };
-type Parameter = { type: "integer" | "number" | "boolean" | "string"; title: string; description: string; default?: unknown; minimum?: number; maximum?: number; enum?: unknown[] };
+type Parameter = { type: "integer" | "number" | "boolean" | "string"; title: string; description: string; unit?: string; default?: unknown; minimum?: number; maximum?: number; enum?: unknown[] };
 type Contract = { id: string; contract_version: string; definition: { execution_parameters?: { properties: Record<string, Parameter> } } };
 
 export default function InstanceParameters({ instanceId, serviceId, configuration, onChange, onCopy, onReady }: {
@@ -42,7 +42,7 @@ export default function InstanceParameters({ instanceId, serviceId, configuratio
         {Object.entries(properties).map(([name, spec]) => {
           const value = configuration.parameters[name] ?? spec.default ?? "";
           return <div key={name} style={{ display: "grid", gap: 5, margin: "12px 0" }}>
-            <label htmlFor={`setting-${instanceId}-${name}`}><strong>{spec.title}</strong></label>
+            <label htmlFor={`setting-${instanceId}-${name}`}><strong>{spec.title}{spec.unit ? ` (${spec.unit})` : ""}</strong></label>
             {spec.enum ? <select id={`setting-${instanceId}-${name}`} aria-label={spec.title} value={JSON.stringify(value)} onChange={event => update(name, JSON.parse(event.target.value))}>
               {value === "" && <option value={'""'}>Choose a value</option>}
               {spec.enum.map(option => <option key={JSON.stringify(option)} value={JSON.stringify(option)}>{String(option)}</option>)}

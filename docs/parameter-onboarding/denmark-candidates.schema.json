@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "SOURCE-REVIEW CANDIDATES ONLY. No owner approval, default, numeric limit, runtime configuration support or deployment is asserted. Do not activate without provider review and actual runtime checks.",
+  "type": "object",
+  "properties": {
+    "allow_hx": {
+      "type": "boolean",
+      "title": "Allow heat exchangers",
+      "description": "Candidate flag passed by GenerateTopology to enumerate_networks(allow_hx=...). Node owner must confirm meaning and default."
+    },
+    "allow_bypass": {
+      "type": "boolean",
+      "title": "Allow bypasses",
+      "description": "Candidate flag passed by GenerateTopology to enumerate_networks(allow_bypass=...). Defaults differ between the configuration assistant and topology handler; owner decision is required."
+    },
+    "how_many": {
+      "type": "integer",
+      "title": "Maximum topology results",
+      "description": "Candidate run_config value passed to enumerate_networks(max_results=...). The existing handler uses a fallback for falsy values. Owner must confirm semantics, default and valid limits."
+    }
+  },
+  "additionalProperties": false
+}

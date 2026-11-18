@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 export type ManagedRuntimeService = {
   id: string;
   name: string;
+  owner_node?: string | null;
   container_name?: string | null;
   internal_host?: string | null;
   internal_port?: string | null;

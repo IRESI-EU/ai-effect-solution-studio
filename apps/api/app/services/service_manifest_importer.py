@@ -4,6 +4,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from app.services.parameter_discovery import discover
 
 from app.schemas.service_import import (
     NormalizedImportedService,
@@ -257,6 +258,18 @@ def normalize_manifest(
         )
 
     validate_interface_specific_fields(interface, interface_type, validation)
+
+    supplied_description = interface.get("parameter_schema", interface.get("openapi"))
+    if supplied_description is not None:
+        try:
+            if not isinstance(supplied_description, dict):
+                raise ValueError("The supplied interface description must be a JSON object")
+            interface_contract["parameter_discovery"] = discover(
+                supplied_description, f"{repo_url}@{branch}:{manifest_path}", operation_name,
+                interface.get("openapi_operation_id"))
+            validation.append(ValidationMessage(level="warning", message="Candidate settings discovered. Provider review and runtime checks are required before activation."))
+        except (ValueError, TypeError) as exc:
+            validation.append(ValidationMessage(level="warning", message=f"Parameter discovery unavailable: {exc}. Register as fixed and supply a supported description in the parameter review."))
 
     if interface_type in {"control", "http", "container_job", "legacy_sidecar"}:
         validation.append(

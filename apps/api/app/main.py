@@ -33,6 +33,7 @@ from app.routers.design_ai import router as design_ai_router
 from app.routers.experiment_journey import router as experiment_journey_router
 from app.routers.deployment_results import router as deployment_results_router, authorized_deployment
 from app.routers.operation_contracts import router as operation_contracts_router
+from app.routers.parameter_onboarding import router as parameter_onboarding_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
     DeploymentCreate,
@@ -96,6 +97,7 @@ with SessionLocal() as bootstrap_db:
 
 app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
 app.include_router(operation_contracts_router)
+app.include_router(parameter_onboarding_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
 app.include_router(design_ai_router)
@@ -338,7 +340,7 @@ def confirm_manual_service_import(
      provider=imported.provider,
      category=imported.category,
      version=imported.version,
-     description=imported.description,
+     description=imported.description or "",
      status="pending_review",
      trust_badge="pending_review",
      lifecycle_status="active",
