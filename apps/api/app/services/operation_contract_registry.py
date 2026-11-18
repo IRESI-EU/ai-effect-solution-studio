@@ -132,6 +132,8 @@ def activate_contract(contract_id: str, db: Session) -> OperationContract:
         _ensure_service_is_deployment_eligible(service)
 
         review = (service.interface_contract or {}).get("parameter_reviews", {}).get(contract.id)
+        if contract.definition.get("execution_parameters") and service.interface_type != "control":
+            raise HTTPException(409, "Parameter publication requires a declared, qualified HTTP Control configuration connector. Definitions may be reviewed as drafts for any interface.")
         if contract.definition.get("execution_parameters") and not review:
             raise HTTPException(409, "Review parameter definitions through provider onboarding before publication")
         if review:

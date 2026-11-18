@@ -1,5 +1,7 @@
 # Product alignment and delivery checkpoint — 18 November 2026
 
+> Later same-day delivery: [Portuguese-priority onboarding](DAILY_DELIVERY_2026-11-18_PORTUGUESE_ONBOARDING.md) implements source-query discovery and records the revised priority, concrete demonstration and runtime dependency.
+
 Baseline: the approved eight-page **AI_EFFECT_Product_Reset_and_Delivery_Plan.docx**. This checkpoint supersedes current-status statements in the earlier onboarding and native-execution checkpoints; those files remain historical evidence.
 
 The reusable parameter core and native execution work fit the target. The earlier chat workspace still used a separate pilot draft, registered workflows and paired composition. Those remain retained regression evidence, not the architecture for the normal product. This pass connects normal chat to the canonical saved Builder solution and corrects a circular onboarding dependency. It does **not** establish the product Definition of Done or production readiness.

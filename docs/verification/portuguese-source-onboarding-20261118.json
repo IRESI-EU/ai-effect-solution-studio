@@ -1,0 +1,161 @@
+{
+  "observed_at": "2026-11-18T09:08:28.250573+00:00",
+  "status": "PASS",
+  "scope": "Source interface discovery and authenticated offline provider/designer API journey; not Portuguese ML execution",
+  "source_reference": "https://github.com/AI-EFFECT/ai-effect-wp3/blob/d533219426af9ea6defaf0bc78956741201a5109/use-cases/portugal-node-integrated/synthetic_data_generation/main.py",
+  "source_sha256": "0e4caddd200e5366b504c3cce2df957fbd6a97beb4418b25613fa8d778e6e322",
+  "declarations": {
+    "/train": {
+      "operation": {
+        "operation_id": "train_new_model_train_post",
+        "method": "POST",
+        "path": "/train"
+      },
+      "settings": [
+        {
+          "name": "sequence_len",
+          "source_pointer": "#/paths/~1train/post/parameters/4/schema",
+          "classification": "setting",
+          "supported": true,
+          "reason": null,
+          "definition": {
+            "type": "integer",
+            "description": "Sequence length for training",
+            "default": 100,
+            "title": "Sequence Len",
+            "required": false
+          },
+          "unit": null,
+          "source_location": "query"
+        },
+        {
+          "name": "batch_size",
+          "source_pointer": "#/paths/~1train/post/parameters/5/schema",
+          "classification": "setting",
+          "supported": true,
+          "reason": null,
+          "definition": {
+            "type": "integer",
+            "description": "Batch size for training",
+            "default": 1000,
+            "title": "Batch Size",
+            "required": false
+          },
+          "unit": null,
+          "source_location": "query"
+        },
+        {
+          "name": "epochs",
+          "source_pointer": "#/paths/~1train/post/parameters/6/schema",
+          "classification": "setting",
+          "supported": true,
+          "reason": null,
+          "definition": {
+            "type": "integer",
+            "description": "Number of epochs for training",
+            "default": 10,
+            "title": "Epochs",
+            "required": false
+          },
+          "unit": null,
+          "source_location": "query"
+        }
+      ],
+      "separate_or_unsupported": [
+        {
+          "name": "user_id",
+          "classification": "operator",
+          "reason": "Keep operator outside algorithm settings"
+        },
+        {
+          "name": "model_name",
+          "classification": "data_input",
+          "reason": "Keep data input outside algorithm settings"
+        },
+        {
+          "name": "index_col",
+          "classification": "setting",
+          "reason": "Free text is not supported by the parameter core; use a confirmed enumeration"
+        },
+        {
+          "name": "overwrite",
+          "classification": "operator",
+          "reason": "Keep operator outside algorithm settings"
+        },
+        {
+          "name": "uploaded_file",
+          "classification": "data_input",
+          "reason": "Keep data input outside algorithm settings"
+        }
+      ]
+    },
+    "/generate": {
+      "operation": {
+        "operation_id": "generate_synthetic_data_generate_get",
+        "method": "GET",
+        "path": "/generate"
+      },
+      "settings": [
+        {
+          "name": "number_of_examples",
+          "source_pointer": "#/paths/~1generate/get/parameters/2/schema",
+          "classification": "setting",
+          "supported": true,
+          "reason": null,
+          "definition": {
+            "type": "integer",
+            "description": "Number of examples to generate",
+            "default": 1,
+            "title": "Number Of Examples",
+            "required": false
+          },
+          "unit": null,
+          "source_location": "query"
+        }
+      ],
+      "separate_or_unsupported": [
+        {
+          "name": "model_name",
+          "classification": "data_input",
+          "reason": "Keep data input outside algorithm settings"
+        },
+        {
+          "name": "user_id",
+          "classification": "operator",
+          "reason": "Keep operator outside algorithm settings"
+        },
+        {
+          "name": "return_csv",
+          "classification": "operator",
+          "reason": "Keep operator outside algorithm settings"
+        }
+      ]
+    }
+  },
+  "manual_then_chat": {
+    "solution_id": "6d49a2dd-3880-4d6e-80e2-803e4095aab4",
+    "initial_epochs": [
+      10,
+      15
+    ],
+    "saved_after_explicit_apply": [
+      10,
+      20
+    ],
+    "compiled_epochs": [
+      10,
+      20
+    ],
+    "proposal_did_not_save": true,
+    "shared_writer": true,
+    "provider": "Injected offline structured response",
+    "qualification_and_administrator_approval": "Synthetic fixture only; not node approval"
+  },
+  "limitations": [
+    "Input-signature export, not observed live OpenAPI",
+    "No actual Portuguese model or sidecar execution",
+    "Bounds absent in source remain undeclared; no scientific or provider-approved limits invented",
+    "SQLite API walkthrough and rendered component checks; browser and PostgreSQL not verified",
+    "Production unchanged; no paid provider calls"
+  ]
+}

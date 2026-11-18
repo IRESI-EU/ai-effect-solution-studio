@@ -16,7 +16,8 @@ MAX_DOCUMENT_BYTES = 256_000
 NAME = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 SECRET = re.compile(r"password|passwd|secret|token|credential|api[_-]?key|authorization|private[_-]?key", re.I)
 OPERATOR = re.compile(r"(^|_)(host|port|path|dir|directory|mount|image|endpoint|url|uri)($|_)", re.I)
-DATA = re.compile(r"(^|_)(data|dataset|file|csv|model_ref|input_ref)($|_)", re.I)
+DATA = re.compile(r"(^|_)(data|dataset|file|csv|model_ref|model_name|input_ref)($|_)", re.I)
+RESOURCE_CONTROL = re.compile(r"^(user_id|username|account_id|tenant_id|owner_id|overwrite|output_format|return_csv|return_json|return_parquet)$", re.I)
 SUPPORTED_KEYS = {"type", "title", "description", "default", "minimum", "maximum", "enum", "x-unit", "x-ai-effect-kind"}
 ANNOTATIONS = {"$schema", "$id", "$comment", "examples", "example", "deprecated"}
 
@@ -65,11 +66,105 @@ def classify(name: str, schema: dict) -> str:
     kind = schema.get("x-ai-effect-kind")
     if SECRET.search(name) or schema.get("writeOnly") or schema.get("format") == "password" or kind == "secret":
         return "secret"
-    if OPERATOR.search(name) or kind == "operator":
+    if OPERATOR.search(name) or RESOURCE_CONTROL.fullmatch(name) or kind == "operator":
         return "operator"
     if DATA.search(name) or kind == "data_input" or schema.get("format") in {"binary", "byte", "uri"}:
         return "data_input"
     return "setting"
+
+
+def _object_fields(document, raw, pointer, location):
+    root, pointer = _resolve(document, raw, pointer)
+    if root.get("type") != "object" or not isinstance(root.get("properties"), dict):
+        raise ValueError("Supply an object schema for the selected request body")
+    # Settings envelopes are intentional scopes, never a guess about arbitrary nesting.
+    if "configuration" in root["properties"]:
+        configuration, nested = _resolve(document, root["properties"]["configuration"], pointer + "/properties/configuration")
+        if isinstance(configuration.get("properties"), dict) and "parameters" in configuration["properties"]:
+            root, pointer = configuration, nested
+    if "parameters" in root["properties"]:
+        root, pointer = _resolve(document, root["properties"]["parameters"], pointer + "/properties/parameters")
+    if root.get("type") != "object" or not isinstance(root.get("properties"), dict):
+        raise ValueError("The parameters schema must describe an object")
+    constraints = set(root) - {"type", "properties", "required", "additionalProperties", "title", "description"} - ANNOTATIONS
+    problem = "Unsupported object constraints: " + ", ".join(sorted(constraints)) if constraints else None
+    if root.get("additionalProperties") not in (None, False, True):
+        problem = "Typed additional properties require connector support"
+    required = root.get("required", [])
+    if not isinstance(required, list) or any(not isinstance(name, str) for name in required):
+        raise ValueError("Schema required must be an array of field names")
+    return [(name, raw, f"{pointer}/properties/{_pointer(name)}", name in required, location, None, problem)
+            for name, raw in root["properties"].items()]
+
+
+def _openapi_fields(document, operation_name, operation_id):
+    selected = []
+    paths = document.get("paths", {})
+    if not isinstance(paths, dict):
+        raise ValueError("OpenAPI paths must be an object")
+    for path, methods in paths.items():
+        if not isinstance(methods, dict):
+            continue
+        for method, operation in methods.items():
+            if method.lower() in {"post", "put", "patch", "get", "delete", "options", "head", "trace"} and isinstance(operation, dict):
+                if operation.get("operationId") == (operation_id or operation_name):
+                    selected.append((path, method, operation))
+    if len(selected) != 1:
+        raise ValueError("Select one unique OpenAPI operationId for this service")
+    path, method, operation = selected[0]
+    prefix = f"#/paths/{_pointer(path)}"
+    # OpenAPI operation-level parameters override path-level parameters by (name,in).
+    # Duplicate declarations within one level are invalid, never silently overwritten.
+    parameters = {}
+    for source, pointer in ((paths[path].get("parameters", []), prefix + "/parameters"),
+                            (operation.get("parameters", []), prefix + f"/{method}/parameters")):
+        if not isinstance(source, list):
+            raise ValueError("OpenAPI parameters must be an array")
+        seen = set()
+        for index, raw in enumerate(source):
+            parameter, resolved = _resolve(document, raw, pointer + f"/{index}")
+            name, location = parameter.get("name"), parameter.get("in")
+            if not isinstance(name, str) or not name or location not in {"query", "path", "header", "cookie"}:
+                raise ValueError("OpenAPI parameters require a name and a supported location")
+            key = name, location
+            if key in seen:
+                raise ValueError("Duplicate OpenAPI parameter declaration")
+            seen.add(key); parameters[key] = parameter, resolved
+    fields, notes = [], []
+    for (name, location), (parameter, pointer) in parameters.items():
+        schema, schema_pointer = _resolve(document, parameter.get("schema", {}), pointer + "/schema")
+        # Parameter description supplements, never replaces, a schema description.
+        schema = dict(schema)
+        if "description" not in schema and isinstance(parameter.get("description"), str):
+            schema["description"] = parameter["description"]
+        required = parameter.get("required", False)
+        if type(required) is not bool:
+            raise ValueError("OpenAPI parameter required must be boolean")
+        unexpected = set(parameter) - {"name", "in", "schema", "description", "required", "deprecated", "example", "examples", "style", "explode"}
+        problem = "Unsupported parameter constraints: " + ", ".join(sorted(unexpected)) if unexpected else None
+        if parameter.get("style", "form") != "form" or ("explode" in parameter and type(parameter["explode"]) is not bool):
+            problem = "This query serialization needs a verified connector"
+        fields.append((name, schema, schema_pointer, required, location,
+                       "operator" if location != "query" else None, problem))
+    if "requestBody" in operation:
+        pointer = prefix + f"/{method}/requestBody"
+        body, pointer = _resolve(document, operation["requestBody"], pointer)
+        contents = body.get("content", {})
+        if not isinstance(contents, dict):
+            raise ValueError("OpenAPI request content must be an object")
+        supported = [kind for kind in ("application/json", "multipart/form-data", "application/x-www-form-urlencoded") if kind in contents]
+        if len(supported) > 1:
+            notes.append("Multiple request body representations require a provider-selected interface description; query fields alone are shown")
+        elif supported:
+            kind = supported[0]; content = contents[kind]
+            if not isinstance(content, dict):
+                raise ValueError("OpenAPI request content must be an object")
+            fields.extend(_object_fields(document, content.get("schema", {}), pointer + f"/content/{_pointer(kind)}/schema", kind))
+        else:
+            notes.append("The request body representation needs connector support; query fields alone are shown")
+    if not fields:
+        raise ValueError("Supply an object JSON Schema or a selected OpenAPI operation with query fields or an object request body")
+    return fields, {"operation_id": operation.get("operationId"), "method": method.upper(), "path": path}, notes
 
 
 def discover(document: dict, source_reference: str, operation_name: str, operation_id: str | None = None) -> dict:
@@ -79,73 +174,38 @@ def discover(document: dict, source_reference: str, operation_name: str, operati
     source_reference = source_reference.strip()
     if not source_reference:
         raise ValueError("Supply a source reference")
-    pointer = "#"
+    operation, notes = None, []
     if "openapi" in document:
-        selected = []
-        paths = document.get("paths", {})
-        if not isinstance(paths, dict):
-            raise ValueError("OpenAPI paths must be an object")
-        for path, methods in paths.items():
-            if not isinstance(methods, dict):
-                continue
-            for method, operation in methods.items():
-                if method.lower() not in {"post", "put", "patch", "get", "delete"} or not isinstance(operation, dict):
-                    continue
-                if operation.get("operationId") == (operation_id or operation_name):
-                    selected.append((path, method, operation))
-        if len(selected) != 1:
-            raise ValueError("Select one unique OpenAPI operationId for this service")
-        path, method, operation = selected[0]
-        pointer = f"#/paths/{_pointer(path)}/{method}/requestBody"
-        body, pointer = _resolve(document, operation.get("requestBody", {}), pointer)
-        contents = body.get("content", {})
-        if not isinstance(contents, dict) or not isinstance(contents.get("application/json", {}), dict):
-            raise ValueError("OpenAPI request content must be an object")
-        content = contents.get("application/json", {})
-        root, pointer = _resolve(document, content.get("schema", {}), pointer + "/content/application~1json/schema")
+        fields, operation, notes = _openapi_fields(document, operation_name, operation_id)
     else:
-        root, pointer = _resolve(document, document, pointer)
-    if root.get("type") != "object" or not isinstance(root.get("properties"), dict):
-        raise ValueError("Supply an object JSON Schema or a selected OpenAPI JSON request body")
-    # A control envelope has one documented parameters object. Inputs and operator
-    # fields outside it are not guessed to be algorithm settings.
-    if "configuration" in root["properties"]:
-        configuration, configuration_pointer = _resolve(document, root["properties"]["configuration"], pointer + "/properties/configuration")
-        if isinstance(configuration.get("properties"), dict) and "parameters" in configuration["properties"]:
-            root, pointer = configuration, configuration_pointer
-    if "parameters" in root["properties"]:
-        root, pointer = _resolve(document, root["properties"]["parameters"], pointer + "/properties/parameters")
-    if root.get("type") != "object" or not isinstance(root.get("properties"), dict):
-        raise ValueError("The parameters schema must describe an object")
-    if len(root["properties"]) > 100:
+        fields = _object_fields(document, document, "#", "json_schema")
+    if len(fields) > 100:
         raise ValueError("At most 100 fields can be reviewed in one operation")
-    root_constraints = set(root) - {"type", "properties", "required", "additionalProperties", "title", "description"} - ANNOTATIONS
-    required = root.get("required", [])
-    if not isinstance(required, list) or any(not isinstance(name, str) for name in required):
-        raise ValueError("Schema required must be an array of field names")
+    duplicates = {name for name, *_ in fields if sum(f[0] == name for f in fields) > 1}
     candidates = []
-    for name, raw in root["properties"].items():
-        source_pointer = f"{pointer}/properties/{_pointer(name)}"
-        reason = None
+    for name, raw, source_pointer, required, location, classification, problem in fields:
+        reason = problem
         try:
             schema, source_pointer = _resolve(document, raw, source_pointer)
         except ValueError as exc:
             schema, reason = {}, str(exc)
         kind = classify(name, schema)
+        if kind == "setting" and classification:
+            kind = classification
         if kind != "setting":
             # Never retain secret/default values or docs for excluded fields.
             candidates.append({"name": name, "source_pointer": source_pointer, "classification": kind,
-                               "supported": False, "reason": f"Keep {kind.replace('_', ' ')} outside algorithm settings"})
+                               "supported": False, "source_location": location, "reason": f"Keep {kind.replace('_', ' ')} outside algorithm settings"})
             continue
         if not NAME.fullmatch(name):
             reason = "The parameter core requires a lowercase identifier"
         unsupported = set(schema) - SUPPORTED_KEYS - ANNOTATIONS
-        if unsupported or root_constraints:
-            reason = "Unsupported constraints need an explicit interface update: " + ", ".join(sorted(unsupported | root_constraints))
-        if root.get("additionalProperties") not in (None, False, True):
-            reason = "Typed additional properties require connector support"
+        if unsupported:
+            reason = "Unsupported constraints need an explicit interface update: " + ", ".join(sorted(unsupported))
+        if name in duplicates:
+            reason = "The same name occurs in multiple input locations; supply an unambiguous parameter schema"
         spec = {key: value for key, value in schema.items() if key in {"type", "title", "description", "default", "minimum", "maximum", "enum"}}
-        spec["required"] = name in required
+        spec["required"] = required
         # Missing descriptions stay blank: the provider supplies the meaning.
         spec.setdefault("title", name)
         spec.setdefault("description", "")
@@ -169,10 +229,10 @@ def discover(document: dict, source_reference: str, operation_name: str, operati
             spec.pop("enum", None)
         candidates.append({"name": name, "source_pointer": source_pointer, "classification": "setting",
                            "supported": bool(supported), "reason": reason, "definition": spec,
-                           "unit": schema.get("x-unit")})
+                           "unit": schema.get("x-unit"), "source_location": location})
     return {"revision": uuid4().hex, "operation_name": operation_name, "source_reference": source_reference,
             "source_sha256": hashlib.sha256(encoded).hexdigest(), "candidates": candidates,
-            "status": "awaiting_provider_review"}
+            "status": "awaiting_provider_review", "source_operation": operation, "limitations": notes}
 
 
 def validate_reviewed_definition(name: str, spec: ParameterDefinition) -> None:

@@ -1,0 +1,299 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Source input signatures for provider review",
+    "description": "Source-derived input signatures only. Runtime availability, parameter approval and output contracts are unverified. The service module and route bodies were not executed.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/train": {
+      "post": {
+        "summary": "Train New Model",
+        "operationId": "train_new_model_train_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The id of the user",
+              "default": "test_user_id",
+              "title": "User Id"
+            },
+            "description": "The id of the user"
+          },
+          {
+            "name": "model_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The name of the model",
+              "default": "test_model",
+              "title": "Model Name"
+            },
+            "description": "The name of the model"
+          },
+          {
+            "name": "index_col",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The name of the index column",
+              "default": "datetime",
+              "title": "Index Col"
+            },
+            "description": "The name of the index column"
+          },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to overwrite existing model",
+              "default": false,
+              "title": "Overwrite"
+            },
+            "description": "Whether to overwrite existing model"
+          },
+          {
+            "name": "sequence_len",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Sequence length for training",
+              "default": 100,
+              "title": "Sequence Len"
+            },
+            "description": "Sequence length for training"
+          },
+          {
+            "name": "batch_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Batch size for training",
+              "default": 1000,
+              "title": "Batch Size"
+            },
+            "description": "Batch size for training"
+          },
+          {
+            "name": "epochs",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Number of epochs for training",
+              "default": 10,
+              "title": "Epochs"
+            },
+            "description": "Number of epochs for training"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_train_new_model_train_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate": {
+      "get": {
+        "summary": "Generate Synthetic Data",
+        "operationId": "generate_synthetic_data_generate_get",
+        "parameters": [
+          {
+            "name": "model_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The name of the model",
+              "default": "test_model",
+              "title": "Model Name"
+            },
+            "description": "The name of the model"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "The id of the user",
+              "default": "test_user_id",
+              "title": "User Id"
+            },
+            "description": "The id of the user"
+          },
+          {
+            "name": "number_of_examples",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Number of examples to generate",
+              "default": 1,
+              "title": "Number Of Examples"
+            },
+            "description": "Number of examples to generate"
+          },
+          {
+            "name": "return_csv",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Whether to return csv",
+              "default": true,
+              "title": "Return Csv"
+            },
+            "description": "Whether to return csv"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_train_new_model_train_post": {
+        "properties": {
+          "uploaded_file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Uploaded File",
+            "description": "CSV file for training data"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uploaded_file"
+        ],
+        "title": "Body_train_new_model_train_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "x-ai-effect-source": {
+    "reference": "https://github.com/AI-EFFECT/ai-effect-wp3/blob/d533219426af9ea6defaf0bc78956741201a5109/use-cases/portugal-node-integrated/synthetic_data_generation/main.py",
+    "sha256": "0e4caddd200e5366b504c3cce2df957fbd6a97beb4418b25613fa8d778e6e322",
+    "scope": "source-input-signatures-only",
+    "operations": [
+      {
+        "path": "/train",
+        "method": "POST",
+        "function": "train_new_model",
+        "line": 54
+      },
+      {
+        "path": "/generate",
+        "method": "GET",
+        "function": "generate_synthetic_data",
+        "line": 129
+      }
+    ]
+  }
+}

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import { suppliedOperations } from "../../lib/parameter-discovery";
 
 type Definition = { type: "integer" | "number" | "boolean" | "string"; title: string; description: string; required?: boolean; default?: unknown; minimum?: number; maximum?: number; enum?: unknown[]; unit?: string };
-type Candidate = { name: string; source_pointer: string; classification: string; supported: boolean; reason?: string; definition?: Definition };
-type Discovery = { revision: string; operation_name: string; source_reference: string; source_sha256: string; candidates: Candidate[] };
+type Candidate = { source_location?: string; name: string; source_pointer: string; classification: string; supported: boolean; reason?: string; definition?: Definition };
+type Discovery = { source_operation?: { operation_id: string; method: string; path: string } | null; limitations?: string[]; revision: string; operation_name: string; source_reference: string; source_sha256: string; candidates: Candidate[] };
 type Contract = { id: string; contract_version: string; status: string; operation_identity: string; definition: { execution_parameters?: { properties: Record<string, Definition> } } };
 type Review = { evidence_reference: string; reviewed_contract_sha256: string; runtime_support_confirmed: boolean; normal_configuration_tested: boolean; invalid_configuration_tested: boolean; mappings?: Record<string, { algorithm_mapping: string; transport_path: string }> };
 type State = { operation_name: string; service_status: string; interface_type: string; discovery?: Discovery; reviews: Record<string, Review> };
@@ -40,6 +41,7 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const operations = suppliedOperations(document);
   const base = `/api/services/${encodeURIComponent(serviceId)}`;
 
   async function load() {
@@ -120,24 +122,29 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
     <fieldset disabled={busy || !state} style={{ border: 0, padding: 0 }}>
       <details open={!state?.discovery}>
         <summary>Supply an interface description</summary>
-        <p>Use a JSON Schema for this operation’s settings, or an OpenAPI JSON document with a request body. Complex constraints, protobuf and prose need a supported description from the provider. No repository code is executed.</p>
+        <p>Use a JSON Schema for this operation’s settings, or an OpenAPI JSON document with query parameters or a JSON/form request body. Complex constraints, protobuf and prose need a supported description from the provider. No repository code is executed.</p>
         <label style={label}>Interface description file<input type="file" accept=".json,application/json" onChange={async event => {
           const file = event.target.files?.[0]; if (!file) return;
           if (file.size > 256000) { setError("Choose a JSON description under 256 KB."); return; }
-          setDocument(await file.text()); setSource(file.name); setError("");
+          setDocument(await file.text()); setSource(file.name); setOperationId(""); setError("");
         }} /></label>
-        <label style={label}>JSON description<textarea value={document} onChange={event => setDocument(event.target.value)} rows={7} style={input} /></label>
+        <label style={label}>JSON description<textarea value={document} onChange={event => { setDocument(event.target.value); setOperationId(""); }} rows={7} style={input} /></label>
         <label style={label}>Source reference and revision<input value={source} onChange={event => setSource(event.target.value)} style={input} /></label>
-        <label style={label}>OpenAPI operationId (when different from the registered name)<input value={operationId} onChange={event => setOperationId(event.target.value)} style={input} /></label>
-        <button type="button" onClick={discover} disabled={!document.trim() || !source.trim()}>Discover candidate settings</button>
+        {operations.length ? <label style={label}>Operation in the supplied OpenAPI<select value={operationId} onChange={event => setOperationId(event.target.value)} style={input}>
+          <option value="">Select the actual operation to review</option>
+          {operations.map((operation, index) => <option key={`${operation.id}:${index}`} value={operation.id}>{operation.label}</option>)}
+        </select></label> : <label style={label}>OpenAPI operationId (when different from the registered name)<input value={operationId} onChange={event => setOperationId(event.target.value)} style={input} /></label>}
+        <button type="button" onClick={discover} disabled={!document.trim() || !source.trim() || (!!operations.length && !operationId)}>Discover candidate settings</button>
       </details>
       {state?.discovery && <>
         <p>Source: {state.discovery.source_reference}</p>
+        {state.discovery.source_operation && <p>Inspected input interface: {state.discovery.source_operation.method} {state.discovery.source_operation.path} · {state.discovery.source_operation.operation_id}. Runtime delivery still uses the reviewed configuration connector.</p>}
+        {state.discovery.limitations?.map(note => <p role="alert" key={note}>{note}</p>)}
         <div style={{ overflowX: "auto" }}><table style={{ width: "100%", textAlign: "left" }}>
           <thead><tr><th>Expose</th><th>Candidate / source</th><th>Classification</th></tr></thead>
           <tbody>{rows.map((row, index) => <tr key={row.source_pointer}>
             <td><input type="checkbox" aria-label={`Expose ${row.name}`} checked={row.selected} disabled={!row.supported} onChange={event => edit(index, { selected: event.target.checked })} /></td>
-            <td style={{ overflowWrap: "anywhere" }}><strong>{row.name}</strong><br /><small>{row.source_pointer}</small></td>
+            <td style={{ overflowWrap: "anywhere" }}><strong>{row.name}</strong><br /><small>{row.source_location ? `${row.source_location} · ` : ""}{row.source_pointer}</small></td>
             <td>{row.classification.replaceAll("_", " ")}{row.reason && <p>{row.reason}</p>}</td>
           </tr>)}</tbody>
         </table></div>
@@ -161,8 +168,8 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
         })}
         <label style={label}>Canonical operation URI or URN<input value={identity} onChange={event => { setIdentity(event.target.value); }} style={input} /></label>
         <label style={label}>New contract version<input placeholder="Semantic version, for example 1.0.0" value={version} onChange={event => { setVersion(event.target.value); }} style={input} /></label>
-        {state.interface_type !== "control" && <p role="alert">This interface needs a verified configuration adapter. Discovery can be reviewed, but this connector cannot publish its settings yet.</p>}
-        <button type="button" onClick={save} disabled={state.interface_type !== "control" || !rows.some(row => row.selected) || !identity.trim() || !version.trim()}>Save reviewed settings as draft</button>
+        {state.interface_type !== "control" && <p role="alert">You can save these definitions for provider review. Publication requires a declared and qualified HTTP Control configuration connector; this interface is not executable through that connector yet.</p>}
+        <button type="button" onClick={save} disabled={!rows.some(row => row.selected) || !identity.trim() || !version.trim()}>Save reviewed settings as draft</button>
       </>}
       {contracts.filter(contract => state?.reviews[contract.id]).map(contract => <article key={contract.id} style={{ borderTop: "1px solid #ddd", marginTop: 16 }}>
         <h3>Version {contract.contract_version} · {contract.status}</h3>
@@ -182,7 +189,7 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
           <button type="button" onClick={() => downloadRuntimeContract(contract.id, true)}>Download qualification contract</button>
           <RuntimeConfirmation key={contract.id} review={state!.reviews[contract.id]} base={base} contractId={contract.id} onConfirmed={load} onError={setError} />
           <p>Publication requires runtime confirmation and administrator approval of the service.</p>
-          <button type="button" disabled={!["approved", "validated"].includes(state?.service_status || "") || !runtimeConfirmed(state!.reviews[contract.id])} onClick={() => activate(contract.id)}>Publish version {contract.contract_version}</button>
+          <button type="button" disabled={state?.interface_type !== "control" || !["approved", "validated"].includes(state?.service_status || "") || !runtimeConfirmed(state!.reviews[contract.id])} onClick={() => activate(contract.id)}>Publish version {contract.contract_version}</button>
         </>}
         {contract.status === "active" && <button type="button" onClick={() => downloadRuntimeContract(contract.id)}>Download runtime contract</button>}
       </article>)}

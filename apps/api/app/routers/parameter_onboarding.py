@@ -56,8 +56,6 @@ def review_parameters(service_id: str, payload: ParameterReviewRequest, db: Sess
     discovery = metadata.get("parameter_discovery")
     if not discovery or discovery["revision"] != payload.discovery_revision or discovery["operation_name"] != service.operation_name:
         raise HTTPException(409, "The interface review changed. Reload and rediscover the operation before saving.")
-    if service.interface_type != "control":
-        raise HTTPException(422, "This first connector supports native HTTP Control services. Other interfaces need a verified configuration adapter.")
     if any((payload.runtime_support_confirmed, payload.normal_configuration_tested, payload.invalid_configuration_tested)) and not payload.evidence_reference.strip():
         raise HTTPException(422, "Supply the provider's runtime test evidence reference")
     candidates = {(c["name"], c["source_pointer"]): c for c in discovery["candidates"]}
@@ -79,7 +77,7 @@ def review_parameters(service_id: str, payload: ParameterReviewRequest, db: Sess
         mappings[parameter.name] = {"transport_path": f"configuration.parameters.{parameter.name}",
                                     "algorithm_mapping": parameter.algorithm_mapping.strip(),
                                     "source_pointer": parameter.source_pointer,
-                                    "unit": parameter.definition.unit}
+                                    "unit": parameter.definition.unit, "source_location": candidate.get("source_location", "json_schema")}
     current = resolve_contract(service_id, db)["contract"]
     definition = deepcopy(current.definition) if current else {"operation_role": payload.operation_role}
     definition["execution_parameters"] = {"schema_version": "1.0", "transport": "http-parameters-v1", "properties": properties}
