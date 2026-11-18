@@ -1,5 +1,7 @@
 # Portuguese runtime connection — 18 November 2026
 
+Later Windows continuation: [real disposable local qualification and owned HTTP result integration](WINDOWS_PORTUGUESE_QUALIFICATION_2026-11-18.md). The source-wiring claims below remain historical; the later fixture model runs do not supply provider-approved scientific defaults/limits or normal designer acceptance.
+
 This pass continues the approved Product Reset baseline after the isolated provider-review workspace at Portal `3927012`. It implements the next node-runtime connection, not a production deployment or a new restricted-workflow product.
 
 ## What changed

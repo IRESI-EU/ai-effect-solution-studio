@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     orchestrator_api_key: str = ""
     # Server-only per-workflow service credential; never a Builder parameter or snapshot field.
     orchestrator_services_api_key: str = ""
+    owned_control_targets_file: str = ""
     session_cookie_name: str = "ai_effect_session"
     session_hours: int = 12
     secure_cookies: bool = False

@@ -1,0 +1,416 @@
+{
+  "containers": [
+    {
+      "name": "ai-effect-pt-parameters-web-1",
+      "id": "9ddf40c4224bfa8ee561684aa6e891791819149d899cae7d8c481674ff654d7c",
+      "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+      "started": "2026-11-16T18:41:12.444451013Z",
+      "running": true,
+      "ports": {
+        "3000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "23124"
+          }
+        ]
+      },
+      "networks": [
+        "ai-effect-pt-parameters_browser",
+        "ai-effect-pt-parameters_private"
+      ],
+      "mounts": []
+    },
+    {
+      "name": "ai-effect-pt-parameters-api-1",
+      "id": "debd03d9312054fc6657b6ec2c887d61c1ae95bb238c02df2226fcb8dcae23aa",
+      "image": "sha256:511b44899c6f437ad33c3cbfc514a31581cbc9dc240e54dcb02aaa7b1d4cc1b5",
+      "started": "2026-11-17T17:59:33.774940551Z",
+      "running": true,
+      "ports": {
+        "8080/tcp": []
+      },
+      "networks": [
+        "ai-effect-pt-parameters_private"
+      ],
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "ai-effect-pt-parameters_adapter",
+          "Destination": "/pt-evidence",
+          "RW": false
+        },
+        {
+          "Type": "volume",
+          "Name": "ai-effect-pt-parameters_models",
+          "Destination": "/pt-models",
+          "RW": false
+        }
+      ]
+    },
+    {
+      "name": "ai-effect-pt-parameters-pt-adapter-1",
+      "id": "f847cb86e0e9e782c34ab11525a03687c4fbd00e560294abfc417bee03312b56",
+      "image": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+      "started": "2026-11-16T14:55:25.337493411Z",
+      "running": true,
+      "ports": {
+        "8080/tcp": null
+      },
+      "networks": [
+        "ai-effect-pt-parameters_private"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/private",
+          "RW": false
+        },
+        {
+          "Type": "volume",
+          "Name": "ai-effect-pt-parameters_adapter",
+          "Destination": "/state",
+          "RW": true
+        }
+      ]
+    },
+    {
+      "name": "ai-effect-pt-parameters-ml-1",
+      "id": "0fda4afe9bc523164a62a594fd8e39c2653b28528b94a0ad8b1aded990880f81",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "started": "2026-11-16T11:02:16.144326823Z",
+      "running": true,
+      "ports": {},
+      "networks": [
+        "ai-effect-pt-parameters_private"
+      ],
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "ai-effect-pt-parameters_models",
+          "Destination": "/app/models",
+          "RW": true
+        }
+      ]
+    },
+    {
+      "name": "ai-effect-pt-parameters-orchestrator-1",
+      "id": "95fc67a2f6575ef4c43280659eb8b30e2d1524fa25c2029356d48498804ddbb9",
+      "image": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+      "started": "2026-11-16T11:02:16.612780535Z",
+      "running": true,
+      "ports": {
+        "8000/tcp": null
+      },
+      "networks": [
+        "ai-effect-pt-parameters_private"
+      ],
+      "mounts": []
+    },
+    {
+      "name": "ai-effect-pt-parameters-model-observer-1",
+      "id": "04f971073bdb4f8ea15fa7829fac4bfc879f99861dd72d755b092df1e5991ec8",
+      "image": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "started": "2026-11-16T11:02:17.746607429Z",
+      "running": true,
+      "ports": {},
+      "networks": [
+        "ai-effect-pt-parameters_private"
+      ],
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "ai-effect-pt-parameters_models",
+          "Destination": "/models",
+          "RW": false
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/private/control.token",
+          "RW": false
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/private/policy.json",
+          "RW": false
+        }
+      ]
+    },
+    {
+      "name": "ai-effect-design-staging-20261117-api-1",
+      "id": "4ff4b79c693611c90035100261ff50fc6371532815fecd61e850552f5ebf3b30",
+      "image": "sha256:29a48dae5efceac7fbab0b151909803a70ccec74843159b3fbe2349d55ea6e67",
+      "started": "2026-11-17T11:04:56.203977895Z",
+      "running": true,
+      "ports": {
+        "8080/tcp": null
+      },
+      "networks": [
+        "ai-effect-design-staging-20261117_private"
+      ],
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "ai-effect-design-staging-20261117_contracts",
+          "Destination": "/service-contracts",
+          "RW": true
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/opt/staging/synthetic_seed.py",
+          "RW": false
+        }
+      ]
+    },
+    {
+      "name": "ai-effect-design-staging-20261117-web-1",
+      "id": "ac45415ebd2317698906c114f2fb598df18c36144253fa0f194196d1bf44df61",
+      "image": "sha256:57cf29da97ab875de93e78fa2068551ba6c44062233358de410a82c490ddc6c0",
+      "started": "2026-11-17T11:01:57.605440431Z",
+      "running": true,
+      "ports": {
+        "3000/tcp": null
+      },
+      "networks": [
+        "ai-effect-design-staging-20261117_private"
+      ],
+      "mounts": []
+    },
+    {
+      "name": "ai-effect-design-staging-20261117-gateway-1",
+      "id": "d672f73ccd6ff639bc5c101439370aa45a04f2d2ebd4facc0090059f7ad7ac30",
+      "image": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+      "started": "2026-11-17T11:01:58.806289311Z",
+      "running": true,
+      "ports": {
+        "8443/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "24443"
+          }
+        ]
+      },
+      "networks": [
+        "ai-effect-design-staging-20261117_private",
+        "ai-effect-design-staging-20261117_review_edge"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/tls",
+          "RW": false
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/etc/nginx/conf.d/default.conf",
+          "RW": false
+        }
+      ]
+    },
+    {
+      "name": "aie-pt-qual-5bef0196d5fb-ml-1",
+      "id": "64a1a75b1af40b1c74e6e932735eeee1fb0606b3e3b375be1eb1b2a2f0fb70ca",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "started": "2026-11-18T14:39:48.950345845Z",
+      "running": true,
+      "ports": {},
+      "networks": [
+        "aie-pt-qual-5bef0196d5fb_private"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/qualification",
+          "RW": false
+        },
+        {
+          "Type": "volume",
+          "Name": "aie-pt-qual-5bef0196d5fb_observations",
+          "Destination": "/qualification-evidence",
+          "RW": true
+        },
+        {
+          "Type": "volume",
+          "Name": "aie-pt-qual-5bef0196d5fb_empty_models",
+          "Destination": "/app/models",
+          "RW": true
+        }
+      ]
+    },
+    {
+      "name": "aie-pt-qual-5bef0196d5fb-connector-1",
+      "id": "a250e73fb9b87ab914d92785261c927dedd00651630969420b20cff9ac61eaa3",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "started": "2026-11-18T14:52:25.759210402Z",
+      "running": true,
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "28190"
+          }
+        ]
+      },
+      "networks": [
+        "aie-pt-qual-5bef0196d5fb_loopback",
+        "aie-pt-qual-5bef0196d5fb_private"
+      ],
+      "mounts": [
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/contracts",
+          "RW": false
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/inputs",
+          "RW": false
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/qualification",
+          "RW": false
+        },
+        {
+          "Type": "volume",
+          "Name": "aie-pt-qual-5bef0196d5fb_state",
+          "Destination": "/state",
+          "RW": true
+        },
+        {
+          "Type": "bind",
+          "Name": null,
+          "Destination": "/qualification-source/common",
+          "RW": false
+        }
+      ]
+    }
+  ],
+  "images": [
+    {
+      "id": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "tags": [
+        "pt33-tef-integrated-synthetic-data:latest"
+      ],
+      "repo_digests": [
+        "pt33-tef-integrated-synthetic-data@sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f"
+      ]
+    },
+    {
+      "id": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+      "tags": [
+        "ai-effect-beta-candidate-web:4296ec484542"
+      ],
+      "repo_digests": [
+        "ai-effect-beta-candidate-web@sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed"
+      ]
+    },
+    {
+      "id": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+      "tags": [
+        "nginx:1.27-alpine"
+      ],
+      "repo_digests": [
+        "nginx@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10"
+      ]
+    },
+    {
+      "id": "sha256:57cf29da97ab875de93e78fa2068551ba6c44062233358de410a82c490ddc6c0",
+      "tags": [
+        "ai-effect-beta-candidate-web:349f45166f31"
+      ],
+      "repo_digests": [
+        "ai-effect-beta-candidate-web@sha256:57cf29da97ab875de93e78fa2068551ba6c44062233358de410a82c490ddc6c0"
+      ]
+    },
+    {
+      "id": "sha256:511b44899c6f437ad33c3cbfc514a31581cbc9dc240e54dcb02aaa7b1d4cc1b5",
+      "tags": [
+        "ai-effect-beta-candidate-api:de58dc98f581"
+      ],
+      "repo_digests": [
+        "ai-effect-beta-candidate-api@sha256:511b44899c6f437ad33c3cbfc514a31581cbc9dc240e54dcb02aaa7b1d4cc1b5"
+      ]
+    },
+    {
+      "id": "sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f",
+      "tags": [
+        "ai-effect-pt-model-observer:30e1ac403c74"
+      ],
+      "repo_digests": [
+        "ai-effect-pt-model-observer@sha256:120dcd8bb3a999fa3d67d4955cecf396101a7b3e6d41fae4e3a4c59bda28455f"
+      ]
+    },
+    {
+      "id": "sha256:29a48dae5efceac7fbab0b151909803a70ccec74843159b3fbe2349d55ea6e67",
+      "tags": [
+        "ai-effect-beta-candidate-api:349f45166f31"
+      ],
+      "repo_digests": [
+        "ai-effect-beta-candidate-api@sha256:29a48dae5efceac7fbab0b151909803a70ccec74843159b3fbe2349d55ea6e67"
+      ]
+    },
+    {
+      "id": "sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6",
+      "tags": [
+        "ai-effect-pt-parameter-adapter:c98b454b1a9c"
+      ],
+      "repo_digests": [
+        "ai-effect-pt-parameter-adapter@sha256:7709b05cb41329a2ef55a05816c82e2d9371cdde131ee92e2c0a31fc8247a8c6"
+      ]
+    },
+    {
+      "id": "sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589",
+      "tags": [
+        "ai-effect-pt-wp3:a8b529ea25bc"
+      ],
+      "repo_digests": [
+        "ai-effect-pt-wp3@sha256:c0a0b19a07619401f74ff944146b4d3fd33f3b4bc86fd71a7dfadcc1ceb85589"
+      ]
+    }
+  ],
+  "original_portal": {
+    "branch": "feature/design-with-ai-pilot",
+    "sha": "12aae82dd47b078ba077aca40b0712c375b9d7f3",
+    "dirty_files": 150,
+    "switched_reset_stashed": false
+  },
+  "original_wp3": {
+    "branch": "main",
+    "sha": "486ccc702bb2afca79fb7d31258d62ee0f94dbfc",
+    "untracked_denmark_directory_preserved": true
+  },
+  "upstream_source": {
+    "branch": "main",
+    "sha": "7ba677f7f0a93b5ed6126e43a0b7b0e30f59d6b3",
+    "clean_read_only": true
+  },
+  "retained_demo": {
+    "port": 23124,
+    "original_web_container_id_prefix": "9ddf40c4224b",
+    "same_container_running": true,
+    "database_design_results_and_closed_scopes_not_modified": true
+  },
+  "provider_review": {
+    "web_url": "http://127.0.0.1:23125/login",
+    "api_url": "http://127.0.0.1:28189/health",
+    "starter_READY": true,
+    "build_sha": "8a15bce707e8222a14f03b91c452d6977bea10be",
+    "browser_sign_in_page_observed": true,
+    "runtime_and_paid_provider_guards_retained": true
+  },
+  "qualification_control": {
+    "url": "http://127.0.0.1:28190",
+    "authentication_required": true,
+    "raw_ml_published": false
+  }
+}

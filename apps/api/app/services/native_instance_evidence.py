@@ -16,6 +16,7 @@ from app.models.deployment import Deployment
 from app.models.execution_submission import InstanceEvidenceReceipt
 from app.services.data_reference_service import resolve_artifact_file
 from app.services.orchestrator_adapter import get_workflow_tasks
+from app.services.execution_submission import view
 
 MAX_BYTES = 5_000_000
 
@@ -60,7 +61,7 @@ def load(row, db):
     configured = [node for node in instances if isinstance(node, dict) and node.get("configuration")]
     if not configured: return None
     base = {"workflow_id": row.workflow_id, "submission_id": row.id, "source": "native Control task output",
-            "limitations": "Node-reported algorithm arguments with task/input/digest checks; not independent scientific qualification"}
+            "limitations": "Algorithm evidence is checked separately from authenticated delivery receipts; neither establishes independent scientific qualification"}
     def unavailable(message):
         return {**base, "state": "unavailable", "message": message, "instances": []}
     deployment = db.query(Deployment).filter(Deployment.workflow_id == row.workflow_id).first()
@@ -70,6 +71,7 @@ def load(row, db):
     if row.submitted.get("runtime_destination") != settings.orchestrator_base_url:
         return unavailable("The recorded run belongs to a different runtime; no current service was queried")
     try:
+        view(row)
         observed = get_workflow_tasks(row.workflow_id)
         if not isinstance(observed, dict) or observed.get("workflow_id") != row.workflow_id or not isinstance(observed.get("tasks"), list):
             return unavailable("Runtime task association differs from the recorded run")
@@ -85,6 +87,15 @@ def load(row, db):
                 if task.get("status") not in {"completed", "complete"}:
                     results.append({**identity, "state": "pending", "message": "No completed algorithm output is recorded"}); continue
                 outputs = task.get("output_refs", [])
+                if (isinstance(outputs, list) and len(outputs) == 1 and isinstance(outputs[0], dict)
+                        and outputs[0].get('protocol') in {'http', 'https'}):
+                    from app.services.owned_control_result import inspect as inspect_control
+                    try:
+                        _, proof = inspect_control(row, node, task, db, tasks)
+                        results.append(proof)
+                    except HTTPException as exc:
+                        results.append({**identity, 'state': 'unavailable', 'message': exc.detail})
+                    continue
                 if not isinstance(outputs, list) or len(outputs) != 1 or not isinstance(outputs[0], dict) or outputs[0].get("format") != "json":
                     results.append({**identity, "state": "unavailable", "message": "No single instrumented output is recorded"}); continue
                 output_raw, output = read(outputs[0], row.workflow_id)

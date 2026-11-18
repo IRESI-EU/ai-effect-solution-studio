@@ -1,0 +1,172 @@
+{
+  "status": "PASS",
+  "fixture_only": true,
+  "real_model": true,
+  "algorithm_double": false,
+  "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+  "wp3_tree": "d54bbfc62fa6f054a7e1d276ae1ab4092dcb980b",
+  "project": "aie-pt-qual-5bef0196d5fb",
+  "workflow_id": "wf-qual-5bef0196d5fb",
+  "fresh_model_state_observation_volumes": true,
+  "private_internal_network": true,
+  "raw_ml_published": false,
+  "contracts_activated": 0,
+  "provider_review_attestations": false,
+  "runs": [
+    {
+      "training_task": "task_fixture_train_1_after_startup_check",
+      "generation_task": "task_fixture_generate_1_after_startup_check",
+      "requested": {
+        "epochs": 1,
+        "batch_size": 16,
+        "sequence_len": 4
+      },
+      "effective": {
+        "batch_size": 8,
+        "epochs": 1,
+        "max_sequence_len": 4,
+        "sample_len": 1
+      },
+      "observed": [
+        {
+          "batch": 1,
+          "epoch": 1,
+          "total_batches": 1,
+          "total_epochs": 1
+        }
+      ],
+      "input_sha256": "adb4ae2180bed4255eee64b6f52fdb77d0bb856a2a48f3efad2f54e9acf5e277",
+      "model_files": {
+        "features.csv": "1874a3ad0f8074ce1376d81a3545e023cd2cae5dc2ce0b7aa952efab16d2dcde",
+        "indices.csv": "40e18e329293d53f2c1d86ae6f489356f95364020d442252e2b1261b0b7f1bde",
+        "model.pt": "9fe0a141c7d3c636f1650b685c24d85f3816b0126c059918182cfd5327a43a7a",
+        "progress.json": "777c9ac2259304cd3faad48e8baf1f60b35d00fa9d5f5f55c5e30982265585c0"
+      },
+      "model_class": "gretel_synthetics.timeseries_dgan.dgan.DGAN",
+      "saved_config": {
+        "batch_size": 8,
+        "epochs": 1,
+        "max_sequence_len": 4,
+        "sample_len": 1
+      },
+      "tensor_counts": {
+        "feature_discriminator_state_dict": 163601,
+        "generate_state_dict": 185105
+      },
+      "output_sha256": "4378f052db02e20805eca8f20e0c58f9124c1c12ee75b8feb5cb948ce9b26962",
+      "csv_sequences": 2,
+      "csv_data_rows": 8,
+      "upstream_interface_sha256": "7df3d50126b5730f3e5939d220bebd11f8a2cbad9ff5c832027747b2bc56b687",
+      "source_receipt_sha256": "eb0dce3ad7936f2578b91766fadb9637ae0f9e568c40c230eca12446b12e1e9f",
+      "training_physical_task": "cfg-7cca0ffbc7d60faec98e93a7fd9934c745e19c88828512387f3d527a57562b53",
+      "generation_physical_task": "cfg-38fe2a11065505a2ee8c0f569990adb1b0604600cb78bf45d0bab4402a797c12",
+      "model_producer_task": "cfg-7cca0ffbc7d60faec98e93a7fd9934c745e19c88828512387f3d527a57562b53",
+      "generation_requested": {
+        "number_of_examples": 2
+      }
+    },
+    {
+      "training_task": "task_fixture_train_2_after_startup_check",
+      "generation_task": "task_fixture_generate_2_after_startup_check",
+      "requested": {
+        "epochs": 2,
+        "batch_size": 16,
+        "sequence_len": 4
+      },
+      "effective": {
+        "batch_size": 8,
+        "epochs": 2,
+        "max_sequence_len": 4,
+        "sample_len": 1
+      },
+      "observed": [
+        {
+          "batch": 1,
+          "epoch": 1,
+          "total_batches": 1,
+          "total_epochs": 2
+        },
+        {
+          "batch": 1,
+          "epoch": 2,
+          "total_batches": 1,
+          "total_epochs": 2
+        }
+      ],
+      "input_sha256": "adb4ae2180bed4255eee64b6f52fdb77d0bb856a2a48f3efad2f54e9acf5e277",
+      "model_files": {
+        "features.csv": "1874a3ad0f8074ce1376d81a3545e023cd2cae5dc2ce0b7aa952efab16d2dcde",
+        "indices.csv": "40e18e329293d53f2c1d86ae6f489356f95364020d442252e2b1261b0b7f1bde",
+        "model.pt": "03955a62b84d7a1d4b554a5012b174f026e01e6ff284a37204b19992912c33bd",
+        "progress.json": "9bb0916473dd9eeacd318568bedb6ef372a75b7f149529c654d1665122c9c275"
+      },
+      "model_class": "gretel_synthetics.timeseries_dgan.dgan.DGAN",
+      "saved_config": {
+        "batch_size": 8,
+        "epochs": 2,
+        "max_sequence_len": 4,
+        "sample_len": 1
+      },
+      "tensor_counts": {
+        "feature_discriminator_state_dict": 163601,
+        "generate_state_dict": 185105
+      },
+      "output_sha256": "fb2fc35622668f55c18b4f93161fab87ebd5ef7a9a07de5878f085f86baa0d26",
+      "csv_sequences": 3,
+      "csv_data_rows": 12,
+      "upstream_interface_sha256": "7df3d50126b5730f3e5939d220bebd11f8a2cbad9ff5c832027747b2bc56b687",
+      "source_receipt_sha256": "234d0ca25371857538e77182483cfbfaff9354c7bb0645eccd63732f4306e14e",
+      "training_physical_task": "cfg-38bab6480b72e2f828c0e04ea4487fac009d719b79055d8540e0231ad128a543",
+      "generation_physical_task": "cfg-82be781bab5d47d1ad8c126af7a5674e94f4d993436e4c231fc973d591e7b07e",
+      "model_producer_task": "cfg-38bab6480b72e2f828c0e04ea4487fac009d719b79055d8540e0231ad128a543",
+      "generation_requested": {
+        "number_of_examples": 3
+      }
+    }
+  ],
+  "invalid_caused_no_journal_or_dispatch": true,
+  "replay_denied": true,
+  "old_output_bytes_unchanged": true,
+  "unauthenticated_control_denied": true,
+  "owner_limits_defaults_data_suitability_approved": false,
+  "normal_portal_run_verified": false,
+  "paid_provider_calls": 0,
+  "qualified_connector_git_lf_sha256": "def51298bd14aa54ade39a4a65e46ab8bae6820a3f0f6723c445da849c78aeaa",
+  "qualified_before_windows_lock_fix": true,
+  "source_wiring_and_native_tests_after_windows_fix": 41,
+  "control_regressions": 50,
+  "portal_owned_result_tests": 60,
+  "portal_saved_solution_review_parameter_regressions": 72,
+  "owned_live_result_test": {
+    "status": "PASS",
+    "real_receipts_and_csv": true,
+    "sqlite_submission_and_task_observations": "explicit fixtures",
+    "normal_portal_run": false
+  },
+  "windows_fix": {
+    "commit": "7e16c810bd928a4bc13df16cb0fb7d712e6f57d8",
+    "tree": "45ea7dbf869f5883aa7ef6de90d859cb5c586a23",
+    "patch_sha256": "8b9e2c35a8c1a867cf0b84ca9bbd1c3e4c2426a641df9df6ac837a5b58919aff"
+  },
+  "prerequisites": {
+    "no_copy_model_volume": true,
+    "image_seeded_model_volume_preserved_unused": true,
+    "initial_failure_was_predispatch": true,
+    "failed_journal_preserved": true
+  },
+  "normal_user_verification": {
+    "starter_READY": true,
+    "browser_sign_in_page_observed": true,
+    "provider_authenticated_draft_export": true,
+    "designer_browser_run": false,
+    "paid_chat": false
+  },
+  "portal_owned_result_verification": {
+    "unchanged_file_inline_and_native_cases": 34,
+    "final_control_reader_including_real_fixture_read": 26,
+    "statuses": "PASS"
+  },
+  "qualified_source_snapshot_read_only": true,
+  "qualified_source_snapshot_manifest_sha256": "2ecc0c641e23c84f072afde3291d8012e7d1c3bd65b64b017382e45e285caccb",
+  "post_freeze_owned_live_result_test": "PASS"
+}

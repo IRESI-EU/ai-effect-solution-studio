@@ -10,6 +10,7 @@ from app.services.orchestrator_adapter import get_workflow_tasks
 from app.services.data_reference_service import preview_data_reference, resolve_artifact_path
 from app.models.execution_submission import ExecutionSubmission
 from app.services.execution_submission import view as submitted_view
+from app.core.config import settings
 
 
 def references(value):
@@ -55,6 +56,9 @@ def preview(payload, db, user):
     # result. Both remain server-observed outputs, never caller input metadata.
     outputs = list(references(matches[0].get("output_refs"))) + list(references(matches[0].get("result")))
     if payload.protocol not in {"file", "inline"}:
+        if payload.protocol in {"http", "https"} and settings.owned_control_targets_file:
+            from app.services.owned_control_result import preview as preview_control
+            return preview_control(submission, payload, matches[0], db, tasks)
         raise HTTPException(409, "Remote preview transport has no qualified ownership boundary")
     requested = (payload.protocol, payload.uri)
     if payload.protocol == "inline":
