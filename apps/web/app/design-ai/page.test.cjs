@@ -34,12 +34,12 @@ for (const [name, config, expected, args] of [
   const noop = () => null;
   const Page = load(path.join(__dirname,'page.tsx'), {
     react:{...React,useState: initial => [states++ === 0 ? {enabled:true,...config} : (typeof initial === 'function' ? initial() : initial),noop],useEffect:noop,useMemo:fn=>fn(),useRef:value=>({current:value})},
-    'next/navigation':{useSearchParams:()=>new URLSearchParams(),useRouter:()=>({push:()=>assert.fail('navigation during render')})},
+    'next/navigation':{useSearchParams:()=>new URLSearchParams("legacy=1"),useRouter:()=>({push:()=>assert.fail('navigation during render')})},
     'next/link':{__esModule:true,default:({children,href})=>React.createElement('a',{href},children)},
     '@xyflow/react':{Position:{Top:'top',Bottom:'bottom'},ReactFlow:noop,Background:noop,Controls:noop},
     '../../components/auth-context':{useAuth:()=>({user:{id:'render-only'}})},
     '../../lib/solution-design':{apiErrorMessage:()=>assert.fail('unexpected API error')},
-    './session':session,'./allowance':allowance,
+    './saved-solution-entry':{__esModule:true,default:()=>null},'./session':session,'./allowance':allowance,
     '../../components/conversation-message':conversationMessage,'../../components/registered-configuration':registeredConfiguration,
     './workspace-view':{...view,promptPlaceholder:(...values)=>{calls.push(values);return view.promptPlaceholder(...values);}},
     './workspace-viewport':{__esModule:true,default:noop},'../../components/review-dialog':{__esModule:true,default:noop},
@@ -59,7 +59,7 @@ for (const [name, config, expected, args] of [
   } finally { global.fetch = originalFetch; }
 });
 
-function routeHarness({messages=[],prompt="",clarification=null,params=new URLSearchParams()}={}) {
+function routeHarness({messages=[],prompt="",clarification=null,params=new URLSearchParams("legacy=1")}={}) {
   let count=0,form,newConversation;
   const state=[];
   const noop=()=>null;
@@ -83,7 +83,7 @@ function routeHarness({messages=[],prompt="",clarification=null,params=new URLSe
     '@xyflow/react':{Position:{Top:'top',Bottom:'bottom'},ReactFlow:noop,Background:noop,Controls:noop},
     '../../components/auth-context':{useAuth:()=>({user:{id:'render-only'}})},
     '../../lib/solution-design':{apiErrorMessage:()=>assert.fail('unexpected API error')},
-    './session':session,'./allowance':allowance,'./workspace-view':view,
+    './saved-solution-entry':{__esModule:true,default:()=>null},'./session':session,'./allowance':allowance,'./workspace-view':view,
     '../../components/conversation-message':conversationMessage,'../../components/registered-configuration':registeredConfiguration,
     './workspace-viewport':{__esModule:true,default:noop},'../../components/review-dialog':{__esModule:true,default:noop},
     '../../components/discovery-recommendation':{__esModule:true,default:noop},'../../components/experiment-execution':{__esModule:true,default:noop},

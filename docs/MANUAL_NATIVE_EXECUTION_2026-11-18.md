@@ -1,5 +1,7 @@
 # Manual parameterisation to native execution — 18 November 2026
 
+> Later checkpoint: [product alignment and delivery, 18 November](PRODUCT_ALIGNMENT_AND_DELIVERY_2026-11-18.md) corrects the draft qualification order and adds shared saved-solution chat. Evidence below describes the earlier pass.
+
 The next implementation increment connects the provider-reviewed parameter card to a real native Control runtime and its results. The isolated manual **API journey works** with the actual Danish topology enumeration and SVG rendering code, real HTTP calls and native Redis. Browser/human acceptance, Danish owner qualification, PostgreSQL verification and production deployment are still pending. Chat integration is unchanged.
 
 ## Observed journey

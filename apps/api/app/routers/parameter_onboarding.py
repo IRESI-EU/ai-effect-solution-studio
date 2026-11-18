@@ -9,7 +9,7 @@ from app.db import get_db
 from app.dependencies.auth import can_manage_service, require_service_publisher
 from app.models.user import User
 from app.schemas.operation_contract import OperationContractCreate, OperationContractRead
-from app.schemas.parameter_onboarding import ParameterDiscoveryRequest, ParameterReviewRequest
+from app.schemas.parameter_onboarding import ParameterDiscoveryRequest, ParameterReviewRequest, RuntimeConfirmationRequest
 from app.services.audit import record_audit_event
 from app.services.operation_contract_registry import create_contract, get_service_or_404, resolve_contract
 from app.services.parameter_discovery import discover, reviewed_contract_digest, reviewed_service_digest, validate_reviewed_definition
@@ -58,9 +58,7 @@ def review_parameters(service_id: str, payload: ParameterReviewRequest, db: Sess
         raise HTTPException(409, "The interface review changed. Reload and rediscover the operation before saving.")
     if service.interface_type != "control":
         raise HTTPException(422, "This first connector supports native HTTP Control services. Other interfaces need a verified configuration adapter.")
-    if not all((payload.runtime_support_confirmed, payload.normal_configuration_tested, payload.invalid_configuration_tested)):
-        raise HTTPException(422, "Confirm runtime consumption and both normal and invalid configuration checks before publishing definitions.")
-    if not payload.evidence_reference.strip():
+    if any((payload.runtime_support_confirmed, payload.normal_configuration_tested, payload.invalid_configuration_tested)) and not payload.evidence_reference.strip():
         raise HTTPException(422, "Supply the provider's runtime test evidence reference")
     candidates = {(c["name"], c["source_pointer"]): c for c in discovery["candidates"]}
     properties, mappings = {}, {}
@@ -100,7 +98,7 @@ def review_parameters(service_id: str, payload: ParameterReviewRequest, db: Sess
                   "source_sha256": discovery["source_sha256"], "source_reference": discovery["source_reference"],
                   "reviewed_by": user.id, "reviewed_at": datetime.now(timezone.utc).isoformat(),
                   "evidence_reference": payload.evidence_reference.strip(), "mappings": mappings,
-                  "runtime_support_confirmed": True, "normal_configuration_tested": True, "invalid_configuration_tested": True,
+                  "runtime_support_confirmed": payload.runtime_support_confirmed, "normal_configuration_tested": payload.normal_configuration_tested, "invalid_configuration_tested": payload.invalid_configuration_tested,
                   "reviewed_service_sha256": reviewed_service_digest(service),
                   "reviewed_contract_sha256": reviewed_contract_digest(contract)}
         metadata.setdefault("parameter_reviews", {})[contract.id] = review
@@ -113,3 +111,30 @@ def review_parameters(service_id: str, payload: ParameterReviewRequest, db: Sess
     except Exception:
         db.rollback()
         raise
+
+
+@router.post("/services/{service_id}/parameter-onboarding/reviews/{contract_id}/confirm-runtime")
+def confirm_runtime(service_id: str, contract_id: str, payload: RuntimeConfirmationRequest,
+                    db: Session = Depends(get_db), user: User = Depends(require_service_publisher)):
+    service = owned_service(service_id, db, user, for_update=True)
+    from app.services.operation_contract_registry import get_contract_or_404
+    contract = get_contract_or_404(contract_id, db)
+    if contract.service_id != service_id:
+        raise HTTPException(404, "Review not found for this service")
+    if contract.status != "draft":
+        raise HTTPException(409, "Runtime qualification applies to a saved draft")
+    metadata = deepcopy(service.interface_contract or {})
+    review = metadata.get("parameter_reviews", {}).get(contract_id)
+    if (not review or payload.reviewed_contract_sha256 != reviewed_contract_digest(contract)
+            or review.get("reviewed_contract_sha256") != reviewed_contract_digest(contract)
+            or review.get("reviewed_service_sha256") != reviewed_service_digest(service)):
+        raise HTTPException(409, "The reviewed definition or runtime changed. Repeat provider review before confirmation.")
+    if not all((payload.runtime_support_confirmed, payload.normal_configuration_tested, payload.invalid_configuration_tested)) or not payload.evidence_reference.strip():
+        raise HTTPException(422, "Confirm runtime consumption, normal and invalid checks with an evidence reference")
+    review.update({"runtime_support_confirmed": True, "normal_configuration_tested": True,
+                   "invalid_configuration_tested": True, "evidence_reference": payload.evidence_reference.strip(),
+                   "runtime_confirmed_by": user.id, "runtime_confirmed_at": datetime.now(timezone.utc).isoformat()})
+    service.interface_contract = metadata
+    record_audit_event(db, user, "service.parameter_runtime_confirmed", "service", service.id, {"contract_id": contract_id})
+    db.commit()
+    return review

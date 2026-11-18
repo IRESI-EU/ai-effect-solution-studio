@@ -30,4 +30,12 @@ class ParameterReviewRequest(StrictContractModel):
     runtime_support_confirmed: bool
     normal_configuration_tested: bool
     invalid_configuration_tested: bool
+    evidence_reference: str = Field(default="", max_length=500)
+
+
+class RuntimeConfirmationRequest(StrictContractModel):
+    reviewed_contract_sha256: str
+    runtime_support_confirmed: bool
+    normal_configuration_tested: bool
+    invalid_configuration_tested: bool
     evidence_reference: str = Field(min_length=1, max_length=500)

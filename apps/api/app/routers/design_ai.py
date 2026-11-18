@@ -51,6 +51,7 @@ def configuration(provider: Provider = Depends(get_provider), user: User | None 
     if settings.design_ai_local_pilot:
         result["pilot_notice"] = "Restricted local design-only pilot · Supervised use through one existing reviewer account. Saving does not execute a workflow."
     if settings.design_ai_enabled:
+        result["saved_solution_workspace"] = not (settings.design_ai_restricted_beta or settings.design_ai_local_pilot)
         result.update(provider_name=getattr(provider, "name", "Test provider"),
                       provider_mode=getattr(provider, "mode", "test"), model=settings.design_ai_model or None)
         from app.services.allowance_client import Client, requested
@@ -197,6 +198,8 @@ async def chat(payload: ChatRequest, request: Request, db: Session = Depends(get
             with correlation(conversation_id=payload.conversation_id, draft_id=payload.draft_id, revision=base_revision):
                 async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
                     turn = AssistantTurn.model_validate(await provider.respond(context))
+                    if turn.solution_edits:
+                        raise ValueError("Saved-solution edits require the canonical solution workspace")
         except TimeoutError as exc:
             raise HTTPException(504, "The AI provider timed out. Your draft is unchanged; retry when ready.") from exc
         except (ValidationError, ValueError) as exc:

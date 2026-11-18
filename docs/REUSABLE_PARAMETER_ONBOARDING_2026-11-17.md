@@ -1,5 +1,7 @@
 # Reusable provider parameter onboarding — implementation checkpoint
 
+> Later checkpoint: [product alignment and delivery, 18 November](PRODUCT_ALIGNMENT_AND_DELIVERY_2026-11-18.md) corrects the draft qualification order and adds shared saved-solution chat. Evidence below describes the earlier pass.
+
 Approved baseline: **AI_EFFECT_Product_Reset_and_Delivery_Plan.docx**, 17 November 2026, all eight pages read before development.
 
 **Implemented:** the first missing product connection, normal provider onboarding to the existing versioned parameter contracts and Builder resolution. **Not complete:** real-node configuration consumption, general chat editing, independent browser acceptance or a production release.

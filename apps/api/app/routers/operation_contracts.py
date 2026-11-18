@@ -48,6 +48,28 @@ def export_runtime_capability(contract_id: str, db: Session = Depends(get_db), u
     }]}
 
 
+@router.get("/operation-contracts/{contract_id}/qualification-capability")
+def export_qualification_capability(contract_id: str, db: Session = Depends(get_db), user: User = Depends(require_service_publisher)):
+    contract = require_contract_ownership(contract_id, db, user)
+    if contract.status != "draft" or not contract.definition.get("execution_parameters"):
+        raise HTTPException(409, "Qualification requires a saved parameter draft")
+    service = db.query(Service).filter(Service.id == contract.service_id).first()
+    review = (service.interface_contract or {}).get("parameter_reviews", {}).get(contract.id)
+    from app.services.parameter_discovery import reviewed_contract_digest, reviewed_service_digest
+    if (not review or review.get("reviewed_contract_sha256") != reviewed_contract_digest(contract)
+            or review.get("reviewed_service_sha256") != reviewed_service_digest(service)):
+        raise HTTPException(409, "The reviewed definition or runtime changed. Repeat provider review first.")
+    parameters = contract.definition["execution_parameters"]
+    parameter_contract_digest(parameters)
+    # Isolated node qualification only. Drafts remain unavailable to designers,
+    # compilation and normal portal execution until confirmed and activated.
+    return {"capability_schema_version": "1.0", "qualification_only": True,
+            "transports": ["http-parameters-v1"], "operations": [{
+        "operation_name": contract.runtime_operation_name, "operation_identity": contract.operation_identity,
+        "contract_version": contract.contract_version, "execution_parameters": parameters,
+    }]}
+
+
 def require_service_ownership(service_id: str, db: Session, user: User) -> None:
     service = db.query(Service).filter(Service.id == service_id).first()
     if not service:

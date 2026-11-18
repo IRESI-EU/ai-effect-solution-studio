@@ -376,7 +376,7 @@ def load_draft(draft_id: str, db: Session, user: User, lock: bool = False) -> De
     # lock. Refresh the identity map after acquiring it, including after a wait
     # for another writer, so revision checks cannot use stale cached content.
     row = (query.populate_existing().with_for_update() if lock else query).first()
-    if not row:
+    if not row or row.state.get("kind") == "saved_solution_conversation":
         raise HTTPException(404, "Draft not found")
     if row.state.get("source", {}).get("kind") == "catalogue_composed":
         if row.state["design"].get("editing_scope") != "catalogue_pair" or "template_key" in row.state:
@@ -410,7 +410,7 @@ def list_drafts(db: Session, user: User) -> list[dict]:
              "saved_solution_id": row.state.get("saved_solution_id"),
              "pending_changes": bool(row.state.get("pending")),
              "seed": (row.state["design"].get("run_input") or {}).get("seed")}
-            for row in rows]
+            for row in rows if row.state.get("kind") != "saved_solution_conversation"]
 
 
 def view(row: DesignDraft, db: Session | None = None) -> dict:

@@ -1,0 +1,80 @@
+{
+  "observed_at": "2026-11-18T08:44:26.818498+00:00",
+  "status": "PASS",
+  "source_files_sha256": {
+    "portal/apps/api/app/main.py": "93e2aac5cdad0c92ac485dcbab1caeb1de5d1cb7e9712d57f756c3792d532c6e",
+    "portal/apps/api/app/routers/operation_contracts.py": "abbcc7b245b8f9c3b35d43de986e5e84173d8ae8d519ea9c5b1baddb5db01496",
+    "portal/apps/api/app/routers/parameter_onboarding.py": "a67471e9cc23f71cdf13453c39d5e127ec2a953a645f7a6c913b9c698161b5bc",
+    "portal/apps/api/app/routers/solution_assistant.py": "e1a1f1e1f4512515540a72e83e0a17271e9b3bec91eaef62e707c608978be4cb",
+    "portal/apps/api/app/services/solution_assistant.py": "037fa89868a1284bd963133583dd76cdfbc7a3ec730cb9abbe94eae1178c48a1",
+    "portal/apps/api/app/services/solution_editing.py": "c140fd9bbaa97b2a3dc4fcca75c4dde7023354ed2ce1b5e8ec5615a669b4001b",
+    "portal/apps/api/app/services/operation_contract_registry.py": "d3ede284cec4736b95333551974eaff4d67ab60851e984f594984a7fa094eb21",
+    "portal/apps/api/app/services/design_ai_provider.py": "7d837b02ef37119a8533cd04c38d3fcdda820251adc178c4004897b9ebc16669",
+    "portal/apps/api/app/services/native_instance_evidence.py": "2a285144eb2a2d7bfad678d78978488460dcce67a80d0c9b0857336bf12d42be",
+    "portal/apps/api/app/services/owned_artifact_preview.py": "c87b95048586166e0c33a268d121da5377c46f5837ea25c99e0ea79e300c4fd7",
+    "wp3/use-cases/denmark-node/common/configuration.py": "41b480fdc396fa9d1c7b05b404137ccf7845300a1d43c9aa35579679e826f50c",
+    "wp3/use-cases/denmark-node/common/concurrent.py": "7eca837fb78c815bb254591f923ab97f1cf133324833e7e882ddba4f90cb4cc5",
+    "wp3/use-cases/denmark-node/services/topology_generator/service.py": "045d41d02281958ffafd5b35ae759bd2ed826ee12b41ed5dc914aff37431c5d4",
+    "wp3/use-cases/denmark-node/services/draw_topology/service.py": "c5e049a0ab1cdbe03eaec76822bfdc330df4825ac1fc8b91da073e91f4a92b11"
+  },
+  "journey": "normal authenticated provider/admin/designer API routes -> real HTTP WP3 -> native Redis -> Worker -> real topology enumerator and SVG renderer -> owned result preview and instance evidence",
+  "edit_mode": "assistant",
+  "provider": "Explicit offline structured response double; not live model acceptance",
+  "qualification": "Saved draft -> exported isolated contract -> real valid/invalid HTTP checks -> provider confirmation -> publication",
+  "runs": [
+    {
+      "workflow_id": "wf-8f24a96af3f6",
+      "task_id": "task_0bb41ffa",
+      "service_task_id": "cfg-a73395220ac830b0c84e3061e9735ee2d4a80bf4d92e4ab2564de07278ff4feb",
+      "requested": {
+        "how_many": 1
+      },
+      "effective": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 1
+      },
+      "algorithm_consumed": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 1
+      },
+      "topology_count": 1,
+      "svg_count": 1,
+      "parameter_contract_sha256": "9684657971a7d9babeeb0ca6eaf36256c9215d808e8138196a469d2b387ab1eb",
+      "output_sha256": "759c151de2d57974e606e53024cc5f9c924f19ab0bb7786ac2f8cfb28808cadb"
+    },
+    {
+      "workflow_id": "wf-b5b8b11b51bd",
+      "task_id": "task_0bb41ffa",
+      "service_task_id": "cfg-08da86a6c8593ab3ce3d0b536eca37ea16d5ca87ed08ff02c007658727b0f734",
+      "requested": {
+        "how_many": 3
+      },
+      "effective": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 3
+      },
+      "algorithm_consumed": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 3
+      },
+      "topology_count": 3,
+      "svg_count": 3,
+      "parameter_contract_sha256": "9684657971a7d9babeeb0ca6eaf36256c9215d808e8138196a469d2b387ab1eb",
+      "output_sha256": "96cdc3f9bb591ce9f3182196c6aa6177b265d5ee53c0ccc25175ce25a3587656"
+    }
+  ],
+  "history_after_edit": "PASS",
+  "cross_owner_denial": "PASS",
+  "artifact_change_detection": "PASS",
+  "limitations": [
+    "Synthetic node approvals and test limits; not Danish owner confirmation",
+    "Portal SQLite test database; PostgreSQL not verified",
+    "Automated API walkthrough; browser and independent human acceptance not performed",
+    "Native processes; Docker and production unchanged",
+    "No paid provider calls"
+  ]
+}

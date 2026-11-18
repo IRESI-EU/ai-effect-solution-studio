@@ -23,6 +23,7 @@ import { roleLabels, useAuth, type UserRole } from "../../components/auth-contex
 import { apiErrorMessage } from "../../lib/solution-design";
 import { deploymentResultsUrl, executionLabel, isDutchExperiment } from "../../lib/experiment-journey";
 import { designReturnUrl } from "../design-ai/session";
+import SavedSolutionAssistant from "../../components/saved-solution-assistant";
 import InstanceParameters, { type InstanceConfiguration } from "../../components/instance-parameters";
 import { copyInstance } from "../../lib/copy-instance";
 import CapabilityBindings from "../../components/capability-bindings";
@@ -163,6 +164,7 @@ function BuilderContent() {
   const [deploymentResult, setDeploymentResult] = useState<any>(null);
   const [submittingToOrchestrator, setSubmittingToOrchestrator] = useState(false);
   const [loadedSolutionScope, setLoadedSolutionScope] = useState<string | null>(null);
+  const [assistantMutating, setAssistantMutating] = useState(false);
   const [currentSolutionId, setCurrentSolutionId] = useState<string | null>(null);
   const [solutionName, setSolutionName] = useState("Untitled AI-EFFECT Solution");
   const [designMetadata, setDesignMetadata] = useState<Record<string, unknown> | null>(null);
@@ -774,7 +776,8 @@ function BuilderContent() {
   }
 
   return (
-    <div className="page builder-page">
+    <>
+    <div className="page builder-page" inert={assistantMutating}>
       <div className="builder-page-header">
         <div><h1>Build a solution</h1><p>Review the workflow, then select a step to change its settings.</p></div>
         <div className="builder-review-links">
@@ -1120,6 +1123,9 @@ function BuilderContent() {
       </div>
 
     </div>
+    {loaded && <div className="page"><SavedSolutionAssistant solutionId={currentSolutionId} savedVersion={savedUpdatedAtRef.current}
+      disabled={dirty || busy} onMutating={setAssistantMutating} /></div>}
+    </>
   );
 }
 

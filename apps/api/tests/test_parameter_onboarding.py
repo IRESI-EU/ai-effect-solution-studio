@@ -158,14 +158,12 @@ def review_payload_forbidden():
             "runtime_support_confirmed": True, "normal_configuration_tested": True, "invalid_configuration_tested": True, "evidence_reference": "Fixture"}
 
 
-@pytest.mark.parametrize("mutation", ["stale", "secret", "runtime", "invalid", "bounds", "mapping", "duplicate"])
-def test_invalid_or_unconfirmed_review_does_not_create_contract(publisher, mutation):
+@pytest.mark.parametrize("mutation", ["stale", "secret", "bounds", "mapping", "duplicate"])
+def test_invalid_review_does_not_create_contract(publisher, mutation):
     payload = review_payload(publisher)
     parameter = payload["parameters"][0]
     if mutation == "stale": payload["discovery_revision"] = "old"
     if mutation == "secret": parameter["name"] = "api_key"; parameter["source_pointer"] = "#/properties/api_key"
-    if mutation == "runtime": payload["runtime_support_confirmed"] = False
-    if mutation == "invalid": payload["invalid_configuration_tested"] = False
     if mutation == "bounds": parameter["definition"]["maximum"] = 0
     if mutation == "mapping": parameter["algorithm_mapping"] = " "
     if mutation == "duplicate": payload["parameters"].append(deepcopy(parameter))
@@ -276,3 +274,61 @@ def test_runtime_export_rejects_changed_runtime_and_unreviewed_legacy_contract(p
     with SessionLocal() as db:
         service = db.get(Service, "fixture-onboarded"); service.interface_contract = {}; db.commit()
     assert publisher.get(path).status_code == 409
+
+
+def test_provider_qualifies_saved_draft_before_publication(publisher):
+    payload = review_payload(publisher)
+    flags = ("runtime_support_confirmed", "normal_configuration_tested", "invalid_configuration_tested")
+    payload.update({key: False for key in flags}); payload["evidence_reference"] = ""
+    contract = review(publisher, payload)
+    path = f"/operation-contracts/{contract['id']}"
+    review_state = state(publisher)["reviews"][contract["id"]]
+    assert all(review_state[key] is False for key in flags)
+    # An unapproved provider can qualify a draft without exposing it to designers.
+    exported = publisher.get(path + "/qualification-capability")
+    assert exported.status_code == 200, exported.text
+    assert exported.json()["qualification_only"] is True
+    assert publisher.get(path + "/runtime-capability").status_code == 409
+    assert publisher.get("/services/fixture-onboarded/operation-contract-resolution").json()["contract"] is None
+    approve(publisher)
+    assert publisher.post(path + "/activate").status_code == 409
+    confirm_path = f"/services/fixture-onboarded/parameter-onboarding/reviews/{contract['id']}/confirm-runtime"
+    confirmation = {key: True for key in flags}
+    confirmation.update(reviewed_contract_sha256=review_state["reviewed_contract_sha256"], evidence_reference="Synthetic qualification fixture; not partner approval")
+    assert publisher.post(confirm_path, json={**confirmation, "invalid_configuration_tested": False}).status_code == 422
+    assert publisher.post(confirm_path, json={**confirmation, "reviewed_contract_sha256": "stale"}).status_code == 409
+    assert publisher.post(confirm_path, json={**confirmation, "evidence_reference": " "}).status_code == 422
+    login(publisher, "outsider@example.test")
+    assert publisher.get(path + "/qualification-capability").status_code == 403
+    assert publisher.post(confirm_path, json=confirmation).status_code == 403
+    login(publisher, "provider@example.test")
+    assert publisher.post(confirm_path, json=confirmation).status_code == 200
+    assert publisher.post(path + "/activate").status_code == 200
+    assert publisher.get(path + "/qualification-capability").status_code == 409
+    assert publisher.get(path + "/runtime-capability").status_code == 200
+
+
+def test_qualification_rejects_runtime_drift_and_requires_evidence_for_claims(publisher):
+    payload = review_payload(publisher); payload["evidence_reference"] = " "
+    assert publisher.post("/services/fixture-onboarded/parameter-onboarding/review", json=payload).status_code == 422
+    contract = review(publisher)
+    with SessionLocal() as db:
+        service = db.get(Service, "fixture-onboarded"); service.image = "fixture:changed"; db.commit()
+    assert publisher.get(f"/operation-contracts/{contract['id']}/qualification-capability").status_code == 409
+    review_state = state(publisher)["reviews"][contract["id"]]
+    assert publisher.post(f"/services/fixture-onboarded/parameter-onboarding/reviews/{contract['id']}/confirm-runtime", json={
+        "reviewed_contract_sha256": review_state["reviewed_contract_sha256"], "evidence_reference": "Fixture",
+        "runtime_support_confirmed": True, "normal_configuration_tested": True, "invalid_configuration_tested": True}).status_code == 409
+
+
+def test_generic_registry_cannot_bypass_provider_runtime_review(publisher):
+    payload = {"operation_identity": "urn:fixture:unreviewed", "runtime_operation_name": "RunFixture", "contract_version": "1.0.0", "source_kind": "manual",
+               "definition": {"operation_role": "other", "execution_parameters": {"schema_version": "1.0", "transport": "http-parameters-v1", "properties": {
+                   "iterations": {"type": "integer", "title": "Iterations", "description": "Fixture", "default": 2}}}}}
+    response = publisher.post('/services/fixture-onboarded/operation-contracts', json=payload)
+    assert response.status_code == 201, response.text
+    path = '/operation-contracts/' + response.json()['id']
+    approve(publisher)
+    assert publisher.post(path + '/activate').status_code == 409
+    assert publisher.get(path + '/qualification-capability').status_code == 409
+    assert publisher.get('/services/fixture-onboarded/operation-contract-resolution').json()['contract'] is None

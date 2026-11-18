@@ -143,3 +143,23 @@ def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp
     assert audit['response_id'] == 'resp_budget_test' and audit['usage']['total_tokens'] == 1100
     assert audit['validated_response'] is None and 'validated_response' in audit['unavailable_fields']
     assert 'input' not in audit  # No prompt/context or hidden reasoning is logged.
+
+
+def test_normal_saved_solution_prompt_uses_real_catalogue_without_template_system(environment, monkeypatch):
+    monkeypatch.setattr(settings, "openai_api_key", "test-key-never-transmitted")
+    monkeypatch.setattr(settings, "design_ai_model", "configured-test-model")
+    turn = AssistantTurn(message="Review the current catalogue", template_key=None, expected_revision=None, edits=[],
+                         solution_edits=[{"kind": "rename", "value": "My saved design"}])
+    parse = AsyncMock(return_value=SimpleNamespace(output_parsed=turn))
+    options = {}
+    def constructor(**kwargs):
+        options.update(kwargs)
+        return FakeOpenAIClient(parse)
+    monkeypatch.setattr(module, "AsyncOpenAI", constructor)
+    context = {"mode": "saved_solution", "solution": {"id": "same-solution"}, "catalogue": {"services": [{"service_id": "actual-catalogue-id"}]}}
+    assert asyncio.run(module.OpenAIProvider().respond(context)) == turn
+    kwargs = parse.call_args.kwargs
+    assert kwargs["input"][0]["content"] == module.SAVED_SOLUTION_SYSTEM
+    assert json.loads(kwargs["input"][1]["content"]) == context
+    assert kwargs["text_format"] is AssistantTurn and "tools" not in kwargs
+    assert options["max_retries"] == 0 and kwargs["store"] is False

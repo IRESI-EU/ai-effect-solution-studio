@@ -6,7 +6,8 @@ type Definition = { type: "integer" | "number" | "boolean" | "string"; title: st
 type Candidate = { name: string; source_pointer: string; classification: string; supported: boolean; reason?: string; definition?: Definition };
 type Discovery = { revision: string; operation_name: string; source_reference: string; source_sha256: string; candidates: Candidate[] };
 type Contract = { id: string; contract_version: string; status: string; operation_identity: string; definition: { execution_parameters?: { properties: Record<string, Definition> } } };
-type State = { operation_name: string; service_status: string; interface_type: string; discovery?: Discovery; reviews: Record<string, { evidence_reference: string; mappings?: Record<string, { algorithm_mapping: string; transport_path: string }> }> };
+type Review = { evidence_reference: string; reviewed_contract_sha256: string; runtime_support_confirmed: boolean; normal_configuration_tested: boolean; invalid_configuration_tested: boolean; mappings?: Record<string, { algorithm_mapping: string; transport_path: string }> };
+type State = { operation_name: string; service_status: string; interface_type: string; discovery?: Discovery; reviews: Record<string, Review> };
 type Row = Candidate & { selected: boolean; definition: Definition; defaultText: string; minimumText: string; maximumText: string; enumText: string; mapping: string };
 
 function editable(candidate: Candidate): Row {
@@ -36,8 +37,6 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
   const [operationId, setOperationId] = useState("");
   const [identity, setIdentity] = useState("");
   const [version, setVersion] = useState("");
-  const [evidence, setEvidence] = useState("");
-  const [confirmations, setConfirmations] = useState([false, false, false]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -58,7 +57,7 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
 
   function edit(index: number, change: Partial<Row>) {
     setRows(current => current.map((row, i) => i === index ? { ...row, ...change } : row));
-    setConfirmations([false, false, false]); setNotice("");
+    setNotice("");
   }
   async function discover() {
     setBusy(true); setError(""); setNotice("");
@@ -67,7 +66,7 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
         document: JSON.parse(document), source_reference: source, operation_id: operationId || null,
       }) as Discovery;
       setState(current => current ? { ...current, discovery } : current);
-      setRows(discovery.candidates.map(editable)); setConfirmations([false, false, false]);
+      setRows(discovery.candidates.map(editable));
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Discovery failed; existing definitions are unchanged."); }
     finally { setBusy(false); }
   }
@@ -86,10 +85,10 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
       });
       await request(`${base}/parameter-onboarding/review`, { discovery_revision: state.discovery.revision,
         operation_identity: identity, contract_version: version, parameters,
-        runtime_support_confirmed: confirmations[0], normal_configuration_tested: confirmations[1],
-        invalid_configuration_tested: confirmations[2], evidence_reference: evidence });
-      await load(); setConfirmations([false, false, false]);
-      setNotice("Reviewed settings saved as a draft. Publish this version after service approval to make it available in Builder.");
+        runtime_support_confirmed: false, normal_configuration_tested: false,
+        invalid_configuration_tested: false, evidence_reference: "" });
+      await load();
+      setNotice("Definitions saved as a draft. Download its qualification contract, test the node runtime, then confirm the checks below before publishing.");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Review could not be saved; your edits are retained."); }
     finally { setBusy(false); }
   }
@@ -101,14 +100,14 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Publication failed."); }
     finally { setBusy(false); }
   }
-  async function downloadRuntimeContract(contractId: string) {
+  async function downloadRuntimeContract(contractId: string, qualification = false) {
     setBusy(true); setError("");
     try {
-      const value = await request(`/api/operation-contracts/${encodeURIComponent(contractId)}/runtime-capability`);
+      const value = await request(`/api/operation-contracts/${encodeURIComponent(contractId)}/${qualification ? "qualification-capability" : "runtime-capability"}`);
       const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + "\n"], { type: "application/json" }));
-      const anchor = window.document.createElement("a"); anchor.href = url; anchor.download = "service-parameter-contract.json"; anchor.click();
+      const anchor = window.document.createElement("a"); anchor.href = url; anchor.download = qualification ? "qualification-parameter-contract.json" : "service-parameter-contract.json"; anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setNotice("Runtime contract downloaded. The node operator must install it in a runtime that implements these mappings; downloading does not deploy it.");
+      setNotice(qualification ? "Qualification contract downloaded for isolated runtime tests. This draft is unavailable in Builder and downloading does not publish or run it." : "Runtime contract downloaded. The node operator must install it in a runtime that implements these mappings; downloading does not deploy it.");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Runtime contract export failed."); }
     finally { setBusy(false); }
   }
@@ -160,17 +159,15 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
             <label style={label}>How the runtime passes this value to the algorithm<input value={row.mapping} onChange={event => edit(index, { mapping: event.target.value })} style={input} /></label>
           </fieldset>;
         })}
-        <label style={label}>Canonical operation URI or URN<input value={identity} onChange={event => { setIdentity(event.target.value); setConfirmations([false, false, false]); }} style={input} /></label>
-        <label style={label}>New contract version<input placeholder="Semantic version, for example 1.0.0" value={version} onChange={event => { setVersion(event.target.value); setConfirmations([false, false, false]); }} style={input} /></label>
-        <label style={label}>Provider runtime test evidence reference<input value={evidence} onChange={event => { setEvidence(event.target.value); setConfirmations([false, false, false]); }} style={input} /></label>
-        {["I confirm this runtime accepts the configuration envelope and consumes each selected value in the algorithm.", "I have tested a normal configuration using this runtime and these definitions.", "I have tested that this runtime rejects an invalid configuration."].map((text, index) => <label key={text} style={{ display: "block", margin: "10px 0" }}><input type="checkbox" checked={confirmations[index]} onChange={event => setConfirmations(current => current.map((value, i) => i === index ? event.target.checked : value))} /> {text}</label>)}
+        <label style={label}>Canonical operation URI or URN<input value={identity} onChange={event => { setIdentity(event.target.value); }} style={input} /></label>
+        <label style={label}>New contract version<input placeholder="Semantic version, for example 1.0.0" value={version} onChange={event => { setVersion(event.target.value); }} style={input} /></label>
         {state.interface_type !== "control" && <p role="alert">This interface needs a verified configuration adapter. Discovery can be reviewed, but this connector cannot publish its settings yet.</p>}
-        <button type="button" onClick={save} disabled={state.interface_type !== "control" || !rows.some(row => row.selected) || !confirmations.every(Boolean) || !identity.trim() || !version.trim() || !evidence.trim()}>Save reviewed settings as draft</button>
+        <button type="button" onClick={save} disabled={state.interface_type !== "control" || !rows.some(row => row.selected) || !identity.trim() || !version.trim()}>Save reviewed settings as draft</button>
       </>}
       {contracts.filter(contract => state?.reviews[contract.id]).map(contract => <article key={contract.id} style={{ borderTop: "1px solid #ddd", marginTop: 16 }}>
         <h3>Version {contract.contract_version} · {contract.status}</h3>
         <p>{Object.values(contract.definition.execution_parameters?.properties || {}).map(spec => spec.title).join(", ")}</p>
-        <p>Provider evidence: {state?.reviews[contract.id].evidence_reference}</p>
+        <p>Provider evidence: {state?.reviews[contract.id].evidence_reference || "Runtime qualification pending"}</p>
         <details><summary>Review saved definitions and runtime mappings</summary>
           {Object.entries(contract.definition.execution_parameters?.properties || {}).map(([name, spec]) => <div key={name}>
             <h4>{spec.title}{spec.unit ? ` (${spec.unit})` : ""}</h4>
@@ -181,8 +178,11 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
           </div>)}
         </details>
         {contract.status === "draft" && <>
-          <p>Publication requires administrator approval of the service. It publishes this saved version.</p>
-          <button type="button" disabled={!["approved", "validated"].includes(state?.service_status || "")} onClick={() => activate(contract.id)}>Publish version {contract.contract_version}</button>
+          <p>Test this saved definition in an isolated node environment before publishing. It is unavailable in Builder until publication.</p>
+          <button type="button" onClick={() => downloadRuntimeContract(contract.id, true)}>Download qualification contract</button>
+          <RuntimeConfirmation key={contract.id} review={state!.reviews[contract.id]} base={base} contractId={contract.id} onConfirmed={load} onError={setError} />
+          <p>Publication requires runtime confirmation and administrator approval of the service.</p>
+          <button type="button" disabled={!["approved", "validated"].includes(state?.service_status || "") || !runtimeConfirmed(state!.reviews[contract.id])} onClick={() => activate(contract.id)}>Publish version {contract.contract_version}</button>
         </>}
         {contract.status === "active" && <button type="button" onClick={() => downloadRuntimeContract(contract.id)}>Download runtime contract</button>}
       </article>)}
@@ -193,3 +193,31 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
 
 const label: CSSProperties = { display: "grid", gap: 5, margin: "12px 0", fontWeight: 600 };
 const input: CSSProperties = { width: "100%", padding: 9, borderRadius: 8, border: "1px solid #cbd5e1" };
+
+function runtimeConfirmed(review: Review) {
+  return review.runtime_support_confirmed && review.normal_configuration_tested && review.invalid_configuration_tested && !!review.evidence_reference.trim();
+}
+
+function RuntimeConfirmation({ review, base, contractId, onConfirmed, onError }: { review: Review; base: string; contractId: string; onConfirmed: () => Promise<void>; onError: (message: string) => void }) {
+  const [evidence, setEvidence] = useState("");
+  const [checks, setChecks] = useState([false, false, false]);
+  const [busy, setBusy] = useState(false);
+  if (runtimeConfirmed(review)) return <p role="status">Runtime checks confirmed for this saved definition.</p>;
+  async function confirm() {
+    setBusy(true); onError("");
+    try {
+      await request(`${base}/parameter-onboarding/reviews/${encodeURIComponent(contractId)}/confirm-runtime`, {
+        reviewed_contract_sha256: review.reviewed_contract_sha256, evidence_reference: evidence,
+        runtime_support_confirmed: checks[0], normal_configuration_tested: checks[1], invalid_configuration_tested: checks[2],
+      });
+      await onConfirmed();
+    } catch (reason) { onError(reason instanceof Error ? reason.message : "Runtime confirmation failed"); }
+    finally { setBusy(false); }
+  }
+  return <fieldset disabled={busy}>
+    <legend>Confirm runtime qualification for this draft</legend>
+    <label style={label}>Runtime test evidence reference<input value={evidence} onChange={event => setEvidence(event.target.value)} style={input} /></label>
+    {["This runtime consumes every selected setting in the algorithm.", "A normal configuration passed using this saved definition.", "An invalid configuration was rejected by this runtime."].map((text, index) => <label key={text} style={{ display: "block", margin: "10px 0" }}><input type="checkbox" checked={checks[index]} onChange={event => setChecks(current => current.map((value, i) => i === index ? event.target.checked : value))} /> {text}</label>)}
+    <button type="button" disabled={!checks.every(Boolean) || !evidence.trim()} onClick={confirm}>Confirm tested runtime</button>
+  </fieldset>;
+}

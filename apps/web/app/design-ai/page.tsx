@@ -20,6 +20,7 @@ import ExperimentExecution from "../../components/experiment-execution";
 import CompositionReview, { type CompositionReviewData } from "../../components/composition-review";
 import StructuralReview, { type StructuralReviewData } from "../../components/structural-review";
 import InstanceSettingReview, { type ParameterReview } from "../../components/instance-setting-review";
+import SavedSolutionEntry from "./saved-solution-entry";
 import RegisteredConfiguration from "../../components/registered-configuration";
 
 type Validation = { valid: boolean; errors: string[]; unknown: string[]; contracts?: {node_id: string; resolution: string; version: string | null}[]; required_inputs: { operation: string; name: string; resolution: string }[] };
@@ -74,8 +75,9 @@ function DesignAIRoute() {
   const { user } = useAuth();
   const draftId = activeDraftId(params);
   const conversationId = draftId ? null : activeConversationId(params);
-  // Remount all draft/conversation state together, including on same-page navigation.
-  return <DesignWorkspace key={`${user?.id || "signed-out"}:${draftId || conversationId || "start"}`} draftId={draftId} conversationId={conversationId} />;
+  // Preserve explicit retained pilot URLs. The ordinary entry opens one saved solution.
+  const legacy = <DesignWorkspace key={`${user?.id || "signed-out"}:${draftId || conversationId || "start"}`} draftId={draftId} conversationId={conversationId} />;
+  return draftId || conversationId || params.get("legacy") === "1" ? legacy : <SavedSolutionEntry legacy={legacy} />;
 }
 
 function DesignWorkspace({ draftId, conversationId }: { draftId: string | null; conversationId: string | null }) {

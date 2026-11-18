@@ -45,6 +45,12 @@ class CompositionSettings(StrictModel):
     second: list[SettingAssignment] = Field(default_factory=list, max_length=8)
 
 
+class SolutionEdit(StrictModel):
+    kind: Literal["rename", "describe", "set_node_label", "set_node_parameters", "add_service", "remove_service", "replace_service", "connect", "disconnect"]
+    node_id: str | None = None
+    value: str = Field(default="", max_length=16000)
+
+
 class AssistantTurn(StrictModel):
     message: str = Field(min_length=1, max_length=5000)
     template_key: str | None = Field(max_length=80)
@@ -54,11 +60,12 @@ class AssistantTurn(StrictModel):
     discovery: DiscoveryDecision | None = None
     composition_settings: CompositionSettings | None = None
     registered_settings: CompositionSettings | None = None
+    solution_edits: list["SolutionEdit"] | None = Field(default=None, max_length=10)
 
     @model_validator(mode="after")
     def answer_has_no_authority(self):
         if self.discovery and self.discovery.outcome == "answer_only" and (
-            self.edits or self.template_key is not None or self.recommended_seed is not None or self.composition_settings is not None or self.registered_settings is not None
+            self.edits or self.template_key is not None or self.recommended_seed is not None or self.composition_settings is not None or self.registered_settings is not None or self.solution_edits
         ):
             raise ValueError("An answer-only turn cannot select a creation path, supply settings or propose edits")
         return self

@@ -30,6 +30,7 @@ from app.dependencies.auth import (
 from app.routers.auth import bootstrap_admin, router as auth_router
 from app.routers.admin_users import router as admin_users_router
 from app.routers.design_ai import router as design_ai_router
+from app.routers.solution_assistant import router as solution_assistant_router
 from app.routers.experiment_journey import router as experiment_journey_router
 from app.routers.deployment_results import router as deployment_results_router, authorized_deployment
 from app.routers.operation_contracts import router as operation_contracts_router
@@ -101,6 +102,7 @@ app.include_router(parameter_onboarding_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
 app.include_router(design_ai_router)
+app.include_router(solution_assistant_router)
 app.include_router(experiment_journey_router)
 app.include_router(deployment_results_router)
 
@@ -744,9 +746,7 @@ def submit_workflow_to_orchestrator_endpoint(
         raise HTTPException(403, "Review and explicitly confirm an authorized execution attempt first")
     if workflow.solution_id:
         query = db.query(Solution).filter(Solution.id == workflow.solution_id)
-        if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)):
-            query = query.with_for_update().populate_existing()
-        solution = query.first()
+        solution = query.with_for_update().populate_existing().first()
 
         if not solution:
             raise HTTPException(status_code=404, detail="Solution not found")
@@ -759,7 +759,10 @@ def submit_workflow_to_orchestrator_endpoint(
                 status_code=400,
                 detail="Archived solutions cannot be submitted to the orchestrator.",
             )
-        if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)):
+        from app.services.solution_editing import require_saved_input
+        require_saved_input(solution, workflow)
+        if (capability_bindings.explicit(workflow) or any("configuration" in n.model_fields_set for n in workflow.nodes)
+                or "run_input" in (solution.design_metadata or {})):
             if workflow.expected_updated_at != solution.updated_at.isoformat():
                 raise HTTPException(409, "Saved solution changed; reload before preparing a run")
             saved = {n["id"]: n.get("data", {}) for n in solution.nodes if n.get("data", {}).get("service")}
@@ -1142,52 +1145,8 @@ def update_solution(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    solution = db.query(Solution).filter(Solution.id == solution_id).with_for_update().populate_existing().first()
-
-    if not solution:
-        raise HTTPException(status_code=404, detail="Solution not found")
-    if not can_manage_owned_record(user, solution.created_by_user_id):
-        raise HTTPException(status_code=403, detail="You can only modify your own solutions")
-
-    if solution.status == "archived":
-        raise HTTPException(
-            status_code=400,
-            detail="Archived solutions cannot be edited. Restore the solution first.",
-        )
-
-    if payload.design_metadata is not None:
-        from app.services.catalogue_composition import design_only
-        if design_only(solution.design_metadata) and any(
-            payload.design_metadata.get(key) != solution.design_metadata.get(key)
-            for key in ("source", "execution_policy", "composition_authority", "draft_id")
-        ):
-            raise HTTPException(409, "Keep the catalogue-composed provenance and design-only execution boundary")
-
-    configured = has_configuration(solution.nodes) or has_configuration(payload.nodes or [])
-    if (configured or payload.expected_updated_at is not None) and payload.expected_updated_at != solution.updated_at.isoformat():
-        raise HTTPException(409, "This solution changed since it was opened. Reload before saving.")
-    validate_builder_configurations(db, payload.nodes if payload.nodes is not None else solution.nodes,
-                                    payload.edges if payload.edges is not None else solution.edges, user)
-    if payload.name is not None:
-        solution.name = payload.name
-    if payload.description is not None:
-        solution.description = payload.description
-    if payload.nodes is not None:
-        solution.nodes = payload.nodes
-    if payload.edges is not None:
-        solution.edges = payload.edges
-    if payload.status is not None:
-        solution.status = payload.status
-    if payload.design_metadata is not None:
-        solution.design_metadata = payload.design_metadata
-
-    solution.updated_at = datetime.utcnow()
-
-    record_audit_event(db, user, "solution.updated", "solution", solution.id)
-    db.commit()
-    db.refresh(solution)
-
-    return solution
+    from app.services.solution_editing import update
+    return update(solution_id, payload, db, user)
 
 
 @app.put("/solutions/{solution_id}/archive", response_model=SolutionRead)
