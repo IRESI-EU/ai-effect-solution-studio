@@ -1,0 +1,70 @@
+{
+  "observed_at": "2026-11-18T00:28:23.867001+00:00",
+  "status": "PASS",
+  "source_files_sha256": {
+    "portal/apps/api/app/routers/operation_contracts.py": "50cbb9ed8fffc4f368cb63c765adde08d2cada05a5bf1166f79c702388882165",
+    "portal/apps/api/app/services/native_instance_evidence.py": "2a285144eb2a2d7bfad678d78978488460dcce67a80d0c9b0857336bf12d42be",
+    "portal/apps/api/app/services/owned_artifact_preview.py": "c87b95048586166e0c33a268d121da5377c46f5837ea25c99e0ea79e300c4fd7",
+    "wp3/use-cases/denmark-node/common/configuration.py": "41b480fdc396fa9d1c7b05b404137ccf7845300a1d43c9aa35579679e826f50c",
+    "wp3/use-cases/denmark-node/common/concurrent.py": "7eca837fb78c815bb254591f923ab97f1cf133324833e7e882ddba4f90cb4cc5",
+    "wp3/use-cases/denmark-node/services/topology_generator/service.py": "045d41d02281958ffafd5b35ae759bd2ed826ee12b41ed5dc914aff37431c5d4",
+    "wp3/use-cases/denmark-node/services/draw_topology/service.py": "c5e049a0ab1cdbe03eaec76822bfdc330df4825ac1fc8b91da073e91f4a92b11"
+  },
+  "journey": "normal authenticated provider/admin/designer API routes -> real HTTP WP3 -> native Redis -> Worker -> real topology enumerator and SVG renderer -> owned result preview and instance evidence",
+  "runs": [
+    {
+      "workflow_id": "wf-ca425bfdf0cc",
+      "task_id": "task_0bb41ffa",
+      "service_task_id": "cfg-1330bb2be449b3c64b1ad79de13b18d4aabddd1bbe7a43884088515f9d30dabd",
+      "requested": {
+        "how_many": 1
+      },
+      "effective": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 1
+      },
+      "algorithm_consumed": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 1
+      },
+      "topology_count": 1,
+      "svg_count": 1,
+      "parameter_contract_sha256": "9684657971a7d9babeeb0ca6eaf36256c9215d808e8138196a469d2b387ab1eb",
+      "output_sha256": "cdb4d17380f7ad54cb75e732d7d49a8e2b55ab1ca6a847c7b007ae3e62654bac"
+    },
+    {
+      "workflow_id": "wf-aeabbc16cae5",
+      "task_id": "task_0bb41ffa",
+      "service_task_id": "cfg-e8a5e73555fb414f4b6eadfeff027479b015ef8c2cb7a23ff46db608105a2827",
+      "requested": {
+        "how_many": 3
+      },
+      "effective": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 3
+      },
+      "algorithm_consumed": {
+        "allow_hx": true,
+        "allow_bypass": true,
+        "how_many": 3
+      },
+      "topology_count": 3,
+      "svg_count": 3,
+      "parameter_contract_sha256": "9684657971a7d9babeeb0ca6eaf36256c9215d808e8138196a469d2b387ab1eb",
+      "output_sha256": "ef13a6a5b8807c3df32ab5c55b950ccc7adf289d48694b0f33eb5d26a5da1475"
+    }
+  ],
+  "history_after_edit": "PASS",
+  "cross_owner_denial": "PASS",
+  "artifact_change_detection": "PASS",
+  "limitations": [
+    "Synthetic node approvals and test limits; not Danish owner confirmation",
+    "Portal SQLite test database; PostgreSQL not verified",
+    "Automated API walkthrough; browser and independent human acceptance not performed",
+    "Native processes; Docker and production unchanged",
+    "No paid provider calls"
+  ]
+}

@@ -101,6 +101,17 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Publication failed."); }
     finally { setBusy(false); }
   }
+  async function downloadRuntimeContract(contractId: string) {
+    setBusy(true); setError("");
+    try {
+      const value = await request(`/api/operation-contracts/${encodeURIComponent(contractId)}/runtime-capability`);
+      const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2) + "\n"], { type: "application/json" }));
+      const anchor = window.document.createElement("a"); anchor.href = url; anchor.download = "service-parameter-contract.json"; anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setNotice("Runtime contract downloaded. The node operator must install it in a runtime that implements these mappings; downloading does not deploy it.");
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Runtime contract export failed."); }
+    finally { setBusy(false); }
+  }
 
   return <section aria-label="Provider parameter review" style={{ borderTop: "1px solid #ddd8f4", marginTop: 20, paddingTop: 20 }}>
     <h2>Adjustable service settings</h2>
@@ -173,6 +184,7 @@ export function ParameterReview({ serviceId }: { serviceId: string }) {
           <p>Publication requires administrator approval of the service. It publishes this saved version.</p>
           <button type="button" disabled={!["approved", "validated"].includes(state?.service_status || "")} onClick={() => activate(contract.id)}>Publish version {contract.contract_version}</button>
         </>}
+        {contract.status === "active" && <button type="button" onClick={() => downloadRuntimeContract(contract.id)}>Download runtime contract</button>}
       </article>)}
     </fieldset>
     {busy && <p role="status">Updating settings…</p>}

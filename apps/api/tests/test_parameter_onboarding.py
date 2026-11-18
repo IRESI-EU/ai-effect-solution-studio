@@ -245,3 +245,34 @@ def test_new_review_preserves_existing_operation_slots_and_history(publisher):
     new = review(publisher, payload)
     assert new["definition"]["compatibility_notes"] == ["Preserve the provider's existing operation semantics"]
     assert publisher.get("/services/fixture-onboarded/operation-contract-resolution").json()["contract"]["id"] == contract["id"]
+
+
+def test_provider_can_export_only_published_current_reviewed_runtime_contract(publisher):
+    from app.services.parameter_values import parameter_contract_digest
+    contract = review(publisher)
+    path = f"/operation-contracts/{contract['id']}/runtime-capability"
+    assert publisher.get(path).status_code == 409
+    approve(publisher)
+    assert publisher.post(f"/operation-contracts/{contract['id']}/activate").status_code == 200
+    exported = publisher.get(path)
+    assert exported.status_code == 200, exported.text
+    operation = exported.json()["operations"][0]
+    assert operation["operation_name"] == "RunFixture"
+    assert operation["operation_identity"] == contract["operation_identity"]
+    assert parameter_contract_digest(operation["execution_parameters"]) == parameter_contract_digest(contract["definition"]["execution_parameters"])
+    login(publisher, "outsider@example.test")
+    assert publisher.get(path).status_code == 403
+    publisher.cookies.clear()
+    assert publisher.get(path).status_code == 401
+
+
+def test_runtime_export_rejects_changed_runtime_and_unreviewed_legacy_contract(publisher):
+    contract = review(publisher); approve(publisher)
+    assert publisher.post(f"/operation-contracts/{contract['id']}/activate").status_code == 200
+    path = f"/operation-contracts/{contract['id']}/runtime-capability"
+    with SessionLocal() as db:
+        service = db.get(Service, "fixture-onboarded"); service.internal_host = "changed-runtime"; db.commit()
+    assert publisher.get(path).status_code == 409
+    with SessionLocal() as db:
+        service = db.get(Service, "fixture-onboarded"); service.interface_contract = {}; db.commit()
+    assert publisher.get(path).status_code == 409

@@ -16,8 +16,9 @@ def references(value):
     if isinstance(value, dict):
         if isinstance(value.get("protocol"), str) and isinstance(value.get("uri"), str):
             yield value["protocol"], value["uri"]
-        for child in value.values():
-            yield from references(child)
+            return
+        for key in ("output", "output_refs"):
+            yield from references(value.get(key))
     elif isinstance(value, list):
         for child in value:
             yield from references(child)
@@ -50,7 +51,9 @@ def preview(payload, db, user):
     if len(matches) != 1:
         raise HTTPException(404, "Task is not recorded for this workflow")
     # Only server-observed outputs confer authority; inputs/metadata do not.
-    outputs = list(references(matches[0].get("result")))
+    # Maintained WP3 exposes output_refs directly; older adapters nest them in
+    # result. Both remain server-observed outputs, never caller input metadata.
+    outputs = list(references(matches[0].get("output_refs"))) + list(references(matches[0].get("result")))
     if payload.protocol not in {"file", "inline"}:
         raise HTTPException(409, "Remote preview transport has no qualified ownership boundary")
     requested = (payload.protocol, payload.uri)

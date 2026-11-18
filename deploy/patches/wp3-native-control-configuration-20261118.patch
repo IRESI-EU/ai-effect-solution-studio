@@ -1,0 +1,1134 @@
+From 9e07ea4473c655a6f58143dc55b708ed6f9b88da Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Wed, 18 Nov 2026 00:29:19 +0000
+Subject: [PATCH] feat: consume validated instance settings in native topology
+ services
+
+---
+ docs/NATIVE_CONTROL_PARAMETERS_2026-11-18.md  |  47 +++++
+ tests/test_native_control_parameters.py       | 193 ++++++++++++++++++
+ use-cases/common/concurrent.py                |  19 +-
+ use-cases/common/configuration.py             |  96 +++++++++
+ use-cases/common/parameter_contract.py        | 119 +++++++++++
+ .../common/parameter_contract_provenance.json |   7 +
+ use-cases/common/sequential.py                |  15 +-
+ use-cases/denmark-node/common/concurrent.py   |  19 +-
+ .../denmark-node/common/configuration.py      |  96 +++++++++
+ .../denmark-node/common/parameter_contract.py | 119 +++++++++++
+ .../common/parameter_contract_provenance.json |   7 +
+ use-cases/denmark-node/common/sequential.py   |  15 +-
+ .../services/draw_topology/service.py         |   3 +
+ .../services/topology_generator/service.py    |  72 ++++++-
+ 14 files changed, 793 insertions(+), 34 deletions(-)
+ create mode 100644 docs/NATIVE_CONTROL_PARAMETERS_2026-11-18.md
+ create mode 100644 tests/test_native_control_parameters.py
+ create mode 100644 use-cases/common/configuration.py
+ create mode 100644 use-cases/common/parameter_contract.py
+ create mode 100644 use-cases/common/parameter_contract_provenance.json
+ create mode 100644 use-cases/denmark-node/common/configuration.py
+ create mode 100644 use-cases/denmark-node/common/parameter_contract.py
+ create mode 100644 use-cases/denmark-node/common/parameter_contract_provenance.json
+
+diff --git a/docs/NATIVE_CONTROL_PARAMETERS_2026-11-18.md b/docs/NATIVE_CONTROL_PARAMETERS_2026-11-18.md
+new file mode 100644
+index 0000000..b109e97
+--- /dev/null
++++ b/docs/NATIVE_CONTROL_PARAMETERS_2026-11-18.md
+@@ -0,0 +1,47 @@
++# Native Control instance settings
++
++This change joins the existing `http-parameters-v1` transport to native service handlers. It reuses the maintained portable validator. There is no runtime service-ID registry or automatic provider approval.
++
++## Current supported operation
++
++The Danish `GenerateTopology` implementation consumes:
++
++| Published setting | Actual enumerator argument |
++|---|---|
++| `allow_hx` | `enumerate_networks(..., allow_hx=value)` |
++| `allow_bypass` | `enumerate_networks(..., allow_bypass=value)` |
++| `how_many` | `enumerate_networks(..., max_results=value)` |
++
++Definitions, defaults, permitted limits and operation identity/version come from a provider-reviewed contract installed by the operator. The repository does not ship a production-approved card. For configured values there is no silent fallback or clamping. Existing unconfigured fallback behaviour is retained. Scientific validity and resource limits require the Danish owner; the placeholder ValidateTopology operation is not qualification.
++
++## Provider and operator handoff
++
++1. Review the parameter card and actual runtime mappings through normal Portal onboarding, and supply real normal/invalid configuration test evidence. Complete normal service approval and publish the reviewed card.
++2. Download the active card's runtime capability through the normal publisher (or its authenticated `/operation-contracts/{id}/runtime-capability` endpoint).
++3. After runtime/release review, install this service source and mount that downloaded JSON read-only in the topology-generator container. Set `SERVICE_PARAMETER_CONTRACT_FILE` to its operator-controlled path. Keep `SERVICE_API_KEY` in the existing secret/configuration mechanism, outside parameter definitions.
++4. Verify authenticated `/control/capabilities` and WP3 readiness against the exact saved contract before an explicit Run. A missing or incompatible installed card rejects configured requests. It does not fall back to a demo identity or inferred limits.
++5. Keep the real shared data volume available to downstream services. Portal inspection additionally needs its authorised read-only artifact mount. This guide does not deploy or modify any running stack.
++
++The enumerator input is a JSON object containing `run_config` with the actual supplies and loads. Instance settings override the corresponding upstream routing options without modifying the upstream artifact. This supports structured input without a mandatory Ollama/free-text step. Existing config-assistant defaults are not asserted as approved parameter defaults.
++
++## Identity, outputs and results
++
++The configured service returns its own task identity, derived from both workflow and logical task IDs. WP3 already records that external association and polls it. This prevents the same logical step in two runs from colliding in the service's in-memory task store. Results are written exclusively to the workflow/logical-task namespace; existing configured artifacts and in-memory task records cannot be overwritten by a replay.
++
++The generator's output has an `execution` member containing the reviewed envelope, workflow/task/instance identities, actual enumerator arguments, consumed settings, parameter digest and input-content hash. The renderer carries the producer record as `upstream_execution`. These are node/runtime instrumentation records, not scientific certification. Portal inspection matches them against its immutable submission, observed output/input references and its existing digest receipts.
++
++The configured output path uses exclusive creation, including after a restart. The existing TaskManager remains single-process and in-memory. A restart may remove status records; this change does not add a distributed task database or establish safe multi-process deployment.
++
++## Shared handler contract
++
++Services may expose a `configuration_capabilities()` hook and implement the advertised values in their own algorithm. Both shared concurrent and sequential handlers validate configured requests before dispatch. Unsupported services reject them. A capability declaration alone is not consumption proof; the provider must test the actual mapping. Legacy requests without configuration retain their existing handling.
++
++`use-cases/common` and `use-cases/denmark-node/common` carry exact copies of the maintained parameter validator and provenance. Use the Portal's existing `deploy/aie18/sync_wp3_contract.py` to regenerate/check all copies; do not independently edit validators. Other services adopting this handler must use the matching complete `common/` package, rather than copying a handler file alone.
++
++## Verification
++
++`tests/test_native_control_parameters.py` runs the actual topology enumerator through the native HTTP handler, generates SVGs from its output, checks invalid/missing contracts, authentication and replay protection, and verifies vendor consistency. Numeric test limits and identities are explicitly synthetic fixtures.
++
++The matching Portal's `test_native_control_execution.py` additionally runs normal provider/admin/designer API routes, real localhost HTTP, native Redis, the real WP3 engine/Worker and the two services. It verifies two configurations (1 and 3 topology/SVG results), owned preview, linked settings and unchanged earlier history. It uses an isolated SQLite Portal store and is not browser, PostgreSQL, Docker, partner-hosted or production acceptance.
++
++No production service or retained demonstration is changed by these source commits.
+diff --git a/tests/test_native_control_parameters.py b/tests/test_native_control_parameters.py
+new file mode 100644
+index 0000000..c63569e
+--- /dev/null
++++ b/tests/test_native_control_parameters.py
+@@ -0,0 +1,193 @@
++"""Real source-runtime consumption through native HTTP Control handlers.
++
++All contracts/accounts/identities are disposable test data. Limits here are
++synthetic fixture limits, not Danish provider approval or scientific bounds.
++"""
++from copy import deepcopy
++import importlib.util
++import json
++from pathlib import Path
++import sys
++import time
++from types import SimpleNamespace
++
++import pytest
++from fastapi.testclient import TestClient
++
++ROOT = Path(__file__).resolve().parents[1]
++NODE = ROOT / "use-cases/denmark-node"
++sys.path.insert(0, str(NODE))
++sys.path.insert(0, str(NODE / "services/topology_generator"))
++sys.path.insert(0, str(NODE / "services/draw_topology"))
++from common import concurrent, sequential
++from common.parameter_contract import parameter_contract_digest
++
++
++def module(name, path):
++    spec = importlib.util.spec_from_file_location(name, path)
++    value = importlib.util.module_from_spec(spec)
++    sys.modules[name] = value
++    spec.loader.exec_module(value)
++    return value
++
++
++topology = module("native_topology_test", NODE / "services/topology_generator/service.py")
++renderer = module("native_renderer_test", NODE / "services/draw_topology/service.py")
++CAPABILITY = {"capability_schema_version": "1.0", "transports": ["http-parameters-v1"], "operations": [{
++    "operation_name": "GenerateTopology", "operation_identity": "urn:test:topology:source-runtime", "contract_version": "1.0.0",
++    "execution_parameters": {"schema_version": "1.0", "transport": "http-parameters-v1", "properties": {
++        "allow_hx": {"type": "boolean", "title": "Heat exchangers", "description": "Synthetic runtime test"},
++        "allow_bypass": {"type": "boolean", "title": "Bypasses", "description": "Synthetic runtime test"},
++        "how_many": {"type": "integer", "title": "Topology cap", "description": "Synthetic runtime test limits, not node-approved", "minimum": 1, "maximum": 4},
++    }}}]}
++
++
++def configuration(count=1):
++    return {"contract_id": "test-contract", "contract_version": "1.0.0", "operation_identity": "urn:test:topology:source-runtime",
++            "schema_version": "1.0", "instance_id": "test-instance", "parameters": {"allow_hx": True, "allow_bypass": True, "how_many": count}}
++
++
++@pytest.fixture
++def runtime(tmp_path, monkeypatch):
++    contract = tmp_path / "installed.json"; contract.write_text(json.dumps(CAPABILITY))
++    upstream = tmp_path / "input.json"
++    upstream.write_text(json.dumps({"run_config": {"supplies": ["310-D::CHP"], "loads": ["716-D::Dumpload"],
++                                              "allow_hx": False, "allow_bypass": False, "how_many": 20}}))
++    monkeypatch.setenv("SERVICE_PARAMETER_CONTRACT_FILE", str(contract))
++    monkeypatch.delenv("SERVICE_API_KEY", raising=False)
++    manager = concurrent.TaskManager()
++    monkeypatch.setattr(concurrent, "task_manager", manager)
++    for service in (topology, renderer):
++        monkeypatch.setattr(service, "task_manager", manager)
++        monkeypatch.setattr(service, "DATA_DIR", tmp_path / "outputs")
++    calls = []
++    original = topology.enumerate_networks
++    def observed(*args, **kwargs):
++        calls.append(deepcopy(kwargs))
++        return original(*args, **kwargs)  # The actual enumerator runs, no result double.
++    monkeypatch.setattr(topology, "enumerate_networks", observed)
++    with TestClient(concurrent.create_app(topology)) as client:
++        yield SimpleNamespace(client=client, upstream=upstream, calls=calls, root=tmp_path, manager=manager, contract=contract)
++
++
++def request(runtime, task, count=1, configured=True):
++    value = {"method": "GenerateTopology", "workflow_id": "wf-source-runtime-test", "task_id": task,
++             "inputs": [{"protocol": "file", "uri": str(runtime.upstream), "format": "json"}]}
++    if configured: value["configuration"] = configuration(count)
++    return value
++
++
++def completed(client, task):
++    deadline = time.monotonic() + 5
++    while time.monotonic() < deadline:
++        value = client.get(f"/control/status/{task}").json()
++        if value["status"] != "running":
++            assert value["status"] == "complete", value
++            reference = client.get(f"/control/output/{task}").json()["output"]
++            return reference, json.loads(Path(reference["uri"]).read_text())
++        time.sleep(0.01)
++    pytest.fail("Native task did not finish")
++
++
++def test_two_http_configurations_reach_real_enumerator_and_keep_own_results(runtime):
++    client = runtime.client
++    assert client.get("/control/capabilities").json() == CAPABILITY
++    outputs = []
++    original_input = runtime.upstream.read_bytes()
++    for task, count in [("task_first", 1), ("task_second", 3)]:
++        value = request(runtime, task, count)
++        response = client.post("/control/execute", json=value)
++        assert response.status_code == 200
++        ref, output = completed(client, response.json()["task_id"])
++        outputs.append((ref, Path(ref["uri"]).read_bytes()))
++        assert output["topology_count"] == count
++        assert output["execution"]["configuration"] == value["configuration"]
++        assert output["execution"]["algorithm_consumed"] == value["configuration"]["parameters"]
++        assert output["execution"]["task_id"] == task
++        assert output["execution"]["parameter_contract_sha256"] == parameter_contract_digest(CAPABILITY["operations"][0]["execution_parameters"])
++        assert output["run_config"]["supplies"] == ["310-D::CHP"]
++    assert runtime.calls == [{"allow_hx": True, "allow_bypass": True, "max_results": 1},
++                             {"allow_hx": True, "allow_bypass": True, "max_results": 3}]
++    assert runtime.upstream.read_bytes() == original_input
++    assert outputs[0][0]["uri"] != outputs[1][0]["uri"]
++    assert Path(outputs[0][0]["uri"]).read_bytes() == outputs[0][1]
++
++
++def test_renderer_uses_actual_generated_networks_and_retains_producer_settings(runtime):
++    response = runtime.client.post("/control/execute", json=request(runtime, "task_producer", 3))
++    assert response.status_code == 200
++    ref, producer = completed(runtime.client, response.json()["task_id"])
++    with TestClient(concurrent.create_app(renderer)) as client:
++        response = client.post("/control/execute", json={"method": "RenderTopologies", "workflow_id": "wf-source-runtime-test",
++            "task_id": "task_renderer", "inputs": [ref]})
++        assert response.status_code == 200
++        _, output = completed(client, "task_renderer")
++    assert output["drawing_count"] == 3
++    assert output["upstream_execution"] == producer["execution"]
++    assert all("<svg" in Path(item["uri"]).read_text() for item in output["drawings"])
++
++
++@pytest.mark.parametrize("mutation", ["null", "version", "type", "limit", "unknown", "mixed", "path", "method"])
++def test_invalid_settings_are_rejected_before_task_or_algorithm(runtime, mutation):
++    value = request(runtime, "task_invalid")
++    if mutation == "null": value["configuration"] = None
++    if mutation == "version": value["configuration"]["contract_version"] = "9.0.0"
++    if mutation == "type": value["configuration"]["parameters"]["allow_hx"] = "true"
++    if mutation == "limit": value["configuration"]["parameters"]["how_many"] = 999
++    if mutation == "unknown": value["configuration"]["parameters"]["unsupported"] = 1
++    if mutation == "mixed": value["parameters"] = {}
++    if mutation == "path": value["workflow_id"] = "../outside"
++    if mutation == "method": value["method"] = "ValidateTopology"
++    assert runtime.client.post("/control/execute", json=value).status_code in {409, 422}
++    assert runtime.manager.get_status("task_invalid") is None
++    assert runtime.calls == []
++
++
++def test_duplicate_configured_task_cannot_overwrite_result_or_restart_algorithm(runtime):
++    value = request(runtime, "task_duplicate")
++    response = runtime.client.post("/control/execute", json=value)
++    assert response.status_code == 200
++    ref, _ = completed(runtime.client, response.json()["task_id"])
++    old = Path(ref["uri"]).read_bytes()
++    value["configuration"]["parameters"]["how_many"] = 3
++    assert runtime.client.post("/control/execute", json=value).status_code == 409
++    legacy = deepcopy(value); legacy.pop("configuration")
++    assert runtime.client.post("/control/execute", json=legacy).status_code == 409
++    # A restart loses the in-memory TaskManager; the existing output still denies replay.
++    runtime.manager._tasks.clear()
++    assert runtime.client.post("/control/execute", json=value).status_code == 409
++    assert len(runtime.calls) == 1 and Path(ref["uri"]).read_bytes() == old
++
++
++def test_missing_or_incompatible_runtime_contract_denies_configuration(runtime, monkeypatch):
++    monkeypatch.delenv("SERVICE_PARAMETER_CONTRACT_FILE")
++    assert runtime.client.get("/control/capabilities").status_code == 409
++    assert runtime.client.post("/control/execute", json=request(runtime, "task_missing")).status_code == 409
++    assert runtime.calls == []
++
++
++@pytest.mark.parametrize("handler", [concurrent, sequential])
++def test_services_without_configuration_support_do_not_silently_ignore_it(handler):
++    calls = []
++    service = SimpleNamespace(execute_Echo=lambda request: (calls.append(request) or handler.ExecuteResponse(status="complete")))
++    with TestClient(handler.create_app(service)) as client:
++        value = {"method": "Echo", "workflow_id": "test-workflow", "task_id": "test-task", "configuration": configuration()}
++        assert client.post("/control/execute", json=value).status_code == 409
++        assert calls == []
++        value.pop("configuration")
++        assert client.post("/control/execute", json=value).status_code == 200
++        assert len(calls) == 1
++
++
++def test_existing_authentication_applies_to_capabilities_and_dispatch(runtime, monkeypatch):
++    monkeypatch.setenv("SERVICE_API_KEY", "disposable-test-token")
++    assert runtime.client.get("/control/capabilities").status_code == 401
++    assert runtime.client.post("/control/execute", json=request(runtime, "task_auth")).status_code == 401
++    assert runtime.client.get("/control/capabilities", headers={"Authorization": "Bearer disposable-test-token"}).status_code == 200
++    assert runtime.calls == []
++
++
++def test_vendored_handlers_and_validators_match_maintained_sources():
++    for name in ("configuration.py", "concurrent.py", "sequential.py", "parameter_contract.py"):
++        assert (ROOT / "use-cases/common" / name).read_bytes() == (NODE / "common" / name).read_bytes()
++    assert (NODE / "common/parameter_contract.py").read_bytes() == (ROOT / "orchestrator/src/services/parameter_contract.py").read_bytes()
+diff --git a/use-cases/common/concurrent.py b/use-cases/common/concurrent.py
+index 8ee8cc4..aa5520f 100644
+--- a/use-cases/common/concurrent.py
++++ b/use-cases/common/concurrent.py
+@@ -17,6 +17,7 @@ import uvicorn
+ from fastapi import Depends, FastAPI, HTTPException, Security
+ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+ from pydantic import BaseModel
++from .configuration import ConfigurableRequest, capabilities, validate_request
+ 
+ _bearer = HTTPBearer(auto_error=False)
+ 
+@@ -41,14 +42,9 @@ class DataReference(BaseModel):
+     format: str
+ 
+ 
+-class ExecuteRequest(BaseModel):
++class ExecuteRequest(ConfigurableRequest):
+     """Execute request from orchestrator."""
+ 
+-    method: str
+-    workflow_id: str
+-    task_id: str
+-    inputs: list[dict] = []
+-    parameters: dict = {}
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -84,6 +80,9 @@ class TaskManager:
+     def register_task(self, task_id: str, request: ExecuteRequest) -> None:
+         """Register a task for tracking. Uses orchestrator's task_id."""
+         with self._lock:
++            prior = self._tasks.get(task_id)
++            if prior and (request.configuration is not None or prior["request"].get("configuration") is not None):
++                raise HTTPException(409, "This configured task identity is already recorded; it cannot be overwritten")
+             self._tasks[task_id] = {
+                 "status": "running",
+                 "progress": 0,
+@@ -189,8 +188,12 @@ def create_app(service_module) -> FastAPI:
+                 detail=f"Unknown method: {request.method}",
+             )
+ 
++        validate_request(service_module, request)
++
+         try:
+             return handler(request)
++        except HTTPException:
++            raise
+         except Exception as e:
+             logger.error(f"Execute failed: {e}")
+             return ExecuteResponse(status="failed", error=str(e))
+@@ -219,6 +222,10 @@ def create_app(service_module) -> FastAPI:
+         """Health check."""
+         return {"status": "ok"}
+ 
++    @app.get("/control/capabilities", dependencies=[Depends(_check_api_key)])
++    def get_capabilities():
++        return capabilities(service_module)
++
+     return app
+ 
+ 
+diff --git a/use-cases/common/configuration.py b/use-cases/common/configuration.py
+new file mode 100644
+index 0000000..e0782f4
+--- /dev/null
++++ b/use-cases/common/configuration.py
+@@ -0,0 +1,96 @@
++"""Optional configuration transport for native Control services.
++
++Services opt in with configuration_capabilities() and explicitly consume values
++in their own algorithm. No service IDs or parameter defaults live here.
++"""
++from copy import deepcopy
++import json
++from pathlib import Path
++import re
++
++from fastapi import HTTPException
++from pydantic import BaseModel, Field, model_validator
++
++from .parameter_contract import match_wrapper_configuration
++
++
++class ConfigurableRequest(BaseModel):
++    method: str
++    workflow_id: str
++    task_id: str
++    inputs: list[dict] = Field(default_factory=list)
++    parameters: dict = Field(default_factory=dict)
++    configuration: dict | None = None
++
++    @model_validator(mode="after")
++    def explicit_configuration(self):
++        if "configuration" in self.model_fields_set:
++            if self.configuration is None:
++                raise ValueError("Explicit configuration cannot be null")
++            if "parameters" in self.model_fields_set:
++                raise ValueError("Legacy parameters and instance configuration cannot be combined")
++            for value in (self.workflow_id, self.task_id):
++                if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", value):
++                    raise ValueError("Configured workflow/task identifiers must be safe path components")
++        return self
++
++
++def capabilities(service_module):
++    hook = getattr(service_module, "configuration_capabilities", None)
++    if not callable(hook):
++        raise HTTPException(409, "This service has not declared instance configuration support")
++    return hook()
++
++
++def validate_request(service_module, request):
++    if request.configuration is not None:
++        try:
++            return match_wrapper_configuration(request.method, request.configuration, capabilities(service_module))
++        except (ValueError, TypeError, KeyError) as exc:
++            raise HTTPException(422, "Instance configuration differs from the installed runtime contract") from exc
++    return None
++
++
++def load_contract(path: str | None, operation_name: str, supported_types: dict[str, str]):
++    """Load an operator-installed export, with no fallback/default contract."""
++    if not path:
++        raise HTTPException(409, "Install the provider-reviewed runtime contract before using instance settings")
++    try:
++        source = Path(path)
++        if source.stat().st_size > 256_000:
++            raise ValueError("Contract too large")
++        value = json.loads(source.read_text(encoding="utf-8"))
++        operations = value["operations"]
++        if (value["capability_schema_version"] != "1.0" or value["transports"] != ["http-parameters-v1"]
++                or not isinstance(operations, list) or len(operations) != 1):
++            raise ValueError("Unsupported capability export")
++        operation = operations[0]
++        properties = operation["execution_parameters"]["properties"]
++        if (operation["operation_name"] != operation_name or not properties
++                or any(name not in supported_types or spec["type"] != supported_types[name] for name, spec in properties.items())):
++            raise ValueError("The runtime does not implement these parameter mappings")
++        from .parameter_contract import parameter_contract_digest
++        parameter_contract_digest(operation["execution_parameters"])
++        return deepcopy(value)
++    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
++        raise HTTPException(409, "Installed parameter contract is unavailable or incompatible with this operation") from exc
++
++
++def output_path(data_dir, workflow_id, task_id):
++    root = Path(data_dir).resolve()
++    directory = root / workflow_id
++    if directory.is_symlink() or not directory.resolve().is_relative_to(root):
++        raise ValueError("Output directory leaves the service data volume")
++    path = directory / f"{task_id}.json"
++    if path.exists() or path.is_symlink():
++        raise HTTPException(409, "This task already has an output; use a new execution identity")
++    return path
++
++
++def write_output(data_dir, workflow_id, task_id, payload):
++    """Configured outputs are task-specific and cannot overwrite earlier results."""
++    path = output_path(data_dir, workflow_id, task_id)
++    path.parent.mkdir(parents=True, exist_ok=True)
++    with path.open("x", encoding="utf-8") as stream:
++        json.dump(payload, stream, indent=2, allow_nan=False)
++    return {"protocol": "file", "uri": str(path), "format": "json"}
+diff --git a/use-cases/common/parameter_contract.py b/use-cases/common/parameter_contract.py
+new file mode 100644
+index 0000000..e8e700b
+--- /dev/null
++++ b/use-cases/common/parameter_contract.py
+@@ -0,0 +1,119 @@
++"""Portable parameter validation shared by Studio and isolated node wrappers.
++
++No paths, deployment commands, environment variables or secrets are interpreted.
++"""
++from copy import deepcopy
++import math
++import hashlib
++import json
++
++
++def effective_parameters(definition, requested):
++    if not isinstance(requested, dict):
++        raise ValueError("Parameters must be a JSON object; null is not supported")
++    properties = definition.get("properties", {})
++    unknown = set(requested) - set(properties)
++    if unknown:
++        raise ValueError("Unsupported parameters: " + ", ".join(sorted(unknown)))
++    result = {}
++    for name, spec in properties.items():
++        if name in requested:
++            value = requested[name]
++        elif "default" in spec:
++            value = deepcopy(spec["default"])
++        elif spec.get("required"):
++            raise ValueError(f"{name}: a value is required")
++        else:
++            continue
++        kind = spec["type"]
++        valid = ((kind == "integer" and type(value) is int)
++                 or (kind == "number" and type(value) in (int, float) and math.isfinite(value))
++                 or (kind == "boolean" and type(value) is bool)
++                 or (kind == "string" and type(value) is str))
++        if not valid:
++            raise ValueError(f"{name}: expected {kind}; null is not supported")
++        if "enum" in spec and value not in spec["enum"]:
++            raise ValueError(f"{name}: choose one of {spec['enum']}")
++        if kind in ("integer", "number"):
++            if spec.get("minimum") is not None and value < spec["minimum"]:
++                raise ValueError(f"{name}: minimum is {spec['minimum']}")
++            if spec.get("maximum") is not None and value > spec["maximum"]:
++                raise ValueError(f"{name}: maximum is {spec['maximum']}")
++        result[name] = deepcopy(value)
++    return result
++
++
++TRANSPORT = "http-parameters-v1"
++CAPABILITY_SCHEMA = "1.0"
++
++
++def parameter_contract_digest(definition):
++    """Stable digest for the registry export, including labels and constraints.
++
++    Stored Pydantic defaults and JSON numeric spelling do not create a second
++    contract identity. Explicit null defaults remain invalid, not omitted.
++    """
++    if (not isinstance(definition, dict) or definition.get("schema_version") != "1.0"
++            or definition.get("transport") != TRANSPORT or not isinstance(definition.get("properties"), dict)
++            or set(definition) - {"schema_version", "transport", "properties"}):
++        raise ValueError("Unsupported execution parameter contract/protocol version")
++    properties = {}
++    for name, original in definition["properties"].items():
++        if not isinstance(original, dict):
++            raise ValueError("Malformed parameter definition")
++        spec = {k: deepcopy(v) for k, v in original.items() if v is not None or k == "default"}
++        if spec.get("required") is False:
++            spec.pop("required")
++        if spec.get("type") not in {"integer", "number", "boolean", "string"}:
++            raise ValueError("Unsupported parameter type")
++        for bound in ("minimum", "maximum"):
++            if bound in spec:
++                value = spec[bound]
++                if type(value) not in (int, float) or not math.isfinite(value):
++                    raise ValueError("Parameter bounds must be finite numbers")
++                if value == int(value):
++                    spec[bound] = int(value)
++        for value in ([spec["default"]] if "default" in spec else []) + spec.get("enum", []):
++            effective_parameters({"properties": {name: spec}}, {name: value})
++        properties[name] = spec
++    canonical = {"schema_version": "1.0", "transport": TRANSPORT, "properties": properties}
++    return hashlib.sha256(json.dumps(canonical, sort_keys=True, ensure_ascii=False, allow_nan=False,
++                                     separators=(",", ":")).encode()).hexdigest()
++
++
++def validate_configuration_envelope(configuration):
++    keys = {"contract_id", "contract_version", "operation_identity", "schema_version", "parameters", "instance_id"}
++    if not isinstance(configuration, dict) or set(configuration) != keys:
++        raise ValueError("Unsupported instance configuration envelope")
++    if configuration["schema_version"] != "1.0":
++        raise ValueError("Unsupported parameter schema version")
++    for key in keys - {"parameters"}:
++        if not isinstance(configuration[key], str) or not configuration[key].strip() or len(configuration[key]) > 300:
++            raise ValueError(f"Invalid configuration {key}")
++    if not isinstance(configuration["parameters"], dict):
++        raise ValueError("Parameters must be a JSON object")
++    json.dumps(configuration, allow_nan=False)
++    return deepcopy(configuration)
++
++
++def match_wrapper_configuration(method, configuration, capability):
++    """Generic protocol negotiation; no Dutch/Danish definitions live here."""
++    configuration = validate_configuration_envelope(configuration)
++    if (not isinstance(capability, dict) or capability.get("capability_schema_version") != CAPABILITY_SCHEMA
++            or not isinstance(capability.get("transports"), list)
++            or TRANSPORT not in capability["transports"]
++            or not isinstance(capability.get("operations"), list)):
++        raise ValueError("Wrapper does not declare a supported configuration protocol")
++    matches = [op for op in capability.get("operations", []) if isinstance(op, dict)
++               and op.get("operation_name") == method
++               and op.get("operation_identity") == configuration["operation_identity"]
++               and op.get("contract_version") == configuration["contract_version"]]
++    if len(matches) != 1:
++        raise ValueError("Wrapper operation/contract version is incompatible or ambiguous")
++    definition = matches[0].get("execution_parameters")
++    digest = parameter_contract_digest(definition)
++    effective = effective_parameters(definition, configuration["parameters"])
++    if effective != configuration["parameters"]:
++        raise ValueError("Submitted parameters must already contain validated effective values")
++    return {"operation_identity": configuration["operation_identity"], "contract_version": configuration["contract_version"],
++            "schema_version": "1.0", "parameter_contract_sha256": digest}
+diff --git a/use-cases/common/parameter_contract_provenance.json b/use-cases/common/parameter_contract_provenance.json
+new file mode 100644
+index 0000000..732f665
+--- /dev/null
++++ b/use-cases/common/parameter_contract_provenance.json
+@@ -0,0 +1,7 @@
++{
++  "owner": "Solution Studio Operation Contract Registry",
++  "source": "apps/api/app/services/parameter_values.py",
++  "validator_version": "1.0",
++  "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
++  "note": "Exact vendored release artifact; regenerate with deploy/aie18/sync_wp3_contract.py, do not edit independently"
++}
+diff --git a/use-cases/common/sequential.py b/use-cases/common/sequential.py
+index 500a1e3..4607ffe 100644
+--- a/use-cases/common/sequential.py
++++ b/use-cases/common/sequential.py
+@@ -11,6 +11,7 @@ import uvicorn
+ from fastapi import Depends, FastAPI, HTTPException, Security
+ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+ from pydantic import BaseModel
++from .configuration import ConfigurableRequest, capabilities, validate_request
+ 
+ _bearer = HTTPBearer(auto_error=False)
+ 
+@@ -35,14 +36,9 @@ class DataReference(BaseModel):
+     format: str
+ 
+ 
+-class ExecuteRequest(BaseModel):
++class ExecuteRequest(ConfigurableRequest):
+     """Execute request from orchestrator."""
+ 
+-    method: str
+-    workflow_id: str
+-    task_id: str
+-    inputs: list[dict] = []
+-    parameters: dict = {}
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -82,8 +78,11 @@ def create_app(service_module) -> FastAPI:
+                 detail=f"Unknown method: {request.method}",
+             )
+ 
++        validate_request(service_module, request)
+         try:
+             return handler(request)
++        except HTTPException:
++            raise
+         except Exception as e:
+             logger.error(f"Execute failed: {e}")
+             return ExecuteResponse(status="failed", error=str(e))
+@@ -93,6 +92,10 @@ def create_app(service_module) -> FastAPI:
+         """Health check."""
+         return {"status": "ok"}
+ 
++    @app.get("/control/capabilities", dependencies=[Depends(_check_api_key)])
++    def get_capabilities():
++        return capabilities(service_module)
++
+     return app
+ 
+ 
+diff --git a/use-cases/denmark-node/common/concurrent.py b/use-cases/denmark-node/common/concurrent.py
+index 8ee8cc4..aa5520f 100644
+--- a/use-cases/denmark-node/common/concurrent.py
++++ b/use-cases/denmark-node/common/concurrent.py
+@@ -17,6 +17,7 @@ import uvicorn
+ from fastapi import Depends, FastAPI, HTTPException, Security
+ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+ from pydantic import BaseModel
++from .configuration import ConfigurableRequest, capabilities, validate_request
+ 
+ _bearer = HTTPBearer(auto_error=False)
+ 
+@@ -41,14 +42,9 @@ class DataReference(BaseModel):
+     format: str
+ 
+ 
+-class ExecuteRequest(BaseModel):
++class ExecuteRequest(ConfigurableRequest):
+     """Execute request from orchestrator."""
+ 
+-    method: str
+-    workflow_id: str
+-    task_id: str
+-    inputs: list[dict] = []
+-    parameters: dict = {}
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -84,6 +80,9 @@ class TaskManager:
+     def register_task(self, task_id: str, request: ExecuteRequest) -> None:
+         """Register a task for tracking. Uses orchestrator's task_id."""
+         with self._lock:
++            prior = self._tasks.get(task_id)
++            if prior and (request.configuration is not None or prior["request"].get("configuration") is not None):
++                raise HTTPException(409, "This configured task identity is already recorded; it cannot be overwritten")
+             self._tasks[task_id] = {
+                 "status": "running",
+                 "progress": 0,
+@@ -189,8 +188,12 @@ def create_app(service_module) -> FastAPI:
+                 detail=f"Unknown method: {request.method}",
+             )
+ 
++        validate_request(service_module, request)
++
+         try:
+             return handler(request)
++        except HTTPException:
++            raise
+         except Exception as e:
+             logger.error(f"Execute failed: {e}")
+             return ExecuteResponse(status="failed", error=str(e))
+@@ -219,6 +222,10 @@ def create_app(service_module) -> FastAPI:
+         """Health check."""
+         return {"status": "ok"}
+ 
++    @app.get("/control/capabilities", dependencies=[Depends(_check_api_key)])
++    def get_capabilities():
++        return capabilities(service_module)
++
+     return app
+ 
+ 
+diff --git a/use-cases/denmark-node/common/configuration.py b/use-cases/denmark-node/common/configuration.py
+new file mode 100644
+index 0000000..e0782f4
+--- /dev/null
++++ b/use-cases/denmark-node/common/configuration.py
+@@ -0,0 +1,96 @@
++"""Optional configuration transport for native Control services.
++
++Services opt in with configuration_capabilities() and explicitly consume values
++in their own algorithm. No service IDs or parameter defaults live here.
++"""
++from copy import deepcopy
++import json
++from pathlib import Path
++import re
++
++from fastapi import HTTPException
++from pydantic import BaseModel, Field, model_validator
++
++from .parameter_contract import match_wrapper_configuration
++
++
++class ConfigurableRequest(BaseModel):
++    method: str
++    workflow_id: str
++    task_id: str
++    inputs: list[dict] = Field(default_factory=list)
++    parameters: dict = Field(default_factory=dict)
++    configuration: dict | None = None
++
++    @model_validator(mode="after")
++    def explicit_configuration(self):
++        if "configuration" in self.model_fields_set:
++            if self.configuration is None:
++                raise ValueError("Explicit configuration cannot be null")
++            if "parameters" in self.model_fields_set:
++                raise ValueError("Legacy parameters and instance configuration cannot be combined")
++            for value in (self.workflow_id, self.task_id):
++                if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", value):
++                    raise ValueError("Configured workflow/task identifiers must be safe path components")
++        return self
++
++
++def capabilities(service_module):
++    hook = getattr(service_module, "configuration_capabilities", None)
++    if not callable(hook):
++        raise HTTPException(409, "This service has not declared instance configuration support")
++    return hook()
++
++
++def validate_request(service_module, request):
++    if request.configuration is not None:
++        try:
++            return match_wrapper_configuration(request.method, request.configuration, capabilities(service_module))
++        except (ValueError, TypeError, KeyError) as exc:
++            raise HTTPException(422, "Instance configuration differs from the installed runtime contract") from exc
++    return None
++
++
++def load_contract(path: str | None, operation_name: str, supported_types: dict[str, str]):
++    """Load an operator-installed export, with no fallback/default contract."""
++    if not path:
++        raise HTTPException(409, "Install the provider-reviewed runtime contract before using instance settings")
++    try:
++        source = Path(path)
++        if source.stat().st_size > 256_000:
++            raise ValueError("Contract too large")
++        value = json.loads(source.read_text(encoding="utf-8"))
++        operations = value["operations"]
++        if (value["capability_schema_version"] != "1.0" or value["transports"] != ["http-parameters-v1"]
++                or not isinstance(operations, list) or len(operations) != 1):
++            raise ValueError("Unsupported capability export")
++        operation = operations[0]
++        properties = operation["execution_parameters"]["properties"]
++        if (operation["operation_name"] != operation_name or not properties
++                or any(name not in supported_types or spec["type"] != supported_types[name] for name, spec in properties.items())):
++            raise ValueError("The runtime does not implement these parameter mappings")
++        from .parameter_contract import parameter_contract_digest
++        parameter_contract_digest(operation["execution_parameters"])
++        return deepcopy(value)
++    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
++        raise HTTPException(409, "Installed parameter contract is unavailable or incompatible with this operation") from exc
++
++
++def output_path(data_dir, workflow_id, task_id):
++    root = Path(data_dir).resolve()
++    directory = root / workflow_id
++    if directory.is_symlink() or not directory.resolve().is_relative_to(root):
++        raise ValueError("Output directory leaves the service data volume")
++    path = directory / f"{task_id}.json"
++    if path.exists() or path.is_symlink():
++        raise HTTPException(409, "This task already has an output; use a new execution identity")
++    return path
++
++
++def write_output(data_dir, workflow_id, task_id, payload):
++    """Configured outputs are task-specific and cannot overwrite earlier results."""
++    path = output_path(data_dir, workflow_id, task_id)
++    path.parent.mkdir(parents=True, exist_ok=True)
++    with path.open("x", encoding="utf-8") as stream:
++        json.dump(payload, stream, indent=2, allow_nan=False)
++    return {"protocol": "file", "uri": str(path), "format": "json"}
+diff --git a/use-cases/denmark-node/common/parameter_contract.py b/use-cases/denmark-node/common/parameter_contract.py
+new file mode 100644
+index 0000000..e8e700b
+--- /dev/null
++++ b/use-cases/denmark-node/common/parameter_contract.py
+@@ -0,0 +1,119 @@
++"""Portable parameter validation shared by Studio and isolated node wrappers.
++
++No paths, deployment commands, environment variables or secrets are interpreted.
++"""
++from copy import deepcopy
++import math
++import hashlib
++import json
++
++
++def effective_parameters(definition, requested):
++    if not isinstance(requested, dict):
++        raise ValueError("Parameters must be a JSON object; null is not supported")
++    properties = definition.get("properties", {})
++    unknown = set(requested) - set(properties)
++    if unknown:
++        raise ValueError("Unsupported parameters: " + ", ".join(sorted(unknown)))
++    result = {}
++    for name, spec in properties.items():
++        if name in requested:
++            value = requested[name]
++        elif "default" in spec:
++            value = deepcopy(spec["default"])
++        elif spec.get("required"):
++            raise ValueError(f"{name}: a value is required")
++        else:
++            continue
++        kind = spec["type"]
++        valid = ((kind == "integer" and type(value) is int)
++                 or (kind == "number" and type(value) in (int, float) and math.isfinite(value))
++                 or (kind == "boolean" and type(value) is bool)
++                 or (kind == "string" and type(value) is str))
++        if not valid:
++            raise ValueError(f"{name}: expected {kind}; null is not supported")
++        if "enum" in spec and value not in spec["enum"]:
++            raise ValueError(f"{name}: choose one of {spec['enum']}")
++        if kind in ("integer", "number"):
++            if spec.get("minimum") is not None and value < spec["minimum"]:
++                raise ValueError(f"{name}: minimum is {spec['minimum']}")
++            if spec.get("maximum") is not None and value > spec["maximum"]:
++                raise ValueError(f"{name}: maximum is {spec['maximum']}")
++        result[name] = deepcopy(value)
++    return result
++
++
++TRANSPORT = "http-parameters-v1"
++CAPABILITY_SCHEMA = "1.0"
++
++
++def parameter_contract_digest(definition):
++    """Stable digest for the registry export, including labels and constraints.
++
++    Stored Pydantic defaults and JSON numeric spelling do not create a second
++    contract identity. Explicit null defaults remain invalid, not omitted.
++    """
++    if (not isinstance(definition, dict) or definition.get("schema_version") != "1.0"
++            or definition.get("transport") != TRANSPORT or not isinstance(definition.get("properties"), dict)
++            or set(definition) - {"schema_version", "transport", "properties"}):
++        raise ValueError("Unsupported execution parameter contract/protocol version")
++    properties = {}
++    for name, original in definition["properties"].items():
++        if not isinstance(original, dict):
++            raise ValueError("Malformed parameter definition")
++        spec = {k: deepcopy(v) for k, v in original.items() if v is not None or k == "default"}
++        if spec.get("required") is False:
++            spec.pop("required")
++        if spec.get("type") not in {"integer", "number", "boolean", "string"}:
++            raise ValueError("Unsupported parameter type")
++        for bound in ("minimum", "maximum"):
++            if bound in spec:
++                value = spec[bound]
++                if type(value) not in (int, float) or not math.isfinite(value):
++                    raise ValueError("Parameter bounds must be finite numbers")
++                if value == int(value):
++                    spec[bound] = int(value)
++        for value in ([spec["default"]] if "default" in spec else []) + spec.get("enum", []):
++            effective_parameters({"properties": {name: spec}}, {name: value})
++        properties[name] = spec
++    canonical = {"schema_version": "1.0", "transport": TRANSPORT, "properties": properties}
++    return hashlib.sha256(json.dumps(canonical, sort_keys=True, ensure_ascii=False, allow_nan=False,
++                                     separators=(",", ":")).encode()).hexdigest()
++
++
++def validate_configuration_envelope(configuration):
++    keys = {"contract_id", "contract_version", "operation_identity", "schema_version", "parameters", "instance_id"}
++    if not isinstance(configuration, dict) or set(configuration) != keys:
++        raise ValueError("Unsupported instance configuration envelope")
++    if configuration["schema_version"] != "1.0":
++        raise ValueError("Unsupported parameter schema version")
++    for key in keys - {"parameters"}:
++        if not isinstance(configuration[key], str) or not configuration[key].strip() or len(configuration[key]) > 300:
++            raise ValueError(f"Invalid configuration {key}")
++    if not isinstance(configuration["parameters"], dict):
++        raise ValueError("Parameters must be a JSON object")
++    json.dumps(configuration, allow_nan=False)
++    return deepcopy(configuration)
++
++
++def match_wrapper_configuration(method, configuration, capability):
++    """Generic protocol negotiation; no Dutch/Danish definitions live here."""
++    configuration = validate_configuration_envelope(configuration)
++    if (not isinstance(capability, dict) or capability.get("capability_schema_version") != CAPABILITY_SCHEMA
++            or not isinstance(capability.get("transports"), list)
++            or TRANSPORT not in capability["transports"]
++            or not isinstance(capability.get("operations"), list)):
++        raise ValueError("Wrapper does not declare a supported configuration protocol")
++    matches = [op for op in capability.get("operations", []) if isinstance(op, dict)
++               and op.get("operation_name") == method
++               and op.get("operation_identity") == configuration["operation_identity"]
++               and op.get("contract_version") == configuration["contract_version"]]
++    if len(matches) != 1:
++        raise ValueError("Wrapper operation/contract version is incompatible or ambiguous")
++    definition = matches[0].get("execution_parameters")
++    digest = parameter_contract_digest(definition)
++    effective = effective_parameters(definition, configuration["parameters"])
++    if effective != configuration["parameters"]:
++        raise ValueError("Submitted parameters must already contain validated effective values")
++    return {"operation_identity": configuration["operation_identity"], "contract_version": configuration["contract_version"],
++            "schema_version": "1.0", "parameter_contract_sha256": digest}
+diff --git a/use-cases/denmark-node/common/parameter_contract_provenance.json b/use-cases/denmark-node/common/parameter_contract_provenance.json
+new file mode 100644
+index 0000000..732f665
+--- /dev/null
++++ b/use-cases/denmark-node/common/parameter_contract_provenance.json
+@@ -0,0 +1,7 @@
++{
++  "owner": "Solution Studio Operation Contract Registry",
++  "source": "apps/api/app/services/parameter_values.py",
++  "validator_version": "1.0",
++  "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa",
++  "note": "Exact vendored release artifact; regenerate with deploy/aie18/sync_wp3_contract.py, do not edit independently"
++}
+diff --git a/use-cases/denmark-node/common/sequential.py b/use-cases/denmark-node/common/sequential.py
+index 500a1e3..4607ffe 100644
+--- a/use-cases/denmark-node/common/sequential.py
++++ b/use-cases/denmark-node/common/sequential.py
+@@ -11,6 +11,7 @@ import uvicorn
+ from fastapi import Depends, FastAPI, HTTPException, Security
+ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+ from pydantic import BaseModel
++from .configuration import ConfigurableRequest, capabilities, validate_request
+ 
+ _bearer = HTTPBearer(auto_error=False)
+ 
+@@ -35,14 +36,9 @@ class DataReference(BaseModel):
+     format: str
+ 
+ 
+-class ExecuteRequest(BaseModel):
++class ExecuteRequest(ConfigurableRequest):
+     """Execute request from orchestrator."""
+ 
+-    method: str
+-    workflow_id: str
+-    task_id: str
+-    inputs: list[dict] = []
+-    parameters: dict = {}
+ 
+ 
+ class ExecuteResponse(BaseModel):
+@@ -82,8 +78,11 @@ def create_app(service_module) -> FastAPI:
+                 detail=f"Unknown method: {request.method}",
+             )
+ 
++        validate_request(service_module, request)
+         try:
+             return handler(request)
++        except HTTPException:
++            raise
+         except Exception as e:
+             logger.error(f"Execute failed: {e}")
+             return ExecuteResponse(status="failed", error=str(e))
+@@ -93,6 +92,10 @@ def create_app(service_module) -> FastAPI:
+         """Health check."""
+         return {"status": "ok"}
+ 
++    @app.get("/control/capabilities", dependencies=[Depends(_check_api_key)])
++    def get_capabilities():
++        return capabilities(service_module)
++
+     return app
+ 
+ 
+diff --git a/use-cases/denmark-node/services/draw_topology/service.py b/use-cases/denmark-node/services/draw_topology/service.py
+index b4c0a56..e17c6c4 100644
+--- a/use-cases/denmark-node/services/draw_topology/service.py
++++ b/use-cases/denmark-node/services/draw_topology/service.py
+@@ -115,6 +115,9 @@ def _render_topologies(
+             },
+             "generated_by": "draw_topology",
+         }
++        if "execution" in topology_output:
++            # Keep producer settings attached to the visual result as well.
++            payload["upstream_execution"] = topology_output["execution"]
+ 
+         manager.complete_task(
+             task_id,
+diff --git a/use-cases/denmark-node/services/topology_generator/service.py b/use-cases/denmark-node/services/topology_generator/service.py
+index 134d929..af9437d 100644
+--- a/use-cases/denmark-node/services/topology_generator/service.py
++++ b/use-cases/denmark-node/services/topology_generator/service.py
+@@ -14,10 +14,15 @@ import logging
+ import os
+ import sys
+ import time
++from copy import deepcopy
++import hashlib
+ from pathlib import Path
+ from typing import Any
++from fastapi import HTTPException
+ 
+-from dh_network_generator import Infrastructure, enumerate_networks
++from dh_network_generator import DEFAULT_TOPOLOGY, Infrastructure, enumerate_networks
++from common.configuration import load_contract, output_path, write_output
++from common.parameter_contract import match_wrapper_configuration
+ from handler import (
+     DataReference,
+     ExecuteRequest,
+@@ -32,6 +37,11 @@ logger = logging.getLogger(__name__)
+ DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
+ 
+ 
++def configuration_capabilities():
++    return load_contract(os.environ.get("SERVICE_PARAMETER_CONTRACT_FILE"), "GenerateTopology", {
++        "allow_hx": "boolean", "allow_bypass": "boolean", "how_many": "integer"})
++
++
+ def resolve_input(inputs: list[dict], default: Any = None) -> Any:
+     if not inputs:
+         return default
+@@ -59,9 +69,18 @@ def publish_output(workflow_id: str, task_id: str, payload: dict) -> dict:
+ 
+ def execute_GenerateTopology(request: ExecuteRequest) -> ExecuteResponse:
+     """Generate a topology from the assistant's normalized run config."""
+-    task_manager.register_task(request.task_id, request)
+-    run_in_background(request.task_id, _generate_topology, request)
+-    return ExecuteResponse(status="running", task_id=request.task_id)
++    if request.configuration is not None:
++        # Also validate direct invocation before a task or background thread exists.
++        match_wrapper_configuration(request.method, request.configuration, configuration_capabilities())
++    # Removing configuration must not make a recorded configured output writable.
++    output_path(DATA_DIR, request.workflow_id, request.task_id)
++    configured_task_id = "cfg-" + hashlib.sha256(json.dumps([request.workflow_id, request.task_id]).encode()).hexdigest()
++    if request.configuration is None and task_manager.get_status(configured_task_id) is not None:
++        raise HTTPException(409, "A configured execution already owns this task identity")
++    service_task_id = configured_task_id if request.configuration is not None else request.task_id
++    task_manager.register_task(service_task_id, request)
++    run_in_background(service_task_id, _generate_topology, request)
++    return ExecuteResponse(status="running", task_id=service_task_id)
+ 
+ 
+ def execute_ValidateTopology(request: ExecuteRequest) -> ExecuteResponse:
+@@ -94,21 +113,36 @@ def _generate_topology(
+                 "(a JSON object containing 'run_config')."
+             )
+ 
+-        config = assistant_output["run_config"]
++        if not isinstance(assistant_output, dict) or not isinstance(assistant_output.get("run_config"), dict):
++            raise ValueError("GenerateTopology requires a run_config object")
++        config = deepcopy(assistant_output["run_config"])
++        configuration = request.configuration
++        matched = None
++        if configuration is not None:
++            if len(request.inputs) != 1:
++                raise ValueError("Configured GenerateTopology requires exactly one run configuration input")
++            matched = match_wrapper_configuration(request.method, configuration, configuration_capabilities())
++            # Instance settings deliberately override upstream routing defaults.
++            # Preserve supplies/loads and never mutate the upstream artifact.
++            config.update(deepcopy(configuration["parameters"]))
+         supplies = config.get("supplies", [])
+         loads = config.get("loads", [])
+         if not supplies or not loads:
+             raise ValueError("run_config must contain at least one supply and load")
+ 
+         manager.update_progress(task_id, 45)
+-        infra = Infrastructure.load(Path("/app/syslab_heat_topology.yaml"))
++        infra = Infrastructure.load(DEFAULT_TOPOLOGY)
++        arguments = {
++            "allow_hx": bool(config.get("allow_hx", True)),
++            "allow_bypass": bool(config.get("allow_bypass", True)),
++            "max_results": (config["how_many"] if configuration is not None and "how_many" in configuration["parameters"]
++                            else int(config.get("how_many") or 20)),
++        }
+         solutions = enumerate_networks(
+             infra,
+             supplies,
+             loads,
+-            allow_hx=bool(config.get("allow_hx", True)),
+-            allow_bypass=bool(config.get("allow_bypass", True)),
+-            max_results=int(config.get("how_many") or 20),
++            **arguments,
+         )
+         if not solutions:
+             raise ValueError("no feasible topology found for the requested supplies and loads")
+@@ -163,11 +197,29 @@ def _generate_topology(
+             "generated_by": "dh_network_generator",
+         }
+ 
++        if configuration is not None:
++            consumed = {name: arguments["max_results" if name == "how_many" else name]
++                        for name in configuration["parameters"]}
++            payload["execution"] = {
++                "schema_version": "1.0", "workflow_id": request.workflow_id, "task_id": request.task_id,
++                "service_task_id": task_id,
++                "instance_id": configuration["instance_id"], "operation_name": request.method,
++                "configuration": deepcopy(configuration), "algorithm_consumed": consumed,
++                "algorithm_arguments": arguments,
++                "parameter_contract_sha256": matched["parameter_contract_sha256"],
++                "input_sha256": hashlib.sha256(json.dumps(assistant_output, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest(),
++                "parameter_sources": {name: "instance_configuration" if name in consumed else
++                                      "upstream_run_config" if name in assistant_output["run_config"] else "legacy_handler_default"
++                                      for name in ("allow_hx", "allow_bypass", "how_many")},
++                "instrumentation": "Arguments passed to enumerate_networks in this task; provider/runtime instrumentation, not scientific qualification",
++            }
++
+         logger.info("Built %d topology/topologies for %d supply and %d load(s)",
+                 len(solutions), len(supplies), len(loads))
+         manager.complete_task(
+             task_id,
+-            publish_output(request.workflow_id, task_id, payload),
++            (write_output(DATA_DIR, request.workflow_id, request.task_id, payload) if configuration is not None
++             else publish_output(request.workflow_id, task_id, payload)),
+         )
+ 
+     except Exception as exc:  # noqa: BLE001
+-- 
+2.52.0
+

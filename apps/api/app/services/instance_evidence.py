@@ -1,4 +1,4 @@
-"""Read-only verification of the explicitly configured isolated proof volume."""
+"""Instance evidence from native outputs or retained isolated proof profiles."""
 import base64
 import hashlib
 import json
@@ -21,6 +21,10 @@ def load(row, db=None):
     if settings.aie37_qualification:
         return load_qualification(row, db)
     if not settings.aie18_evidence_root:
+        from app.services.native_instance_evidence import load as load_native
+        native = load_native(row, db)
+        if native is not None:
+            return native
         return {"state": "unavailable", "message": "Algorithm consumption evidence is not enabled for this runtime", "instances": []}
     if not re.fullmatch(r"wf-[a-f0-9]{12}", row.workflow_id or ""):
         return {"state": "unavailable", "message": "Unsupported historical workflow identity", "instances": []}

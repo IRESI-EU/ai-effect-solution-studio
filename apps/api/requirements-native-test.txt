@@ -1,0 +1,5 @@
+# Optional cross-repository verification only; never an API production input.
+-r requirements-test.txt
+redis==8.1.0
+socksio==1.0.0
+redislite==6.2.912183; sys_platform == "linux" and platform_machine == "x86_64"

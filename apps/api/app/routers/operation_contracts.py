@@ -21,9 +21,31 @@ from app.services.operation_contract_registry import (
     update_contract,
     withdraw_contract,
 )
+from app.services.parameter_values import parameter_contract_digest
 
 
 router = APIRouter(tags=["operation-contracts"])
+
+
+@router.get("/operation-contracts/{contract_id}/runtime-capability")
+def export_runtime_capability(contract_id: str, db: Session = Depends(get_db), user: User = Depends(require_service_publisher)):
+    contract = require_contract_ownership(contract_id, db, user)
+    if contract.status != "active" or not contract.definition.get("execution_parameters"):
+        raise HTTPException(409, "Publish a parameter definition before exporting its runtime contract")
+    service = db.query(Service).filter(Service.id == contract.service_id).first()
+    from app.services.operation_contract_registry import _ensure_service_is_deployment_eligible
+    _ensure_service_is_deployment_eligible(service)
+    review = (service.interface_contract or {}).get("parameter_reviews", {}).get(contract.id)
+    from app.services.parameter_discovery import reviewed_contract_digest, reviewed_service_digest
+    if (not review or review.get("reviewed_contract_sha256") != reviewed_contract_digest(contract)
+            or review.get("reviewed_service_sha256") != reviewed_service_digest(service)):
+        raise HTTPException(409, "A current provider review is required before exporting runtime settings")
+    parameters = contract.definition["execution_parameters"]
+    parameter_contract_digest(parameters)
+    return {"capability_schema_version": "1.0", "transports": ["http-parameters-v1"], "operations": [{
+        "operation_name": contract.runtime_operation_name, "operation_identity": contract.operation_identity,
+        "contract_version": contract.contract_version, "execution_parameters": parameters,
+    }]}
 
 
 def require_service_ownership(service_id: str, db: Session, user: User) -> None:

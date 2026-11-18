@@ -46,6 +46,21 @@ def test_owned_task_output_previews_but_omitted_authority_cannot(environment, ob
     assert environment.post("/data-references/preview",json={"protocol":"file","uri":"/data/wf-owned/result.json"}).status_code == 422
 
 
+def test_maintained_wp3_top_level_output_refs_confer_same_owned_authority(environment, observed):
+    state, _, _ = observed
+    state["tasks"][0]["output_refs"] = [state["tasks"][0].pop("result")["output"]]
+    response = request(environment)
+    assert response.status_code == 200 and response.json()["content"] == {"answer": 43}
+
+
+def test_reference_metadata_is_not_output_authority(environment, observed):
+    state, _, _ = observed
+    state["tasks"][0].pop("result")
+    state["tasks"][0]["output_refs"] = [{"protocol": "file", "uri": "/data/wf-owned/unrelated.json", "metadata": {
+        "output": {"protocol": "file", "uri": "/data/wf-owned/result.json"}}}]
+    assert request(environment).status_code == 403
+
+
 @pytest.mark.parametrize("compiled",[None,{"solution_studio_metadata":None},
     {"solution_studio_metadata":{"execution_instances":None}}])
 def test_non_capture_submission_keeps_existing_preview_behavior(environment,observed,db,compiled):
