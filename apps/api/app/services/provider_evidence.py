@@ -90,7 +90,7 @@ def begin(kwargs, reservation, remote, timeout):
         return None
 
 
-def finish(record, *, payload, response, request_id, validated):
+def finish(record, *, payload, response, request_id, validated, stage=None):
     if record is None:
         return
     try:
@@ -105,6 +105,7 @@ def finish(record, *, payload, response, request_id, validated):
             for content in (item.get("content") or []) if isinstance(content, dict) and content.get("type") in {"output_text", "refusal"}]
         turn = validated.model_dump(mode="json") if validated is not None else None
         record.update(returned_model=identifier(field("model")), returned_service_tier=identifier(field("service_tier")),
+            provider_stage=identifier(stage),
             response_id=identifier(field("id")), request_id=identifier(request_id or getattr(response, "_request_id", None)),
             status=identifier(field("status")), usage=safe_usage(usage),
             validated_response=sanitize(turn), validated_response_sha256=digest(turn) if turn is not None else None,

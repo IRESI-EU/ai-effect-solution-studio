@@ -266,6 +266,7 @@ class OpenAIProvider:
             input_bound = len(serialized.encode("utf-8")) + len(system.encode("utf-8")) + len(json.dumps(AssistantTurn.model_json_schema()).encode("utf-8")) + 8192
             reservation = budget.reserve(input_bound, output_limit)
         evidence, payload, response, validated, request_id = None, None, None, None, None
+        stage='provider_request'
         try:
             # No environment-selectable base URL, hosted tools, network fetching or automatic retries.
             async with AsyncOpenAI(api_key=settings.openai_api_key, base_url="https://api.openai.com/v1", max_retries=0, timeout=timeout) as client:
@@ -282,27 +283,39 @@ class OpenAIProvider:
                         # Record usage even for refusals, incomplete output or a
                         # parser failure, before running the strict SDK parser.
                         raw = await client.responses.with_raw_response.parse(**kwargs)
+                        stage='response_json'
                         payload = raw.http_response.json()
                         request_id = provider_evidence.request_identifier(raw) if evidence is not None else None
+                        stage='accounting'
                         budget.settle(reservation, payload)
+                        stage='sdk_parse'
                         response = raw.parse()
                     else:
                         response = await client.responses.parse(**kwargs)
             if response.output_parsed is None:
+                stage='provider_refusal_or_incomplete'
+                if settings.design_ai_scoped_acceptance_file:
+                    raise HTTPException(502,{'code':'assistant_provider_failed','stage':stage,'message':'No usable structured response. Acceptance stopped; do not retry.'})
                 raise HTTPException(502, "The AI provider did not return a supported proposal. Try rephrasing your request.")
+            stage='schema_validation'
             validated = AssistantTurn.model_validate(response.output_parsed)
+            stage='schema_validated'
             return validated
         except (TimeoutError, APITimeoutError) as exc:
             if budget:
                 budget.failed(reservation, "timeout_usage_unknown")
+            if settings.design_ai_scoped_acceptance_file:
+                raise HTTPException(504,{'code':'assistant_provider_timeout','stage':stage,'message':'Provider timeout; usage uncertain. Acceptance stopped; do not retry.'}) from exc
             raise HTTPException(504, "The AI provider timed out. Stop; the reservation remains held. Do not retry." if shared or settings.design_ai_scoped_acceptance_file
                                 else "The AI provider timed out. Your draft is unchanged; you can retry.") from exc
         except (APIError, ValidationError, ValueError) as exc:
             if budget:
                 budget.failed(reservation, "http_" + str(getattr(exc, "status_code", "unknown")))
+            if settings.design_ai_scoped_acceptance_file:
+                raise HTTPException(502,{'code':'assistant_provider_failed','stage':stage,'message':'Provider request or structured response failed. Acceptance stopped; saved work is unchanged.'}) from exc
             raise HTTPException(502, "The AI provider could not return a valid proposal. Your draft is unchanged.") from exc
         finally:
-            provider_evidence.finish(evidence, payload=payload, response=response, request_id=request_id, validated=validated)
+            provider_evidence.finish(evidence, payload=payload, response=response, request_id=request_id, validated=validated, stage=stage)
             if budget and reservation is not None:
                 budget.failed(reservation, "usage_unknown_or_cancelled")
                 if settings.design_ai_scoped_acceptance_file and validated is None:

@@ -12,7 +12,7 @@ def sha(raw):return hashlib.sha256(raw).hexdigest()
 
 def capture(directory,workflow,label):
     p=json.loads((directory/'profile.private.json').read_text())
-    if p['kind']!='offline-assistant-danish-v1':raise RuntimeError('Wrong isolated workspace')
+    if p['kind'] not in {'offline-assistant-danish-v1','genuine-saved-solution-v1'}:raise RuntimeError('Wrong isolated workspace')
     accounts=json.loads((directory/'credentials.private.json').read_text())
     client=session();login(client,p['api_url'],accounts['designer'])
     def get(path):return call(client,'GET',p['api_url'],path)

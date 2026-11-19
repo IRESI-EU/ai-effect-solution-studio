@@ -55,7 +55,8 @@ def onboard(directory):
         'schema_ref':'urn:development-fixture:danish-run-config:1','data_reference_protocols':['inline','file'],'required':True,'source_requirement':'workflow_input'}
     rendered={**topology,'name':'rendered_report','semantic_concept':'urn:development-fixture:danish-drawings','schema_ref':'urn:development-fixture:danish-rendered-report:1'}
     records=[]
-    for suffix,operation,port in [('Generator','GenerateTopology',28196),('Drawing A','RenderTopologies',28197),('Drawing B','RenderTopologies',28198)]:
+    ports=p.get('node_ports',{'generator':28196,'renderer-a':28197,'renderer-b':28198})
+    for suffix,operation,port in [('Generator','GenerateTopology',ports['generator']),('Drawing A','RenderTopologies',ports['renderer-a']),('Drawing B','RenderTopologies',ports['renderer-b'])]:
         manifest={'schema_version':'1.0','service':{'id':'dev-danish-'+uuid4().hex,'name':'DEVELOPMENT SOFTWARE FIXTURE — Danish '+suffix,
             'provider':'Danish source software acceptance fixture','category':'Development software fixtures',
             'description':('Enumerates feasible district-heating topology candidates from separate run configuration; adjustable maximum count.' if operation=='GenerateTopology'
