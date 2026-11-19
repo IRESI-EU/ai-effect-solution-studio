@@ -1,0 +1,242 @@
+{
+  "checked_at": "2026-11-19",
+  "source": "GitHub read-only connector",
+  "pull_requests": [
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 8,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/8",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "feature/production-ui-polish-v1",
+      "base_sha": "df5b75873326ab56cad608990f3bd4add125bcc4",
+      "head": "codex/review-design-ai-foundation",
+      "head_sha": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 9,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/9",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/review-design-ai-foundation",
+      "base_sha": "b1c6d72cee6a918bad5a3f15eafa38ed9bc02cca",
+      "head": "codex/review-module-parameterisation",
+      "head_sha": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 10,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/10",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/review-module-parameterisation",
+      "base_sha": "fd4b88be692cf9944837cc5fb4c5450ecfa54df8",
+      "head": "codex/aie37-workflow-qualification",
+      "head_sha": "bd18c212e479084f3dc6b1f169f1163dc1631619"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 11,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/11",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/aie37-workflow-qualification",
+      "base_sha": "bd18c212e479084f3dc6b1f169f1163dc1631619",
+      "head": "codex/aie38-bounded-workflow-composition",
+      "head_sha": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 12,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/12",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/aie38-bounded-workflow-composition",
+      "base_sha": "dd8ecb4d6910b7f6039a3df13596b5620ad75e74",
+      "head": "codex/aie41-builder-review-usability",
+      "head_sha": "c352ca4fab8e065d3105d91ff38c96d92ba9497f"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 13,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/13",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/aie41-builder-review-usability",
+      "base_sha": "c352ca4fab8e065d3105d91ff38c96d92ba9497f",
+      "head": "codex/design-ai-goal-to-results",
+      "head_sha": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 14,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/14",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/design-ai-goal-to-results",
+      "base_sha": "2c9ba3e648d3782cb5db760a0378d3dc612af2cf",
+      "head": "codex/catalogue-grounded-discovery",
+      "head_sha": "f36f8fdfcfb95576d948fea2971907ad4d433e3a"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 15,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/15",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/catalogue-grounded-discovery",
+      "base_sha": "f36f8fdfcfb95576d948fea2971907ad4d433e3a",
+      "head": "codex/two-operation-composition",
+      "head_sha": "5d9c398cad1a0944f3fe61edc1da90a832341e11"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 16,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/16",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/two-operation-composition",
+      "base_sha": "5d9c398cad1a0944f3fe61edc1da90a832341e11",
+      "head": "codex/design-ai-workspace-review",
+      "head_sha": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 17,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/17",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/design-ai-workspace-review",
+      "base_sha": "d8e6e3b269da0d3a6f936cb7e8349c719a9049fe",
+      "head": "codex/conversational-pair-review",
+      "head_sha": "c93848eb3d3495287ed0c615c6ffe98bddae2f77"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 18,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/18",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/conversational-pair-review",
+      "base_sha": "c93848eb3d3495287ed0c615c6ffe98bddae2f77",
+      "head": "codex/platform-parameterisation-verification",
+      "head_sha": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 19,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/19",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/platform-parameterisation-verification",
+      "base_sha": "dca4838d0d41ca2bc18b1271adb4684bf7979f5d",
+      "head": "codex/local-composition-acceptance",
+      "head_sha": "94c28277a60cc18d3e2095455844cde36afae463"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 20,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/20",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/local-composition-acceptance",
+      "base_sha": "94c28277a60cc18d3e2095455844cde36afae463",
+      "head": "codex/supervised-local-pilot",
+      "head_sha": "14680bbebfb4db62c44330058f6593f26e28f7ce"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 21,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/21",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/supervised-local-pilot",
+      "base_sha": "14680bbebfb4db62c44330058f6593f26e28f7ce",
+      "head": "codex/conversation-context-repair",
+      "head_sha": "4faa2c9dcf30f725aa890d027052277e5760f871"
+    },
+    {
+      "repo": "AI-EFFECT/ai-effect-wp3",
+      "number": 2,
+      "url": "https://github.com/AI-EFFECT/ai-effect-wp3/pull/2",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "main",
+      "base_sha": "e8914565e966a2d78879c314f980574769d31b87",
+      "head": "codex/review-legacy-client-parameters",
+      "head_sha": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4"
+    },
+    {
+      "repo": "AI-EFFECT/ai-effect-wp3",
+      "number": 3,
+      "url": "https://github.com/AI-EFFECT/ai-effect-wp3/pull/3",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/review-legacy-client-parameters",
+      "base_sha": "6f6f16d36fd5bf7f5344451698f51c4bad171cb4",
+      "head": "codex/review-instance-configuration",
+      "head_sha": "0221b7ecd4a2d5f072de640350ebc599df22131a"
+    },
+    {
+      "repo": "AI-EFFECT/ai-effect-wp3",
+      "number": 4,
+      "url": "https://github.com/AI-EFFECT/ai-effect-wp3/pull/4",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/review-instance-configuration",
+      "base_sha": "0221b7ecd4a2d5f072de640350ebc599df22131a",
+      "head": "codex/portuguese-parameter-sandbox",
+      "head_sha": "d533219426af9ea6defaf0bc78956741201a5109"
+    },
+    {
+      "repo": "IRESI-EU/ai-effect-solution-studio",
+      "number": 22,
+      "url": "https://github.com/IRESI-EU/ai-effect-solution-studio/pull/22",
+      "state": "open",
+      "merged": false,
+      "draft": true,
+      "base": "codex/conversation-context-repair",
+      "base_sha": "4faa2c9dcf30f725aa890d027052277e5760f871",
+      "head": "codex/portuguese-parameter-sandbox",
+      "head_sha": "0c9930fc7591dfc54734803227753db379cd2ca4"
+    }
+  ],
+  "vercel_statuses": [
+    {
+      "pr": 8,
+      "context": "Vercel",
+      "state": "failure",
+      "target_kind": "project-access invitation"
+    },
+    {
+      "pr": 9,
+      "context": "Vercel",
+      "state": "failure",
+      "target_kind": "project-access invitation"
+    },
+    {
+      "pr": 10,
+      "context": "Vercel",
+      "state": "failure",
+      "target_kind": "project-access invitation"
+    }
+  ]
+}

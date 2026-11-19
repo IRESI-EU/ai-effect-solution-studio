@@ -1,0 +1,82 @@
+{
+  "collected_at": "2026-11-19T18:52:22.317344+00:00",
+  "read_only": true,
+  "source_comparison": {
+    "expected": "89072340c9a13f3aa49d3e433380de8928cc16dd",
+    "files": 44,
+    "mismatches": [],
+    "windows_crlf_files": 43,
+    "byte_equivalent_except_documented_checkout_line_endings": true
+  },
+  "schema_metadata_sha256": "2418df187c936f91d002f5c8da58e04fb5eb7acfb62344ebedb68b9f5ed0223c",
+  "table_counts": {
+    "audit_events": 502,
+    "deployments": 57,
+    "operation_contracts": 0,
+    "services": 37,
+    "solutions": 51,
+    "user_sessions": 103,
+    "users": 31
+  },
+  "null_owner_counts": {
+    "deployments": 1,
+    "services": 16,
+    "solutions": 2
+  },
+  "web_build_id": "aLp4c1xkUjCM1v23PtrYY",
+  "portal": [
+    {
+      "Name": "/ai-effect-solution-studio-web-1",
+      "Image": "sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f",
+      "state": "running",
+      "health": "healthy",
+      "source": null
+    },
+    {
+      "Name": "/ai-effect-solution-studio-api-1",
+      "Image": "sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340",
+      "state": "running",
+      "health": "healthy",
+      "source": null
+    },
+    {
+      "Name": "/ai-effect-solution-studio-postgres-1",
+      "Image": "sha256:81bd698b4594e751a3269e4dcd3e03a4a0ec0daf7b72e7aa1abd43cce9887542",
+      "state": "running",
+      "health": "healthy",
+      "source": null
+    }
+  ],
+  "runtime": [
+    {
+      "name": "/orchestrator-api-1",
+      "image": "sha256:15ebcb7261be2dd7b0a3a55b5b65953dcfa8a132c0dad46fcbf8fbd0830069cc",
+      "state": "running",
+      "source_label": null
+    },
+    {
+      "name": "/orchestrator-redis-1",
+      "image": "sha256:aa189b5a1954929c393585e6dc5717a75b18f75a931df8bdcc00a3d3bd546be6",
+      "state": "running",
+      "source_label": null
+    },
+    {
+      "name": "/orchestrator-worker-1",
+      "image": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+      "state": "running",
+      "source_label": null
+    },
+    {
+      "name": "/orchestrator-worker-2",
+      "image": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+      "state": "running",
+      "source_label": null
+    },
+    {
+      "name": "/orchestrator-worker-3",
+      "image": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+      "state": "running",
+      "source_label": null
+    }
+  ]
+}

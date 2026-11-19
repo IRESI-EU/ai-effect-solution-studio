@@ -1,0 +1,17 @@
+{
+  "outcome": "proposal",
+  "message": "I’ve revised the pending design to keep heat exchangers and bypasses enabled and preserve Drawing A, while retaining the up-to-two-layout review setup. It is left ready for your review before Apply or Run.",
+  "clarification": null,
+  "solution_edits": [],
+  "edit_base": {
+    "kind": "pending",
+    "expected_updated_at": "2026-11-19T18:47:17.512300",
+    "conversation_revision": 1,
+    "proposal_id": "43325aae-87fa-4218-8931-750cf3d89f97",
+    "candidate_sha256": "e73ba70843cf65a96b01379ac0b4501fdf454dbc82631916d72e34a9904a77e7"
+  },
+  "assumptions": [
+    "The existing pending design already preserves enabled heat exchangers and bypasses, so no parameter change is needed.",
+    "“Use up to two layouts” is satisfied by the current review design’s supported maximum-candidate configuration for review purposes."
+  ]
+}
