@@ -1,10 +1,11 @@
 {
   "date": "2026-11-19",
   "boundary": "Explicit scripted assistant double; real native Danish source; development software fixtures only",
+  "portal_serving_code_commit": "23f1cd79fe0800c1bc954f83d7690cabb9c69b6d",
   "portal_parent": "c7ab371159cfd2aa666dcd7d23d1ecf919411fad",
   "wp3_parent": "69f7408e12908eb85a5de50af037e4f134e2be49",
   "wp3_published_candidate": "39405313f9b685d91b8263b9b87a3fc42577331d",
-  "source_manifest_sha256": "529ded074e2cc078e29f4ec1127ce30455c982db50f97d62676433c0ed14bc71",
+  "source_manifest_sha256": "506b5b0fd405255c3eb8f921c27baa385e76662d0c90b8a375b18f73a67dd7b5",
   "active_read_only_export_sha256": {
     "generator": "3d86b807c4150777147803789c79e847bf2aeba150a11cbc92287aea300ffd98",
     "renderer-a": "d669abda372299f88f74db7ab1e7d81ade50d06731bf144eb70f5a3d83adf07d",

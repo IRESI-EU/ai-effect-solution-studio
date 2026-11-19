@@ -1,0 +1,226 @@
+{
+  "date": "2026-11-19",
+  "portal_serving_code_commit": "23f1cd79fe0800c1bc954f83d7690cabb9c69b6d",
+  "wp3_commit": "39405313f9b685d91b8263b9b87a3fc42577331d",
+  "original_preserved": {
+    "branch": "feature/design-with-ai-pilot",
+    "head": "12aae82dd47b078ba077aca40b0712c375b9d7f3",
+    "dirty_entries": 150
+  },
+  "health": [
+    {
+      "url": "http://127.0.0.1:23124/login",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:23125/login",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:23126/login",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:23127/login",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:28194/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:28195/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:28196/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:28197/health",
+      "status": 200
+    },
+    {
+      "url": "http://127.0.0.1:28198/health",
+      "status": 200
+    }
+  ],
+  "containers": [
+    {
+      "id": "9ddf40c4224bfa8ee561684aa6e891791819149d899cae7d8c481674ff654d7c",
+      "name": "/ai-effect-pt-parameters-web-1",
+      "image": "sha256:a7ca1100fb5364ca876117a176b351f411bb330f5baa8dfe6a4f09de49d635ed",
+      "running": true,
+      "ports": {
+        "3000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "23124"
+          }
+        ]
+      },
+      "mounts": []
+    },
+    {
+      "id": "df3f65b25a824490960508df5226e8e888a356eb84a5a36a1ccae677ec68e96e",
+      "name": "/aie-assistant-56bc9537c582-redis-1",
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "running": true,
+      "ports": {
+        "6379/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "26381"
+          }
+        ]
+      },
+      "mounts": [
+        {
+          "type": "volume",
+          "target": "/data",
+          "writable": true,
+          "source_identity_sha256": "fb388721d06fb479d724016acfa8bf0f421d9cc6145599e8f94b32a7b994ce15"
+        },
+        {
+          "type": "bind",
+          "target": "/private/redis.conf",
+          "writable": false,
+          "source_identity_sha256": "245fa7fe11206e0a26f0fe197a0bf010e7390083c4f0bcd0f7d9c6fc2b89eda0"
+        }
+      ]
+    },
+    {
+      "id": "a981c00894be24fa30cf91cbb509f8456e20d26b261ba3d0ffb48236dfce17f2",
+      "name": "/aie-normal-96b1d3a9e1c6-ml-1",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "running": true,
+      "ports": {},
+      "mounts": [
+        {
+          "type": "bind",
+          "target": "/observation-contract",
+          "writable": false,
+          "source_identity_sha256": "6b3f50ce1b3b8b08a66c3c5a518baf1b6ba1c43e85eb98bb64cfcbf71f812004"
+        },
+        {
+          "type": "bind",
+          "target": "/qualification",
+          "writable": false,
+          "source_identity_sha256": "be4a58ccf21f308fc03371702d45f9fd5b957c902ad4d196bd40e54b9d897a65"
+        },
+        {
+          "type": "volume",
+          "target": "/qualification-evidence",
+          "writable": true,
+          "source_identity_sha256": "eca5e1aae303de14a2cc7c0cdd685249b65856dab128b1b98ebdd7a462b969d5"
+        },
+        {
+          "type": "volume",
+          "target": "/app/models",
+          "writable": true,
+          "source_identity_sha256": "18c6fb0baf6e2e2429f13281dbf761ef40243409444581731f39571b5b503808"
+        }
+      ]
+    },
+    {
+      "id": "75ef883f8bbd64c26980186eb07c24f00303e04eecc510e173c70e0964ed6cd6",
+      "name": "/aie-normal-96b1d3a9e1c6-connector-1",
+      "image": "sha256:557246d79612eaa2106266d60cc6b36970634afebb659e371658cce6a1f1f61f",
+      "running": true,
+      "ports": {
+        "8080/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "28193"
+          }
+        ]
+      },
+      "mounts": [
+        {
+          "type": "bind",
+          "target": "/connector-entry",
+          "writable": false,
+          "source_identity_sha256": "7cea32469cd5c09ff1ff0a978047408e6d68101a019b3c7c22ed2b1704b3e8b7"
+        },
+        {
+          "type": "bind",
+          "target": "/contracts",
+          "writable": false,
+          "source_identity_sha256": "a0fe4e8040e6a30b63b3e6dd9d3e0cb9af23c031a8b253df19e86e09683ce569"
+        },
+        {
+          "type": "bind",
+          "target": "/qualification-source",
+          "writable": false,
+          "source_identity_sha256": "34400fde2b80dee187176c5833fb1f18d13d385cd22031e654a989dcf13f7aff"
+        },
+        {
+          "type": "volume",
+          "target": "/state",
+          "writable": true,
+          "source_identity_sha256": "f3d939dff3e8d7256cd57ed260878632859b80937804bce6169991ffbf2b548b"
+        }
+      ]
+    }
+  ],
+  "test_suites": [
+    {
+      "suite": "assistant-final",
+      "tests": 55,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "conversation-final",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "io-normal",
+      "tests": 40,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "final-ownership",
+      "tests": 53,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "rendered_component_tests": {
+    "passed": 13,
+    "paid_model_calls": 0
+  },
+  "source_matches": [
+    {
+      "component": "api",
+      "files_compared": 96,
+      "matches_current_source": true
+    },
+    {
+      "component": "danish",
+      "files_compared": 15,
+      "matches_current_source": true
+    },
+    {
+      "component": "wp3",
+      "files_compared": 24,
+      "matches_current_source": true
+    }
+  ],
+  "selected_ui_sources_match": true,
+  "runtime_packages": {
+    "PyYAML": "6.0.3",
+    "pydantic": "2.13.5",
+    "fastapi": "0.142.2"
+  },
+  "paid_calls": 0,
+  "active_acceptance_ledger_created": false,
+  "new_application_image_claimed": false
+}

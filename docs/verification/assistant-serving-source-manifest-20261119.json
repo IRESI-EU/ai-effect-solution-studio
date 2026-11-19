@@ -324,7 +324,7 @@
     {
       "component": "api",
       "path": "services/owned_task_artifacts.py",
-      "sha256": "2d78746713f2a4737bc4ca2b9bed5a877a4112241540a3835804be1749a9497d"
+      "sha256": "05dd78bd5436cea49c06bd85fc69a447b85cebc252e14165c55b248c9ca35f44"
     },
     {
       "component": "api",
@@ -409,7 +409,7 @@
     {
       "component": "api",
       "path": "services/solution_assistant.py",
-      "sha256": "762d842c859f9d26bfad387d1b88e12009850d5cb36f058d42d2f9ca7b2cbf1a"
+      "sha256": "78e20194d06a3f8651c62554293d701d9305ee2d9541cc664df740ec06109709"
     },
     {
       "component": "api",
@@ -697,5 +697,5 @@
       "sha256": "77c3436c4ac7609fd43c2398bd7d8e63815ff81a398284120c7b990027ff880a"
     }
   ],
-  "aggregate_sha256": "529ded074e2cc078e29f4ec1127ce30455c982db50f97d62676433c0ed14bc71"
+  "aggregate_sha256": "506b5b0fd405255c3eb8f921c27baa385e76662d0c90b8a375b18f73a67dd7b5"
 }
