@@ -1,0 +1,295 @@
+{
+  "date": "2026-11-19",
+  "reviewed_baseline": "ace1068d89064a1a20e428cc2372145188949160",
+  "failed_exercise_source": "b37a240d23324da3fd4d4cc03eb334bc1ded33ff",
+  "wp3_source": "39405313f9b685d91b8263b9b87a3fc42577331d",
+  "paid_requests_this_task": 0,
+  "spending_scopes_created_this_task": 0,
+  "new_running_workspaces": 0,
+  "previous_scope_closed": true,
+  "previous_scope_requests_unchanged": 1,
+  "original_head": "12aae82dd47b078ba077aca40b0712c375b9d7f3",
+  "original_dirty_entries": 150,
+  "retained_workspace_health": [
+    {
+      "retained_workspace_port": 23124,
+      "http_status": 200
+    },
+    {
+      "retained_workspace_port": 23125,
+      "http_status": 200
+    },
+    {
+      "retained_workspace_port": 23126,
+      "http_status": 200
+    },
+    {
+      "retained_workspace_port": 23127,
+      "http_status": 200
+    },
+    {
+      "retained_workspace_port": 23128,
+      "http_status": 200
+    }
+  ],
+  "historical_evidence": [
+    {
+      "path": "docs/GENUINE_SAVED_SOLUTION_ACCEPTANCE_2026-11-19.md",
+      "git_blob": "782230e3fdf8ac92e98f5e5e8a10df623201f1dc",
+      "committed_content_sha256": "64c12fbbbbaeea3b269e14b8a03bfb47c05be46055b54c8508caf39407e9731b",
+      "unchanged_git_content": true
+    },
+    {
+      "path": "apps/api/tests/fixtures/genuine-clarification-miss-20261119.json",
+      "git_blob": "d4da4613dcbd83df9ea9bc5b4138c308937224ff",
+      "committed_content_sha256": "1c07a8c0640597215b04019d56557ff76a50c0f87f778312c8e6f781912b450e",
+      "unchanged_git_content": true
+    },
+    {
+      "path": "docs/verification/genuine-conversation-acceptance-20261119.json",
+      "git_blob": "93d46d5c482489ee1b8640cccac2e67e9645acf1",
+      "committed_content_sha256": "8e5e45fd6c9d51e2067811b7520948bf686bb1c8834bec04c97ec4242f39dec9",
+      "unchanged_git_content": true
+    },
+    {
+      "path": "docs/verification/genuine-acceptance-verification-20261119.json",
+      "git_blob": "49496df1743db9123b73ac19224b32b500627593",
+      "committed_content_sha256": "7aac3657e9d7464a4cb20387d7355be47172bf77fbb2399328452cbc858d56da",
+      "unchanged_git_content": true
+    },
+    {
+      "path": "docs/verification/genuine-turn-1-fail-20261119.png",
+      "git_blob": "3d80f38cec89d02d69f24505aa99591dbfd60771",
+      "committed_content_sha256": "af32b71e8be29758cf0d9096c12f7adfbbb14bdf25d1896c1c9162286ebbc66b",
+      "unchanged_git_content": true
+    }
+  ],
+  "focused_wire_schema_sha256": "aa714583d0bf6134f1d8fc1f68686137716ddd17fdc821cb93d799c942143939",
+  "focused_schema_fields": [
+    "outcome",
+    "message",
+    "clarification",
+    "solution_edits",
+    "assumptions"
+  ],
+  "focused_wire_format_bytes": 1453,
+  "legacy_wire_format_bytes": 3499,
+  "openai_sdk_version": "2.54.0",
+  "offline_only": true,
+  "genuine_model_acceptance": "PENDING",
+  "implementation_commit": "32e66c58449c0c6940d0e248e79a8d5eaa5d4a49",
+  "branch": "codex/focused-conversation-policy-20261119",
+  "backend": {
+    "method": "Latest result for each unique case across the recorded runs; initial fixture failures were repaired and rerun, and the one source skip was resolved against the paired WP3 checkout. Passing unrelated cases were not repeated.",
+    "latest_unique_results": {
+      "passed": 200,
+      "failed": 0,
+      "skipped": 0
+    },
+    "runs": [
+      {
+        "run": "backend",
+        "tests": 199,
+        "passed": 189,
+        "failed": 9,
+        "skipped": 1
+      },
+      {
+        "run": "corrected-fixtures",
+        "tests": 48,
+        "passed": 47,
+        "failed": 0,
+        "skipped": 1
+      },
+      {
+        "run": "double-compatibility",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "run": "source-snapshot",
+        "tests": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      }
+    ],
+    "modules": [
+      {
+        "module": "apps.api.tests.test_assistant_journey",
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_catalogue_composition",
+        "passed": 53,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_design_ai",
+        "passed": 25,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_design_ai_provider",
+        "passed": 10,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_openapi_parameter_discovery",
+        "passed": 15,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_prompt_first_discovery",
+        "passed": 2,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_provider_evidence",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_saved_solution_assistant",
+        "passed": 8,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_saved_solution_response",
+        "passed": 34,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_scoped_ai_acceptance",
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_selected_input",
+        "passed": 13,
+        "failed": 0,
+        "skipped": 0
+      },
+      {
+        "module": "apps.api.tests.test_targeted_instance_edit",
+        "passed": 16,
+        "failed": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "frontend": {
+    "typecheck": "PASS",
+    "typescript_version": "7.0.2",
+    "temporary_installed_dependency_path_map": true,
+    "new_dependencies_installed": false,
+    "type_stubs_used": false,
+    "new_browser_or_model_acceptance": false
+  },
+  "limitations": [
+    "Offline supplied responses do not establish model outcome selection or semantic honesty of assumptions",
+    "No new browser journey, algorithm execution or production deployment",
+    "Opt-in real-native and DGAN-double runtime journeys were not rerun; their assistant fixtures were migrated to the focused contract",
+    "Installed OpenAI SDK internal wire converter is pinned and tested; upgrades need renewed wire-schema verification"
+  ],
+  "implementation_source_files": [
+    {
+      "path": "apps/api/app/routers/solution_assistant.py",
+      "git_blob": "25a34f7a03d9fd4dbed67cb055d0d84680353af4",
+      "committed_content_sha256": "f8f2dcdf8fca69b92b41dd7832c8e368d72af07c0afad5dfde54f385a353707c"
+    },
+    {
+      "path": "apps/api/app/schemas/solution_assistant.py",
+      "git_blob": "71219eaf8b9456af1205cb4ac0956fe73642e582",
+      "committed_content_sha256": "94c77db0a65ab94b95fbcba9c546785a084236d9ed8a9455a9470abe840204ec"
+    },
+    {
+      "path": "apps/api/app/services/design_ai_provider.py",
+      "git_blob": "d1ede54143bec0dcb45ab591ec649ecbad6d58ed",
+      "committed_content_sha256": "27b3b5b2ad90f38b165f28b4b79dcd30503febf1984848c31da15ddda267dfbc"
+    },
+    {
+      "path": "apps/api/app/services/provider_evidence.py",
+      "git_blob": "80deb663518dd15a34430894e96edbe03d97dd95",
+      "committed_content_sha256": "34e02ad9cfdabf73224e131b3e64a12176884bf57403972f69cba3794e3ffda7"
+    },
+    {
+      "path": "apps/api/app/services/solution_assistant.py",
+      "git_blob": "71185f00b783386c6d15bb0179acc994c684619b",
+      "committed_content_sha256": "f5e05e3d68ad71e089b05b755017865bfca135311baccf44a93ecb32f8838f86"
+    },
+    {
+      "path": "apps/api/tests/test_assistant_journey.py",
+      "git_blob": "69db3c642abd7f3afb03c27fe6e2a3f6569dafb7",
+      "committed_content_sha256": "f369d075dd9e8c2ec7fadb122566a046f8072daeeb148dce505925391927b1b9"
+    },
+    {
+      "path": "apps/api/tests/test_design_ai_provider.py",
+      "git_blob": "8538d1307152aae355e35d54cd56f030a24159bb",
+      "committed_content_sha256": "300575fa07edd522fecc94b2f87bd374db8ce6d565879c2750c2edfd98584681"
+    },
+    {
+      "path": "apps/api/tests/test_native_control_execution.py",
+      "git_blob": "0d2b3d5ab72e6e6a16351f6a347644aa647e41a4",
+      "committed_content_sha256": "d0bf4084f1d31a2bc2db01532fc05a68ca21f9c483f00476c371283376da2c28"
+    },
+    {
+      "path": "apps/api/tests/test_openapi_parameter_discovery.py",
+      "git_blob": "7e8392a567f1c7d3892d188b7ae034f015c9c2b3",
+      "committed_content_sha256": "ea3f87b0af8ed2e50423221a7cf1f9f82eb19eae07c64764f5edc9c62139b298"
+    },
+    {
+      "path": "apps/api/tests/test_portuguese_normal_execution.py",
+      "git_blob": "1ae6da0cbbe5d1b9efc75914d4bf24b9587ce598",
+      "committed_content_sha256": "e2aee203bc6529849411b25f9389afc46a44370ec26ca4bcdced3eee09b0bcae"
+    },
+    {
+      "path": "apps/api/tests/test_provider_evidence.py",
+      "git_blob": "f1d7c96ad03a7f2921f41b2f7842970d928cd607",
+      "committed_content_sha256": "a14521d4764af50edd9300d0d42804689285f40515bc67331b6c55e0d6a1881b"
+    },
+    {
+      "path": "apps/api/tests/test_saved_solution_assistant.py",
+      "git_blob": "9616be1418fbff1814fd9e009f3666e9d59f400f",
+      "committed_content_sha256": "57b4c76038d67d0939e7f194eb1df1de295677a8fc85600e3fe5bb6c6e9c6771"
+    },
+    {
+      "path": "apps/api/tests/test_saved_solution_response.py",
+      "git_blob": "86f373ae09f647bf884513b28938e4973287c32b",
+      "committed_content_sha256": "e9de73ec7616e3264606a1dc8d9ad43e25f315e807147ba18adae3c433f9651c"
+    },
+    {
+      "path": "apps/api/tests/test_scoped_ai_acceptance.py",
+      "git_blob": "2bcadd28d981ec98322d1b3fcbb90592f183d2de",
+      "committed_content_sha256": "44d0cfbcd30d74d161c602e6e28244753993bd19eec5fa3c8bf07d8beb32e31a"
+    },
+    {
+      "path": "apps/api/tests/test_selected_input.py",
+      "git_blob": "59f8e0dea24242f0c53926d13786816b616ccd17",
+      "committed_content_sha256": "bf4b61e28ecc919882d16259478e9844941e394063d927b3497a616d9c84345b"
+    },
+    {
+      "path": "apps/web/components/saved-solution-assistant.tsx",
+      "git_blob": "dffc50d2df981c376100d02bf90de10049dd3d9f",
+      "committed_content_sha256": "ad3111cd71a935c346c5a005e0c6490ee223b656a2e05147d5d2fd081343420c"
+    },
+    {
+      "path": "deploy/assistant_acceptance/offline_provider.py",
+      "git_blob": "a5ae9630270174462b0116e43e980582bff53ba1",
+      "committed_content_sha256": "3dcaf74e84248310f7d3a483aaa27e1787aeea48a43a71f0ddb0f36f97d70563"
+    }
+  ]
+}

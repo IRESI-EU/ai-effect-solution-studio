@@ -10,7 +10,7 @@ A focused question OR a supported, low-impact reversible assumption disclosed be
 
 ## Provider and enforceable proposed limits
 
-Propose OpenAI Responses API, exact `gpt-5.4-mini-2026-03-17`, reasoning `none`, Standard/default tier, no tools, no provider storage, zero SDK/automatic retries, no fallback models or top-ups. [Official model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini), checked 2026-11-19, is USD 0.75 per million input tokens, USD 4.50 output, USD 0.075 cached input. The published regional uplift is 10%; reserve with that headroom and no cache discount. Account access and live schema/model behaviour remain untested.
+Propose OpenAI Responses API, exact `gpt-5.4-mini-2026-03-17`, reasoning `none`, Standard/default tier, no tools, `store=false`, zero SDK/automatic retries, no fallback models or top-ups. [Official model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini), checked 2026-11-19, is USD 0.75 per million input tokens, USD 4.50 output, USD 0.075 cached input. The published regional uplift is 10%; reserve with that headroom and no cache discount. Account access and live schema/model behaviour remain untested.
 
 **Proposed total: at most 12 requests and USD 0.90, across two explicitly approved phases, each capped at six requests and USD 0.45.** Each request is limited to a conservative 64,000 input-token byte bound including the selected strict wire schema plus framing, and 3,000 output tokens. Reservation is USD 0.06765 per request; six lifetime reservations are USD 0.40590, twelve USD 0.81180. Retaining lifetime reservations, rather than recycling unused reservations, enforces the cap with the existing exclusive accounting implementation.
 
