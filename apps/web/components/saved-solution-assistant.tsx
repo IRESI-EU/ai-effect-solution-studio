@@ -29,7 +29,29 @@ function ChangeDetails({change}:{change:Record<string,unknown>}) {
   </>;
 }
 
-type State = { solution_id: string; expected_updated_at: string; conversation_revision: number; can_undo: boolean; messages: { role: string; content: string; question?: string }[]; catalogue_used?: {services:{service_id:string;name:string;operation:string;contract_version:string|null}[];truncated:boolean;total_accessible:number}; pending: { id: string; base_updated_at: string; changes: Record<string, unknown>[] } | null };
+type Candidate = {
+  name: string; steps: {node_id:string;target_ref:string;label:string;service_id:string;effective_settings:Record<string,unknown>;requested_overrides:Record<string,unknown>;setting_labels:Record<string,string>;contract:{contract_version:string}|null}[];
+  connections:{source:string;target:string;binding:{source_slot:string;target_slot:string}|null}[];
+  assumptions:string[]; prior_assumptions?:string[]; workflow_input_selected:boolean;
+};
+function CompleteCandidate({candidate}:{candidate:Candidate}) {
+  const labels=new Map(candidate.steps.map(step=>[step.target_ref,`${step.label} (${step.node_id.slice(-8)})`]));
+  return <section aria-label="Complete proposed design">
+    <h4>Complete proposed design</h4><p>{candidate.name}. This is the design Apply will save. It has not run.</p>
+    <ul>{candidate.steps.map(step=><li key={step.node_id}><strong>{labels.get(step.target_ref)}</strong>
+      {step.contract && <p>Published contract {step.contract.contract_version}</p>}
+      {Object.keys(step.effective_settings).length ? <dl>{Object.entries(step.effective_settings).map(([key,value])=><div key={key}>
+        <dt>{step.setting_labels[key] || key.replaceAll("_"," ")}</dt><dd>{String(value)} {key in step.requested_overrides ? "(proposed override)" : "(published default)"}</dd>
+      </div>)}</dl> : <p>No editable settings.</p>}
+    </li>)}</ul>
+    <p>Connections</p><ul>{candidate.connections.map((edge,index)=><li key={index}>{labels.get(edge.source)} ({edge.binding?.source_slot}) → {labels.get(edge.target)} ({edge.binding?.target_slot})</li>)}</ul>
+    {candidate.assumptions.length>0 && <><p>Current proposed assumptions for review; these are not scientific approval.</p><ul>{candidate.assumptions.map((text,index)=><li key={index}>{text}</li>)}</ul></>}
+    {!!candidate.prior_assumptions?.length && <details><summary>Earlier review disclosures</summary><p>These earlier choices may have been superseded. The complete current settings above define this review.</p><ul>{candidate.prior_assumptions.map((text,index)=><li key={index}>{text}</li>)}</ul></details>}
+    <p>{candidate.workflow_input_selected ? "The separate saved input selection is retained." : "No input is selected. Choose data separately in Builder before Run."}</p>
+  </section>;
+}
+
+type State = { solution_id: string; expected_updated_at: string; conversation_revision: number; can_undo: boolean; messages: { role: string; content: string; question?: string }[]; catalogue_used?: {services:{service_id:string;name:string;operation:string;contract_version:string|null}[];truncated:boolean;total_accessible:number}; pending: { id: string; base_updated_at: string; changes: Record<string, unknown>[]; current?: boolean; candidate?: Candidate | null; supersedes?: string | null; unavailable_reason?: string } | null };
 type Config = { enabled: boolean; saved_solution_workspace: boolean; provider_configured: boolean; provider_mode?: string; test_allowance?: { can_request: boolean; message: string } };
 async function request(path: string, body?: unknown) {
   const response = await fetch(`/api/design-ai${path}`, { cache: "no-store", ...(body === undefined ? {} : {
@@ -104,12 +126,16 @@ export default function SavedSolutionAssistant({ solutionId, savedVersion, disab
     </details>}
     {state?.pending && <section aria-label="Review proposed solution changes">
       <h3>Proposed changes</h3>
+      {state.pending.candidate && <CompleteCandidate candidate={state.pending.candidate} />}
+      <h4>{state.pending.supersedes ? "Changes since previous review" : "Changes from saved design"}</h4>
+      {state.pending.supersedes && <p>The earlier proposal is superseded and can no longer be applied.</p>}
+      {state.pending.current === false && <p role="alert">{state.pending.unavailable_reason || "Reload and request a current proposal."}</p>}
       <ul>{state.pending.changes.map((change, index) => <li key={index}>
         <strong>{String(change.action).replaceAll("_", " ")}</strong>{change.step ? ` · ${String(change.step)}` : ""}
         <ChangeDetails change={change} />
       </li>)}</ul>
       {state.pending.base_updated_at !== state.expected_updated_at && <p role="alert">This proposal predates the current Builder version. Request a new proposal.</p>}
-      <button type="button" disabled={blocked || state.pending.base_updated_at !== state.expected_updated_at} onClick={() => action("apply")}>Apply and save reviewed changes</button>{" "}
+      <button type="button" disabled={blocked || state.pending.current === false || state.pending.base_updated_at !== state.expected_updated_at} onClick={() => action("apply")}>Apply and save reviewed changes</button>{" "}
       <button type="button" disabled={blocked} onClick={() => action("dismiss")}>Dismiss proposal</button>
     </section>}
     <form onSubmit={event => { event.preventDefault(); void action("chat"); }}>

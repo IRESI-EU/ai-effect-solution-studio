@@ -19,4 +19,4 @@ class DisclosureFixture:
                  dict(kind='add_service', value=json.dumps({'service_id': drawing['service_id'], 'local_ref': 'fixture-view'})),
                  dict(kind='connect', value=json.dumps({'source': 'fixture-source', 'target': 'fixture-view', 'source_slot': pair['source_slot'], 'target_slot': pair['target_slot']}))]
         return SavedSolutionResponse(outcome='proposal', message='OFFLINE RESPONSE: review a connected generator and drawing view. This supplied response tests disclosure UI only; it is not model evidence.', clarification=None,
-            solution_edits=edits, assumptions=['For this OFFLINE UI fixture, propose up to two layouts for comparison. This is a reversible proposed choice, not your prior choice or partner scientific approval.'])
+            edit_base=context['edit_bases']['saved'], solution_edits=edits, assumptions=['For this OFFLINE UI fixture, propose up to two layouts for comparison. This is a reversible proposed choice, not your prior choice or partner scientific approval.'])

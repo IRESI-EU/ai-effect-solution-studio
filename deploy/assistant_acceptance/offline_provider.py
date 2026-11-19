@@ -53,25 +53,25 @@ class OfflineProvider:
             case='follow-up-settings'
             target=next(s for s in steps if s['operation_name']=='GenerateTopology')
             message='Review changing only this generator’s how_many setting to three. Its other settings, selected input and connections stay unchanged. This is a maximum candidate count, not a guarantee.'
-            edits=[edit('set_node_parameters',{'how_many':3},target['node_id'])]
+            edits=[edit('set_node_parameters',{'how_many':3},target['target_ref'])]
         elif 'add a second' in request:
             case='compatible-add'
             target=next(s for s in steps if s['operation_name']=='GenerateTopology')
-            if not any(c['source_node_id']==target['node_id'] and c['target_service_id']==primary['service_id'] for c in context['compatible_actions']['add_after']):raise ValueError('Add is not advertised compatible')
+            if not any(c['source_node_id']==target['target_ref'] and c['target_service_id']==primary['service_id'] for c in context['compatible_actions']['add_after']):raise ValueError('Add is not advertised compatible')
             message='Review a second drawing instance connected to the same generator’s whole output. Both views receive that run’s topology reference; this adds no merge or conversion.'
             edits=[edit('add_service',{'service_id':primary['service_id'],'local_ref':'second-view'}),
-                edit('set_node_label','Second view','second-view'),connection(target['node_id'],'second-view',primary)]
+                edit('set_node_label','Second view','second-view'),connection(target['target_ref'],'second-view',primary)]
         elif 'replace the second view' in request:
             case='compatible-replace'
             matches=[s for s in steps if s['label']=='Second view']
             if len(matches)!=1:raise ValueError('The requested instance is ambiguous')
             target=matches[0]
-            if not any(c['node_id']==target['node_id'] and c['service_id']==alternative['service_id'] for c in context['compatible_actions']['replacements']):raise ValueError('Replacement is not advertised compatible')
+            if not any(c['node_id']==target['target_ref'] and c['service_id']==alternative['service_id'] for c in context['compatible_actions']['replacements']):raise ValueError('Replacement is not advertised compatible')
             message='Review replacing only Second view with '+alternative['name']+'. Its logical instance and existing compatible input connection are retained. The alternative also has no editable settings.'
-            edits=[edit('replace_service',{'service_id':alternative['service_id']},target['node_id'])]
+            edits=[edit('replace_service',{'service_id':alternative['service_id']},target['target_ref'])]
         else:raise ValueError('This offline double only supports the documented acceptance script')
         turn=SavedSolutionResponse(outcome='clarification' if question else 'proposal' if edits else 'answer',
-            message='OFFLINE SCRIPTED RESPONSE — '+message, clarification=question, solution_edits=edits, assumptions=[])
+            message='OFFLINE SCRIPTED RESPONSE — '+message, clarification=question, solution_edits=edits, assumptions=[], edit_base=context['edit_bases']['saved'] if edits else None)
         trace={'boundary':'EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call','case':case,'context':context,'response':turn.model_dump(mode='json')}
         with (self.directory/'assistant-trace.private.jsonl').open('a',encoding='utf-8') as stream:stream.write(json.dumps(trace,ensure_ascii=False)+'\n')
         return turn

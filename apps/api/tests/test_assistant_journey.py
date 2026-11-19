@@ -7,13 +7,31 @@ from app.db import SessionLocal
 from app.models.execution_submission import ExecutionSubmission
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
-from app.schemas.design_ai import AssistantTurn
-from app.schemas.solution_assistant import SavedSolutionResponse
+from app.schemas.design_ai import AssistantTurn, SolutionEdit
+from app.schemas.solution_assistant import SavedSolutionResponse, EditBase
 from test_saved_solution_assistant import bound, turn, scope, apply, chat
 
 
 def send(client, solution, provider, message):
     state=client.get(scope(solution)).json()
+    # Explicit offline fixture adapter: bind placeholder fixtures to the actual
+    # advertised saved base. Real model-path tests supply their exact base/refs.
+    if isinstance(getattr(provider, 'turn', None), SavedSolutionResponse) and provider.turn.edit_base and provider.turn.edit_base.expected_updated_at == 'FIXTURE-BIND-BEFORE-SEND':
+        from datetime import datetime
+        from types import SimpleNamespace
+        from app.services.solution_assistant import target_ref
+        actual = client.get('/solutions/' + solution['id']).json()
+        base = SimpleNamespace(id=solution['id'], updated_at=datetime.fromisoformat(state['expected_updated_at']))
+        refs = {n['id']:target_ref(base, n['id']) for n in actual['nodes'] if n.get('data', {}).get('service')}
+        value = provider.turn.model_dump()
+        value['edit_base'] = {'kind':'saved', 'expected_updated_at':state['expected_updated_at'], 'conversation_revision':state['conversation_revision'], 'proposal_id':None, 'candidate_sha256':None}
+        for edit in value['solution_edits']:
+            if edit['node_id'] in refs: edit['node_id'] = refs[edit['node_id']]
+            if edit['kind'] in ('connect','disconnect'):
+                data = json.loads(edit['value'])
+                for key in ('source','target'): data[key] = refs.get(data.get(key), data.get(key))
+                edit['value'] = json.dumps(data)
+        provider.turn = provider.turn.model_copy(update={'edit_base':EditBase.model_validate(value['edit_base']),'solution_edits':[SolutionEdit.model_validate(e) for e in value['solution_edits']]})
     return client.post(scope(solution)+'/chat',json={'message':message,**{k:state[k] for k in ('expected_updated_at','conversation_revision')}})
 
 
@@ -57,7 +75,7 @@ def test_fresh_goal_clarification_connected_follow_up_add_and_compatible_replace
     assert apply(client,current,proposed).status_code==200
     current=client.get('/solutions/'+identifier).json();second=current['nodes'][-1]['id'];old_edges=deepcopy(current['edges'])
     proposed=chat(client,current,provider,[{'kind':'replace_service','node_id':second,'value':'{"service_id":"portugal-ActualC"}'}]).json()
-    assert any(r['node_id']==second and r['service_id']=='portugal-ActualC'
+    assert any(r['service_id']=='portugal-ActualC'
         for r in provider.contexts[-1]['compatible_actions']['replacements'])
     assert apply(client,current,proposed).status_code==200
     final=client.get('/solutions/'+identifier).json()

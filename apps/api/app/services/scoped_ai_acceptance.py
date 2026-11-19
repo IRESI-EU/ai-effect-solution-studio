@@ -38,8 +38,14 @@ def binding(settings, user_id, solution_id):
     return {'database_sha256':digest(database),'user_id':user_id,'solution_id':solution_id}
 
 
-def initialize(path, *, approved_binding, authorization_ref, expires_at):
+def lower_limits(max_requests, limit_nano):
+    return (type(max_requests) is int and 1 <= max_requests <= MAX_REQUESTS
+            and type(limit_nano) is int and RESERVATION <= limit_nano <= LIMIT_NANO)
+
+
+def initialize(path, *, approved_binding, authorization_ref, expires_at, max_requests=MAX_REQUESTS, limit_nano=LIMIT_NANO):
     """Operator-only AFTER separate approval; exclusive creation, no reopen/reset."""
+    if not lower_limits(max_requests, limit_nano): raise ValueError('New scoped limits may only lower the existing maximums')
     if not authorization_ref.strip() or set(approved_binding)!={'database_sha256','user_id','solution_id'} or not all(approved_binding.values()):
         raise ValueError('A concrete approval reference and exact account/solution/database scope are required')
     expiry=datetime.fromisoformat(expires_at)
@@ -50,7 +56,7 @@ def initialize(path, *, approved_binding, authorization_ref, expires_at):
     policy={'version':1,'path':str(path),'file_identity':[path.stat().st_dev,path.stat().st_ino],
         'binding':approved_binding,'authorization_ref':authorization_ref,'expires_at':expires_at,
         'model':MODEL,'reasoning':'none','tier':'default','input_limit':MAX_INPUT,'output_limit':MAX_OUTPUT,
-        'max_requests':MAX_REQUESTS,'limit_nano':LIMIT_NANO,'reservation_nano':RESERVATION}
+        'max_requests':max_requests,'limit_nano':limit_nano,'reservation_nano':RESERVATION}
     with sqlite3.connect(path) as db:
         db.executescript('CREATE TABLE acceptance_policy (id INTEGER PRIMARY KEY CHECK(id=1), value TEXT NOT NULL, hash TEXT NOT NULL, closed INTEGER NOT NULL);'
             'CREATE TABLE acceptance_requests (id INTEGER PRIMARY KEY, reserved INTEGER NOT NULL, held INTEGER NOT NULL, input_bound INTEGER NOT NULL, state TEXT NOT NULL, usage TEXT, response_id TEXT);')
@@ -75,7 +81,8 @@ class Budget:
         value=json.loads(raw)
         if (digest(value)!=hashed or value['path']!=str(self.path) or value['file_identity']!=[self.path.stat().st_dev,self.path.stat().st_ino]
             or value['version']!=1 or value['model']!=MODEL or value['reasoning']!='none' or value['tier']!='default'
-            or (value['input_limit'],value['output_limit'],value['max_requests'],value['limit_nano'],value['reservation_nano'])!=(MAX_INPUT,MAX_OUTPUT,MAX_REQUESTS,LIMIT_NANO,RESERVATION)):
+            or not lower_limits(value['max_requests'],value['limit_nano'])
+            or (value['input_limit'],value['output_limit'],value['reservation_nano'])!=(MAX_INPUT,MAX_OUTPUT,RESERVATION)):
             raise HTTPException(503,'Scoped acceptance identity or immutable controls differ')
         return value,closed
 
@@ -83,11 +90,11 @@ class Budget:
         policy,closed=self.policy(db)
         count,reserved,held,unresolved=db.execute("SELECT COUNT(*),COALESCE(SUM(reserved),0),COALESCE(SUM(held),0),SUM(CASE WHEN usage IS NULL THEN 1 ELSE 0 END) FROM acceptance_requests").fetchone()
         reason=('closed' if closed else 'expired' if datetime.fromisoformat(policy['expires_at'])<=datetime.now(timezone.utc)
-            else 'unresolved_request' if unresolved else 'request_limit' if count>=MAX_REQUESTS
-            else 'budget_limit' if max(reserved,held)+RESERVATION>LIMIT_NANO else None)
+            else 'unresolved_request' if unresolved else 'request_limit' if count>=policy['max_requests']
+            else 'budget_limit' if max(reserved,held)+RESERVATION>policy['limit_nano'] else None)
         return {'can_request':reason is None,'blocked_reason':reason,'request_count':count,
-            'max_calls':MAX_REQUESTS,'remaining_calls':max(0,MAX_REQUESTS-count),
-            'limit_usd':LIMIT_NANO/1e9,'lifetime_reserved_usd':reserved/1e9,'next_reservation_usd':RESERVATION/1e9,
+            'max_calls':policy['max_requests'],'remaining_calls':max(0,policy['max_requests']-count),
+            'limit_usd':policy['limit_nano']/1e9,'lifetime_reserved_usd':reserved/1e9,'next_reservation_usd':RESERVATION/1e9,
             'message':'Scoped acceptance available.' if reason is None else 'Scoped acceptance paused: '+reason+'. No retry or fallback is authorised.'}
 
     def availability(self):

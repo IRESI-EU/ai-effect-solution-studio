@@ -6,6 +6,7 @@ solution graph and never submits execution. Apply uses Builder's normal writer.
 from copy import deepcopy
 import hashlib
 import json
+from types import SimpleNamespace
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
 from fastapi import HTTPException
@@ -46,15 +47,125 @@ def conversation(solution, db, user, *, lock=False, create=False):
     return row
 
 
-def view(solution, row):
+def view(solution, row, db=None, user=None):
+    pending = row.state.get('pending') if row else None
+    review = None
+    if pending:
+        review = {key: deepcopy(pending[key]) for key in ('id', 'changes', 'base_updated_at')}
+        review['supersedes'] = pending.get('supersedes')
+        try:
+            if db is None or user is None: raise HTTPException(409, 'Reload the current review')
+            result = materialize(solution, pending, db, user)
+            review.update(current=True, candidate=projection(solution, result, db, pending=pending))
+        except HTTPException as exc:
+            review.update(current=False, candidate=None, unavailable_reason=str(exc.detail))
     return {"solution_id": solution.id, "expected_updated_at": solution.updated_at.isoformat(),
             "conversation_revision": row.revision if row else 0,
             "can_undo": bool(row and row.state.get("last_applied") and row.state["last_applied"]["updated_at"] == solution.updated_at.isoformat()),
             "messages": deepcopy(row.state.get("messages", [])) if row else [],
             "clarification": deepcopy(row.state.get("clarification")) if row else None,
             "catalogue_used": deepcopy(row.state.get("catalogue_used")) if row else None,
-            "pending": ({key: deepcopy(row.state["pending"][key]) for key in ("id", "changes", "base_updated_at")}
-                        if row and row.state.get("pending") else None)}
+            "pending": review}
+
+
+def edit_base(solution, row, pending=None):
+    return {'kind': 'pending' if pending else 'saved', 'expected_updated_at': solution.updated_at.isoformat(),
+            'conversation_revision': row.revision if row else 0, 'proposal_id': pending['id'] if pending else None,
+            'candidate_sha256': pending['candidate_sha256'] if pending else None}
+
+
+def target_ref(solution, identifier, pending=None):
+    # Scope references to this solution AND exact saved/proposal base. Proposed
+    # node IDs remain stable across revisions; eligibility references rotate.
+    return 'instance_' + digest([solution.id, solution.updated_at.isoformat(), pending['id'] if pending else 'saved', identifier])[:32]
+
+
+def projection(solution, result, db, *, pending=None):
+    """Allowlisted read-only view, never a second persisted/editable graph."""
+    steps = []
+    for n in result['nodes']:
+        data = n.get('data', {}); reference = data.get('service')
+        if not isinstance(reference, dict): continue
+        service = db.get(Service, reference['id']); contract = active_contract(service, db)
+        if service is None: raise HTTPException(409, 'A selected service is unavailable')
+        parameters = contract.definition.get('execution_parameters') if contract else None
+        overrides = deepcopy((data.get('configuration') or {}).get('parameters', {}))
+        steps.append({'node_id': n['id'], 'target_ref': target_ref(solution, n['id'], pending),
+                      'label': data.get('label') or service.name, 'service_id': service.id,
+                      'operation_name': service.operation_name,
+                      'contract': {'contract_id': contract.id, 'contract_version': contract.contract_version,
+                                   'definition': contract.definition} if contract else None,
+                      'effective_settings': effective_parameters(parameters, overrides) if parameters else {},
+                      'requested_overrides': overrides,
+                      'setting_labels': {k:v.get('title', k.replace('_', ' ')) for k,v in (parameters or {}).get('properties', {}).items()}})
+    refs = {n['node_id']: n['target_ref'] for n in steps}
+    return {'name': result['name'], 'description': result['description'], 'steps': steps,
+            'connections': [{'source': refs[e['source']], 'target': refs[e['target']],
+                             'binding': deepcopy((e.get('data') or {}).get('binding'))}
+                            for e in result['edges'] if e['source'] in refs and e['target'] in refs],
+            'assumptions': deepcopy(pending.get('assumptions', [c['after'] for c in pending['changes'] if c['action']=='proposed_assumption'])) if pending else [],
+            'prior_assumptions': deepcopy(pending.get('prior_assumptions', [])) if pending else [],
+            'proposal_id': pending['id'] if pending else None,
+            'base_updated_at': solution.updated_at.isoformat(), 'candidate_sha256': digest(result),
+            'workflow_input_selected': (result.get('design_metadata') or {}).get('run_input') is not None}
+
+
+def materialize(solution, pending, db, user):
+    """Replay stored cumulative edits against the owned saved base with normal validators."""
+    if pending['base_updated_at'] != solution.updated_at.isoformat() or pending['base_sha256'] != digest(content(solution)):
+        raise HTTPException(409, 'Builder changed the saved solution. Request a new proposal against its current version.')
+    try:
+        result = replay(solution, pending['edits'], pending.get('batch_sizes', [len(pending['edits'])]), pending['allocations'], db, user)
+    except HTTPException as exc:
+        raise HTTPException(409, 'The pending candidate is no longer valid; review catalogue authority and Builder changes') from exc
+    if digest(result) != pending['candidate_sha256'] or authority(result['nodes'], db) != pending['authority_sha256']:
+        raise HTTPException(409, 'Catalogue settings changed after review. Request a new proposal before applying.')
+    return result
+
+
+def replay(solution, edits, batch_sizes, allocations, db, user):
+    """Replay normal editor batches, including its deterministic boundary layout.
+
+    Only edits/allocations are stored. Batch boundaries preserve the exact order
+    and positions of additions across multiple reviews; there is no second graph.
+    """
+    from app.schemas.design_ai import SolutionEdit
+    if sum(batch_sizes) != len(edits) or any(n < 1 for n in batch_sizes):
+        raise HTTPException(409, 'Invalid cumulative proposal replay')
+    result = content(solution); offset = 0
+    for size in batch_sizes:
+        result, _ = candidate(SimpleNamespace(**result), [SolutionEdit.model_validate(e) for e in edits[offset:offset+size]], deepcopy(allocations), db, user)
+        offset += size
+    return result
+
+
+def resolve_edits(solution, result, edits, db, pending=None):
+    """Resolve only exact scoped instance refs and this turn's new local refs."""
+    from app.schemas.design_ai import SolutionEdit
+    eligible = {target_ref(solution, n['id'], pending): n['id'] for n in result['nodes'] if isinstance(n.get('data', {}).get('service'), dict)}
+    local = set(); resolved = []
+    catalogue_ids = {n['data']['service']['id'] for n in result['nodes'] if n.get('data', {}).get('service')}
+    def instance(ref):
+        if isinstance(ref, str) and ref in eligible: return eligible[ref]
+        if isinstance(ref, str) and ref in local: return ref
+        raise HTTPException(422, 'Select one existing service instance using its current target_ref; catalogue IDs are not instance references')
+    for edit in edits:
+        value = edit.value; node_id = edit.node_id
+        if edit.kind in {'set_node_label', 'set_node_parameters', 'remove_service', 'replace_service'}:
+            node_id = instance(node_id)
+        if edit.kind == 'add_service':
+            data = parsed(value, {'service_id', 'local_ref', 'parameters'}); ref = data.get('local_ref')
+            if not isinstance(ref, str) or not ref or ref.startswith('instance_') or ref in local or ref in eligible or ref in catalogue_ids or ref == data.get('service_id') or db.get(Service, ref) is not None:
+                raise HTTPException(422, 'New services need a unique proposal-local reference distinct from catalogue and instance references')
+            local.add(ref)
+        elif edit.kind in {'connect', 'disconnect'}:
+            data = parsed(value, {'source', 'target', 'source_slot', 'target_slot'})
+            data['source'] = instance(data.get('source')); data['target'] = instance(data.get('target'))
+            value = json.dumps(data)
+        if edit.kind == 'remove_service':
+            eligible = {r:n for r,n in eligible.items() if n != node_id}; local.discard(node_id)
+        resolved.append(SolutionEdit(kind=edit.kind, node_id=node_id, value=value))
+    return resolved
 
 
 def check(solution, row, version, revision):
@@ -91,30 +202,38 @@ def selectable(service):
 def context(solution, row, message, db, user):
     from app.services.assistant_catalogue import retrieve, actions
     catalogue = retrieve(db,user,solution,row,message)
-    steps = []
-    for node in solution.nodes:
-        data = node.get("data", {}); reference = data.get("service")
-        if not isinstance(reference, dict): continue
-        service = db.get(Service, reference.get("id"))
-        if service is None: raise HTTPException(409, "A saved service is unavailable; review it in Builder")
-        contract = active_contract(service, db)
-        steps.append({"node_id": node["id"], "label": data.get("label") or service.name, "service_id": service.id,
-                      "operation_name": service.operation_name, "configuration": data.get("configuration"),
-                      "contract": {"contract_id": contract.id, "contract_version": contract.contract_version,
-                                   "definition": contract.definition} if contract else None})
-    return {"mode": "saved_solution", "request": message, "history": (row.state.get("messages", [])[-12:] if row else []),
-            "solution": {"id": solution.id, "name": solution.name, "description": solution.description,
-                         "steps": steps, "connections": [{"source": e["source"], "target": e["target"],
-                            "binding": (e.get("data") or {}).get("binding")} for e in solution.edges],
-                         "workflow_input_selected": (solution.design_metadata or {}).get("run_input") is not None},
-            "pending_clarification": deepcopy(row.state.get('clarification')) if row else None,
-            "pending_proposal": ({k:deepcopy(row.state['pending'][k]) for k in ('id','changes','base_updated_at')}
-                if row and row.state.get('pending') else None),
-            "catalogue": catalogue, "compatible_actions": actions(solution,catalogue,db,user),
-            "limits": {"service_instances": 24, "edits_per_proposal": 10}, "supported_actions": ["rename", "describe", "set_node_label", "set_node_parameters",
-                "add_service", "remove_service", "replace_service", "connect", "disconnect"],
-            "input_selection": "Use Builder's existing input controls. Data and credentials are not model-editable settings.",
-            "execution": "No chat action executes anything. Apply and save requires a separate explicit action; Run stays in Builder."}
+    saved_projection = projection(solution, content(solution), db)
+    pending = row.state.get('pending') if row else None
+    pending_projection = None; pending_error = None
+    if pending:
+        try:
+            result = materialize(solution, pending, db, user)
+            pending_projection = projection(solution, result, db, pending=pending)
+        except HTTPException as exc: pending_error = str(exc.detail)
+    saved_base = edit_base(solution, row)
+    pending_base = edit_base(solution, row, pending) if pending_projection else None
+    # Compatible actions use the same validator, for each declared base. Replace
+    # raw node IDs with scoped references before presenting them to the provider.
+    def scoped_actions(result, proposal=None):
+        choices = actions(SimpleNamespace(**result), catalogue, db, user)
+        for item in choices['replacements']: item['node_id'] = target_ref(solution, item['node_id'], proposal)
+        for item in choices['add_after']: item['source_node_id'] = target_ref(solution, item['source_node_id'], proposal)
+        return choices
+    return {'mode': 'saved_solution', 'request': message, 'history': (row.state.get('messages', [])[-12:] if row else []),
+            'solution': {'id': solution.id, **saved_projection},
+            'saved_design': saved_projection, 'pending_candidate': pending_projection,
+            'edit_bases': {'saved': saved_base, 'pending': pending_base},
+            'pending_unavailable_reason': pending_error,
+            'pending_clarification': deepcopy(row.state.get('clarification')) if row else None,
+            'pending_proposal': ({'id': pending['id'], 'base_updated_at': pending['base_updated_at'],
+                                  'changes': deepcopy(pending['changes']), 'current': pending_projection is not None} if pending else None),
+            'catalogue': catalogue, 'compatible_actions': scoped_actions(content(solution)),
+            'pending_compatible_actions': scoped_actions(result, pending) if pending_projection else None,
+            'limits': {'service_instances': 24, 'edits_per_proposal': 10, 'cumulative_edits': 80},
+            'supported_actions': ['rename', 'describe', 'set_node_label', 'set_node_parameters', 'add_service',
+                                  'remove_service', 'replace_service', 'connect', 'disconnect'],
+            'input_selection': "Use Builder's existing input controls. Data and credentials are not model-editable settings.",
+            'execution': 'Chat never applies or executes. Apply and save requires a separate explicit action; Run stays in Builder.'}
 
 
 def parsed(value, allowed):
@@ -234,7 +353,7 @@ def candidate(solution, edits, allocations, db, user):
     return result, changes
 
 
-def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None):
+def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None, base=None):
     if turn.edits or turn.template_key is not None or turn.composition_settings or turn.registered_settings or turn.recommended_seed is not None or (turn.discovery and turn.discovery.candidate_id) or turn.expected_revision is not None:
         raise HTTPException(502, "The assistant returned legacy workflow authority instead of saved-solution edits")
     state = deepcopy(row.state)
@@ -243,12 +362,39 @@ def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assu
     if clarification and edits: raise HTTPException(502,'Clarification cannot also propose design changes')
     pending = None
     if edits:
-        result, changes = candidate(solution, edits, allocations, db, user)
-        # Review disclosures use the existing visible change list, outside the
-        # graph and candidate hash. They never become settings or Run input.
+        if base is None: raise HTTPException(422, 'An explicit current edit base is required')
+        check(solution, row, base.expected_updated_at, base.conversation_revision)
+        previous = None; prior_edits = []; disclosures = []; batches = []
+        if base.kind == 'pending':
+            previous = state.get('pending')
+            if not previous or previous['id'] != base.proposal_id or previous['candidate_sha256'] != base.candidate_sha256:
+                raise HTTPException(409, 'This pending proposal has been superseded or does not belong to this review')
+            original = materialize(solution, previous, db, user)
+            allocations = deepcopy(previous['allocations'])
+            prior_edits = deepcopy(previous['edits'])
+            batches = deepcopy(previous.get('batch_sizes', [len(prior_edits)]))
+            disclosures = [*previous.get('prior_assumptions', []), *previous.get('assumptions', [c['after'] for c in previous['changes'] if c['action']=='proposed_assumption'])]
+        else:
+            original = content(solution)
+        # Resolve before the normal editor. No service-ID fallback or guesses.
+        edits = resolve_edits(solution, original, edits, db, previous)
+        delta_allocations = {} # additions allocate once, then replay with the same IDs
+        revised, changes = candidate(SimpleNamespace(**original), edits, delta_allocations, db, user)
+        if set(allocations) & set(delta_allocations):
+            raise HTTPException(422, 'Use fresh proposal-local references for additional instances')
+        allocations.update(delta_allocations)
+        cumulative = prior_edits + [e.model_dump() for e in edits]
+        if len(cumulative) > 80: raise HTTPException(422, 'Apply or dismiss this review before requesting further revisions')
+        batches.append(len(edits))
+        result = replay(solution, cumulative, batches, allocations, db, user)
+        if digest(result) != digest(revised): raise HTTPException(409, 'Cumulative proposal replay differs from the reviewed candidate')
+        disclosures = list(dict.fromkeys(disclosures))
+        if len(disclosures) > 12: raise HTTPException(422, 'Review existing assumptions before adding more')
         changes = [{'action': 'proposed_assumption', 'after': text} for text in assumptions] + changes
-        pending = {"id": str(uuid4()), "base_updated_at": solution.updated_at.isoformat(), "base_sha256": digest(content(solution)),
-                   "candidate_sha256": digest(result), "authority_sha256": authority(result["nodes"], db), "edits": [e.model_dump() for e in edits], "allocations": allocations, "changes": changes}
+        pending = {'id': str(uuid4()), 'base_updated_at': solution.updated_at.isoformat(), 'base_sha256': digest(content(solution)),
+                   'candidate_sha256': digest(result), 'authority_sha256': authority(result['nodes'], db),
+                   'edits': cumulative, 'batch_sizes': batches, 'allocations': allocations, 'changes': changes, 'assumptions': list(assumptions), 'prior_assumptions': disclosures,
+                   'supersedes': previous['id'] if previous else None}
     reply = {'role':'assistant','content':turn.message}
     if outcome is not None:
         reply.update(outcome=outcome, assumptions=list(assumptions))
@@ -266,22 +412,17 @@ def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assu
     if edits: state["pending"] = pending
     row.state = state; row.revision += 1
     db.commit(); db.refresh(row)
-    return view(solution, row)
+    return view(solution, row, db, user)
 
 
 def apply(solution_id, payload, db, user):
-    from app.schemas.design_ai import SolutionEdit
     solution = owned_solution(solution_id, db, user, lock=True)
     row = conversation(solution, db, user, lock=True)
     check(solution, row, payload.expected_updated_at, payload.conversation_revision)
     pending = row.state.get("pending") if row else None
     if not pending or pending["id"] != payload.proposal_id:
         raise HTTPException(409, "This proposal is no longer pending")
-    if pending["base_updated_at"] != solution.updated_at.isoformat() or pending["base_sha256"] != digest(content(solution)):
-        raise HTTPException(409, "Builder changed the saved solution. Request a new proposal against its current version.")
-    result, _ = candidate(solution, [SolutionEdit.model_validate(e) for e in pending["edits"]], deepcopy(pending["allocations"]), db, user)
-    if digest(result) != pending["candidate_sha256"] or authority(result["nodes"], db) != pending["authority_sha256"]:
-        raise HTTPException(409, "Catalogue settings changed after review. Request a new proposal before applying.")
+    result = materialize(solution, pending, db, user)
     before = content(solution)
     try:
         solution = update(solution_id, SolutionUpdate(expected_updated_at=payload.expected_updated_at, **result), db, user, commit=False)
@@ -289,7 +430,7 @@ def apply(solution_id, payload, db, user):
         state["last_applied"] = {"id": pending["id"], "before": before, "updated_at": solution.updated_at.isoformat(), "sha256": digest(content(solution))}
         row.state = state; row.revision += 1
         db.commit(); db.refresh(solution); db.refresh(row)
-        return view(solution, row)
+        return view(solution, row, db, user)
     except Exception:
         db.rollback(); raise
 
@@ -306,6 +447,6 @@ def undo(solution_id, payload, db, user):
         state = deepcopy(row.state); state["last_applied"] = None; state["pending"] = None
         row.state = state; row.revision += 1
         db.commit(); db.refresh(solution); db.refresh(row)
-        return view(solution, row)
+        return view(solution, row, db, user)
     except Exception:
         db.rollback(); raise

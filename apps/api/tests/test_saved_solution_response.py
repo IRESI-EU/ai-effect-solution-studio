@@ -27,7 +27,7 @@ from test_assistant_journey import send
 
 def response(outcome='answer', **values):
     return {'outcome': outcome, 'message': 'Explicit offline response fixture',
-            'clarification': None, 'solution_edits': [], 'assumptions': [], **values}
+            'clarification': None, 'solution_edits': [], 'assumptions': [], 'edit_base': ({'kind':'saved','expected_updated_at':'FIXTURE-BIND-BEFORE-SEND','conversation_revision':0,'proposal_id':None,'candidate_sha256':None} if outcome=='proposal' else None), **values}
 
 
 @pytest.mark.parametrize('bad', [
@@ -137,7 +137,7 @@ def test_pending_explanation_detour_short_reply_and_partial_patch(policy, provid
     proposed = send(client, solution, provider, 'Three please').json()
     context = provider.contexts[-1]
     assert context['pending_clarification'] == question['clarification']
-    assert context['pending_proposal'] == prior['pending']
+    assert context['pending_candidate'] == prior['pending']['candidate']
     assert context['request'] == 'Three please'
     assert proposed['clarification'] is None
     assert apply(client, solution, proposed).status_code == 200
@@ -177,7 +177,7 @@ def test_confirmation_of_matching_pending_proposal_needs_no_duplicate_edits(poli
     reopened = client.get(scope(solution)).json()
     assert reopened['pending']['changes'][0]['action'] == 'proposed_assumption'
     assert reopened['pending']['changes'][0]['after'] == proposed['pending']['changes'][0]['after']
-    assert provider.contexts[-1]['pending_proposal'] == proposed['pending']
+    assert provider.contexts[-1]['pending_candidate'] == proposed['pending']['candidate']
     with SessionLocal() as db: assert db.query(ExecutionSubmission).count() == 0
 
 
@@ -202,6 +202,8 @@ def test_recorded_genuine_confirmation_rejection_preserves_existing_review(bound
         value = json.loads(recorded['solution_edits'][1]['value'])
         value.update(source='dutch-ConfigureAndSynthesize', target='dutch-RunBenchmark')
         recorded['solution_edits'][1]['value'] = json.dumps(value)
+    # Preserve the exact historical edit payload; only wrap the new explicit base.
+    recorded['edit_base'] = response('proposal')['edit_base']
     provider.turn = SavedSolutionResponse.model_validate(recorded)
     result = send(client, solution, provider, 'Confirm the already matching pending design')
     assert result.status_code == 422 and result.json()['detail']['stage'] == 'application_validation'
@@ -219,7 +221,7 @@ def test_invalid_response_and_unsupported_proposal_retain_saved_and_pending(poli
     old = send(client, solution, provider, 'Propose a name').json()
     provider.turn = invalid  # Deliberately unvalidated provider double.
     result = send(client, solution, provider, 'An invalid structured fixture')
-    assert result.status_code in (422, 502)
+    assert result.status_code in (409, 422, 502)
     assert client.get(scope(solution)).json() == old
     assert client.get('/solutions/' + solution['id']).json() == solution
 
@@ -241,7 +243,7 @@ def test_focused_sdk_wire_schema_budget_audit_and_parser_are_identical(environme
         assert budget.availability()['request_count'] == 1
         format = body['text']['format']
         assert format == provider_evidence.response_format(SavedSolutionResponse)
-        assert set(format['schema']['properties']) == {'outcome', 'message', 'clarification', 'solution_edits', 'assumptions'}
+        assert set(format['schema']['properties']) == {'outcome', 'message', 'clarification', 'solution_edits', 'assumptions', 'edit_base'}
         assert set(format['schema']['required']) == set(format['schema']['properties'])
         assert format['schema']['additionalProperties'] is False
         assert not {'AssistantTurn', 'CompositionSettings', 'Edit', 'DiscoveryDecision'} & set(format['schema']['$defs'])

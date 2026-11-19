@@ -61,3 +61,14 @@ test('sending text only requests a proposal and never navigates or submits Run',
   try {await forms[0].onSubmit({preventDefault(){}});assert.equal(calls.length,1);assert.equal(calls[0][0],'/api/design-ai/solutions/same-id/chat');assert.equal(JSON.parse(calls[0][1].body).message,'Use three');}
   finally {global.fetch=previousFetch;}
 });
+
+
+test('complete cumulative review shows final settings and separate revision delta',()=>{
+  const pending={...state,pending:{...state.pending,current:true,supersedes:'previous',candidate:{name:'Reviewed design',steps:[
+    {node_id:'source-abcdefgh',target_ref:'source-ref',label:'Generator',service_id:'fixture-source',effective_settings:{count:3,enabled:true},requested_overrides:{count:3},setting_labels:{count:'Candidate maximum',enabled:'Enabled'},contract:{contract_version:'1.0.0'}},
+    {node_id:'view-12345678',target_ref:'view-ref',label:'Alternative drawing',service_id:'fixture-view',effective_settings:{},requested_overrides:{},setting_labels:{},contract:{contract_version:'1.0.0'}}],
+    connections:[{source:'source-ref',target:'view-ref',binding:{source_slot:'networks',target_slot:'networks'}}],assumptions:['View was proposed, not a catalogue default.'],workflow_input_selected:false}}};
+  const {html}=render({pending});
+  for(const text of ['Complete proposed design','Candidate maximum','3 (proposed override)','true (published default)','Alternative drawing','Changes since previous review','earlier proposal is superseded','No input is selected'])assert.ok(html.includes(text),text);
+  assert.equal(render({pending:{...pending,pending:{...pending.pending,current:false,candidate:null}}}).buttons.find(b=>b.children==='Apply and save reviewed changes').disabled,true);
+});

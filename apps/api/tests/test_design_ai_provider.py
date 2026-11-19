@@ -149,7 +149,7 @@ def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp
 def test_normal_saved_solution_prompt_uses_real_catalogue_without_template_system(environment, monkeypatch):
     monkeypatch.setattr(settings, "openai_api_key", "test-key-never-transmitted")
     monkeypatch.setattr(settings, "design_ai_model", "configured-test-model")
-    turn = SavedSolutionResponse(outcome="proposal", message="Review the current catalogue", clarification=None, assumptions=[],
+    turn = SavedSolutionResponse(outcome="proposal", message="Review the current catalogue", clarification=None, assumptions=[], edit_base={"kind":"saved","expected_updated_at":"offline-version","conversation_revision":0,"proposal_id":None,"candidate_sha256":None},
                          solution_edits=[{"kind": "rename", "value": "My saved design"}])
     parse = AsyncMock(return_value=SimpleNamespace(output_parsed=turn))
     options = {}

@@ -30,7 +30,7 @@ def workspace_user(request: Request, user: User = Depends(get_current_user)):
 @router.get("/{solution_id}")
 def read(solution_id: str, db: Session = Depends(get_db), user: User = Depends(workspace_user)):
     solution = owned_solution(solution_id, db, user)
-    return service.view(solution, service.conversation(solution, db, user))
+    return service.view(solution, service.conversation(solution, db, user), db, user)
 
 
 @router.post("/{solution_id}/chat")
@@ -41,6 +41,8 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     service.check(solution, row, payload.expected_updated_at, payload.conversation_revision)
     base_sha = service.digest(service.content(solution))
     context = redact_context(service.context(solution, row, payload.message, db, user))
+    authority_nodes = [*solution.nodes, *[{'data': {'service': {'id': card['service_id']}}} for card in context['catalogue']['services']]]
+    authority_sha = service.authority(authority_nodes, db)
     if settings.design_ai_scoped_acceptance_file:
         from app.services.scoped_ai_acceptance import binding
         context['_acceptance_binding']=binding(settings,user.id,solution.id)
@@ -65,9 +67,11 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     service.check(solution, row, payload.expected_updated_at, payload.conversation_revision)
     if service.digest(service.content(solution)) != base_sha:
         raise HTTPException(409, "Builder changed the design while AI was responding. Request a new proposal.")
+    if service.authority(authority_nodes, db) != authority_sha:
+        raise HTTPException(409, 'Catalogue authority changed while AI was responding. Request a new proposal.')
     try:
         return service.propose(solution, row, payload.message, turn, db, user,
-                               catalogue_used=context['catalogue'], assumptions=response.assumptions, outcome=response.outcome)
+                               catalogue_used=context['catalogue'], assumptions=response.assumptions, outcome=response.outcome, base=response.edit_base)
     except HTTPException as exc:
         if exc.status_code in {409, 422, 502}:
             db.rollback()
@@ -101,4 +105,4 @@ def dismiss(solution_id: str, payload: SolutionProposalRequest, db: Session = De
     state = deepcopy(row.state); state["pending"] = None
     row.state = state; row.revision += 1
     db.commit(); db.refresh(row)
-    return service.view(solution, row)
+    return service.view(solution, row, db, user)

@@ -127,3 +127,19 @@ def test_scoped_failures_are_distinguishable_secret_free_and_stop_after_one(envi
     with pytest.raises(HTTPException) as error:asyncio.run(provider.OpenAIProvider().respond({'mode':'saved_solution','request':'Explain','_acceptance_binding':SCOPE}))
     assert error.value.detail['stage']==expected_stage and 'PRIVATE' not in json.dumps(error.value.detail)
     assert len(calls)==1 and budget.availability()['request_count']==1 and not budget.availability()['can_request']
+
+
+def test_new_lower_recovery_caps_are_exclusive_and_do_not_change_closed_scope(tmp_path):
+    old=new(tmp_path);old.close();before=old.path.read_bytes()
+    path=tmp_path/'lower-recovery-fixture.sqlite'
+    module.initialize(path,approved_binding=SCOPE,authorization_ref='OFFLINE LOWER-CAP APPROVAL DOUBLE',
+        expires_at=(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat(),max_requests=3,limit_nano=210_000_000)
+    budget=module.Budget(path)
+    for _ in range(3):settled(budget,budget.reserve(1000,3000,request_binding=SCOPE))
+    assert budget.availability()['max_calls']==3 and budget.availability()['limit_usd']==0.21
+    assert budget.availability()['lifetime_reserved_usd']==0.20295
+    with pytest.raises(HTTPException):budget.reserve(1000,3000,request_binding=SCOPE)
+    assert old.path.read_bytes()==before and not old.availability()['can_request']
+    for calls,limit in [(7,210_000_000),(3,450_000_001),(0,210_000_000),(3,True)]:
+        with pytest.raises(ValueError):module.initialize(tmp_path/'invalid.sqlite',approved_binding=SCOPE,authorization_ref='OFFLINE INVALID',
+            expires_at=(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat(),max_requests=calls,limit_nano=limit)

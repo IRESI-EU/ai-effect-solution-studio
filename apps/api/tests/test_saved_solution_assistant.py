@@ -31,14 +31,14 @@ def scope(solution): return '/design-ai/solutions/' + solution['id']
 
 def turn(edits=None, message='Review these changes', *, outcome=None, clarification=None, assumptions=None):
     return SavedSolutionResponse(outcome=outcome or ('proposal' if edits else 'answer'), message=message,
-                                 clarification=clarification, solution_edits=edits or [], assumptions=assumptions or [])
+                                 clarification=clarification, solution_edits=edits or [], assumptions=assumptions or [], edit_base=({'kind':'saved','expected_updated_at':'FIXTURE-BIND-BEFORE-SEND','conversation_revision':0,'proposal_id':None,'candidate_sha256':None} if edits else None))
 
 
 def chat(client, solution, provider, edits=None, message='Please edit my solution'):
     provider.turn = turn(edits)
-    before = client.get(scope(solution)).json()
-    return client.post(scope(solution) + '/chat', json={
-        'message': message, 'expected_updated_at': before['expected_updated_at'], 'conversation_revision': before['conversation_revision']})
+    from test_assistant_journey import send
+    return send(client, solution, provider, message)
+
 
 
 def apply(client, solution, state):
@@ -96,7 +96,7 @@ def test_rejection_failure_and_manual_edit_preserve_prior_proposal(configured, p
     provider.error = None
     clarified = chat(configured, solution, provider, message='Explain that proposal').json()
     assert clarified['pending'] == first['pending']
-    assert provider.contexts[-1]['pending_proposal']==first['pending']
+    assert provider.contexts[-1]['pending_candidate']==first['pending']['candidate']
     manual = configured.put('/solutions/' + solution['id'], json={'name': 'Manual changed', 'expected_updated_at': solution['updated_at']})
     assert manual.status_code == 200, manual.text
     current = configured.get(scope(solution)).json()
