@@ -1,0 +1,11 @@
+{
+  "message": "You can build a simple 2-step workflow from the available services:\n\n1. **Danish Generator** (`dev-danish-5d64fc0d9d054404bb24eeec7b15bed7`, version 0.1.0)\n   - Generates feasible district-heating topology candidates.\n   - Published settings:\n     - `allow_hx` (boolean, default `true`): include heat exchangers\n     - `allow_bypass` (boolean, default `true`): include bypasses\n     - `how_many` (integer, default `1`, min `1`, max `4`): maximum candidate layouts to return\n\n2. **Danish Drawing A** (`dev-danish-e68628e4c31840b19aa972bdde8a8342`, version 0.1.0)\n   - Renders drawings from the topology report.\n   - No editable settings.\n\nOr, alternatively, use **Danish Drawing B** (`dev-danish-183f32d3e8034828bf918c61832da209`, version 0.1.0) instead of Drawing A if you want the other published drawing view.\n\nThe compatible connection published by the catalogue is:\n- Generator `networks` output → Drawing A `networks` input\n- Generator `networks` output → Drawing B `networks` input\n\nSo the available layout comparison + drawing flow is:\n- **Generator → Drawing A**, or\n- **Generator → Drawing B**\n\nIf you want, I can propose a specific saved-solution edit for one of these setups, including a choice of how many candidate layouts to generate.",
+  "template_key": null,
+  "expected_revision": null,
+  "edits": [],
+  "recommended_seed": null,
+  "discovery": null,
+  "composition_settings": null,
+  "registered_settings": null,
+  "solution_edits": null
+}

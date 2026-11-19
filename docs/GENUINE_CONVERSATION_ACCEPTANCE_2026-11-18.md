@@ -1,5 +1,12 @@
 # Genuine conversation acceptance — concrete proposal, awaiting separate approval
 
+Status update, 2026-11-19: the user separately authorised one bounded exercise.
+Its first genuine response failed the count-clarification objective; the scope
+was closed after one request. No further dispatch is authorised under that scope.
+See [the actual FAIL checkpoint](GENUINE_SAVED_SOLUTION_ACCEPTANCE_2026-11-19.md).
+The remaining text records the original pre-exercise proposal and its status at
+preparation time; it is not renewed spending authority.
+
 Updated 2026-11-19, Europe/Dublin. No paid request, active grant, provider key or successful language-model response is claimed. The running 23127 workspace uses an explicitly labelled scripted provider double. Previous spending scopes stay closed.
 
 ## Provider, model and price

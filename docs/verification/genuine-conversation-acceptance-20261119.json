@@ -1,0 +1,135 @@
+{
+  "date": "2026-11-19",
+  "result": "FAIL",
+  "failed_step": 1,
+  "failure_stage": "acceptance_semantics",
+  "reason": "The real response discovered services and compatible connections but asked no structured count clarification; remaining turns and Runs were not attempted.",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "provider_stage": "schema_validated",
+  "sdk_schema_validated": true,
+  "actual_response": {
+    "message": "You can build a simple 2-step workflow from the available services:\n\n1. **Danish Generator** (`dev-danish-5d64fc0d9d054404bb24eeec7b15bed7`, version 0.1.0)\n   - Generates feasible district-heating topology candidates.\n   - Published settings:\n     - `allow_hx` (boolean, default `true`): include heat exchangers\n     - `allow_bypass` (boolean, default `true`): include bypasses\n     - `how_many` (integer, default `1`, min `1`, max `4`): maximum candidate layouts to return\n\n2. **Danish Drawing A** (`dev-danish-e68628e4c31840b19aa972bdde8a8342`, version 0.1.0)\n   - Renders drawings from the topology report.\n   - No editable settings.\n\nOr, alternatively, use **Danish Drawing B** (`dev-danish-183f32d3e8034828bf918c61832da209`, version 0.1.0) instead of Drawing A if you want the other published drawing view.\n\nThe compatible connection published by the catalogue is:\n- Generator `networks` output → Drawing A `networks` input\n- Generator `networks` output → Drawing B `networks` input\n\nSo the available layout comparison + drawing flow is:\n- **Generator → Drawing A**, or\n- **Generator → Drawing B**\n\nIf you want, I can propose a specific saved-solution edit for one of these setups, including a choice of how many candidate layouts to generate.",
+    "template_key": null,
+    "expected_revision": null,
+    "edits": [],
+    "recommended_seed": null,
+    "discovery": null,
+    "composition_settings": null,
+    "registered_settings": null,
+    "solution_edits": null
+  },
+  "actual_response_sha256": "7b867ae5127ff9e6bfcd1b24e835a91c73a9386bb74c31cd56d5fb7b428d76ee",
+  "request_sha256": "6107710c65255438b06e41c1480769fa610ed157efb1062e8ec8d9ed411720fe",
+  "solution_id": "bc475d0f-2e7b-413e-b5d3-2b895ae502ae",
+  "solution_updated_at": "2026-11-19T09:03:29.775303",
+  "conversation_revision": 1,
+  "saved_nodes": 0,
+  "saved_edges": 0,
+  "pending_proposal": null,
+  "run_input_selected": false,
+  "workflow_submissions": 0,
+  "first_run": {
+    "attempted": false
+  },
+  "second_run": {
+    "attempted": false
+  },
+  "turns": [
+    {
+      "turn": 1,
+      "result": "FAIL",
+      "observed": "Actual catalogue discovery, settings/defaults and compatible connections; no count question",
+      "user_message": "I’m exploring district-heating network layouts. I’d like to compare possible layouts and see drawings of them. What can I build from the available services?"
+    },
+    {
+      "turn": 2,
+      "result": "NOT_ATTEMPTED",
+      "reason": "Stopped after first failed live step; scope closed"
+    },
+    {
+      "turn": 3,
+      "result": "NOT_ATTEMPTED",
+      "reason": "Stopped after first failed live step; scope closed"
+    },
+    {
+      "turn": 4,
+      "result": "NOT_ATTEMPTED",
+      "reason": "Stopped after first failed live step; scope closed"
+    },
+    {
+      "turn": 5,
+      "result": "NOT_ATTEMPTED",
+      "reason": "Stopped after first failed live step; scope closed"
+    },
+    {
+      "turn": 6,
+      "result": "NOT_ATTEMPTED",
+      "reason": "Stopped after first failed live step; scope closed"
+    }
+  ],
+  "accounting": {
+    "closed": true,
+    "requests": 1,
+    "known_input_tokens": 3132,
+    "known_output_tokens": 411,
+    "usage_complete": true,
+    "accounted_usd": 0.00461835,
+    "lifetime_reserved_usd": 0.06765,
+    "accounting_basis": "conservative rates including 10% headroom; unknown usage retains maximum reservation; invoice not independently reconciled"
+  },
+  "usage": {
+    "input_tokens": 3132,
+    "output_tokens": 411,
+    "total_tokens": 3543,
+    "input_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0,
+      "cache_write_tokens_details": {
+        "ttl_30m_tokens": 0,
+        "ttl_12h_tokens": 0
+      }
+    },
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    }
+  },
+  "other_designer_denied": true,
+  "catalogue": [
+    {
+      "service_id": "dev-danish-5d64fc0d9d054404bb24eeec7b15bed7",
+      "name": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+      "contract_id": "c9323d6c-8349-4e22-96e3-5c76b35f5de5",
+      "contract_version": "1.1.0"
+    },
+    {
+      "service_id": "dev-danish-e68628e4c31840b19aa972bdde8a8342",
+      "name": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+      "contract_id": "65ccbff2-5927-4df2-a493-33524cac01ff",
+      "contract_version": "1.0.0"
+    },
+    {
+      "service_id": "dev-danish-183f32d3e8034828bf918c61832da209",
+      "name": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B",
+      "contract_id": "fc557111-f535-49d3-95c4-968fdd9f0274",
+      "contract_version": "1.0.0"
+    }
+  ],
+  "scope_policy": {
+    "max_requests": 6,
+    "max_input_tokens": 64000,
+    "max_output_tokens": 3000,
+    "hard_limit_usd": 0.45,
+    "automatic_retries": 0,
+    "fallback_models": false
+  },
+  "portal_serving_commit": "b37a240d23324da3fd4d4cc03eb334bc1ded33ff",
+  "wp3_serving_commit": "39405313f9b685d91b8263b9b87a3fc42577331d",
+  "historical_workflows_rerun": false,
+  "limitations": [
+    "No independent renderer consumption was established",
+    "No partner scientific approval",
+    "No joins or broad interchangeability established",
+    "No production deployment",
+    "No general reliability claim"
+  ]
+}

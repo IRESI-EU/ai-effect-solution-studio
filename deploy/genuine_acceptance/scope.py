@@ -87,9 +87,52 @@ def close(directory):
     (directory/'closed-summary.private.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary))
 
 
+def capture(directory,solution_id):
+    p,client,_=load(directory)
+    solution=get(client,p,'/solutions/'+solution_id);conversation=get(client,p,'/design-ai/solutions/'+solution_id)
+    audits=[json.loads(line) for line in (directory/'provider-audit.private.jsonl').read_text(encoding='utf-8').splitlines()]
+    assert len(audits)==1 and conversation['conversation_revision']==1
+    # The audit's conservative CSV redactor can omit comma-rich prose. Recover
+    # only the actually stored owned response, then verify the original SDK hash.
+    from app.services.provider_evidence import digest
+    turn=dict(audits[0]['validated_response'])
+    turn['message']=conversation['messages'][-1]['content']
+    assert digest(turn)==audits[0]['validated_response_sha256']
+    assert turn['discovery'] is None and not turn['solution_edits'] and not turn['edits']
+    assert not solution['nodes'] and not solution['edges'] and conversation['pending'] is None
+    assert not Budget(directory/'acceptance.private.sqlite').availability()['can_request']
+    accounts=json.loads((directory/'credentials.private.json').read_text());other=session();login(other,p['api_url'],accounts['other_designer'])
+    denied=[other.get(p['api_url']+path,timeout=10).status_code for path in ('/solutions/'+solution_id,'/design-ai/solutions/'+solution_id)]
+    assert denied==[403,403]
+    closed=json.loads((directory/'closed-summary.private.json').read_text())
+    checkpoint={'solution':solution,'conversation':conversation,'actual_validated_turn':turn,'audit_response_hash_verified':True,'closed':closed}
+    with (directory/'failed-turn-1.private.json').open('x',encoding='utf-8') as stream:json.dump(checkpoint,stream,indent=2,ensure_ascii=False)
+    public={'date':'2026-11-19','result':'FAIL','failed_step':1,'failure_stage':'acceptance_semantics',
+        'reason':'The real response discovered services and compatible connections but asked no structured count clarification; remaining turns and Runs were not attempted.',
+        'model':audits[0]['returned_model'],'provider_stage':audits[0]['provider_stage'],'sdk_schema_validated':True,
+        'actual_response':turn,'actual_response_sha256':digest(turn),'request_sha256':audits[0]['request_sha256'],
+        'solution_id':solution_id,'solution_updated_at':solution['updated_at'],'conversation_revision':conversation['conversation_revision'],
+        'saved_nodes':0,'saved_edges':0,'pending_proposal':None,'run_input_selected':False,'workflow_submissions':0,
+        'first_run':{'attempted':False},'second_run':{'attempted':False},
+        'turns':[{'turn':1,'result':'FAIL','observed':'Actual catalogue discovery, settings/defaults and compatible connections; no count question',
+            'user_message':conversation['messages'][0]['content']}]+[{'turn':n,'result':'NOT_ATTEMPTED','reason':'Stopped after first failed live step; scope closed'} for n in range(2,7)],
+        'accounting':closed,'usage':audits[0]['usage'],'other_designer_denied':True,
+        'catalogue':json.loads((directory/'preflight.private.json').read_text())['catalogue'],
+        'scope_policy':{'max_requests':6,'max_input_tokens':64000,'max_output_tokens':3000,'hard_limit_usd':0.45,'automatic_retries':0,'fallback_models':False},
+        'portal_serving_commit':json.loads((directory/'serving.private.json').read_text())['portal_base'],
+        'wp3_serving_commit':'39405313f9b685d91b8263b9b87a3fc42577331d','historical_workflows_rerun':False,
+        'limitations':['No independent renderer consumption was established','No partner scientific approval','No joins or broad interchangeability established','No production deployment','No general reliability claim']}
+    destination=ROOT/'docs/verification/genuine-conversation-acceptance-20261119.json'
+    with destination.open('x',encoding='utf-8') as stream:json.dump(public,stream,indent=2,ensure_ascii=False);stream.write('\n')
+    fixture=ROOT/'apps/api/tests/fixtures/genuine-clarification-miss-20261119.json';fixture.parent.mkdir(exist_ok=True)
+    with fixture.open('x',encoding='utf-8') as stream:json.dump(turn,stream,indent=2,ensure_ascii=False);stream.write('\n')
+    print(json.dumps({'result':'FAIL','requests':closed['requests'],'actual_response_hash_verified':True,'scope_closed':True,'new_workflow_submissions':0,'provider_identifiers_published':False}))
+
+
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=['preflight','activate','close']);parser.add_argument('--directory',type=Path,required=True);parser.add_argument('--solution')
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=['preflight','activate','close','capture']);parser.add_argument('--directory',type=Path,required=True);parser.add_argument('--solution')
     args=parser.parse_args();directory=args.directory.resolve()
     if args.action=='preflight':preflight(directory,args.solution)
     elif args.action=='activate':activate(directory,args.solution)
-    else:close(directory)
+    elif args.action=='close':close(directory)
+    else:capture(directory,args.solution)

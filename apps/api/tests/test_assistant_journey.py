@@ -1,12 +1,14 @@
 """Full saved-solution conversation with explicit offline provider responses."""
 from copy import deepcopy
 import json
+from pathlib import Path
 
 from app.db import SessionLocal
 from app.models.execution_submission import ExecutionSubmission
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.schemas.design_ai import DiscoveryDecision
+from app.schemas.design_ai import AssistantTurn
 from test_saved_solution_assistant import bound, turn, scope, apply, chat
 
 
@@ -94,3 +96,19 @@ def test_retrieval_ranks_late_relevant_service_and_excludes_inaccessible_drafts(
     catalogue=provider.contexts[-1]['catalogue'];identifiers=[c['service_id'] for c in catalogue['services']]
     assert catalogue['truncated'] and len(identifiers)==40 and identifiers[0]=='late'
     assert not {'draft','hidden','archived'}&set(identifiers)
+
+
+def test_recorded_failed_genuine_reply_preserves_review_without_inventing_clarification(bound,provider):
+    """Actual failed response replay only; no inference or successful live claim."""
+    client,_=bound
+    solution=client.post('/solutions',json={'name':'Recorded failure replay','nodes':[],'edges':[]}).json()
+    pending=chat(client,solution,provider,[{'kind':'rename','value':'Existing reviewed proposal'}]).json()
+    recorded=json.loads((Path(__file__).parent/'fixtures/genuine-clarification-miss-20261119.json').read_text(encoding='utf-8'))
+    provider.turn=AssistantTurn.model_validate(recorded)
+    response=send(client,solution,provider,'Recorded failed comparison goal replay')
+    assert response.status_code==200
+    actual=response.json()
+    assert actual['messages'][-1]['content']==recorded['message']
+    assert actual['clarification'] is None and actual['pending']==pending['pending']
+    assert client.get('/solutions/'+solution['id']).json()==solution
+    with SessionLocal() as db:assert db.query(ExecutionSubmission).count()==0

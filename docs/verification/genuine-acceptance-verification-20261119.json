@@ -1,0 +1,873 @@
+{
+  "date": "2026-11-19",
+  "exercise_portal_commit": "b37a240d23324da3fd4d4cc03eb334bc1ded33ff",
+  "wp3_commit": "39405313f9b685d91b8263b9b87a3fc42577331d",
+  "real_provider": true,
+  "scripted_override": false,
+  "scope_closed": true,
+  "settled_requests": 1,
+  "actual_request_input_bound": 22198,
+  "new_solutions": 1,
+  "new_workflow_submissions": 0,
+  "new_deployments": 0,
+  "reopened_conversation_revision": 1,
+  "historical_runs_read_only_rechecked_unchanged": [
+    "wf-7596a65908e7",
+    "wf-04a2b43ae794",
+    "wf-c155a6dd6853",
+    "wf-6066f56dcf4b"
+  ],
+  "workspace_health": [
+    {
+      "workspace_port": 23124,
+      "http_status": 200
+    },
+    {
+      "workspace_port": 23125,
+      "http_status": 200
+    },
+    {
+      "workspace_port": 23126,
+      "http_status": 200
+    },
+    {
+      "workspace_port": 23127,
+      "http_status": 200
+    },
+    {
+      "workspace_port": 23128,
+      "http_status": 200
+    }
+  ],
+  "original_head": "12aae82dd47b078ba077aca40b0712c375b9d7f3",
+  "original_dirty_entries": 150,
+  "offline_tests": [
+    {
+      "suite": "failure-stage-checks",
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "offline-diagnosis",
+      "tests": 42,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "frozen_source_files": [
+    {
+      "component": "api",
+      "path": "apps/api/app/accounting_authority.py",
+      "git_blob": "eaffcccc12c21993a38968a4dfde8357725bb019",
+      "sha256": "907bda560b07b28459d8d6e69667e5f69051151e42ab20d8c5f86d91f0f476e1"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/core/config.py",
+      "git_blob": "804d9a7150bd329b487c56a3381b959e9cac0bd0",
+      "sha256": "b385d1f729164c405fe1fa91680b400b858e97230545f799550a159d248e31de"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/core/security.py",
+      "git_blob": "158005bf859898bb4dc11cdb8a17227d024a8780",
+      "sha256": "d611e24f32f6cdbce6f75273f1b758129adda17bb862ccd70d635600d848efe9"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/db.py",
+      "git_blob": "503e26bd5d5c7dc82c3c9aeeb75c216573293a2f",
+      "sha256": "44641f6612aab66d23ac5cf5724a7b4ffb96ecd3f32a9d30266087110bceb61f"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/dependencies/__init__.py",
+      "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/dependencies/auth.py",
+      "git_blob": "84297ce19232f955d1afc362beb56f168c032884",
+      "sha256": "e9af3ebb32ad8c1fa9b31549ec16b6a2f4de02f2d1c218c1a5f9cba6f9a882ed"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/main.py",
+      "git_blob": "fbd15a9a64ca827f81120f1f9c856e93bb5a5baf",
+      "sha256": "1ac91c66eb79ab4e080ed34cc65731254f373636b8e98e12b7711b566a39410d"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/deployment.py",
+      "git_blob": "4fb67455370fd98dcbbc60081847ebd52bd9d8e0",
+      "sha256": "444f63cfaee18fe043484c4a2a3e76635b354c49657864ad52a8de209be6b8c5"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/design_ai.py",
+      "git_blob": "006f2c064e5719e0b2b29d6d1efbc412d17349f3",
+      "sha256": "532aac1204e3d419148e6c7e76228046c65b226e837960bc4c074a0b92c4ecba"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/execution_submission.py",
+      "git_blob": "2c8a1b1cd4d02ab9434fce99439211e99ffe236c",
+      "sha256": "33bb32dc33e441fb853737b1bd71184ec2ee7458af37e8df145182676c57d40e"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/local_dutch_execution.py",
+      "git_blob": "d1450d6c9865811f6a5aacb4b638d2de17bdf8fe",
+      "sha256": "cdfb4dfbb57811a922841fa294e7a96f8fe2bf031d4fb0eb095e86faad61b373"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/operation_contract.py",
+      "git_blob": "d0f4d4a77fab11acf781a37627c57b308a808a73",
+      "sha256": "6ce0d8bf4581b32514e35acf482c69b56fed6208503682a5bd7b5357d3252e38"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/service.py",
+      "git_blob": "725df5aa2bac4833ceb583e4aee140e51115dad4",
+      "sha256": "01f07289258e9a19a4854d066232e43f137f3ff6f72dd0bdc6b2845486b465a0"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/solution.py",
+      "git_blob": "295a2af6de825006d01eb89072db2e1becdc2592",
+      "sha256": "59851b6b5e5c57d23eb02cd99a6c1e7c66cd2122bac2991438674b2c685aa0cf"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/models/user.py",
+      "git_blob": "6fc2680e5e28d631271c4c24c6bfb7d565bbf529",
+      "sha256": "fa89cf1b8af47457da67b139f6a50a4bc93aaa0bd044590cd1873adfc8870922"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/admin_users.py",
+      "git_blob": "74028758773dbfe8e35d31b5c167dceaa1409458",
+      "sha256": "611f920f0859891791a5e6d442299cd270ee675c54def0c908bc427f9330ae77"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/auth.py",
+      "git_blob": "377fd1e78dc7bef0a8d773a1ba45600e1d301b1b",
+      "sha256": "27e57430cd3e741ea3cd8f8749383f766862b06340473cb1b564e8b97697c3ef"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/deployment_results.py",
+      "git_blob": "2fe84ad4b429358ed9142849882f7ba9eef7c3f4",
+      "sha256": "5764c9f8281e3ca999a5413334a91bae7d0e5d0a1cd74a634c2a071a7ef79268"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/design_ai.py",
+      "git_blob": "1eea1280b5ce02cf9c9f4884f4764f9b9898bfe6",
+      "sha256": "c4adf6bb97b4314e732e63036800299ceab66e67bf729689d0dd0af4fbf15d18"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/experiment_journey.py",
+      "git_blob": "000fcfafdbf41535076b1df376eb8b9427644d37",
+      "sha256": "67b8dfe3c6eaeb4bc3311f9d466f6e84a8d05f27567b5ea144867e5fdf90a292"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/operation_contracts.py",
+      "git_blob": "004e1a65caa53b91176fae3ee1086ed85d2b4267",
+      "sha256": "ffb6c09847ea4a92e69a73707fe41c1c14de34eb324bee2b56a603130128e5f8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/parameter_onboarding.py",
+      "git_blob": "1db7df1504b2cc6732d02c109147e25899aff817",
+      "sha256": "58f7faf450737c8e3a44aacda08450ba810369a6204dd736fa454ea0d269d256"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/routers/solution_assistant.py",
+      "git_blob": "0771073fca3f26406f94456b235154d405c5b239",
+      "sha256": "021fd3c3ccad60f7c29cc207d4bc436d1141778b7cf4f670cda3661b2cf9e31e"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/auth.py",
+      "git_blob": "7bea59d6fd6edf3a6856f71765cec2015d32412c",
+      "sha256": "326517b9396977ff6d2a6ca5e0213297afc95ffe043bb55eaecdb6ce9c236657"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/data_reference.py",
+      "git_blob": "1e34d8bf32db1fa707efd13767044dcd181aa4da",
+      "sha256": "3ad13beea83c4b3d7343ec37db530ffeb3d5b7c452432dc0294bad43a395cc36"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/deployment.py",
+      "git_blob": "d70f8a373ee5d12ebfa6db26fa15c701c58ff3c0",
+      "sha256": "c4714bb42950542e0d62335af505a3e2c041f1552a6400da7c18261e0a5d4783"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/design_ai.py",
+      "git_blob": "d916ecb473da89e4a74b90dfa436a7e759577aab",
+      "sha256": "87cf5e5a447f8da30bb8cceca22d62c0df5c53fd266bc7092203f92326fe22c2"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/operation_contract.py",
+      "git_blob": "62c97e56beefde2d37efda1a7b6512edf9d0250b",
+      "sha256": "ed761aa8a79eb05f9c6bbaceb2cd08f51dd95a3f47c0a9f48369a4f6aa7e1ea6"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/ownership.py",
+      "git_blob": "7a7b227962580dda29185098a205ea77223b8232",
+      "sha256": "e448b6659f553d7b8593ffe10f071e27f1b88eb7795efa6184cec144e91f89ab"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/parameter_onboarding.py",
+      "git_blob": "c0742982cdc3166a7264f370e71c4948fd21c534",
+      "sha256": "866764af5710f8ef1d28cc9ccc3d8615a446cf386223dfef70d96afe36b79154"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/service.py",
+      "git_blob": "63d65a4ebec8a2f913ba711dcd693a278e26a925",
+      "sha256": "f23025a503b4136a0f30d2bf71fcb8a71cef2be975ee0c0d841d3cc62d999dc8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/service_import.py",
+      "git_blob": "901ab052d34ba64babb14ea5ef82923ad33a1bc4",
+      "sha256": "ea8b6654d1a1785e24e808b43694efdf1cbe54de4600813266f834c3c477e3b8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/solution.py",
+      "git_blob": "9be41ed3ec0e8a91e40901177765f7e89d643f8b",
+      "sha256": "8eca6202891f5719801684610aa15cce417ace7d8b56641e31b51bb7f0787829"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/solution_assistant.py",
+      "git_blob": "60c570ad66aa23f8dab0724035176ecc41ac0457",
+      "sha256": "dd3be823ea09a925a9185d3b45a9337131517a03ecd61e9a188f5d3117a2e371"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/workflow.py",
+      "git_blob": "b3a0bcd7802ccbd6b69cdb979f25f3813b45b74d",
+      "sha256": "dd33cdef67dc6735a730868ac1d325e283308afb9f3745efc851d044656be66e"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/workflow_submit.py",
+      "git_blob": "caa72d82f5551d50f1242b700ad6438aa90c229d",
+      "sha256": "86a90cd99216c09facee5a57c929162c761f029796e28da9990a9a520f9e4b97"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/schemas/wp3_import.py",
+      "git_blob": "8bfc7dc360135ceae10df3a5bc0ea59165d7013f",
+      "sha256": "041b52b79ea9043c276dc1d5dc8bc3a6277242f09f90d7ed921f9b5d6d14fdc6"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/allowance_client.py",
+      "git_blob": "85b2d3676b21e5601171e6968980fa5899a79322",
+      "sha256": "c41888a008b0d0dfeea8feafdfd0fe2c5fa1efe87d372a4e694511021001e29c"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/assistant_catalogue.py",
+      "git_blob": "01ec088f3bce6583cbd1b1702275fef8cea1bd87",
+      "sha256": "ee60246c12b54f29ff640e094148d15a8c11afa5941cf7a68e093d82cbe26a8a"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/audit.py",
+      "git_blob": "a83101e679891276491882587a0400f175bb6853",
+      "sha256": "4ffae9d55ad8b0321993444dda8b108ffc5bd08e892371a76c8c7ba5e96ac240"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/capability_bindings.py",
+      "git_blob": "0f1a5b282edb06ff1cf4f6584fbc63c77f177ab5",
+      "sha256": "c5eabc6819764a7357118f4a3ef5b57755ace02b8cf8982548e541e20b328e75"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/capability_readiness.py",
+      "git_blob": "2f2b72e6a8ccd4d776d58ba9a4e5ac8519a73b13",
+      "sha256": "cb36d663d7ae3141486ddbdb74d354492efde468efb5d6f9513f06695ddd07d1"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/catalogue_composition.py",
+      "git_blob": "c6660a9207b331f12041bb981cf8b517c9de66fc",
+      "sha256": "c5340d234a300c6f9fcdfa5cf53853d18753864b5ae62be4dba299b48e84ad58"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/catalogue_discovery.py",
+      "git_blob": "2aa7b3036f78ede1b133885e443487ef38fb121d",
+      "sha256": "ffdea578955316d13a202d42ef946d9d7d8d0273b9cdb4bb098c5e78e5fed0f8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/data_reference_service.py",
+      "git_blob": "c99018655a448e6227e239a26a98bf961f2f367a",
+      "sha256": "536476ac7c5bd9afd81a6e08647bbb030f12419be34796b0d938bb2fc59aa993"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/design_ai.py",
+      "git_blob": "f21ff2c3a2601ddea72a28d1b02294aa32435247",
+      "sha256": "8599696a4662e2c579ac6fa762bf577b073aa5c8f71b2fccabd06e3a96115ee9"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/design_ai_allowance_operator.py",
+      "git_blob": "4ed59c29c261f63193b54ff3996ecc71f6e34e4b",
+      "sha256": "574830cbe87b290201c0a51d04797060a96fd8feb8468f3ad953f67474c68643"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/design_ai_budget.py",
+      "git_blob": "02ff1fe16b2171b4c4205d2445c1c91f50473f68",
+      "sha256": "66bc3bd9bc8a028caae12632136a2b260a2a14f97ded82f21d2a5a60344676c2"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/design_ai_demo_allowance.py",
+      "git_blob": "2b8fbad4b31f5e65b4d63a09eed2b42e4c2846ae",
+      "sha256": "628a962c1b2a2e0497274dba59dd78cc79fa086b04c48130b8d0e91c12911edb"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/design_ai_mcp.py",
+      "git_blob": "c983e7c92f900bea69f29bf4beb8e91ae2c1b2c5",
+      "sha256": "5a4410518dd53696518c6a4ea7d22078eb862b4a7ba15af1fb2efb1f33e82169"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/design_ai_provider.py",
+      "git_blob": "af46b667a83f25725a2e1df06d96dbc13ff66a3b",
+      "sha256": "4c1036b96e443b3df16ec754728d0187d3b9063cd0bf246ff749349785dd977f"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/dutch_capture_contract.py",
+      "git_blob": "25e27d6da7cebe307ef7f4a5dc3f62612f33dc4c",
+      "sha256": "f535eaaa20f73a45e8ff6431e3373c05a490801e63ffee4e4c658c8cae793598"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/execution_journey.py",
+      "git_blob": "2233b35f792be03fed99300ec4e2f2300fb533cc",
+      "sha256": "96df07a17c2c742aaf6465c034b9c24b82392fcc4fdc41bb3ec069fa0314c719"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/execution_submission.py",
+      "git_blob": "da45e80404e8fd2837df75d05c3b4d9164714efa",
+      "sha256": "6b17f73e63424e4c0a86d19cdbb1396490edfcd66ecc4f32c52655ed86ec55c8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/instance_configuration.py",
+      "git_blob": "19de470a9c1626b2800a6383ac381975625b668b",
+      "sha256": "6be3c40b7ecf2ce833d96d209c14afc5fc567e20b78f1d3156222f9d9c916023"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/instance_evidence.py",
+      "git_blob": "6f12bcaf74494d3276a7724d8c5ddbf040e97c69",
+      "sha256": "2965c79a01ec254aaf45102d2d54aac273de26e29534ad71d74eadb70319da2f"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/instance_proposals.py",
+      "git_blob": "ca4150ed65ba2919f88b9427eaf1336747518e71",
+      "sha256": "f610dc09fe00d19646b0631acc61a7df799afdde03b88c57d9196407d9a5acd1"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/local_dutch_capture.py",
+      "git_blob": "d7623ce376f6672c11f5ffce0bdfda85ee1f2031",
+      "sha256": "866c85ef91ad290ee99514092a489a54ddb3db2087506a856c9cc14f0cbbb4f7"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/local_dutch_evidence.py",
+      "git_blob": "518984ef9c3689d89ce501945a870c025ea6c8e1",
+      "sha256": "faa29b4c30df1571054d17c4ff51e05a7e4c2c0263779310bc7fd0014880aae5"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/native_instance_evidence.py",
+      "git_blob": "68e6d918b637d49ae8b5019ff3c03a9caa694397",
+      "sha256": "d68b47f6ecc0a825cd8e64b29255122cdd44ac03a497ceaef164e23ae5c043e2"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/operation_contract_registry.py",
+      "git_blob": "231ac5df429486143af42389d994531e796d2536",
+      "sha256": "838edf86e3e05f78119faa687b06bdfe71094bc708db978b12c53ace5e6ff546"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/orchestrator_adapter.py",
+      "git_blob": "6381bee808b45e7b0c7ad6f5a0082ccd8e7937ec",
+      "sha256": "6074dc747d249f1438929c64e9b26876310f4623f7be96e982dcd7c6fbca9a1a"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/owned_artifact_preview.py",
+      "git_blob": "bee4b9ce6cff6edaa77e7e8b5a67fe80efd4ec7e",
+      "sha256": "fb78614c95624c5d9f8dde106f7d7f9f470be5a74500705179ef916bde78493e"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/owned_control_result.py",
+      "git_blob": "41a2ce7382aea19ae87b9b7ebd63349f1afde4cf",
+      "sha256": "c7743182bafaf5c9cdea0ca7faa739f627f097e75674b20c1ee361397e563c04"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/owned_task_artifacts.py",
+      "git_blob": "e813103d5d9478a0ead68ea6cfa7a5461a993110",
+      "sha256": "3177b705bdb7f2371cdd4c96706caf57f8c9b74f725e35908799377664af4510"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/package_importer.py",
+      "git_blob": "924189b1c11970bf9abb32f277cabcc10964ea36",
+      "sha256": "f1d914ee8ffb421ddbe699b8b092bd4a1105d3a1b6f3761669c45f2efb91d8b3"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/package_solution_repair.py",
+      "git_blob": "84ba9b93e627dca30f4b4221bb12bd1374f88b68",
+      "sha256": "255a732e8d563872e8a449136c4fcdab1f578a3a903c7594def12d9e30f760b8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/parameter_discovery.py",
+      "git_blob": "2abe477bf488ef9b72d8ce6727617e74cce6a2af",
+      "sha256": "4d17429b007ca04889b25749d4f9e25477ff337ed06be575d5024f421f3b22de"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/parameter_values.py",
+      "git_blob": "e8e700b0f168a9c57dd0137979dbf2dec275ee6d",
+      "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/portuguese_evidence.py",
+      "git_blob": "cb402080dc202b1703bfb9f601495d1f8d7aa4e3",
+      "sha256": "3bb072ce5d951df6b3ff37b8437ea56ba85ca8b799815c2b78ce4833cbc37e2f"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/portuguese_supervision.py",
+      "git_blob": "043089a2c4af9a86185d5e4b091945a507a3dbd1",
+      "sha256": "07096434ce57b589ae6ddfe910859052d1ebaa47332e97da68fa2ef7cde23c52"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/provider_evidence.py",
+      "git_blob": "d4a6daa04e6d5a32cb839bec430df4cf0a819ead",
+      "sha256": "e8ced64ee028ba95cffc2e5f4f713b2967af89ca3bbaeb3e810343ba4a7d1eeb"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/qualified_demo.py",
+      "git_blob": "27119d35875f9c69cbe5afabd0d16aeec8a4788e",
+      "sha256": "9b16a21841ea0fe179a2d86cd5712d8eed27486ab27d9a5138b62e6836cda099"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/registered_parameters.py",
+      "git_blob": "f6047adaee8ccc0e3834f3a82b38330c9e202206",
+      "sha256": "6702682eb711fba39b69ca32dbfe0fc051354ea0ed583e3d823cc1442cd1f329"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/registered_parameters_operator.py",
+      "git_blob": "18a556cda2971ffeee1f4e73a50dc5192c20375d",
+      "sha256": "cd3e51b6d014cf3ae16ab27d70090b58777714e4079fcfb9cbfabae2801442dd"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/runtime_observation.py",
+      "git_blob": "ce7252d4a1534164c4473bca505f75381b9b3fae",
+      "sha256": "444e2ec0bfc92523300e4ee2eab411316e779907952e0885b7e48404d63f333e"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/runtime_preflight.py",
+      "git_blob": "2730532a871eaba65bb99b7ad423b92dd7cfb0a9",
+      "sha256": "8d7fb3be407931458d7ef297172570eb71a0e1d28ed6fdb392b4d2d8c88dbb5f"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/scoped_ai_acceptance.py",
+      "git_blob": "6386e15f443ac5d0ed257c9247311fade9c293dc",
+      "sha256": "d50593a938fa0035f6ef34b21bed0f7b6cf6f2f0bcfbf73ded10d81f2a28c08b"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/selected_input.py",
+      "git_blob": "3456266dd60783319e562a53504971d405649a18",
+      "sha256": "3d8b3e1f8662bbb044b64c8ca1f2313922a08a1cb6cb3aeffc794942ba074a39"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/service_manifest_importer.py",
+      "git_blob": "4085d348cd117dca270f2400468355bc7941bf20",
+      "sha256": "1030ab230e4c054b77b7edc4f6cb065d49ced564e17da608c82ed12e4c6eb506"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/shared_allowance.py",
+      "git_blob": "af7c7593724a7e4f0205d302e8b495202cea2bd7",
+      "sha256": "e8205d590cd1eaae576587ffe30ab850c7a2599f7af7a9eb4905c19ea0fb2af4"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/solution_assistant.py",
+      "git_blob": "8be4f0d2e45470e375427261293b897d674f55a7",
+      "sha256": "78e20194d06a3f8651c62554293d701d9305ee2d9541cc664df740ec06109709"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/solution_design.py",
+      "git_blob": "afcf367999415372a266631f11ebab92ba3276ba",
+      "sha256": "c9f5992749b994edf8440bf5da11a346ada30afccd3b9fe7650e04b52b0d403a"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/solution_editing.py",
+      "git_blob": "030c3e4aebbada304a39ef7929d4c88da8e23efa",
+      "sha256": "c0e70cbdb5e22f1979227717a20e67183c9dbca2e0f20c3dadc28f12474cfd89"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/structural_proposals.py",
+      "git_blob": "6ab5f5790691a1be64eaedcbe872747a9fe54a1d",
+      "sha256": "e54fb53610fa7354e20487dfc983c70cf7b9ab15e1812b8acadd61644095d292"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/workflow_boundaries.py",
+      "git_blob": "5c38ee0aed634c5cd52840daabcd5c06bbca9901",
+      "sha256": "2599c6fa614828a05fa378a3ae86c6f3644a1f6468a4bb668433b8ff4db897e0"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/workflow_compiler.py",
+      "git_blob": "d177c8831798e5b78396b9763cc80f96f70a29dd",
+      "sha256": "50ad16fea6984ceaca9699842d6eab2993bebd3de14ecdb63428980ab46d55ed"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/services/wp3_importer.py",
+      "git_blob": "fa04cd5ef17e42b7b1fa411ad1f3979fddba9c17",
+      "sha256": "254ea8e4396a7a0c0d2fbdc53c85b78118c55748ca269eb04ab6fc445f866d30"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/conftest.py",
+      "git_blob": "592e1ab97abe7e1a846536781a8a871988c9d20a",
+      "sha256": "774acfab3b362a932e845d299195ff190af0f89e4d8e3425063d0a17986a24b8"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_auth_rbac.py",
+      "git_blob": "defad1ed78adc8474ece6190dcbd5f3f231efe2b",
+      "sha256": "cc48a34b996496c9839c2fc20289214acf2529e5137d2fc5163798c3f66aa07f"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_grpc_preview.py",
+      "git_blob": "1e6bff60c815531bb23b5946e296dcd97ea615fe",
+      "sha256": "cb1e47fef6604d79df69323f330ee3a788ca0a443331164252026f51c6e9f699"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_operation_contracts.py",
+      "git_blob": "d4f531e4edfa489606a098fb0d9ebd93020f6d52",
+      "sha256": "6586c143476d6c3e4b1a057c69022c2bd8792e6c3d897f4298fbda72d31f0484"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_package_import.py",
+      "git_blob": "de574d4d9cadd499e4c1951de36862c456a28e55",
+      "sha256": "56cd87b622a9c839d57d6a5c07a801e982d1775413f402868cea534c90e83f52"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_run_input_artifacts.py",
+      "git_blob": "5e691ad038254b7259a6d8ed3d331f5f3776911d",
+      "sha256": "f2ae2d02c61a7c15430704bcc8b79f68f06b145df07fa2eb96cbe719e6739c96"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_runtime_management.py",
+      "git_blob": "aa8eb076555c2f7eba8c44212c9edd4a67e8663b",
+      "sha256": "e2bf3c3be8ea0174f5f3caa389d7c810eaf6bfdb0fc9611d8469b4c6aa2ca31d"
+    },
+    {
+      "component": "api",
+      "path": "apps/api/app/tests/test_service_onboarding.py",
+      "git_blob": "5f60f319192daa9016ec2b50fcfa90042dd38296",
+      "sha256": "17aab778448fdcb56be9dabb35b02f07ae5899f0bbb473bffb77b181b48fbe01"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/__init__.py",
+      "git_blob": "fdfd5b0390c0af422dbef50f6c17e1089238595d",
+      "sha256": "d161ca4d5918a2b422b37ac5a317681571b589826ea4b7be0bb0077d432959be"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/api/__init__.py",
+      "git_blob": "f8be825e4c2e105f2f9459b58adf0647025ad3ca",
+      "sha256": "d9ac99e32eddd245b6da0f163ee55c7134ea0debae134a777170aedbb52f2649"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/api/app.py",
+      "git_blob": "3d16d815da1a83daad4a5225196abf0addd7922c",
+      "sha256": "b3232d922040f2f6331405bfc55ab5291f54f182163d88270c4c5096ece9d1aa"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/api/models.py",
+      "git_blob": "bcc0c43be3613e38f6df17df9da90a2109abdaa2",
+      "sha256": "bc36b7c33d8a263459c2cd99fb74629104586a85f5c25e4268b84c379874cc5f"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/main.py",
+      "git_blob": "3c127a02dc4cfdb2c6d47b6a60d7ab01f41370dd",
+      "sha256": "4b291a3b49c50580aa88eebc9721c89f4715326f13e40ba6c3f2d5e6e93f8729"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/models/__init__.py",
+      "git_blob": "282acaff423c9f6967849bf7b6864a6861b5e976",
+      "sha256": "5550350716366133f65e12acbe534e1e3ba3f19636c6c7f9a76c933ee1898039"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/models/data_reference.py",
+      "git_blob": "d23e0513210ca330a1b9383cf917c96fe04957f9",
+      "sha256": "975da96d26c3073c692cfb0a8b55980842b4ce94a4b1bbe3b44ab87f040e1b38"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/models/graph.py",
+      "git_blob": "3233091a8e515fbae2d6937eab681a035210a0d7",
+      "sha256": "172199bc94cb92de7d357ec612ceac62fc6227d90191ac0542ae0f1c378dc72e"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/models/node.py",
+      "git_blob": "8781c6f38e28a64f45d980c6ac8f66bccf6ce013",
+      "sha256": "66317533a93be8c7e959ee115de34fa8c8551144e567ea304b2b4b1988d465f3"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/models/state.py",
+      "git_blob": "47f9aa9af4abfdd7d83b350dc9d384e0abf770d2",
+      "sha256": "c6c8c86a5fe928766726127852048f6e632f36dd13df2fb5a22c748b926e18b1"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/__init__.py",
+      "git_blob": "05cef19e896f2c2c3db8db5af4b15f9760cea90e",
+      "sha256": "e2958a7d29c690ececcbee9071e7cdf69f58d4a4427c382f2268f1c8e5a225d6"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/blueprint_parser.py",
+      "git_blob": "2c36910ad68eb02bb5637730239bf35edc8de7be",
+      "sha256": "2e93e47e049e06b66eac319e0fffd0cf5f504af6327d221a9ce6e07042341360"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/configuration_readiness.py",
+      "git_blob": "b1ac3aa6743d91bddb77fc51cce13c1c3eb03068",
+      "sha256": "eec722a6c3c7ebaa022a49a447565d78db32a5ed1a7149c2782837aea1fc9b6d"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/control_client.py",
+      "git_blob": "afd0fb5e8c989057a59fe425555c8cf13b4e8ca7",
+      "sha256": "8af34eb5a75d8174fd7a101c42a532b343601970938bf817ee2fbd1a76d35f92"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/dockerinfo_parser.py",
+      "git_blob": "9d888c9be28f755487b783ab40d25779582f3d8b",
+      "sha256": "acaefb3cd12e232374ed27510db792148ff968227022738865244acc82b7a708"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/log_service.py",
+      "git_blob": "3eafdea4a14b32865dcbec56cac097ec8967a1cf",
+      "sha256": "4be7f91b03d517c8e5d28e926c1397c6e98a5d2abb7120b94113cff938ac442f"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/parameter_contract.py",
+      "git_blob": "e8e700b0f168a9c57dd0137979dbf2dec275ee6d",
+      "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/state_store.py",
+      "git_blob": "19b087f5c722e7299ab08bc98709b84df23e5e63",
+      "sha256": "8e11c8590a987ecbd1ec6f340e0d9b73a8ff7d02a4c90270f9300f787cff33a6"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/task_queue.py",
+      "git_blob": "7460c630e1d27117cc6c806e466c3bb8c2d789ab",
+      "sha256": "789a49583cd2a1b6976d68a503a53f1296584090586d8cfaf6bb8aedb971f576"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/worker.py",
+      "git_blob": "cedb5ac5673b6158c1d321eef3a7e280da48487a",
+      "sha256": "7d77960b82de1783941c29936b252f5023b79b4785822dbee9dd8cf288bf5f8f"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/services/workflow_engine.py",
+      "git_blob": "f3c350055a85b2b0dc876b1017b3a7cf836a8699",
+      "sha256": "b0076af0f15a3cdea57929380caa053dc00a0e1f74f1360967608bd2e8dd79d2"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/utils/__init__.py",
+      "git_blob": "67b9db69f4e18dc515fe8c18c3bac36d6537938a",
+      "sha256": "a50574212694e9c8c8e752e5eed6cf110a262ea64ec223b159447513cabc818c"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/worker_cli.py",
+      "git_blob": "ffe8002d380e00de76bb71160cb12bad3a62c8fe",
+      "sha256": "ac7e683265d9434803c925406f8c0ea83466651511ba18d968df7cd43cdd5e57"
+    },
+    {
+      "component": "wp3",
+      "path": "orchestrator/src/worker_daemon.py",
+      "git_blob": "cff6e39bd108dd5af101388152ee289fa7ae5cf1",
+      "sha256": "87a773ce2554eb52e9558971a6f1bdded239dcdd3a4c03c8a1de1ea69d6921e8"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/common/__init__.py",
+      "git_blob": "bee56c5adbe6b93ef14b0b27377e08af465de514",
+      "sha256": "e70d622beff54ddbac259533647abb4a1437131fc3ebe4d9ec07e9f32ae6d0f8"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/common/concurrent.py",
+      "git_blob": "aa5520f0563e4bf1b035d5ce44147e1e65c46c54",
+      "sha256": "4007af3faf7d2d1ce6efd8bdcd2c40884ca5a523dee3c2e7e7bb6ebfa54938a3"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/common/configuration.py",
+      "git_blob": "3500dd443f724bac9364933b39d6e34248047595",
+      "sha256": "7ee639917d23d7feec363fc1d31359ba429cf0ac81b9b04b737169c9aadbb581"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/common/parameter_contract.py",
+      "git_blob": "e8e700b0f168a9c57dd0137979dbf2dec275ee6d",
+      "sha256": "1861736c1bd9c8a1e4d3aa86b1a2f58ef27bf5e272d682a619062cfb8b7171aa"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/common/sequential.py",
+      "git_blob": "4607ffe97011da896816cbce3907043792694192",
+      "sha256": "22503c271f7c603ed6b5545855ee22b308aa1aad06ecab269767270099b1d3a7"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/config_assistant/handler.py",
+      "git_blob": "9e381c7568a0b7a27a87b2f8b405cf9519c19008",
+      "sha256": "f9a745c788642645c3fa140a3dad624ce3760208e730cfeb64e07ff58571ace1"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/config_assistant/ollama_client.py",
+      "git_blob": "68de773f404d6bb56e6ee167b95f18050f4202ff",
+      "sha256": "f17d16314cf837ae9825b790254c8bf0720ad10077f54fe5a2d8dd2bd61a71ac"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/config_assistant/service.py",
+      "git_blob": "3c246ee0619f8cf7a88529af369f14b59fff94b7",
+      "sha256": "5c019d97ddc9ce08509671a740b278895e0d03fcb65d53e5c9f8065ec0652195"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/draw_topology/draw_network.py",
+      "git_blob": "419297938837b51924af1c855aec37113407d473",
+      "sha256": "198bf061ae11877fbe399ae17d22652afe9849d668b23e06f0a4302d9d734013"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/draw_topology/handler.py",
+      "git_blob": "6e2efd7a3b3e02712882ffa999b7242036a90609",
+      "sha256": "8a921e07d7b1a4f4d1b4ebf09f8b9a1dc2abf0dae2757e57ad1d3f9be79ffbf0"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/draw_topology/service.py",
+      "git_blob": "bca29c367e48259e4eb3475abf3df541540894cf",
+      "sha256": "96edaa4d383c72f4111f5c2b23499b7bb18993c27e249c10ace9303b969de442"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/topology_generator/dh_network_generator.py",
+      "git_blob": "450e762fc3da473f8b9c7ca17af05bee553dd168",
+      "sha256": "754ff9db7cdd2d8d14ce0a56304063d0639c5008906f00c48af94f35ca74f6ab"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/topology_generator/handler.py",
+      "git_blob": "6e2efd7a3b3e02712882ffa999b7242036a90609",
+      "sha256": "8a921e07d7b1a4f4d1b4ebf09f8b9a1dc2abf0dae2757e57ad1d3f9be79ffbf0"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/topology_generator/service.py",
+      "git_blob": "af9437dc6427a280c3618c9cd1c06929c2ee33b2",
+      "sha256": "33254484d87ca63c2d2f980da2b8834eb36de57d4e1b48b4d4eea4db41ae3d14"
+    },
+    {
+      "component": "danish",
+      "path": "use-cases/denmark-node/services/web_ui/app.py",
+      "git_blob": "816e7aaaed7fb8dec691877f23b9fb885f212335",
+      "sha256": "bd80171f027c833972e3d91562d9073d7c35adc91f5256b10869ca619caaf0fb"
+    }
+  ],
+  "offline_prompt_correction_live_verified": false
+}
