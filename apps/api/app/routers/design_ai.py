@@ -47,7 +47,10 @@ def pilot_user(request: Request, user: User = Depends(get_current_user)):
 @router.get("/config")
 def configuration(provider: Provider = Depends(get_provider), user: User | None = Depends(get_optional_user)):
     require_reviewer(user)
-    result = {"enabled": settings.design_ai_enabled, "provider_configured": settings.design_ai_enabled and configured()}
+    # A test provider can only be installed by an explicit in-process dependency
+    # override. get_provider() always returns the real provider in normal runtime.
+    is_double = getattr(provider,"mode",None) == "test"
+    result = {"enabled": settings.design_ai_enabled, "provider_configured": settings.design_ai_enabled and (configured() or is_double)}
     if settings.design_ai_local_pilot:
         result["pilot_notice"] = "Restricted local design-only pilot · Supervised use through one existing reviewer account. Saving does not execute a workflow."
     if settings.design_ai_enabled:
@@ -55,7 +58,11 @@ def configuration(provider: Provider = Depends(get_provider), user: User | None 
         result.update(provider_name=getattr(provider, "name", "Test provider"),
                       provider_mode=getattr(provider, "mode", "test"), model=settings.design_ai_model or None)
         from app.services.allowance_client import Client, requested
-        if requested(settings):
+        if settings.design_ai_scoped_acceptance_file:
+            from app.services.scoped_ai_acceptance import Budget
+            try:result['test_allowance']=Budget(settings.design_ai_scoped_acceptance_file).availability()
+            except HTTPException:result['test_allowance']={'can_request':False,'message':'Scoped acceptance is unavailable; no provider request is authorised.'}
+        elif requested(settings):
             try:result["test_allowance"]=Client(settings).availability()
             except HTTPException:
                 result["test_allowance"]={"can_request":False,"blocked_reason":"accounting_unavailable",

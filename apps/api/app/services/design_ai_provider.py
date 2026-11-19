@@ -136,6 +136,16 @@ composition_settings=null, registered_settings=null. Use solution_edits for chan
 use discovery=null. Never claim edits are already applied, saved or executed.
 The user reviews and explicitly applies/saves a proposal. Execution is a separate
 Run action in Builder; there is no chat execution tool.
+Use catalogue.services for real current discovery. Explain relevant named services
+and their published versions. catalogue.compatible_connections are computed by the
+same whole-output validator used on save; compatible_actions identifies add-after
+and replace choices checked against current connections. Neither proves runtime
+readiness. Unknown connections require clarification or an honest limitation.
+Keep the user's stated goal and pending_clarification across short replies and
+intervening explanations. Never ask again for an already supplied choice.
+For a focused clarification use discovery.outcome=clarification_needed with its
+single question, candidate_id=null and solution_edits=[]. Put explanatory prose
+in message, not a duplicate question. For other saved-solution turns use discovery=null.
 Supported solution_edits are the advertised actions; node_id identifies an existing
 logical step. Different instances of one service can have different settings.
 For set_node_parameters use a JSON object of only requested parameter overrides as
@@ -167,6 +177,15 @@ class Provider(Protocol):
 
 def configured() -> bool:
     from app.services.allowance_client import Client, requested
+    if settings.design_ai_scoped_acceptance_file:
+        try:
+            from app.services.scoped_ai_acceptance import Budget, MODEL
+            if (requested(settings) or settings.design_ai_acceptance_budget_file or settings.design_ai_acceptance_task_limit_file
+                or settings.design_ai_restricted_beta or settings.design_ai_local_pilot
+                or settings.design_ai_model!=MODEL or settings.design_ai_reasoning_effort!='none' or settings.design_ai_max_output_tokens!=3000):return False
+            Budget(settings.design_ai_scoped_acceptance_file).availability()
+            return bool(settings.openai_api_key)
+        except HTTPException:return False
     if requested(settings):
         try:Client(settings)
         except HTTPException:return False
@@ -213,7 +232,8 @@ class OpenAIProvider:
         if settings.design_ai_acceptance_task_limit_file and not settings.design_ai_acceptance_budget_file:
             raise HTTPException(503, "Task allowance requires the existing acceptance ledger")
         system = SAVED_SOLUTION_SYSTEM if context.get("mode") == "saved_solution" else SYSTEM
-        serialized = json.dumps(redact_context(context), ensure_ascii=False, allow_nan=False)
+        request_binding=context.get('_acceptance_binding')
+        serialized = json.dumps(redact_context({k:v for k,v in context.items() if k!='_acceptance_binding'}), ensure_ascii=False, allow_nan=False)
         if len(serialized) > min(max(settings.design_ai_context_chars, 4000), 100000):
             raise HTTPException(422, "This design is too large for the pilot's conversation context")
         timeout = min(max(settings.design_ai_timeout_seconds, 1), 90)
@@ -222,7 +242,13 @@ class OpenAIProvider:
         if settings.design_ai_reasoning_effort:
             options["reasoning"] = {"effort": settings.design_ai_reasoning_effort}
         budget, reservation = None, None
-        if shared:
+        if settings.design_ai_scoped_acceptance_file:
+            from app.services.scoped_ai_acceptance import Budget
+            if context.get('mode')!='saved_solution' or not request_binding:raise HTTPException(503,'Scoped acceptance requires the normal owned saved-solution path')
+            budget=Budget(settings.design_ai_scoped_acceptance_file)
+            input_bound = len(serialized.encode('utf-8'))+len(system.encode('utf-8'))+len(json.dumps(AssistantTurn.model_json_schema()).encode('utf-8'))+8192
+            reservation=budget.reserve(input_bound,output_limit,request_binding=request_binding)
+        elif shared:
             budget=remote
             input_bound = len(serialized.encode("utf-8")) + len(system.encode("utf-8")) + len(json.dumps(AssistantTurn.model_json_schema()).encode("utf-8")) + 8192
             reservation=budget.reserve(input_bound,output_limit)
@@ -269,7 +295,7 @@ class OpenAIProvider:
         except (TimeoutError, APITimeoutError) as exc:
             if budget:
                 budget.failed(reservation, "timeout_usage_unknown")
-            raise HTTPException(504, "The AI provider timed out. Stop; the shared reservation remains held. Do not retry." if shared
+            raise HTTPException(504, "The AI provider timed out. Stop; the reservation remains held. Do not retry." if shared or settings.design_ai_scoped_acceptance_file
                                 else "The AI provider timed out. Your draft is unchanged; you can retry.") from exc
         except (APIError, ValidationError, ValueError) as exc:
             if budget:
@@ -279,6 +305,8 @@ class OpenAIProvider:
             provider_evidence.finish(evidence, payload=payload, response=response, request_id=request_id, validated=validated)
             if budget and reservation is not None:
                 budget.failed(reservation, "usage_unknown_or_cancelled")
+                if settings.design_ai_scoped_acceptance_file and validated is None:
+                    budget.close()
 
 
 def get_provider() -> Provider:

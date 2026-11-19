@@ -64,7 +64,7 @@ def test_chat_review_apply_manual_reload_undo_and_legacy_isolation(configured, p
     assert response.status_code == 200, response.text
     changed = configured.get('/solutions/' + solution['id']).json()
     assert changed['id'] == solution['id']
-    assert [n['data']['configuration']['parameters']['seed'] for n in changed['nodes']] == [42, 43]
+    assert [n['data']['configuration']['parameters']['seed'] for n in changed['nodes'] if n['data'].get('service')] == [42, 43]
     compiled = configured.post('/workflows/compile', json=workflow(changed))
     assert compiled.status_code == 200, compiled.text
     assert [p['parameters']['seed'] for p in compiled.json()['task_configurations'].values()] == [42, 43]
@@ -95,6 +95,7 @@ def test_rejection_failure_and_manual_edit_preserve_prior_proposal(configured, p
     provider.error = None
     clarified = chat(configured, solution, provider, message='Explain that proposal').json()
     assert clarified['pending'] == first['pending']
+    assert provider.contexts[-1]['pending_proposal']==first['pending']
     manual = configured.put('/solutions/' + solution['id'], json={'name': 'Manual changed', 'expected_updated_at': solution['updated_at']})
     assert manual.status_code == 200, manual.text
     current = configured.get(scope(solution)).json()
@@ -146,12 +147,13 @@ def test_three_step_catalogue_proposal_uses_declared_io_and_same_compile(bound, 
     edits += [{'kind': 'connect', 'value': json.dumps({'source': a, 'target': b, 'source_slot': 'grid', 'target_slot': 'grid'})} for a, b in [('start', 'middle'), ('middle', 'finish')]]
     proposal = chat(client, solution, provider, edits)
     assert proposal.status_code == 200, proposal.text
-    assert len(proposal.json()['pending']['changes']) == 5
+    assert len(proposal.json()['pending']['changes']) == 6
+    assert proposal.json()['pending']['changes'][-1]['action']=='workflow_boundaries'
     assert client.get('/solutions/' + solution['id']).json()['nodes'] == []
     result = apply(client, solution, proposal.json())
     assert result.status_code == 200, result.text
     saved_solution = client.get('/solutions/' + solution['id']).json()
-    assert len(saved_solution['nodes']) == 3 and len(saved_solution['edges']) == 2
+    assert len(saved_solution['nodes']) == 5 and len(saved_solution['edges']) == 4
     from test_capability_bindings import workflow as bound_workflow
     compiled = client.post('/workflows/compile', json=bound_workflow(saved_solution))
     assert compiled.status_code == 200, compiled.text

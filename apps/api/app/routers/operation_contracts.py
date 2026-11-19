@@ -30,22 +30,29 @@ router = APIRouter(tags=["operation-contracts"])
 @router.get("/operation-contracts/{contract_id}/runtime-capability")
 def export_runtime_capability(contract_id: str, db: Session = Depends(get_db), user: User = Depends(require_service_publisher)):
     contract = require_contract_ownership(contract_id, db, user)
-    if contract.status != "active" or not contract.definition.get("execution_parameters"):
-        raise HTTPException(409, "Publish a parameter definition before exporting its runtime contract")
+    parameters = contract.definition.get('execution_parameters')
+    if contract.status != "active" or not (parameters or contract.definition.get('binding_transport')=='whole-output-v1'):
+        raise HTTPException(409, "Publish a parameter or supported I/O definition before exporting its runtime contract")
     service = db.query(Service).filter(Service.id == contract.service_id).first()
     from app.services.operation_contract_registry import _ensure_service_is_deployment_eligible
     _ensure_service_is_deployment_eligible(service)
     review = (service.interface_contract or {}).get("parameter_reviews", {}).get(contract.id)
     from app.services.parameter_discovery import reviewed_contract_digest, reviewed_service_digest
-    if (not review or review.get("reviewed_contract_sha256") != reviewed_contract_digest(contract)
+    if parameters and (not review or review.get("reviewed_contract_sha256") != reviewed_contract_digest(contract)
             or review.get("reviewed_service_sha256") != reviewed_service_digest(service)):
         raise HTTPException(409, "A current provider review is required before exporting runtime settings")
-    parameters = contract.definition["execution_parameters"]
-    parameter_contract_digest(parameters)
-    return {"capability_schema_version": "1.0", "transports": ["http-parameters-v1"], "operations": [{
+    if parameters:parameter_contract_digest(parameters)
+    value={"capability_schema_version": "1.0", "transports": ["http-parameters-v1"] if parameters else [], "operations": [{
         "operation_name": contract.runtime_operation_name, "operation_identity": contract.operation_identity,
-        "contract_version": contract.contract_version, "execution_parameters": parameters,
+        "contract_version": contract.contract_version, **({'execution_parameters':parameters} if parameters else {}),
     }]}
+    if contract.definition.get('binding_transport')=='whole-output-v1':
+        from app.schemas.operation_contract import OperationContractDefinition
+        from app.services.capability_bindings import digest
+        definition=OperationContractDefinition.model_validate(contract.definition).model_dump(exclude_none=True)
+        value['transports'].append('whole-output-v1')
+        value['operations'][0].update(binding_transport='whole-output-v1',io_contract_sha256=digest(definition),io_definition=definition)
+    return value
 
 
 @router.get("/operation-contracts/{contract_id}/qualification-capability")

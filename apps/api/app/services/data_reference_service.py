@@ -75,6 +75,12 @@ def preview_svg_file(uri: str):
     if path.stat().st_size > MAX_SVG_BYTES:
         return {"kind": "svg", "available": False, "message": "SVG exceeds the 2 MiB preview limit."}
     content = path.read_bytes()
+    return preview_svg_bytes(content,uri)
+
+
+def preview_svg_bytes(content: bytes, uri: str):
+    if len(content)>MAX_SVG_BYTES or b"<svg" not in content[:2048].lower() or b"<!doctype" in content.lower() or b"<!entity" in content.lower():
+        return {"kind":"svg","available":False,"message":"Invalid or oversized SVG artifact."}
     # SVGs are displayed as images, never injected into the page as markup.
     if b"<svg" not in content[:2048].lower() or b"<!doctype" in content.lower() or b"<!entity" in content.lower():
         return {"kind": "svg", "available": False, "message": "Invalid SVG artifact."}

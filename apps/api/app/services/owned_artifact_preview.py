@@ -72,6 +72,11 @@ def preview(payload, db, user):
             raise HTTPException(409, "Artifact workflow namespace could not be verified")
         associated = requested in outputs
         if not associated:
+            from app.services.owned_task_artifacts import inspect
+            for reference in matches[0].get('output_refs',[]):
+                if reference.get('protocol')=='file':
+                    derivative=inspect(submission,matches[0],reference,payload,db)
+                    if derivative is not None:return derivative
             for protocol, uri in outputs:
                 if protocol != "file":
                     continue

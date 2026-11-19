@@ -47,6 +47,7 @@ export default function DeploymentDetailPage({
   const [previewDrawings, setPreviewDrawings] = useState<DrawingReference[]>([]);
   const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
+  const previewTaskRef = useRef<string | undefined>(undefined);
   const resultsScrolledRef = useRef(false);
 
   useEffect(() => {
@@ -73,6 +74,9 @@ export default function DeploymentDetailPage({
     taskId?: string,
     directoryContext?: any,
   ) {
+    // Keep derivative drawing/file navigation bound to the parent task selected
+    // from this run. The server still verifies the manifest and every hash.
+    if (taskId !== undefined) previewTaskRef.current = taskId;
     setPreviewDrawings(drawingOptions?.drawings || []);
     setSelectedDrawingIndex(drawingOptions?.selectedIndex ?? null);
     if (directoryContext) {
@@ -94,7 +98,7 @@ export default function DeploymentDetailPage({
           protocol: ref.protocol,
           uri: ref.uri,
           format: ref.format,
-          task_id: taskId,
+          task_id: taskId ?? previewTaskRef.current,
         }),
       });
 

@@ -128,6 +128,7 @@ def test_manual_onboarding_two_runs_and_owned_results(publisher, tmp_path, monke
         export = client.get(f"/operation-contracts/{contract['id']}/qualification-capability")
         assert export.status_code == 200, export.text
         installed.write_text(json.dumps(export.json()))
+        monkeypatch.setenv('CONTROL_PARAMETER_QUALIFICATION_MODE','true')
         import requests
         headers = {'Authorization': 'Bearer test-service-authority'}
         qualification_input = tmp_path / 'qualification-input.json'

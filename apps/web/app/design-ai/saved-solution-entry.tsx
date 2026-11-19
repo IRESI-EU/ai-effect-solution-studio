@@ -12,6 +12,7 @@ export default function SavedSolutionEntry({ legacy }: { legacy: ReactNode }) {
   const [solutions, setSolutions] = useState<Solution[]>([]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [goal, setGoal] = useState("");
   const creating = useRef(false);
   useEffect(() => {
     let current = true;
@@ -33,11 +34,11 @@ export default function SavedSolutionEntry({ legacy }: { legacy: ReactNode }) {
     return () => { current = false; };
   }, [user?.id]);
   async function create() {
-    if (creating.current) return;
+    if (creating.current || !goal.trim()) return;
     creating.current = true; setBusy(true); setError("");
     try {
       const response = await fetch("/api/solutions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
-        name: "New AI-EFFECT solution", description: "", nodes: [], edges: [], design_metadata: { run_input: null },
+        name: "New AI-EFFECT solution", description: "", nodes: [], edges: [], design_metadata: { run_input: null, assistant_goal: goal.trim() },
       }) });
       const value = await response.json();
       if (!response.ok) throw new Error(apiErrorMessage(value, "Could not create a solution"));
@@ -50,7 +51,13 @@ export default function SavedSolutionEntry({ legacy }: { legacy: ReactNode }) {
     {error && <p role="alert">{error}</p>}
     {mode === "loading" ? <p>Loading your workspace…</p> : mode === "disabled" ? <p>Sign in to an enabled design workspace to use the assistant.</p> : <>
       <p>Chat and manual editing share one saved solution in Builder. Start a solution or continue one of your own.</p>
-      <button type="button" disabled={busy} onClick={create}>{busy ? "Creating…" : "Start a new solution"}</button>
+      <form onSubmit={event => { event.preventDefault(); void create(); }}>
+        <label style={{display:"grid",gap:8,marginBlock:12}}>What would you like to build?
+          <textarea value={goal} onChange={event=>setGoal(event.target.value)} maxLength={4000} rows={3} disabled={busy} required />
+        </label>
+        <p>Your goal opens in the same saved Builder solution. Send it to discover current catalogue services, clarify choices and review a connected proposal. Starting a solution makes no AI request or Run.</p>
+        <button disabled={busy || !goal.trim()}>{busy ? "Creating…" : "Start with this goal"}</button>
+      </form>
       <ul>{solutions.map(solution => <li key={solution.id}><Link href={`/builder?solutionId=${encodeURIComponent(solution.id)}`}>{solution.name}</Link></li>)}</ul>
     </>}
   </div>;

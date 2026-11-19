@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     design_ai_acceptance_budget_file: str = ""
     # Optional immutable task ceiling, accounted in the same existing ledger.
     design_ai_acceptance_task_limit_file: str = ""
+    design_ai_scoped_acceptance_file: str = ""
     # Separate, explicit shared-authority scope. Never a local-budget fallback.
     design_ai_budget_authority_url: str = ""
     design_ai_budget_authority_socket: str = ""

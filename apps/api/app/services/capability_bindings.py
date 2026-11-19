@@ -20,6 +20,19 @@ def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False).encode()).hexdigest()
 
 
+def whole_output_compatible(output, target):
+    """One reference, unchanged: shared by validation and catalogue discovery."""
+    fields = ("semantic_concept", "schema_ref", "value_representation")
+    return (target.get("source_requirement") in ("upstream_operation", "upstream_or_workflow_input")
+        and all(output.get(k) and output.get(k) == target.get(k) for k in fields)
+        and output["value_representation"] == "data_reference"
+        and bool(output.get("data_reference_protocols")) and bool(output.get("content_types"))
+        and set(output["data_reference_protocols"]) <= set(target.get("data_reference_protocols", []))
+        and set(output["content_types"]) <= set(target.get("content_types", []))
+        and output.get("min_cardinality") == 1 and output.get("max_cardinality") == 1
+        and target.get("max_cardinality") == 1)
+
+
 def explicit(workflow):
     return any("operation_contract" in n.model_fields_set for n in workflow.nodes) or any(
         "binding" in e.model_fields_set for e in workflow.edges)
@@ -150,14 +163,7 @@ def validate(workflow, db, *, require_run_input=True):
             raise HTTPException(422, "The selected output or input slot is unknown; review this connection.")
         if target["source_requirement"] not in ("upstream_operation", "upstream_or_workflow_input"):
             raise HTTPException(422, f"{pins[edge.source].runtime_operation_name} → {pins[edge.target].runtime_operation_name}: {target['name']} requires separate workflow input and does not accept this upstream output. Reverse the connection only when the published output/input contracts support it.")
-        fields = ("semantic_concept", "schema_ref", "value_representation")
-        if (any(not output.get(k) or output.get(k) != target.get(k) for k in fields)
-                or output["value_representation"] != "data_reference"
-                or not output["data_reference_protocols"] or not output["content_types"]
-                or not set(output["data_reference_protocols"]) <= set(target["data_reference_protocols"])
-                or not set(output["content_types"]) <= set(target["content_types"])
-                or output["min_cardinality"] != 1 or output["max_cardinality"] != 1
-                or target["max_cardinality"] != 1):
+        if not whole_output_compatible(output, target):
             raise HTTPException(422, "Incompatible connection: schema/version, meaning, representation, format, protocol or cardinality differs. No conversion is available.")
         incoming.setdefault(edge.target, []).append(edge)
         if len(incoming[edge.target]) > 1:

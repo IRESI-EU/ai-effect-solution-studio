@@ -36,8 +36,8 @@ def workflow(saved):
     return {"name": saved["name"], "solution_id": saved["id"], "expected_updated_at": saved["updated_at"],
             "nodes": [{"node_id": n["id"], "container_name": "ignored", "operation_name": "ignored",
                        "service_id": n["data"]["service"]["id"], "operation_contract": n["data"]["operation_contract"]}
-                      for n in saved["nodes"]],
-            "edges": [{"source": e["source"], "target": e["target"], "binding": e["data"]["binding"]} for e in saved["edges"]]}
+                      for n in saved["nodes"] if n['data'].get('service')],
+            "edges": [{"source": e["source"], "target": e["target"], "binding": e["data"]["binding"]} for e in saved["edges"] if (e.get('data') or {}).get('binding')]}
 
 
 def test_save_reload_compile_preserves_named_bindings_and_provenance(bound):

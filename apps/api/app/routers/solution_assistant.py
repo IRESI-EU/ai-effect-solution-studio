@@ -42,6 +42,9 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     service.check(solution, row, payload.expected_updated_at, payload.conversation_revision)
     base_sha = service.digest(service.content(solution))
     context = redact_context(service.context(solution, row, payload.message, db, user))
+    if settings.design_ai_scoped_acceptance_file:
+        from app.services.scoped_ai_acceptance import binding
+        context['_acceptance_binding']=binding(settings,user.id,solution.id)
     identifier = row.id
     # No transaction or row lock is held across a provider request.
     db.rollback()
@@ -63,10 +66,13 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     if service.digest(service.content(solution)) != base_sha:
         raise HTTPException(409, "Builder changed the design while AI was responding. Request a new proposal.")
     try:
-        return service.propose(solution, row, payload.message, turn, db, user)
+        return service.propose(solution, row, payload.message, turn, db, user, catalogue_used=context['catalogue'])
     except HTTPException as exc:
         if exc.status_code in {409, 422, 502}:
             db.rollback()
+            if settings.design_ai_scoped_acceptance_file:
+                from app.services.scoped_ai_acceptance import Budget
+                Budget(settings.design_ai_scoped_acceptance_file).close()
             detail = exc.detail if isinstance(exc.detail, str) else "The proposed edit is incompatible"
             raise HTTPException(exc.status_code, {"code": "assistant_edit_rejected", "stage": "application_validation",
                 "message": detail + ". The saved solution and previous pending proposal are unchanged."}) from exc

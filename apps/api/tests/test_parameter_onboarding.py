@@ -264,6 +264,23 @@ def test_provider_can_export_only_published_current_reviewed_runtime_contract(pu
     assert publisher.get(path).status_code == 401
 
 
+def test_owned_active_io_only_export_uses_the_same_compiler_digest(publisher):
+    from app.schemas.operation_contract import OperationContractDefinition
+    from app.services.capability_bindings import digest
+    payload={'operation_identity':'urn:fixture:io-only','runtime_operation_name':'RunFixture','contract_version':'1.0.0',
+        'source_kind':'manual','definition':{'operation_role':'reporter','binding_transport':'whole-output-v1','inputs':[],'outputs':[]}}
+    contract=publisher.post('/services/fixture-onboarded/operation-contracts',json=payload).json()
+    path=f"/operation-contracts/{contract['id']}/runtime-capability"
+    assert publisher.get(path).status_code==409
+    approve(publisher)
+    assert publisher.post(f"/operation-contracts/{contract['id']}/activate").status_code==200
+    export=publisher.get(path).json();operation=export['operations'][0]
+    assert export['transports']==['whole-output-v1'] and 'execution_parameters' not in operation
+    definition=OperationContractDefinition.model_validate(contract['definition']).model_dump(exclude_none=True)
+    assert operation['io_definition']==definition and operation['io_contract_sha256']==digest(definition)
+    login(publisher,'outsider@example.test');assert publisher.get(path).status_code==403
+
+
 def test_runtime_export_rejects_changed_runtime_and_unreviewed_legacy_contract(publisher):
     contract = review(publisher); approve(publisher)
     assert publisher.post(f"/operation-contracts/{contract['id']}/activate").status_code == 200

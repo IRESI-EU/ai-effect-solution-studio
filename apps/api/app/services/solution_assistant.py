@@ -51,6 +51,8 @@ def view(solution, row):
             "conversation_revision": row.revision if row else 0,
             "can_undo": bool(row and row.state.get("last_applied") and row.state["last_applied"]["updated_at"] == solution.updated_at.isoformat()),
             "messages": deepcopy(row.state.get("messages", [])) if row else [],
+            "clarification": deepcopy(row.state.get("clarification")) if row else None,
+            "catalogue_used": deepcopy(row.state.get("catalogue_used")) if row else None,
             "pending": ({key: deepcopy(row.state["pending"][key]) for key in ("id", "changes", "base_updated_at")}
                         if row and row.state.get("pending") else None)}
 
@@ -86,21 +88,9 @@ def selectable(service):
     return service is not None and service.status in {"approved", "validated"} and service.lifecycle_status not in {"archived", "deprecated"}
 
 
-def catalogue(db, user):
-    query = db.query(Service).filter(Service.status.in_(["approved", "validated"])).order_by(Service.id)
-    from app.services.solution_design import can_reference_service
-    services = [s for s in query.all() if selectable(s) and can_reference_service(user, s)]
-    result = []
-    for service in services[:40]:
-        contract = active_contract(service, db)
-        result.append({"service_id": service.id, "name": service.name, "description": (service.description or "")[:1200],
-            "operation_name": service.operation_name, "service_version": service.version,
-            "contract": ({"contract_id": contract.id, "contract_version": contract.contract_version,
-                           "definition": contract.definition} if contract else None)})
-    return {"services": result, "truncated": len(services) > 40}
-
-
 def context(solution, row, message, db, user):
+    from app.services.assistant_catalogue import retrieve, actions
+    catalogue = retrieve(db,user,solution,row,message)
     steps = []
     for node in solution.nodes:
         data = node.get("data", {}); reference = data.get("service")
@@ -117,7 +107,11 @@ def context(solution, row, message, db, user):
                          "steps": steps, "connections": [{"source": e["source"], "target": e["target"],
                             "binding": (e.get("data") or {}).get("binding")} for e in solution.edges],
                          "workflow_input_selected": (solution.design_metadata or {}).get("run_input") is not None},
-            "catalogue": catalogue(db, user), "limits": {"service_instances": 24, "edits_per_proposal": 10}, "supported_actions": ["rename", "describe", "set_node_label", "set_node_parameters",
+            "pending_clarification": deepcopy(row.state.get('clarification')) if row else None,
+            "pending_proposal": ({k:deepcopy(row.state['pending'][k]) for k in ('id','changes','base_updated_at')}
+                if row and row.state.get('pending') else None),
+            "catalogue": catalogue, "compatible_actions": actions(solution,catalogue,db,user),
+            "limits": {"service_instances": 24, "edits_per_proposal": 10}, "supported_actions": ["rename", "describe", "set_node_label", "set_node_parameters",
                 "add_service", "remove_service", "replace_service", "connect", "disconnect"],
             "input_selection": "Use Builder's existing input controls. Data and credentials are not model-editable settings.",
             "execution": "No chat action executes anything. Apply and save requires a separate explicit action; Run stays in Builder."}
@@ -161,6 +155,8 @@ def candidate(solution, edits, allocations, db, user):
         return {"service_id": service.id, "operation": service.operation_name,
                 "contract_version": contract.contract_version if contract else None,
                 "effective_settings": effective_parameters(parameters, data.get("configuration", {}).get("parameters", {})) if parameters else {},
+                "requested_overrides":deepcopy(data.get('configuration',{}).get('parameters',{})),
+                "setting_labels":{k:v.get('title',k.replace('_',' ')) for k,v in (parameters or {}).get('properties',{}).items()},
                 "published_inputs": contract.definition.get("inputs", []) if contract else [],
                 "published_outputs": contract.definition.get("outputs", []) if contract else []}
     for edit in edits:
@@ -185,7 +181,8 @@ def candidate(solution, edits, allocations, db, user):
             try:
                 effective = effective_parameters(contract.definition["execution_parameters"], values)
             except ValueError as exc: raise HTTPException(422, str(exc)) from exc
-            changes.append({"action": edit.kind, "step": data.get("label"), "before": effective_parameters(contract.definition["execution_parameters"], (old or {}).get("parameters", {})), "after": effective, "requested_overrides": patch})
+            changes.append({"action": edit.kind, "step": data.get("label"), "before": effective_parameters(contract.definition["execution_parameters"], (old or {}).get("parameters", {})), "after": effective, "requested_overrides": patch,
+                "setting_labels":{k:v.get('title',k.replace('_',' ')) for k,v in contract.definition['execution_parameters']['properties'].items()}})
         elif edit.kind == "add_service":
             value = parsed(edit.value, {"service_id", "local_ref", "parameters"})
             reference = value.get("local_ref")
@@ -223,6 +220,9 @@ def candidate(solution, edits, allocations, db, user):
             changes.append({"action": edit.kind, "source": source["data"].get("label"), "target": target["data"].get("label"), "binding": value if edit.kind == "connect" else (matches[0].get("data") or {}).get("binding")})
     if len([n for n in nodes if n.get("data", {}).get("service")]) > 24:
         raise HTTPException(422, "This workspace supports up to 24 service instances per reviewed edit")
+    from app.services.workflow_boundaries import complete
+    if edits and complete(nodes,edges):
+        changes.append({'action':'workflow_boundaries','after':'Connect Workflow Input to each starting step and each final step to Workflow Output. Data selection remains in Builder; these display edges are excluded from service compilation.'})
     validate_builder_configurations(db, nodes, edges, user)
     # The current compiler has no feedback-loop runtime. Reject cycles rather
     # than labelling a deadlocking graph runnable.
@@ -234,17 +234,29 @@ def candidate(solution, edits, allocations, db, user):
     return result, changes
 
 
-def propose(solution, row, message, turn, db, user):
+def propose(solution, row, message, turn, db, user, *, catalogue_used=None):
     if turn.edits or turn.template_key is not None or turn.composition_settings or turn.registered_settings or turn.recommended_seed is not None or (turn.discovery and turn.discovery.candidate_id) or turn.expected_revision is not None:
         raise HTTPException(502, "The assistant returned legacy workflow authority instead of saved-solution edits")
     state = deepcopy(row.state)
     allocations = {}; edits = turn.solution_edits or []
+    clarification = turn.discovery and turn.discovery.outcome == 'clarification_needed'
+    if clarification and edits: raise HTTPException(502,'Clarification cannot also propose design changes')
     pending = None
     if edits:
         result, changes = candidate(solution, edits, allocations, db, user)
         pending = {"id": str(uuid4()), "base_updated_at": solution.updated_at.isoformat(), "base_sha256": digest(content(solution)),
                    "candidate_sha256": digest(result), "authority_sha256": authority(result["nodes"], db), "edits": [e.model_dump() for e in edits], "allocations": allocations, "changes": changes}
-    state["messages"] = (state.get("messages", []) + [{"role": "user", "content": message}, {"role": "assistant", "content": turn.message}])[-24:]
+    reply = {'role':'assistant','content':turn.message}
+    if clarification:
+        reply['question'] = turn.discovery.question
+        state['clarification'] = {'request':(state.get('clarification') or {}).get('request',message),'question':turn.discovery.question}
+    elif edits: state['clarification'] = None
+    if catalogue_used is not None:
+        state['catalogue_used'] = {'services':[{'service_id':c['service_id'],'name':c['name'],'operation':c['operation_name'],
+            'contract_version':c['contract']['contract_version'] if c['contract'] else None} for c in catalogue_used['services']],
+            'truncated':catalogue_used['truncated'],'total_accessible':catalogue_used['total_accessible'],
+            'compatible_connections':catalogue_used['compatible_connections']}
+    state["messages"] = (state.get("messages", []) + [{"role": "user", "content": message}, reply])[-24:]
     # An explanation or clarification does not erase an already reviewed proposal.
     if edits: state["pending"] = pending
     row.state = state; row.revision += 1

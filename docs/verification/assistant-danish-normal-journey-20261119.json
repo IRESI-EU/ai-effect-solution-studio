@@ -1,0 +1,267 @@
+{
+  "date": "2026-11-19",
+  "boundary": "Explicit scripted assistant double; real native Danish source; development software fixtures only",
+  "portal_parent": "c7ab371159cfd2aa666dcd7d23d1ecf919411fad",
+  "wp3_parent": "69f7408e12908eb85a5de50af037e4f134e2be49",
+  "wp3_published_candidate": "39405313f9b685d91b8263b9b87a3fc42577331d",
+  "source_manifest_sha256": "529ded074e2cc078e29f4ec1127ce30455c982db50f97d62676433c0ed14bc71",
+  "active_read_only_export_sha256": {
+    "generator": "3d86b807c4150777147803789c79e847bf2aeba150a11cbc92287aea300ffd98",
+    "renderer-a": "d669abda372299f88f74db7ab1e7d81ade50d06731bf144eb70f5a3d83adf07d",
+    "renderer-b": "4c98d7053068606c41e1a6aaaf37a92790a4ca402249ed0df3552408e4e4ecbb"
+  },
+  "paid_calls": 0,
+  "active_paid_ledger": false,
+  "conversation_cases": [
+    {
+      "case": "fresh-goal-discovery-clarification",
+      "request": "I want to compare district-heating network layouts and see drawings.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    },
+    {
+      "case": "connected-proposal",
+      "request": "Two options, use the development fixture data.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    },
+    {
+      "case": "explanation",
+      "request": "Explain what will run before I apply.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    },
+    {
+      "case": "workflow-boundary-repair",
+      "request": "Connect the workflow input and output.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    },
+    {
+      "case": "follow-up-settings",
+      "request": "Change the topology limit to three.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    },
+    {
+      "case": "compatible-add",
+      "request": "Add a second compatible drawing view.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    },
+    {
+      "case": "compatible-replace",
+      "request": "Replace the Second view with the alternative drawing service.",
+      "catalogue_count": 3,
+      "boundary": "EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call"
+    }
+  ],
+  "same_solution": true,
+  "selected_input_unchanged": true,
+  "retained_existing_instances": [
+    "service-7404c42b-2439-4810-aca4-2c47fdc16896",
+    "service-e66b578a-9a4d-41a8-83f9-00a5b30f9d8d"
+  ],
+  "new_drawing_instance": "service-3f9a995f-11fa-43c9-8c03-0e3a4479ee66",
+  "replacement_preserved_instance_and_connections": true,
+  "runs": [
+    {
+      "label": "first-run",
+      "workflow_id": "wf-7596a65908e7",
+      "solution_id": "e5fea167-edf9-4029-9f95-95fb63737b65",
+      "submission_id": "0f440448-9aaf-4351-98a0-78241b3db437",
+      "submitted_sha256": "c0cd8a40d842acb9e7fd6d0c7a6f29c526faddae3a962ba3eb714157bec40664",
+      "tasks": [
+        {
+          "task_id": "task_a78a37eb",
+          "node_key": "dev-danish-ab8e0ac9250a:GenerateTopology",
+          "input_hashes": [
+            {
+              "sha256": "dcd31df7939fa004bf90f07e100b4e3b2dc8df48f59c94c38ca577cf3af21bf9",
+              "bytes": 74
+            }
+          ],
+          "output_sha256": "57bdf2effa7e96ac3eb9e0294a6e3a4b471f45128ef1f7ab1afc1914f8efe2bd",
+          "output_bytes": 14504,
+          "topology_count": 2,
+          "drawing_count": null,
+          "artifacts": [],
+          "configuration": {
+            "contract_id": "c4a69bab-c318-45e6-9298-c1819c7eecfa",
+            "contract_version": "1.1.0",
+            "operation_identity": "urn:development-fixture:danish:dev-danish-3fc8bdf135d04a61b64e7adc68120441",
+            "schema_version": "1.0",
+            "parameters": {
+              "allow_hx": true,
+              "allow_bypass": true,
+              "how_many": 2
+            },
+            "instance_id": "service-7404c42b-2439-4810-aca4-2c47fdc16896"
+          },
+          "algorithm_consumed": {
+            "allow_hx": true,
+            "allow_bypass": true,
+            "how_many": 2
+          },
+          "algorithm_arguments": {
+            "allow_hx": true,
+            "allow_bypass": true,
+            "max_results": 2
+          }
+        },
+        {
+          "task_id": "task_2b33267f",
+          "node_key": "dev-danish-2a4f7ae2cd48:RenderTopologies",
+          "input_hashes": [
+            {
+              "sha256": "57bdf2effa7e96ac3eb9e0294a6e3a4b471f45128ef1f7ab1afc1914f8efe2bd",
+              "bytes": 14504
+            }
+          ],
+          "output_sha256": "4336739f3673099eab5f9d4e0f6d611b258d3949a73a99ce147ac1ce3cc96a33",
+          "output_bytes": 8185,
+          "topology_count": 2,
+          "drawing_count": 2,
+          "artifacts": [
+            {
+              "name": "task_2b33267f_network_001.svg",
+              "sha256": "c3a8a63d4d06dbd61ee0fa265368c4c2664deca56d66fab5d0693b6fe3b4f406",
+              "bytes": 3703
+            },
+            {
+              "name": "task_2b33267f_network_002.svg",
+              "sha256": "1cfbadbc0009955fe38e23ad77f5c259be21d66508144cdafb6da72d4184df71",
+              "bytes": 4399
+            }
+          ],
+          "configuration": null,
+          "algorithm_consumed": null,
+          "algorithm_arguments": null
+        }
+      ],
+      "other_designer_denied": true
+    },
+    {
+      "label": "second-run",
+      "workflow_id": "wf-04a2b43ae794",
+      "solution_id": "e5fea167-edf9-4029-9f95-95fb63737b65",
+      "submission_id": "73ccba4f-ae34-49fb-b3f8-b65ed7389a45",
+      "submitted_sha256": "c0223f5fc2f7744a14d19fcb5bfd9c82492d8cb7fddd743e259a5d2ee1b6e46d",
+      "tasks": [
+        {
+          "task_id": "task_a78a37eb",
+          "node_key": "dev-danish-ab8e0ac9250a:GenerateTopology",
+          "input_hashes": [
+            {
+              "sha256": "dcd31df7939fa004bf90f07e100b4e3b2dc8df48f59c94c38ca577cf3af21bf9",
+              "bytes": 74
+            }
+          ],
+          "output_sha256": "90b06271f9cd0cecae02e982f17c22ef9ffdb82d9b9c5558468aa2d35e243c0b",
+          "output_bytes": 18817,
+          "topology_count": 3,
+          "drawing_count": null,
+          "artifacts": [],
+          "configuration": {
+            "contract_id": "c4a69bab-c318-45e6-9298-c1819c7eecfa",
+            "contract_version": "1.1.0",
+            "operation_identity": "urn:development-fixture:danish:dev-danish-3fc8bdf135d04a61b64e7adc68120441",
+            "schema_version": "1.0",
+            "parameters": {
+              "allow_hx": true,
+              "allow_bypass": true,
+              "how_many": 3
+            },
+            "instance_id": "service-7404c42b-2439-4810-aca4-2c47fdc16896"
+          },
+          "algorithm_consumed": {
+            "allow_hx": true,
+            "allow_bypass": true,
+            "how_many": 3
+          },
+          "algorithm_arguments": {
+            "allow_hx": true,
+            "allow_bypass": true,
+            "max_results": 3
+          }
+        },
+        {
+          "task_id": "task_2b33267f",
+          "node_key": "dev-danish-2a4f7ae2cd48:RenderTopologies",
+          "input_hashes": [
+            {
+              "sha256": "90b06271f9cd0cecae02e982f17c22ef9ffdb82d9b9c5558468aa2d35e243c0b",
+              "bytes": 18817
+            }
+          ],
+          "output_sha256": "37e7209dc50b3575f5fe26bb1edf677e6af559197daaacdca5abf58f1fe54e43",
+          "output_bytes": 9052,
+          "topology_count": 3,
+          "drawing_count": 3,
+          "artifacts": [
+            {
+              "name": "task_2b33267f_network_001.svg",
+              "sha256": "0c2e0b67862af6029dd66a3359707e0691e336371811748d7ed650dc45354a72",
+              "bytes": 3703
+            },
+            {
+              "name": "task_2b33267f_network_002.svg",
+              "sha256": "bca7f07384a292e0c9f83f237ca116f555a12fe73bf01a83daa98b3277ce1c4a",
+              "bytes": 4399
+            },
+            {
+              "name": "task_2b33267f_network_003.svg",
+              "sha256": "39637ce1e377df004df6542de0540f65057b520c86e902c6f7ded7372a8e705a",
+              "bytes": 4398
+            }
+          ],
+          "configuration": null,
+          "algorithm_consumed": null,
+          "algorithm_arguments": null
+        },
+        {
+          "task_id": "task_ea635265",
+          "node_key": "dev-danish-14b63f04d07a:RenderTopologies",
+          "input_hashes": [
+            {
+              "sha256": "90b06271f9cd0cecae02e982f17c22ef9ffdb82d9b9c5558468aa2d35e243c0b",
+              "bytes": 18817
+            }
+          ],
+          "output_sha256": "506bf2dacb61b946db0815645a399638ef5282a009d20de7cc3abe60cbf4109b",
+          "output_bytes": 9052,
+          "topology_count": 3,
+          "drawing_count": 3,
+          "artifacts": [
+            {
+              "name": "task_ea635265_network_001.svg",
+              "sha256": "0c2e0b67862af6029dd66a3359707e0691e336371811748d7ed650dc45354a72",
+              "bytes": 3703
+            },
+            {
+              "name": "task_ea635265_network_002.svg",
+              "sha256": "bca7f07384a292e0c9f83f237ca116f555a12fe73bf01a83daa98b3277ce1c4a",
+              "bytes": 4399
+            },
+            {
+              "name": "task_ea635265_network_003.svg",
+              "sha256": "39637ce1e377df004df6542de0540f65057b520c86e902c6f7ded7372a8e705a",
+              "bytes": 4398
+            }
+          ],
+          "configuration": null,
+          "algorithm_consumed": null,
+          "algorithm_arguments": null
+        }
+      ],
+      "other_designer_denied": true
+    }
+  ],
+  "original_danish_and_portuguese_results_rechecked_unchanged": true,
+  "limitations": [
+    "Assistant replies are scripted doubles, not model acceptance",
+    "Drawing services expose no adjustable settings; upstream_execution is producer evidence, not renderer consumption",
+    "Host Python source runtime, not partner-hosted or production image acceptance",
+    "Fixture approvals are not partner scientific/data/default/limit approval"
+  ]
+}

@@ -43,8 +43,8 @@ def node(identifier, seed=42):
 def workflow(solution):
     return {"name": solution["name"], "solution_id": solution["id"], "expected_updated_at": solution["updated_at"],
             "nodes": [{"node_id": n["id"], "service_id": n["data"]["service"]["id"], "container_name": "ignored",
-                       "operation_name": "ConfigureAndSynthesize", "configuration": n["data"]["configuration"]} for n in solution["nodes"]],
-            "edges": [{"source": e["source"], "target": e["target"]} for e in solution["edges"]]}
+                       "operation_name": "ConfigureAndSynthesize", "configuration": n["data"]["configuration"]} for n in solution["nodes"] if n['data'].get('service')],
+            "edges": [{"source": e["source"], "target": e["target"]} for e in solution["edges"] if not (e.get('data') or {}).get('assistant_workflow_boundary')]}
 
 
 @pytest.mark.parametrize("value", [None, {"seed": None}, {"seed": True}, {"seed": "42"}, {"seed": 42.0}, {"seed": 44}, {"path": "/tmp"}])

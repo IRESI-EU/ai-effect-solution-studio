@@ -1,0 +1,103 @@
+"""Synthetic ledgers and mocked SDK only: no live approval, key or paid request."""
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime,timedelta,timezone
+import json
+import shutil
+from types import SimpleNamespace
+
+import pytest
+from fastapi import HTTPException
+
+from app.core.config import settings
+from app.schemas.design_ai import AssistantTurn
+from app.services import scoped_ai_acceptance as module
+
+
+SCOPE={'database_sha256':'a'*64,'user_id':'fixture-designer','solution_id':'fixture-solution'}
+
+
+def new(tmp_path):
+    path=tmp_path/'new-scoped-fixture.sqlite'
+    module.initialize(path,approved_binding=SCOPE,authorization_ref='OFFLINE TEST APPROVAL DOUBLE',
+        expires_at=(datetime.now(timezone.utc)+timedelta(hours=1)).isoformat())
+    return module.Budget(path)
+
+
+def settled(budget,identity):
+    budget.settle(identity,{'model':module.MODEL,'service_tier':'default','id':'resp_fixture',
+        'usage':{'input_tokens':100,'output_tokens':20,'unexpected':'NEVER PERSIST THIS'}})
+
+
+def test_six_requests_lifetime_reservations_and_no_reset(tmp_path):
+    budget=new(tmp_path)
+    for _ in range(6):
+        identity=budget.reserve(1000,3000,request_binding=SCOPE);settled(budget,identity)
+    assert budget.availability()['lifetime_reserved_usd']==0.4059
+    assert not budget.availability()['can_request']
+    with pytest.raises(HTTPException):budget.reserve(1000,3000,request_binding=SCOPE)
+    with pytest.raises(FileExistsError):new(tmp_path)
+    assert b'NEVER PERSIST THIS' not in budget.path.read_bytes()
+
+
+def test_identity_scope_limits_uncertainty_close_and_copy_are_fail_closed(tmp_path):
+    budget=new(tmp_path)
+    for bound,output,scope in [(64001,3000,SCOPE),(100,3001,SCOPE),(100,3000,{**SCOPE,'solution_id':'another'})]:
+        with pytest.raises(HTTPException):budget.reserve(bound,output,request_binding=scope)
+    assert budget.availability()['request_count']==0
+    identity=budget.reserve(1000,3000,request_binding=SCOPE)
+    with pytest.raises(HTTPException):budget.reserve(1000,3000,request_binding=SCOPE)
+    budget.failed(identity,'timeout_usage_unknown')
+    assert not module.Budget(budget.path).availability()['can_request']
+    copy=tmp_path/'copy.sqlite';shutil.copy2(budget.path,copy)
+    with pytest.raises(HTTPException):module.Budget(copy).availability()
+
+
+def test_concurrent_reservations_never_dispatch_twice_with_unknown_usage(tmp_path):
+    budget=new(tmp_path)
+    def reserve(_):
+        try:return budget.reserve(1000,3000,request_binding=SCOPE)
+        except HTTPException:return None
+    with ThreadPoolExecutor(max_workers=4) as pool:results=list(pool.map(reserve,range(4)))
+    assert sum(value is not None for value in results)==1
+
+
+@pytest.mark.parametrize('mutation',['model','tier','input','output','unknown'])
+def test_usage_and_model_mismatch_stops_the_scope(tmp_path,mutation):
+    budget=new(tmp_path);identity=budget.reserve(1000,3000,request_binding=SCOPE)
+    payload={'model':module.MODEL,'service_tier':'default','usage':{'input_tokens':100,'output_tokens':20}}
+    if mutation=='model':payload['model']='other'
+    if mutation=='tier':payload['service_tier']='priority'
+    if mutation=='input':payload['usage']['input_tokens']=1001
+    if mutation=='output':payload['usage']['output_tokens']=3001
+    if mutation=='unknown':payload['usage']=None
+    with pytest.raises(HTTPException):budget.settle(identity,payload)
+    assert not budget.availability()['can_request']
+
+
+def test_sdk_dispatch_is_pinned_reserved_and_excludes_private_scope(environment,tmp_path,monkeypatch):
+    from app.services import design_ai_provider as provider
+    budget=new(tmp_path)
+    monkeypatch.setattr(settings,'design_ai_scoped_acceptance_file',str(budget.path))
+    monkeypatch.setattr(settings,'design_ai_model',module.MODEL)
+    monkeypatch.setattr(settings,'design_ai_reasoning_effort','none')
+    monkeypatch.setattr(settings,'design_ai_max_output_tokens',3000)
+    monkeypatch.setattr(settings,'openai_api_key','EXPLICIT SDK DOUBLE KEY, NEVER TRANSMITTED')
+    turn=AssistantTurn(message='EXPLICIT SDK RESPONSE DOUBLE',template_key=None,expected_revision=None,edits=[])
+    requests=[]
+    class Client:
+        async def __aenter__(self):return self
+        async def __aexit__(self,*args):return False
+        def __init__(self,**kwargs):
+            assert kwargs['max_retries']==0 and kwargs['base_url']=='https://api.openai.com/v1'
+            self.responses=SimpleNamespace(with_raw_response=SimpleNamespace(parse=self.parse))
+        async def parse(self,**kwargs):
+            assert budget.availability()['request_count']==1
+            requests.append(kwargs)
+            payload={'model':module.MODEL,'service_tier':'default','id':'resp_fixture','usage':{'input_tokens':100,'output_tokens':20}}
+            return SimpleNamespace(http_response=SimpleNamespace(json=lambda:payload),parse=lambda:SimpleNamespace(output_parsed=turn))
+    monkeypatch.setattr(provider,'AsyncOpenAI',Client)
+    result=asyncio.run(provider.OpenAIProvider().respond({'mode':'saved_solution','request':'Explain','_acceptance_binding':SCOPE}))
+    assert result==turn and 'fixture-designer' not in json.dumps(requests[0]['input'])
+    assert requests[0]['max_output_tokens']==3000 and requests[0]['reasoning']=={'effort':'none'}
+    assert requests[0]['service_tier']=='default' and not requests[0].get('tools')
