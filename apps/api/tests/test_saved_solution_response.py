@@ -165,6 +165,22 @@ def test_existing_offline_ui_double_uses_focused_contract_only(environment, tmp_
     assert 'EXPLICIT OFFLINE' in trace['boundary']
 
 
+def test_confirmation_of_matching_pending_proposal_needs_no_duplicate_edits(policy, provider):
+    client = policy; solution = saved(client)
+    provider.turn = turn([{'kind': 'set_node_parameters', 'node_id': 'first', 'value': '{"limit":2}'}],
+        assumptions=['Propose up to two candidates for this fixture comparison.'])
+    proposed = send(client, solution, provider, 'Prepare a small comparison').json()
+    provider.turn = turn(message='Confirmed: the existing review already proposes up to two; it has not been applied.')
+    confirmed = send(client, solution, provider, 'Yes, up to two please').json()
+    assert confirmed['pending'] == proposed['pending']
+    assert client.get('/solutions/' + solution['id']).json() == solution
+    reopened = client.get(scope(solution)).json()
+    assert reopened['pending']['changes'][0]['action'] == 'proposed_assumption'
+    assert reopened['pending']['changes'][0]['after'] == proposed['pending']['changes'][0]['after']
+    assert provider.contexts[-1]['pending_proposal'] == proposed['pending']
+    with SessionLocal() as db: assert db.query(ExecutionSubmission).count() == 0
+
+
 @pytest.mark.parametrize('invalid', [response('answer', solution_edits=[{'kind': 'rename', 'value': 'No'}]),
     response(template_key='legacy'), response('proposal', solution_edits=[{'kind': 'set_node_parameters', 'node_id': 'first', 'value': '{"undeclared":true}'}])])
 def test_invalid_response_and_unsupported_proposal_retain_saved_and_pending(policy, provider, invalid):
