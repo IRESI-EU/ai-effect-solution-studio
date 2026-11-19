@@ -41,7 +41,7 @@ def capture(directory,workflow,label):
             inputs.append({'sha256':sha(content),'bytes':len(content)})
         records.append({'task':task,'input_hashes':inputs,'output_sha256':sha(raw),'output_bytes':len(raw),
             'topology_count':output.get('topology_count'),'drawing_count':output.get('drawing_count'),
-            'execution':output.get('execution'),'artifacts':artifacts})
+            'execution':output.get('execution'),'input_consumption':output.get('input_consumption'),'artifacts':artifacts})
     solution_id=snapshot['submitted']['request']['solution_id'];other=session();login(other,p['api_url'],accounts['other_designer'])
     denied={}
     for path in ('/solutions/'+solution_id,'/design-ai/solutions/'+solution_id,

@@ -23,6 +23,7 @@ ROOT=Path(__file__).resolve().parents[2]
 REDIS='sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065'
 PORTS=(23128,28199,28200,28201,28202,28203,26382)
 MODEL='gpt-5.4-mini-2026-03-17'
+WP3_REVIEWED='4fada6cad733c932d6a877338798718142e24e85'
 
 
 def module(name,path):
@@ -60,7 +61,7 @@ def prepare(directory,wp3,dependencies,key_source,project,authorization,ports=PO
     free(ports)
     if not offline_ui:key_from_project(key_source,project)
     web_port,api_port,wp3_port,gen_port,draw_a_port,draw_b_port,redis_port=ports
-    if subprocess.check_output(['git','rev-parse','HEAD'],cwd=wp3,text=True).strip()!='39405313f9b685d91b8263b9b87a3fc42577331d':
+    if subprocess.check_output(['git','rev-parse','HEAD'],cwd=wp3,text=True).strip()!=WP3_REVIEWED:
         raise RuntimeError('Verify the reviewed WP3 source identity before preparation')
     if subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=wp3,text=True).strip():raise RuntimeError('Preserve dirty WP3 source')
     directory.mkdir(parents=True,mode=0o700)
@@ -70,7 +71,7 @@ def prepare(directory,wp3,dependencies,key_source,project,authorization,ports=PO
     value={'kind':'genuine-saved-solution-v1','directory':str(directory),'project':'aie-genuine-'+uuid4().hex[:12],
         'cookie':'aie_genuine_'+uuid4().hex,'api_url':f'http://127.0.0.1:{api_port}','web_url':f'http://127.0.0.1:{web_port}','wp3_url':f'http://127.0.0.1:{wp3_port}',
         'node_ports':{'generator':gen_port,'renderer-a':draw_a_port,'renderer-b':draw_b_port},'redis_port':redis_port,'ports':list(ports),'offline_ui_fixture':offline_ui,'workflow_submission_disabled':no_workflows,
-        'control_key':secrets.token_urlsafe(48),'orchestrator_key':secrets.token_urlsafe(48),'redis_key':secrets.token_urlsafe(48),
+        'wp3_commit':WP3_REVIEWED,'control_key':secrets.token_urlsafe(48),'orchestrator_key':secrets.token_urlsafe(48),'redis_key':secrets.token_urlsafe(48),
         'dependencies_directory':str(dependencies/'node_modules'),'key_source':str(key_source.resolve()),'key_project':str(project.resolve()),
         'authorization_ref':'AI-EFFECT genuine acceptance user prompt 2026-11-19 sha256:'+hashlib.sha256(authorization.read_bytes()).hexdigest()+'; project key reuse authorised; ledger initialization requires the exact separately recorded exercise binding and limits'}
     (directory/'profile.private.json').write_text(json.dumps(value,indent=2))

@@ -58,8 +58,7 @@ def load(row, db):
     metadata = compiled.get("solution_studio_metadata")
     if not isinstance(metadata, dict) or not isinstance(metadata.get("execution_instances"), list): return None
     instances = metadata["execution_instances"]
-    configured = [node for node in instances if isinstance(node, dict) and node.get("configuration")]
-    if not configured: return None
+    if not instances: return None
     base = {"workflow_id": row.workflow_id, "submission_id": row.id, "source": "native Control task output",
             "limitations": "Algorithm evidence is checked separately from authenticated delivery receipts; neither establishes independent scientific qualification"}
     def unavailable(message):
@@ -77,7 +76,7 @@ def load(row, db):
             return unavailable("Runtime task association differs from the recorded run")
         tasks = observed["tasks"]
         results = []
-        for node in configured:
+        for node in instances:
             identity = {key: node[key] for key in ("instance_id", "task_id", "node_key", "operation_name")}
             try:
                 matching = [task for task in tasks if isinstance(task, dict) and task.get("task_id") == node["task_id"]]
@@ -99,15 +98,23 @@ def load(row, db):
                 if not isinstance(outputs, list) or len(outputs) != 1 or not isinstance(outputs[0], dict) or outputs[0].get("format") != "json":
                     results.append({**identity, "state": "unavailable", "message": "No single instrumented output is recorded"}); continue
                 output_raw, output = read(outputs[0], row.workflow_id)
-                proof = output.get("execution") if isinstance(output, dict) else None
+                renderer = output.get("input_consumption") if isinstance(output, dict) else None
+                if not node.get("configuration") and renderer is None:
+                    continue  # Preserve historical evidence without inventing consumption.
+                proof = output.get("execution") if node.get("configuration") else renderer
                 if not isinstance(proof, dict) or proof.get("schema_version") != "1.0":
                     results.append({**identity, "state": "unavailable", "message": "This operation has no supported consumption record"}); continue
-                if (any(proof.get(key) != value for key, value in {"workflow_id": row.workflow_id, "task_id": node["task_id"],
-                        "instance_id": node["instance_id"], "operation_name": node["operation_name"]}.items())
-                        or canonical(proof.get("configuration")) != canonical(node["configuration"])
-                        or canonical(proof.get("algorithm_consumed")) != canonical(node["configuration"]["parameters"])
-                        or proof.get("parameter_contract_sha256") != node["parameter_contract_sha256"]):
-                    raise ValueError("Consumed values or execution identity differs from the submitted instance")
+                expected_identity = {"workflow_id": row.workflow_id, "task_id": node["task_id"], "operation_name": node["operation_name"]}
+                if node.get("configuration"):
+                    expected_identity["instance_id"] = node["instance_id"]
+                    if (canonical(proof.get("configuration")) != canonical(node["configuration"])
+                            or canonical(proof.get("algorithm_consumed")) != canonical(node["configuration"]["parameters"])
+                            or proof.get("parameter_contract_sha256") != node["parameter_contract_sha256"]):
+                        raise ValueError("Consumed values differ from the submitted instance")
+                elif proof.get("kind") != "json-networks-render-v1":
+                    raise ValueError("Unsupported input consumption contract")
+                if any(proof.get(key) != value for key, value in expected_identity.items()):
+                    raise ValueError("Observation identity differs from the submitted instance")
                 expected = compiled.get("inputs", [])
                 if node["input_bindings"]:
                     expected = []
@@ -122,9 +129,18 @@ def load(row, db):
                 _, content = read(inputs[0], row.workflow_id)
                 if hashlib.sha256(canonical(content)).hexdigest() != proof.get("input_sha256"):
                     raise ValueError("Algorithm input content differs from its recorded observation")
+                if not node.get("configuration"):
+                    networks = content.get("networks")
+                    if (not isinstance(networks, list) or not networks
+                            or type(proof.get("processed_network_count")) is not int
+                            or proof["processed_network_count"] != len(networks)
+                            or proof.get("networks_sha256") != hashlib.sha256(canonical(networks)).hexdigest()
+                            or proof.get("processed_network_sha256") != [hashlib.sha256(canonical(n)).hexdigest() for n in networks]
+                            or output.get("drawing_count") != len(networks) or output.get("topology_count") != len(networks)):
+                        raise ValueError("Renderer processing differs from the actual input")
                 output_hash = hashlib.sha256(output_raw).hexdigest()
                 receipt_hash = hashlib.sha256(canonical({"output_sha256": output_hash, "input_sha256": proof["input_sha256"],
-                                                        "configuration": node["configuration"], **identity})).hexdigest()
+                                                        "configuration": node.get("configuration"), **identity})).hexdigest()
                 receipt = db.get(InstanceEvidenceReceipt, (row.id, node["task_id"]))
                 if receipt and receipt.manifest_sha256 != receipt_hash: raise ValueError("Previously inspected result changed")
                 if receipt is None:
@@ -133,10 +149,15 @@ def load(row, db):
                     except IntegrityError:
                         db.rollback(); receipt = db.get(InstanceEvidenceReceipt, (row.id, node["task_id"]))
                         if receipt is None or receipt.manifest_sha256 != receipt_hash: raise ValueError("Concurrent result receipt differs")
-                results.append({**identity, "state": "available", "wrapper_received": proof["configuration"]["parameters"],
-                    "algorithm_consumed": proof["algorithm_consumed"], "instrumentation": proof.get("instrumentation"),
-                    "input_binding_verified": True, "output_sha256": output_hash, "manifest_sha256": receipt_hash,
-                    "summary": {"topology_count": output.get("topology_count")}})
+                record = {**identity, "state": "available", "instrumentation": proof.get("instrumentation"),
+                    "input_binding_verified": True, "input_sha256": proof["input_sha256"],
+                    "output_sha256": output_hash, "manifest_sha256": receipt_hash,
+                    "summary": {"topology_count": output.get("topology_count"), "drawing_count": output.get("drawing_count")}}
+                if node.get("configuration"):
+                    record.update(wrapper_received=proof["configuration"]["parameters"], algorithm_consumed=proof["algorithm_consumed"])
+                else:
+                    record["input_consumption"] = proof
+                results.append(record)
             except (EvidenceUnavailable, OSError):
                 results.append({**identity, "state": "inaccessible", "message": "Instrumented output or input is unavailable in the authorized artifact volume"})
             except (ValueError, KeyError, TypeError, StopIteration):

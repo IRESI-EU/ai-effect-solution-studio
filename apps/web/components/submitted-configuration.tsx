@@ -64,6 +64,7 @@ export default function SubmittedConfiguration({ workflowId, status, onConfigure
           {proof?.state === "available" && proof.download_url === `/api/deployments/by-workflow/${workflowId}/tasks/${node.task_id}/generated-csv` && <p><a className="btn btn-primary" href={proof.download_url} download>Download generated CSV</a></p>}
           {proof?.state === "available" && proof.model_binding && <p>Model association: TrainModel task {proof.model_binding.producer_task_id} in this workflow. Model SHA-256: <code>{proof.model_binding.model_sha256}</code></p>}
           {proof?.summary?.topology_count != null && <p>Topologies generated: {proof.summary.topology_count}</p>}
+          {proof?.state === "available" && proof.input_consumption?.kind === "json-networks-render-v1" && <p>Renderer processed networks: {proof.input_consumption.processed_network_count}. Actual input SHA-256: <code style={{ overflowWrap: "anywhere" }}>{proof.input_consumption.input_sha256}</code></p>}
           {proof?.state === "available" && <details><summary>Evidence details</summary><p>{proof.instrumentation || proof.algorithm_consumption}</p>
             {proof.observation_sha256 && <p style={{ overflowWrap: "anywhere" }}>Runtime observation SHA-256: {proof.observation_sha256}</p>}
             {proof.model_sha256 && <p style={{ overflowWrap: "anywhere" }}>Model SHA-256: {proof.model_sha256}</p>}

@@ -87,3 +87,37 @@ def test_missing_mount_or_unsupported_output_does_not_claim_consumption(proof):
     assert inspect(proof).json()['instances'][0]['state'] == 'inaccessible'
     proof.observed['tasks'][0]['output_refs'][0]['format'] = 'csv'
     assert inspect(proof).json()['instances'][0]['state'] == 'unavailable'
+
+
+@pytest.mark.parametrize('mutation', [None,'count','boolean_count','network','input','task','kind','output_count','receipt'])
+def test_renderer_actual_input_contract_and_integrity(proof, mutation):
+    inputs = {'networks':[{'signature':'fixture-1'},{'signature':'fixture-2'}]}
+    reference = {'protocol':'inline','format':'json','uri':base64.b64encode(json.dumps(inputs).encode()).decode()}
+    snapshot = proof.row.submitted
+    node = snapshot['compiled']['solution_studio_metadata']['execution_instances'][0]
+    node['configuration'] = None
+    snapshot['compiled']['inputs'] = [reference]
+    proof.row.submitted_sha256 = hashlib.sha256(json.dumps(snapshot,sort_keys=True,ensure_ascii=False,allow_nan=False).encode()).hexdigest()
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(proof.row,'submitted');proof.db.commit()
+    proof.observed['tasks'][0]['input_refs'] = [reference]
+    h = lambda v: hashlib.sha256(native.canonical(v)).hexdigest()
+    record = {'schema_version':'1.0','kind':'json-networks-render-v1','workflow_id':'wf-native','task_id':'task_test','operation_name':'Run',
+              'input_sha256':h(inputs),'networks_sha256':h(inputs['networks']),
+              'processed_network_count':2,'processed_network_sha256':[h(n) for n in inputs['networks']]}
+    output = {'input_consumption':record,'drawing_count':2,'topology_count':2}
+    if mutation == 'count': record['processed_network_count']=1
+    if mutation == 'boolean_count': record['processed_network_count']=True
+    if mutation == 'network': record['processed_network_sha256'].reverse()
+    if mutation == 'input': record['input_sha256']='a'*64
+    if mutation == 'task': record['task_id']='other'
+    if mutation == 'kind': record['kind']='unknown'
+    if mutation == 'output_count': output['drawing_count']=1
+    proof.output.write_text(json.dumps(output))
+    if mutation == 'receipt':
+        assert inspect(proof).json()['state']=='available'
+        output['changed']='bytes';proof.output.write_text(json.dumps(output))
+    result = inspect(proof).json()['instances'][0]
+    assert result['state'] == ('available' if mutation is None else 'conflicting')
+    if mutation is None:
+        assert result['input_consumption']==record and 'algorithm_consumed' not in result
