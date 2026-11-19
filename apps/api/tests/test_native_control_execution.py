@@ -180,9 +180,9 @@ def test_manual_onboarding_two_runs_and_owned_results(publisher, tmp_path, monke
                 else:
                     from app.main import app
                     from app.services.design_ai_provider import get_provider
-                    from app.schemas.design_ai import AssistantTurn
+                    from app.schemas.solution_assistant import SavedSolutionResponse
                     from conftest import TestProvider
-                    offline = TestProvider(AssistantTurn(message='Review a topology cap of three', template_key=None, expected_revision=None, edits=[],
+                    offline = TestProvider(SavedSolutionResponse(outcome='proposal', message='Review a topology cap of three', clarification=None, assumptions=[],
                         solution_edits=[{'kind': 'set_node_parameters', 'node_id': 'generate', 'value': '{"how_many":3}'}]))
                     app.dependency_overrides[get_provider] = lambda: offline
                     base = f"/design-ai/solutions/{saved['id']}"

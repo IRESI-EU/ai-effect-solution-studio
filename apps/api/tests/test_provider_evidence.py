@@ -61,8 +61,8 @@ def test_capture_actual_sdk_metadata_hashes_and_validated_turn(environment, monk
     config = dict(model="gpt-6-luna", store=False, service_tier="default", max_output_tokens=2000, reasoning={"effort": "low"})
     config["transport"] = dict(endpoint="responses", max_retries=0, timeout_seconds=40)
     assert audit["requested_configuration"] == config
-    assert audit["request_sha256"] == evidence.digest(dict(configuration=config, input=calls[0]["input"], schema=AssistantTurn.model_json_schema()))
-    assert audit["configuration_sha256"] == evidence.digest(dict(configuration=config, schema=AssistantTurn.model_json_schema()))
+    assert audit["request_sha256"] == evidence.digest(dict(configuration=config, input=calls[0]["input"], schema=evidence.response_format(AssistantTurn)['schema']))
+    assert audit["configuration_sha256"] == evidence.digest(dict(configuration=config, schema=evidence.response_format(AssistantTurn)['schema']))
     assert audit["request_sha256"] != audit["configuration_sha256"]
     assert audit["usage"]["input_tokens_details"] == {"cached_tokens": 20, "cache_write_tokens": 10}
     assert audit["usage"]["output_tokens_details"] == {"reasoning_tokens": 1}

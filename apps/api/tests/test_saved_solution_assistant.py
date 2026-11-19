@@ -14,7 +14,7 @@ from app.models.execution_submission import ExecutionSubmission
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.models.user import User
-from app.schemas.design_ai import AssistantTurn
+from app.schemas.solution_assistant import SavedSolutionResponse
 from app.services.design_ai_provider import get_provider
 from conftest import TestProvider
 from test_instance_parameters import configured, node, workflow  # noqa: F401
@@ -29,8 +29,9 @@ def saved(client, nodes=None):
 
 def scope(solution): return '/design-ai/solutions/' + solution['id']
 
-def turn(edits=None, message='Review these changes'):
-    return AssistantTurn(message=message, template_key=None, expected_revision=None, edits=[], solution_edits=edits or [])
+def turn(edits=None, message='Review these changes', *, outcome=None, clarification=None, assumptions=None):
+    return SavedSolutionResponse(outcome=outcome or ('proposal' if edits else 'answer'), message=message,
+                                 clarification=clarification, solution_edits=edits or [], assumptions=assumptions or [])
 
 
 def chat(client, solution, provider, edits=None, message='Please edit my solution'):

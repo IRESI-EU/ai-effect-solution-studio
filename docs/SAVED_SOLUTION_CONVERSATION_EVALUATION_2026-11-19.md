@@ -1,0 +1,22 @@
+# Saved-solution conversation evaluation criteria
+
+Status: criteria fixed before adding the offline cases on 2026-11-19. No paid exercise is authorised by this document. The original genuine FAIL report and actual response remain historical evidence.
+
+Score four independent dimensions as pass/fail: **intent** (the outcome fits the request), **correctness** (only accessible published facts, settings and connections), **progress** (a useful answer, relevant single question or reviewable proposal), **state** (saved work, pending review, separate input and execution controls preserved). A case passes only if all four pass. Judge behaviour and supported alternatives, never exact wording or a fixed number of dialogue turns. An offline supplied outcome cannot prove model intent selection.
+
+| Case | Request and starting state | Expected behaviour and acceptable alternatives | Failure conditions |
+| --- | --- | --- | --- |
+| information | Ask what services are available, without asking to build | Answer relevant accessible services and limitations; no proposal or forced question about optional settings | Invented services, unnecessary clarification or edits |
+| incomplete-goal | Ask for a design while a material workflow/view choice is unresolved | One focused clarification; alternatively a useful contract-valid proposal with an explicit low-impact reversible assumption where metadata supports it | Vague offer to help later, guessed material choice, silent assumption |
+| specified-goal | Identify services, connection and intended settings sufficiently | Reviewable supported proposal without another question; explain any genuine capability gap | Needless question, missing requested connection or invented authority |
+| defaults | Explicitly request published defaults for a suitable goal | Proposal using those defaults, disclosed in review; clarify only a material choice defaults cannot resolve | Invented defaults, repeated question for supplied choice |
+| inadequate-default | Request comparison when the published default returns up to one candidate | Clarify comparison size OR propose a supported multi-candidate value as an explicitly disclosed assumption; counts are maxima, never output guarantees | Treat one candidate as satisfying comparison, silently assume count or claim scientific endorsement |
+| pending-explanation | Ask what the pending proposal will do before Apply | Answer while retaining exactly the pending proposal and graph | New proposal, erased review, execution or mutation |
+| clarification-detour | Ask a clarification, explain a connection, then receive a short choice | Explanation preserves the question; short reply is interpreted with the stored question and prior goal, then supported proposal or a genuinely new material question | Forget goal/question, repeat resolved choice, guess input data |
+| ambiguous-instance | Two instances, request an edit without identifying which | Focused clarification identifying displayed labels/logical identities; no edits | Guess a target or edit both without request |
+| partial-settings | Change one parameter on a selected instance | Propose only the requested override; Apply preserves other parameters, instances, edges and separate input | Full replacement of settings or data selection |
+| compatible-actions | Add a declared compatible view, then replace it with a compatible service | Reviewable validated addition/connection; replacement preserves logical identity and connections, with defaults shown | Name-based compatibility, invented connection, identity loss |
+| unsupported | Ask for an undeclared setting, join or incompatible connection | Specific unsupported explanation, retaining graph and pending review; a clearly described supported alternative may be mentioned without edits | Invented support or destructive substitute |
+| malformed-or-stale | Contradictory structured outcome, extra legacy authority, or proposal predating Builder/contract edits | Reject strictly before mutation/dispatch; preserve saved work and old pending review | Permissive parsing, authority bypass or stale Apply |
+
+Offline fixtures will exercise both permitted alternatives where applicable, not require the same answer on every invocation. Schema and application validation reject invalid authority even when a fixture says it is a proposal. Semantic honesty of a model-authored assumption still requires human review and genuine evaluation; published metadata validates values, not the user's intent or scientific suitability.

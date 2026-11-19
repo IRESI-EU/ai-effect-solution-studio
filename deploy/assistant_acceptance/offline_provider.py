@@ -14,7 +14,7 @@ class OfflineProvider:
     def __init__(self,directory):self.directory=Path(directory)
 
     async def respond(self,context):
-        from app.schemas.design_ai import AssistantTurn,DiscoveryDecision
+        from app.schemas.solution_assistant import SavedSolutionResponse
         catalogue=context['catalogue'];cards=catalogue['services'];steps=context['solution']['steps']
         request=context['request'].casefold()
         def card(operation):
@@ -70,8 +70,8 @@ class OfflineProvider:
             message='Review replacing only Second view with '+alternative['name']+'. Its logical instance and existing compatible input connection are retained. The alternative also has no editable settings.'
             edits=[edit('replace_service',{'service_id':alternative['service_id']},target['node_id'])]
         else:raise ValueError('This offline double only supports the documented acceptance script')
-        turn=AssistantTurn(message='OFFLINE SCRIPTED RESPONSE — '+message,template_key=None,expected_revision=None,edits=[],solution_edits=edits,
-            discovery=DiscoveryDecision(outcome='clarification_needed',question=question) if question else None)
+        turn=SavedSolutionResponse(outcome='clarification' if question else 'proposal' if edits else 'answer',
+            message='OFFLINE SCRIPTED RESPONSE — '+message, clarification=question, solution_edits=edits, assumptions=[])
         trace={'boundary':'EXPLICIT OFFLINE PROVIDER DOUBLE; no model inference or paid call','case':case,'context':context,'response':turn.model_dump(mode='json')}
         with (self.directory/'assistant-trace.private.jsonl').open('a',encoding='utf-8') as stream:stream.write(json.dumps(trace,ensure_ascii=False)+'\n')
         return turn

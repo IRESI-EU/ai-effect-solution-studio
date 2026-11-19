@@ -73,8 +73,8 @@ def test_owned_save_reload_stale_input_and_assistant_privacy(environment, provid
     assert response.status_code == 200, response.text
     saved = response.json()
     assert client.get('/solutions/' + saved['id']).json()['design_metadata']['run_input'] == selected
-    from app.schemas.design_ai import AssistantTurn
-    provider.turn = AssistantTurn(message='Selected data stays private', edits=[], expected_revision=None, template_key=None, solution_edits=[])
+    from app.schemas.solution_assistant import SavedSolutionResponse
+    provider.turn = SavedSolutionResponse(outcome='answer', message='Selected data stays private', clarification=None, assumptions=[], solution_edits=[])
     response = client.post('/design-ai/solutions/' + saved['id'] + '/chat', json={'message': 'Describe my solution', 'expected_updated_at': saved['updated_at'], 'conversation_revision': 0})
     assert response.status_code == 200, response.text
     assert 'PRIVATE_CSV_SENTINEL' not in json.dumps(provider.contexts)

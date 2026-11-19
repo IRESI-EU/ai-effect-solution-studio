@@ -234,7 +234,7 @@ def candidate(solution, edits, allocations, db, user):
     return result, changes
 
 
-def propose(solution, row, message, turn, db, user, *, catalogue_used=None):
+def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None):
     if turn.edits or turn.template_key is not None or turn.composition_settings or turn.registered_settings or turn.recommended_seed is not None or (turn.discovery and turn.discovery.candidate_id) or turn.expected_revision is not None:
         raise HTTPException(502, "The assistant returned legacy workflow authority instead of saved-solution edits")
     state = deepcopy(row.state)
@@ -244,9 +244,14 @@ def propose(solution, row, message, turn, db, user, *, catalogue_used=None):
     pending = None
     if edits:
         result, changes = candidate(solution, edits, allocations, db, user)
+        # Review disclosures use the existing visible change list, outside the
+        # graph and candidate hash. They never become settings or Run input.
+        changes = [{'action': 'proposed_assumption', 'after': text} for text in assumptions] + changes
         pending = {"id": str(uuid4()), "base_updated_at": solution.updated_at.isoformat(), "base_sha256": digest(content(solution)),
                    "candidate_sha256": digest(result), "authority_sha256": authority(result["nodes"], db), "edits": [e.model_dump() for e in edits], "allocations": allocations, "changes": changes}
     reply = {'role':'assistant','content':turn.message}
+    if outcome is not None:
+        reply.update(outcome=outcome, assumptions=list(assumptions))
     if clarification:
         reply['question'] = turn.discovery.question
         state['clarification'] = {'request':(state.get('clarification') or {}).get('request',message),'question':turn.discovery.question}

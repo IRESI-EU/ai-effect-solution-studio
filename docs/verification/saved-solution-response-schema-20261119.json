@@ -1,0 +1,112 @@
+{
+  "type": "json_schema",
+  "strict": true,
+  "name": "SavedSolutionResponse",
+  "schema": {
+    "$defs": {
+      "SolutionEdit": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "rename",
+              "describe",
+              "set_node_label",
+              "set_node_parameters",
+              "add_service",
+              "remove_service",
+              "replace_service",
+              "connect",
+              "disconnect"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "value": {
+            "default": "",
+            "maxLength": 16000,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "node_id",
+          "value"
+        ],
+        "title": "SolutionEdit",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Model-only contract. No creation, legacy template or execution authority.",
+    "properties": {
+      "outcome": {
+        "enum": [
+          "answer",
+          "clarification",
+          "proposal",
+          "unsupported"
+        ],
+        "title": "Outcome",
+        "type": "string"
+      },
+      "message": {
+        "maxLength": 5000,
+        "minLength": 1,
+        "title": "Message",
+        "type": "string"
+      },
+      "clarification": {
+        "anyOf": [
+          {
+            "maxLength": 500,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Clarification"
+      },
+      "solution_edits": {
+        "items": {
+          "$ref": "#/$defs/SolutionEdit"
+        },
+        "maxItems": 10,
+        "title": "Solution Edits",
+        "type": "array"
+      },
+      "assumptions": {
+        "items": {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 4,
+        "title": "Assumptions",
+        "type": "array"
+      }
+    },
+    "required": [
+      "outcome",
+      "message",
+      "clarification",
+      "solution_edits",
+      "assumptions"
+    ],
+    "title": "SavedSolutionResponse",
+    "type": "object"
+  }
+}

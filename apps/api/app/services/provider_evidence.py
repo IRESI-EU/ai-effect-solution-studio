@@ -9,11 +9,21 @@ import hashlib
 import json
 import logging
 import re
+from openai.lib._parsing._responses import type_to_text_format_param
 
 from app.services.shared_allowance import safe_usage
 
 _correlation = ContextVar("provider_evidence_correlation", default=None)
 _private_key = re.compile(r"secret|password|token|authorization|api.?key|path|uploaded_file|dataset_bytes|csv_bytes|raw_data", re.I)
+
+
+def response_format(model):
+    """Use the installed SDK's exact wire format for dispatch accounting/evidence.
+
+    SDK compatibility is checked against captured offline HTTP serialization.
+    In particular, SDK-required nested fields differ from model_json_schema().
+    """
+    return type_to_text_format_param(model)
 
 
 @contextmanager
@@ -74,8 +84,10 @@ def begin(kwargs, reservation, remote, timeout):
     try:
         config = {key: kwargs[key] for key in ("model", "store", "service_tier", "max_output_tokens", "reasoning", "prompt_cache_options") if key in kwargs}
         config["transport"] = {"endpoint": "responses", "max_retries": 0, "timeout_seconds": timeout}
-        schema = kwargs["text_format"].model_json_schema()
-        return dict(audit_format_version=3,
+        format = response_format(kwargs['text_format'])
+        schema = format['schema']
+        return dict(audit_format_version=4,
+            response_schema_name=format['name'], response_schema_sha256=digest(schema),
             requested_model=identifier(kwargs.get("model")),
             requested_service_tier=identifier(kwargs.get("service_tier")),
             requested_configuration=config,

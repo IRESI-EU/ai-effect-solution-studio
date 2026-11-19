@@ -8,8 +8,7 @@ from app.core.config import settings
 from app.db import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-from app.schemas.design_ai import AssistantTurn
-from app.schemas.solution_assistant import SolutionChatRequest, SolutionProposalRequest, SolutionRevisionRequest
+from app.schemas.solution_assistant import SavedSolutionResponse, as_assistant_turn, SolutionChatRequest, SolutionProposalRequest, SolutionRevisionRequest
 from app.services import solution_assistant as service
 from app.services.design_ai_provider import Provider, get_provider, redact_context
 from app.services.solution_editing import owned_solution
@@ -52,7 +51,8 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
         from app.services.provider_evidence import correlation
         with correlation(conversation_id=identifier, draft_id=None, revision=payload.conversation_revision):
             async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
-                turn = AssistantTurn.model_validate(await provider.respond(context))
+                response = SavedSolutionResponse.model_validate(await provider.respond(context))
+                turn = as_assistant_turn(response)
     except TimeoutError as exc:
         raise HTTPException(504, {"code": "assistant_timeout", "stage": "provider_call", "message": "AI response timed out. Your saved solution and pending proposal are unchanged."}) from exc
     except (ValidationError, ValueError) as exc:
@@ -66,7 +66,8 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     if service.digest(service.content(solution)) != base_sha:
         raise HTTPException(409, "Builder changed the design while AI was responding. Request a new proposal.")
     try:
-        return service.propose(solution, row, payload.message, turn, db, user, catalogue_used=context['catalogue'])
+        return service.propose(solution, row, payload.message, turn, db, user,
+                               catalogue_used=context['catalogue'], assumptions=response.assumptions, outcome=response.outcome)
     except HTTPException as exc:
         if exc.status_code in {409, 422, 502}:
             db.rollback()

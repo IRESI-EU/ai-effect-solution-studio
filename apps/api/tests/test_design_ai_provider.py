@@ -12,6 +12,7 @@ from openai import AsyncOpenAI as RealOpenAIClient
 
 from app.core.config import settings
 from app.schemas.design_ai import AssistantTurn
+from app.schemas.solution_assistant import SavedSolutionResponse
 from app.services import design_ai_provider as module
 
 
@@ -148,7 +149,7 @@ def test_budgeted_sdk_records_usage_before_parsing(environment, monkeypatch, tmp
 def test_normal_saved_solution_prompt_uses_real_catalogue_without_template_system(environment, monkeypatch):
     monkeypatch.setattr(settings, "openai_api_key", "test-key-never-transmitted")
     monkeypatch.setattr(settings, "design_ai_model", "configured-test-model")
-    turn = AssistantTurn(message="Review the current catalogue", template_key=None, expected_revision=None, edits=[],
+    turn = SavedSolutionResponse(outcome="proposal", message="Review the current catalogue", clarification=None, assumptions=[],
                          solution_edits=[{"kind": "rename", "value": "My saved design"}])
     parse = AsyncMock(return_value=SimpleNamespace(output_parsed=turn))
     options = {}
@@ -161,5 +162,5 @@ def test_normal_saved_solution_prompt_uses_real_catalogue_without_template_syste
     kwargs = parse.call_args.kwargs
     assert kwargs["input"][0]["content"] == module.SAVED_SOLUTION_SYSTEM
     assert json.loads(kwargs["input"][1]["content"]) == context
-    assert kwargs["text_format"] is AssistantTurn and "tools" not in kwargs
+    assert kwargs["text_format"] is SavedSolutionResponse and "tools" not in kwargs
     assert options["max_retries"] == 0 and kwargs["store"] is False

@@ -10,7 +10,7 @@ import pytest
 from fastapi import HTTPException
 
 from app.core.config import settings
-from app.schemas.design_ai import AssistantTurn
+from app.schemas.solution_assistant import SavedSolutionResponse
 from app.services import scoped_ai_acceptance as module
 
 
@@ -83,7 +83,7 @@ def test_sdk_dispatch_is_pinned_reserved_and_excludes_private_scope(environment,
     monkeypatch.setattr(settings,'design_ai_reasoning_effort','none')
     monkeypatch.setattr(settings,'design_ai_max_output_tokens',3000)
     monkeypatch.setattr(settings,'openai_api_key','EXPLICIT SDK DOUBLE KEY, NEVER TRANSMITTED')
-    turn=AssistantTurn(message='EXPLICIT SDK RESPONSE DOUBLE',template_key=None,expected_revision=None,edits=[])
+    turn=SavedSolutionResponse(outcome='answer',message='EXPLICIT SDK RESPONSE DOUBLE',clarification=None,solution_edits=[],assumptions=[])
     requests=[]
     class Client:
         async def __aenter__(self):return self

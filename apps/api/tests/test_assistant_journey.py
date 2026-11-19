@@ -7,8 +7,8 @@ from app.db import SessionLocal
 from app.models.execution_submission import ExecutionSubmission
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
-from app.schemas.design_ai import DiscoveryDecision
 from app.schemas.design_ai import AssistantTurn
+from app.schemas.solution_assistant import SavedSolutionResponse
 from test_saved_solution_assistant import bound, turn, scope, apply, chat
 
 
@@ -27,8 +27,7 @@ def test_fresh_goal_clarification_connected_follow_up_add_and_compatible_replace
     response=client.post('/solutions',json={'name':'Fresh goal','nodes':[],'edges':[],
         'design_metadata':{'run_input':None,'assistant_goal':'Compare synthetic grid reports'}})
     solution=response.json();identifier=solution['id']
-    provider.turn=turn(message='I found the published grid generator and report services.')
-    provider.turn.discovery=DiscoveryDecision(outcome='clarification_needed',question='Which report view do you want?')
+    provider.turn=turn(message='I found the published grid generator and report services.', outcome='clarification', clarification='Which report view do you want?')
     state=send(client,solution,provider,'Compare synthetic grid reports').json()
     assert state['clarification']['question']=='Which report view do you want?'
     assert state['pending'] is None
@@ -73,7 +72,8 @@ def test_clarification_cannot_smuggle_changes_or_erase_review(bound,provider):
     solution=client.post('/solutions',json={'name':'Clarification guard','nodes':[],'edges':[]}).json()
     old=chat(client,solution,provider,[{'kind':'rename','value':'Already reviewed'}]).json()
     provider.turn=turn([{'kind':'rename','value':'Unreviewed'}])
-    provider.turn.discovery=DiscoveryDecision(outcome='clarification_needed',question='Which one?')
+    provider.turn.outcome='clarification'
+    provider.turn.clarification='Which one?'
     response=send(client,solution,provider,'Clarify')
     assert response.status_code==502
     assert client.get(scope(solution)).json()==old
@@ -104,7 +104,11 @@ def test_recorded_failed_genuine_reply_preserves_review_without_inventing_clarif
     solution=client.post('/solutions',json={'name':'Recorded failure replay','nodes':[],'edges':[]}).json()
     pending=chat(client,solution,provider,[{'kind':'rename','value':'Existing reviewed proposal'}]).json()
     recorded=json.loads((Path(__file__).parent/'fixtures/genuine-clarification-miss-20261119.json').read_text(encoding='utf-8'))
-    provider.turn=AssistantTurn.model_validate(recorded)
+    # Historical legacy response is translated explicitly into an answer fixture;
+    # the live focused provider must never accept old response fields as fallback.
+    historical=AssistantTurn.model_validate(recorded)
+    provider.turn=SavedSolutionResponse(outcome='answer', message=historical.message,
+        clarification=None, solution_edits=[], assumptions=[])
     response=send(client,solution,provider,'Recorded failed comparison goal replay')
     assert response.status_code==200
     actual=response.json()

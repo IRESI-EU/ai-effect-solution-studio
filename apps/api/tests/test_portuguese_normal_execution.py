@@ -144,9 +144,9 @@ def test_normal_saved_csv_run_to_owned_http_results(publisher, portuguese, monke
                 else:
                     from app.main import app
                     from app.services.design_ai_provider import get_provider
-                    from app.schemas.design_ai import AssistantTurn
+                    from app.schemas.solution_assistant import SavedSolutionResponse
                     from conftest import TestProvider
-                    provider = TestProvider(AssistantTurn(message='Review changed settings', edits=[], expected_revision=None, template_key=None, solution_edits=[
+                    provider = TestProvider(SavedSolutionResponse(outcome='proposal', message='Review changed settings', clarification=None, assumptions=[], solution_edits=[
                         {'kind': 'set_node_parameters', 'node_id': 'train', 'value': '{"epochs":2}'}, {'kind': 'set_node_parameters', 'node_id': 'generate', 'value': '{"number_of_examples":3}'}]))
                     app.dependency_overrides[get_provider] = lambda: provider
                     route = '/design-ai/solutions/' + saved['id']; before = client.get(route).json()

@@ -22,6 +22,7 @@ function ChangeDetails({change}:{change:Record<string,unknown>}) {
         {change.requested_overrides && names.some(key=>!(key in object(change.requested_overrides))) && <p>Published defaults: {names.filter(key=>!(key in object(change.requested_overrides))).map(label).join(", ")}.</p>}
       </> : <p>No editable settings for this operation.</p>}
     </> : connection ? <p>{String(change.source)}{binding.source_slot ? ` (${String(binding.source_slot)})` : ""} → {String(change.target)}{binding.target_slot ? ` (${String(binding.target_slot)})` : ""}</p>
+      : change.action==="proposed_assumption" ? <p>{String(change.after)} <em>This is a proposed choice for your review, not your prior instruction or scientific approval.</em></p>
       : change.action==="set_node_parameters" ? <dl>{Object.entries(object(change.after)).filter(([key,after])=>JSON.stringify(object(change.before)[key])!==JSON.stringify(after)).map(([key,after])=><div key={key}><dt>{label(key)}</dt><dd>{value(object(change.before)[key])} → {value(after)}</dd></div>)}</dl>
       : <p>{String(change.before ?? "")} → {String(change.after ?? "")}</p>}
     <details><summary>Contract and change details</summary><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(change,null,2)}</pre></details>

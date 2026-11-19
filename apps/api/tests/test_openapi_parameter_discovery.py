@@ -152,7 +152,7 @@ def test_source_query_definitions_reach_manual_and_same_solution_chat_controls(p
     """Synthetic qualification exercises UI authority; no ML/runtime claim."""
     from test_parameter_onboarding import manifest
     from app.main import app
-    from app.schemas.design_ai import AssistantTurn
+    from app.schemas.solution_assistant import SavedSolutionResponse
     from app.services.design_ai_provider import get_provider
     client = publisher
     value = manifest('source-input-signature-train')
@@ -185,7 +185,7 @@ def test_source_query_definitions_reach_manual_and_same_solution_chat_controls(p
     solution_id = response.json()['id']
     before = client.get('/solutions/' + solution_id).json()
     context = client.get('/design-ai/solutions/' + solution_id).json()
-    provider.turn = AssistantTurn(message='Review twenty epochs on the second instance', template_key=None, expected_revision=None, edits=[],
+    provider.turn = SavedSolutionResponse(outcome='proposal', message='Review twenty epochs on the second instance', clarification=None, assumptions=[],
                                  solution_edits=[{'kind': 'set_node_parameters', 'node_id': 'second', 'value': '{"epochs":20}'}])
     app.dependency_overrides[get_provider] = lambda: provider
     proposal = client.post('/design-ai/solutions/' + solution_id + '/chat', json={'message': 'Change the second instance to twenty epochs',
@@ -196,9 +196,10 @@ def test_source_query_definitions_reach_manual_and_same_solution_chat_controls(p
     applied = client.post('/design-ai/solutions/' + solution_id + '/apply', json={'expected_updated_at': pending['expected_updated_at'], 'conversation_revision': pending['conversation_revision'], 'proposal_id': pending['pending']['id']})
     assert applied.status_code == 200, applied.text
     saved = client.get('/solutions/' + solution_id).json()
-    assert [n['data']['configuration']['parameters']['epochs'] for n in saved['nodes']] == [10, 20]
+    service_nodes = [n for n in saved['nodes'] if n['data'].get('service')]
+    assert [n['data']['configuration']['parameters']['epochs'] for n in service_nodes] == [10, 20]
     compiled = client.post('/workflows/compile', json={'name': saved['name'], 'solution_id': solution_id, 'expected_updated_at': saved['updated_at'], 'run_input': None,
-        'nodes': [{'node_id': n['id'], 'service_id': value['service']['id'], 'container_name': 'ignored', 'operation_name': 'TrainModel', 'configuration': n['data']['configuration']} for n in saved['nodes']], 'edges': []})
+        'nodes': [{'node_id': n['id'], 'service_id': value['service']['id'], 'container_name': 'ignored', 'operation_name': 'TrainModel', 'configuration': n['data']['configuration']} for n in service_nodes], 'edges': []})
     assert compiled.status_code == 200, compiled.text
     assert sorted(c['parameters']['epochs'] for c in compiled.json()['task_configurations'].values()) == [10, 20]
     assert all(c['parameters']['batch_size'] == 1000 and c['parameters']['sequence_len'] == 100 for c in compiled.json()['task_configurations'].values())
