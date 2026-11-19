@@ -54,7 +54,7 @@ def free(ports):
             sock.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1);sock.bind(('127.0.0.1',port))
 
 
-def prepare(directory,wp3,dependencies,key_source,project,authorization,ports=PORTS,offline_ui=False):
+def prepare(directory,wp3,dependencies,key_source,project,authorization,ports=PORTS,offline_ui=False,no_workflows=False):
     if directory.exists():raise RuntimeError('Use a fresh directory; never replace an acceptance scope')
     if len(ports)!=7 or len(set(ports))!=7:raise RuntimeError('Seven distinct loopback ports are required')
     free(ports)
@@ -69,10 +69,10 @@ def prepare(directory,wp3,dependencies,key_source,project,authorization,ports=PO
         subprocess.run(['icacls',str(directory),'/inheritance:r','/grant:r',owner+':(OI)(CI)F','*S-1-5-18:(OI)(CI)F'],check=True,stdout=subprocess.DEVNULL)
     value={'kind':'genuine-saved-solution-v1','directory':str(directory),'project':'aie-genuine-'+uuid4().hex[:12],
         'cookie':'aie_genuine_'+uuid4().hex,'api_url':f'http://127.0.0.1:{api_port}','web_url':f'http://127.0.0.1:{web_port}','wp3_url':f'http://127.0.0.1:{wp3_port}',
-        'node_ports':{'generator':gen_port,'renderer-a':draw_a_port,'renderer-b':draw_b_port},'redis_port':redis_port,'ports':list(ports),'offline_ui_fixture':offline_ui,
+        'node_ports':{'generator':gen_port,'renderer-a':draw_a_port,'renderer-b':draw_b_port},'redis_port':redis_port,'ports':list(ports),'offline_ui_fixture':offline_ui,'workflow_submission_disabled':no_workflows,
         'control_key':secrets.token_urlsafe(48),'orchestrator_key':secrets.token_urlsafe(48),'redis_key':secrets.token_urlsafe(48),
         'dependencies_directory':str(dependencies/'node_modules'),'key_source':str(key_source.resolve()),'key_project':str(project.resolve()),
-        'authorization_ref':'AI-EFFECT genuine acceptance user prompt 2026-11-19 sha256:'+hashlib.sha256(authorization.read_bytes()).hexdigest()+'; project key reuse and one conditional two-phase exercise explicitly authorised'}
+        'authorization_ref':'AI-EFFECT genuine acceptance user prompt 2026-11-19 sha256:'+hashlib.sha256(authorization.read_bytes()).hexdigest()+'; project key reuse authorised; ledger initialization requires the exact separately recorded exercise binding and limits'}
     (directory/'profile.private.json').write_text(json.dumps(value,indent=2))
     accounts={role:{'email':role+'@genuine-fixture.invalid','password':'Fixture-9-'+secrets.token_urlsafe(32)} for role in ('administrator','provider','designer','other_designer')}
     (directory/'credentials.private.json').write_text(json.dumps(accounts,indent=2))
@@ -117,6 +117,16 @@ def serve(directory):
         from ui_disclosure_fixture import DisclosureFixture
         app.dependency_overrides[get_provider]=lambda:DisclosureFixture()
     elif get_provider in app.dependency_overrides or not isinstance(get_provider(),OpenAIProvider):raise RuntimeError('Genuine acceptance forbids provider overrides')
+    if p.get('workflow_submission_disabled'):
+        from fastapi.responses import JSONResponse
+        @app.middleware('http')
+        async def no_workflows(request, call_next):
+            if request.method not in {'GET', 'HEAD'} and (request.url.path.startswith('/workflows/submit') or request.url.path.startswith('/deployments')):
+                return JSONResponse(status_code=409,content={'detail':'This genuine conversation exercise disables workflow submission. No Run is authorised.'})
+            return await call_next(request)
+    with (directory/'runtime-policy.private.json').open('x',encoding='utf-8') as stream:
+        json.dump({'provider_class':type(get_provider()).__name__, 'provider_override_present':get_provider in app.dependency_overrides,
+                   'offline_fixture':bool(p.get('offline_ui_fixture')), 'workflow_submission_disabled':bool(p.get('workflow_submission_disabled'))},stream)
     audit=logging.getLogger('design_ai.provider.audit');audit.setLevel(logging.DEBUG);audit.propagate=False
     audit.addHandler(logging.FileHandler(directory/'provider-audit.private.jsonl',encoding='utf-8'))
     import uvicorn
@@ -167,10 +177,10 @@ def start(directory):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('action',choices=['prepare','start','_serve','_wp3','_worker','_node'])
     parser.add_argument('--directory',type=Path,required=True);parser.add_argument('--wp3',type=Path);parser.add_argument('--dependencies',type=Path)
-    parser.add_argument('--ports',type=int,nargs=7);parser.add_argument('--offline-ui',action='store_true')
+    parser.add_argument('--ports',type=int,nargs=7);parser.add_argument('--offline-ui',action='store_true');parser.add_argument('--no-workflows',action='store_true')
     parser.add_argument('--key-source',type=Path);parser.add_argument('--project',type=Path);parser.add_argument('--authorization',type=Path);parser.add_argument('--node')
     args=parser.parse_args();directory=args.directory.resolve()
-    if args.action=='prepare':prepare(directory,args.wp3.resolve(),args.dependencies.resolve(),args.key_source,args.project,args.authorization,tuple(args.ports or PORTS),args.offline_ui)
+    if args.action=='prepare':prepare(directory,args.wp3.resolve(),args.dependencies.resolve(),args.key_source,args.project,args.authorization,tuple(args.ports or PORTS),args.offline_ui,args.no_workflows)
     elif args.action=='start':start(directory)
     else:
         os.environ.update(environment(directory))
