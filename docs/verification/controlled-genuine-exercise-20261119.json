@@ -1,0 +1,1017 @@
+{
+  "date": "2026-11-19",
+  "result": "FAIL",
+  "conversation_diagnostics": "FAIL at I3 after I1/I2 PASS; sequential retained context, not independent samples",
+  "complete_journey": "BLOCKED; Phase J never activated",
+  "authority": {
+    "one_two_phase_exercise": true,
+    "aggregate_requests": 12,
+    "aggregate_limit_usd": 0.9,
+    "phase_requests": 6,
+    "phase_limit_usd": 0.45,
+    "both_intended_bindings_recorded_before_activation": true,
+    "phase_solution_ids": {
+      "I": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+      "J": "1b3b146b-5d1d-455a-a9f5-07606500bf22"
+    },
+    "automatic_retries": 0,
+    "fallback_models": false
+  },
+  "freeze": {
+    "serving_commit": "48c24e7f1aa892be3095ff32b25472c18025c89a",
+    "wp3_commit": "39405313f9b685d91b8263b9b87a3fc42577331d",
+    "wire_schema_sha256": "aa714583d0bf6134f1d8fc1f68686137716ddd17fdc821cb93d799c942143939",
+    "prompt_sha256": "4b34842d261ce00e2e584a56f99f3b58b5449bfdf92c82e3a3d21c89785ac516",
+    "scoring_sha256": "e2fad260755c5619045879cf0373c6adae6a73707db87dd059c025000039d41a"
+  },
+  "model": "gpt-5.4-mini-2026-03-17",
+  "reasoning": "none",
+  "tier": "default",
+  "cases": [
+    {
+      "case": "I1",
+      "result": "PASS",
+      "dimensions": {
+        "intent": "PASS",
+        "correctness": "PASS",
+        "progress": "PASS",
+        "state": "PASS"
+      },
+      "note": "Grounded catalogue overview with published settings and separate input; no question, proposal, graph mutation or execution.",
+      "before": {
+        "solution_id": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+        "solution_updated_at": "2026-11-19T13:28:20.436504",
+        "saved_nodes": 0,
+        "saved_edges": 0,
+        "run_input_selected": false,
+        "conversation_revision": 0,
+        "history": [],
+        "pending_proposal": null,
+        "clarification": null,
+        "execution_submissions": 0
+      },
+      "after": {
+        "solution_id": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+        "solution_updated_at": "2026-11-19T13:28:20.436504",
+        "saved_nodes": 0,
+        "saved_edges": 0,
+        "run_input_selected": false,
+        "conversation_revision": 1,
+        "history": [
+          {
+            "role": "user",
+            "content": "What district-heating services can I use here, and what can each one do? I only want an overview for now."
+          },
+          {
+            "role": "assistant",
+            "content": "Here’s the current catalogue overview for district-heating services in this solution:\n\n1. DEVELOPMENT SOFTWARE FIXTURE — Danish Generator\n   - Role: source\n   - What it does: enumerates feasible district-heating topology candidates from a separate run configuration.\n   - Main settings:\n     - Heat exchangers: allow_hx (default true)\n     - Bypasses: allow_bypass (default true)\n     - Maximum candidate layouts: how_many (default 1, up to 4)\n   - Output: a whole-output JSON topology report named `networks`.\n\n2. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A\n   - Role: reporter\n   - What it does: renders drawings from the published topology report.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\n3. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B\n   - Role: reporter\n   - What it does: also renders drawings from the published topology report, but as a compatible alternative drawing view.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\nIn short: the generator creates candidate district-heating network topologies, and either drawing service can visualize the resulting topology report. I can also summarize the differences between A and B if you want.",
+            "outcome": "answer",
+            "assumptions": []
+          }
+        ],
+        "pending_proposal": null,
+        "clarification": null,
+        "execution_submissions": 0
+      },
+      "actual_response": {
+        "outcome": "answer",
+        "message": "Here’s the current catalogue overview for district-heating services in this solution:\n\n1. DEVELOPMENT SOFTWARE FIXTURE — Danish Generator\n   - Role: source\n   - What it does: enumerates feasible district-heating topology candidates from a separate run configuration.\n   - Main settings:\n     - Heat exchangers: allow_hx (default true)\n     - Bypasses: allow_bypass (default true)\n     - Maximum candidate layouts: how_many (default 1, up to 4)\n   - Output: a whole-output JSON topology report named `networks`.\n\n2. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A\n   - Role: reporter\n   - What it does: renders drawings from the published topology report.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\n3. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B\n   - Role: reporter\n   - What it does: also renders drawings from the published topology report, but as a compatible alternative drawing view.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\nIn short: the generator creates candidate district-heating network topologies, and either drawing service can visualize the resulting topology report. I can also summarize the differences between A and B if you want.",
+        "clarification": null,
+        "solution_edits": [],
+        "assumptions": []
+      },
+      "actual_response_sha256": "290e37b682a11e329d8908230e135e4ffcf1e220a55acc1de75677ec8db52466",
+      "actual_response_hash_verified": true,
+      "request_sha256": "415a6d973528bef9779e9ccee28da0f51d59bae73056cee62c55da4574f3a673",
+      "usage": {
+        "input_tokens": 2911,
+        "output_tokens": 331,
+        "total_tokens": 3242,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "cache_write_tokens_details": {
+            "ttl_30m_tokens": 0,
+            "ttl_12h_tokens": 0
+          }
+        },
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "user_message": "What district-heating services can I use here, and what can each one do? I only want an overview for now."
+    },
+    {
+      "case": "I2",
+      "result": "PASS",
+      "dimensions": {
+        "intent": "PASS",
+        "correctness": "PASS",
+        "progress": "PASS",
+        "state": "PASS"
+      },
+      "note": "Valid connected proposal using published services/contracts, with two candidates and Drawing A explicitly disclosed as proposed assumptions. View A is an assistant-proposed choice, not a verified published view default; no scientific endorsement. Saved graph unchanged.",
+      "before": {
+        "solution_id": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+        "solution_updated_at": "2026-11-19T13:28:20.436504",
+        "saved_nodes": 0,
+        "saved_edges": 0,
+        "run_input_selected": false,
+        "conversation_revision": 1,
+        "history": [
+          {
+            "role": "user",
+            "content": "What district-heating services can I use here, and what can each one do? I only want an overview for now."
+          },
+          {
+            "role": "assistant",
+            "content": "Here’s the current catalogue overview for district-heating services in this solution:\n\n1. DEVELOPMENT SOFTWARE FIXTURE — Danish Generator\n   - Role: source\n   - What it does: enumerates feasible district-heating topology candidates from a separate run configuration.\n   - Main settings:\n     - Heat exchangers: allow_hx (default true)\n     - Bypasses: allow_bypass (default true)\n     - Maximum candidate layouts: how_many (default 1, up to 4)\n   - Output: a whole-output JSON topology report named `networks`.\n\n2. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A\n   - Role: reporter\n   - What it does: renders drawings from the published topology report.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\n3. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B\n   - Role: reporter\n   - What it does: also renders drawings from the published topology report, but as a compatible alternative drawing view.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\nIn short: the generator creates candidate district-heating network topologies, and either drawing service can visualize the resulting topology report. I can also summarize the differences between A and B if you want.",
+            "outcome": "answer",
+            "assumptions": []
+          }
+        ],
+        "pending_proposal": null,
+        "clarification": null,
+        "execution_submissions": 0
+      },
+      "after": {
+        "solution_id": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+        "solution_updated_at": "2026-11-19T13:28:20.436504",
+        "saved_nodes": 0,
+        "saved_edges": 0,
+        "run_input_selected": false,
+        "conversation_revision": 2,
+        "history": [
+          {
+            "role": "user",
+            "content": "What district-heating services can I use here, and what can each one do? I only want an overview for now."
+          },
+          {
+            "role": "assistant",
+            "content": "Here’s the current catalogue overview for district-heating services in this solution:\n\n1. DEVELOPMENT SOFTWARE FIXTURE — Danish Generator\n   - Role: source\n   - What it does: enumerates feasible district-heating topology candidates from a separate run configuration.\n   - Main settings:\n     - Heat exchangers: allow_hx (default true)\n     - Bypasses: allow_bypass (default true)\n     - Maximum candidate layouts: how_many (default 1, up to 4)\n   - Output: a whole-output JSON topology report named `networks`.\n\n2. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A\n   - Role: reporter\n   - What it does: renders drawings from the published topology report.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\n3. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B\n   - Role: reporter\n   - What it does: also renders drawings from the published topology report, but as a compatible alternative drawing view.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\nIn short: the generator creates candidate district-heating network topologies, and either drawing service can visualize the resulting topology report. I can also summarize the differences between A and B if you want.",
+            "outcome": "answer",
+            "assumptions": []
+          },
+          {
+            "role": "user",
+            "content": "I would like to put together a comparison of candidate heating layouts, with a drawing for each, but I have not chosen how many or which drawing view."
+          },
+          {
+            "role": "assistant",
+            "content": "I can set up a comparison design that generates multiple candidate heating layouts and renders each with a drawing view. Since you have not chosen the number of candidates or which drawing view to use, I will propose a minimal comparison-ready setup using the default drawing view choice available in the catalogue and the maximum candidate count can still be adjusted later in Builder.",
+            "outcome": "proposal",
+            "assumptions": [
+              "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count.",
+              "Using drawing view A as the default drawing view because no drawing view was chosen."
+            ]
+          }
+        ],
+        "pending_proposal": {
+          "id": "94b6475d-252e-46b4-b757-6b63fa1ffdc9",
+          "changes": [
+            {
+              "action": "proposed_assumption",
+              "after": "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count."
+            },
+            {
+              "action": "proposed_assumption",
+              "after": "Using drawing view A as the default drawing view because no drawing view was chosen."
+            },
+            {
+              "action": "add_service",
+              "after": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+              "service_id": "dev-danish-e8ea6a346faf44599173fc15d928f0e7",
+              "operation": "GenerateTopology",
+              "contract_version": "1.1.0",
+              "effective_settings": {
+                "allow_hx": true,
+                "allow_bypass": true,
+                "how_many": 2
+              },
+              "requested_overrides": {
+                "how_many": 2
+              },
+              "setting_labels": {
+                "allow_hx": "Heat exchangers",
+                "allow_bypass": "Bypasses",
+                "how_many": "Maximum candidate layouts"
+              },
+              "published_inputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "run_configuration",
+                  "semantic_concept": "urn:development-fixture:danish-run-configuration",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "inline",
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-run-config:1",
+                  "compatibility_notes": [],
+                  "required": true,
+                  "source_requirement": "workflow_input"
+                }
+              ],
+              "published_outputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "networks",
+                  "semantic_concept": "urn:development-fixture:danish-topologies",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                  "compatibility_notes": []
+                }
+              ]
+            },
+            {
+              "action": "add_service",
+              "after": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+              "service_id": "dev-danish-7578a2ed0b6b4924a1f036f6aad90eee",
+              "operation": "RenderTopologies",
+              "contract_version": "1.0.0",
+              "effective_settings": {},
+              "requested_overrides": {},
+              "setting_labels": {},
+              "published_inputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "networks",
+                  "semantic_concept": "urn:development-fixture:danish-topologies",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                  "compatibility_notes": [],
+                  "required": true,
+                  "source_requirement": "upstream_operation"
+                }
+              ],
+              "published_outputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "rendered_report",
+                  "semantic_concept": "urn:development-fixture:danish-drawings",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-rendered-report:1",
+                  "compatibility_notes": []
+                }
+              ]
+            },
+            {
+              "action": "connect",
+              "source": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+              "target": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+              "binding": {
+                "source": "generator",
+                "source_slot": "networks",
+                "target": "drawing_a",
+                "target_slot": "networks"
+              }
+            },
+            {
+              "action": "workflow_boundaries",
+              "after": "Connect Workflow Input to each starting step and each final step to Workflow Output. Data selection remains in Builder; these display edges are excluded from service compilation."
+            }
+          ],
+          "base_updated_at": "2026-11-19T13:28:20.436504"
+        },
+        "clarification": null,
+        "execution_submissions": 0
+      },
+      "actual_response": {
+        "outcome": "proposal",
+        "message": "I can set up a comparison design that generates multiple candidate heating layouts and renders each with a drawing view. Since you have not chosen the number of candidates or which drawing view to use, I will propose a minimal comparison-ready setup using the default drawing view choice available in the catalogue and the maximum candidate count can still be adjusted later in Builder.",
+        "clarification": null,
+        "solution_edits": [
+          {
+            "kind": "add_service",
+            "node_id": null,
+            "value": "{\"service_id\":\"dev-danish-e8ea6a346faf44599173fc15d928f0e7\",\"local_ref\":\"generator\",\"parameters\":{\"how_many\":2}}"
+          },
+          {
+            "kind": "add_service",
+            "node_id": null,
+            "value": "{\"service_id\":\"dev-danish-7578a2ed0b6b4924a1f036f6aad90eee\",\"local_ref\":\"drawing_a\"}"
+          },
+          {
+            "kind": "connect",
+            "node_id": null,
+            "value": "{\"source\":\"generator\",\"source_slot\":\"networks\",\"target\":\"drawing_a\",\"target_slot\":\"networks\"}"
+          }
+        ],
+        "assumptions": [
+          "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count.",
+          "Using drawing view A as the default drawing view because no drawing view was chosen."
+        ]
+      },
+      "actual_response_sha256": "89c02ce3af955c6bb2477ce56e29420edd7720203b12d87b16a50e61aedb8912",
+      "actual_response_hash_verified": true,
+      "request_sha256": "31e8dc7d437247c49459e515a48a2860a6a9f8c82bc188c77b0fd952a9fcf9bc",
+      "usage": {
+        "input_tokens": 3275,
+        "output_tokens": 274,
+        "total_tokens": 3549,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "cache_write_tokens_details": {
+            "ttl_30m_tokens": 0,
+            "ttl_12h_tokens": 0
+          }
+        },
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "user_message": "I would like to put together a comparison of candidate heating layouts, with a drawing for each, but I have not chosen how many or which drawing view."
+    },
+    {
+      "case": "I3",
+      "result": "FAIL",
+      "hard_failure": true,
+      "dimensions": {
+        "intent": "FAIL",
+        "correctness": "FAIL",
+        "progress": "FAIL",
+        "state": "PASS"
+      },
+      "note": "Model proposed edits rather than acknowledging the matching pending proposal; the normal candidate validator rejected a target absent from the saved graph. Graph, prior pending proposal and history remained unchanged.",
+      "before": {
+        "solution_id": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+        "solution_updated_at": "2026-11-19T13:28:20.436504",
+        "saved_nodes": 0,
+        "saved_edges": 0,
+        "run_input_selected": false,
+        "conversation_revision": 2,
+        "history": [
+          {
+            "role": "user",
+            "content": "What district-heating services can I use here, and what can each one do? I only want an overview for now."
+          },
+          {
+            "role": "assistant",
+            "content": "Here’s the current catalogue overview for district-heating services in this solution:\n\n1. DEVELOPMENT SOFTWARE FIXTURE — Danish Generator\n   - Role: source\n   - What it does: enumerates feasible district-heating topology candidates from a separate run configuration.\n   - Main settings:\n     - Heat exchangers: allow_hx (default true)\n     - Bypasses: allow_bypass (default true)\n     - Maximum candidate layouts: how_many (default 1, up to 4)\n   - Output: a whole-output JSON topology report named `networks`.\n\n2. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A\n   - Role: reporter\n   - What it does: renders drawings from the published topology report.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\n3. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B\n   - Role: reporter\n   - What it does: also renders drawings from the published topology report, but as a compatible alternative drawing view.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\nIn short: the generator creates candidate district-heating network topologies, and either drawing service can visualize the resulting topology report. I can also summarize the differences between A and B if you want.",
+            "outcome": "answer",
+            "assumptions": []
+          },
+          {
+            "role": "user",
+            "content": "I would like to put together a comparison of candidate heating layouts, with a drawing for each, but I have not chosen how many or which drawing view."
+          },
+          {
+            "role": "assistant",
+            "content": "I can set up a comparison design that generates multiple candidate heating layouts and renders each with a drawing view. Since you have not chosen the number of candidates or which drawing view to use, I will propose a minimal comparison-ready setup using the default drawing view choice available in the catalogue and the maximum candidate count can still be adjusted later in Builder.",
+            "outcome": "proposal",
+            "assumptions": [
+              "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count.",
+              "Using drawing view A as the default drawing view because no drawing view was chosen."
+            ]
+          }
+        ],
+        "pending_proposal": {
+          "id": "94b6475d-252e-46b4-b757-6b63fa1ffdc9",
+          "changes": [
+            {
+              "action": "proposed_assumption",
+              "after": "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count."
+            },
+            {
+              "action": "proposed_assumption",
+              "after": "Using drawing view A as the default drawing view because no drawing view was chosen."
+            },
+            {
+              "action": "add_service",
+              "after": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+              "service_id": "dev-danish-e8ea6a346faf44599173fc15d928f0e7",
+              "operation": "GenerateTopology",
+              "contract_version": "1.1.0",
+              "effective_settings": {
+                "allow_hx": true,
+                "allow_bypass": true,
+                "how_many": 2
+              },
+              "requested_overrides": {
+                "how_many": 2
+              },
+              "setting_labels": {
+                "allow_hx": "Heat exchangers",
+                "allow_bypass": "Bypasses",
+                "how_many": "Maximum candidate layouts"
+              },
+              "published_inputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "run_configuration",
+                  "semantic_concept": "urn:development-fixture:danish-run-configuration",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "inline",
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-run-config:1",
+                  "compatibility_notes": [],
+                  "required": true,
+                  "source_requirement": "workflow_input"
+                }
+              ],
+              "published_outputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "networks",
+                  "semantic_concept": "urn:development-fixture:danish-topologies",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                  "compatibility_notes": []
+                }
+              ]
+            },
+            {
+              "action": "add_service",
+              "after": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+              "service_id": "dev-danish-7578a2ed0b6b4924a1f036f6aad90eee",
+              "operation": "RenderTopologies",
+              "contract_version": "1.0.0",
+              "effective_settings": {},
+              "requested_overrides": {},
+              "setting_labels": {},
+              "published_inputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "networks",
+                  "semantic_concept": "urn:development-fixture:danish-topologies",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                  "compatibility_notes": [],
+                  "required": true,
+                  "source_requirement": "upstream_operation"
+                }
+              ],
+              "published_outputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "rendered_report",
+                  "semantic_concept": "urn:development-fixture:danish-drawings",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-rendered-report:1",
+                  "compatibility_notes": []
+                }
+              ]
+            },
+            {
+              "action": "connect",
+              "source": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+              "target": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+              "binding": {
+                "source": "generator",
+                "source_slot": "networks",
+                "target": "drawing_a",
+                "target_slot": "networks"
+              }
+            },
+            {
+              "action": "workflow_boundaries",
+              "after": "Connect Workflow Input to each starting step and each final step to Workflow Output. Data selection remains in Builder; these display edges are excluded from service compilation."
+            }
+          ],
+          "base_updated_at": "2026-11-19T13:28:20.436504"
+        },
+        "clarification": null,
+        "execution_submissions": 0
+      },
+      "after": {
+        "solution_id": "64c89430-6bb3-4f3d-990b-9aa755ba3252",
+        "solution_updated_at": "2026-11-19T13:28:20.436504",
+        "saved_nodes": 0,
+        "saved_edges": 0,
+        "run_input_selected": false,
+        "conversation_revision": 2,
+        "history": [
+          {
+            "role": "user",
+            "content": "What district-heating services can I use here, and what can each one do? I only want an overview for now."
+          },
+          {
+            "role": "assistant",
+            "content": "Here’s the current catalogue overview for district-heating services in this solution:\n\n1. DEVELOPMENT SOFTWARE FIXTURE — Danish Generator\n   - Role: source\n   - What it does: enumerates feasible district-heating topology candidates from a separate run configuration.\n   - Main settings:\n     - Heat exchangers: allow_hx (default true)\n     - Bypasses: allow_bypass (default true)\n     - Maximum candidate layouts: how_many (default 1, up to 4)\n   - Output: a whole-output JSON topology report named `networks`.\n\n2. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A\n   - Role: reporter\n   - What it does: renders drawings from the published topology report.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\n3. DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing B\n   - Role: reporter\n   - What it does: also renders drawings from the published topology report, but as a compatible alternative drawing view.\n   - Settings: none\n   - Input: `networks`\n   - Output: a rendered drawing/report (`rendered_report`)\n\nIn short: the generator creates candidate district-heating network topologies, and either drawing service can visualize the resulting topology report. I can also summarize the differences between A and B if you want.",
+            "outcome": "answer",
+            "assumptions": []
+          },
+          {
+            "role": "user",
+            "content": "I would like to put together a comparison of candidate heating layouts, with a drawing for each, but I have not chosen how many or which drawing view."
+          },
+          {
+            "role": "assistant",
+            "content": "I can set up a comparison design that generates multiple candidate heating layouts and renders each with a drawing view. Since you have not chosen the number of candidates or which drawing view to use, I will propose a minimal comparison-ready setup using the default drawing view choice available in the catalogue and the maximum candidate count can still be adjusted later in Builder.",
+            "outcome": "proposal",
+            "assumptions": [
+              "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count.",
+              "Using drawing view A as the default drawing view because no drawing view was chosen."
+            ]
+          }
+        ],
+        "pending_proposal": {
+          "id": "94b6475d-252e-46b4-b757-6b63fa1ffdc9",
+          "changes": [
+            {
+              "action": "proposed_assumption",
+              "after": "Using 2 candidate layouts as a comparison-oriented default because the requested comparison goal does not specify a count."
+            },
+            {
+              "action": "proposed_assumption",
+              "after": "Using drawing view A as the default drawing view because no drawing view was chosen."
+            },
+            {
+              "action": "add_service",
+              "after": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+              "service_id": "dev-danish-e8ea6a346faf44599173fc15d928f0e7",
+              "operation": "GenerateTopology",
+              "contract_version": "1.1.0",
+              "effective_settings": {
+                "allow_hx": true,
+                "allow_bypass": true,
+                "how_many": 2
+              },
+              "requested_overrides": {
+                "how_many": 2
+              },
+              "setting_labels": {
+                "allow_hx": "Heat exchangers",
+                "allow_bypass": "Bypasses",
+                "how_many": "Maximum candidate layouts"
+              },
+              "published_inputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "run_configuration",
+                  "semantic_concept": "urn:development-fixture:danish-run-configuration",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "inline",
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-run-config:1",
+                  "compatibility_notes": [],
+                  "required": true,
+                  "source_requirement": "workflow_input"
+                }
+              ],
+              "published_outputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "networks",
+                  "semantic_concept": "urn:development-fixture:danish-topologies",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                  "compatibility_notes": []
+                }
+              ]
+            },
+            {
+              "action": "add_service",
+              "after": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+              "service_id": "dev-danish-7578a2ed0b6b4924a1f036f6aad90eee",
+              "operation": "RenderTopologies",
+              "contract_version": "1.0.0",
+              "effective_settings": {},
+              "requested_overrides": {},
+              "setting_labels": {},
+              "published_inputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "networks",
+                  "semantic_concept": "urn:development-fixture:danish-topologies",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                  "compatibility_notes": [],
+                  "required": true,
+                  "source_requirement": "upstream_operation"
+                }
+              ],
+              "published_outputs": [
+                {
+                  "min_cardinality": 1,
+                  "max_cardinality": 1,
+                  "name": "rendered_report",
+                  "semantic_concept": "urn:development-fixture:danish-drawings",
+                  "value_representation": "data_reference",
+                  "data_reference_protocols": [
+                    "file"
+                  ],
+                  "content_types": [
+                    "application/json"
+                  ],
+                  "schema_ref": "urn:development-fixture:danish-rendered-report:1",
+                  "compatibility_notes": []
+                }
+              ]
+            },
+            {
+              "action": "connect",
+              "source": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+              "target": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+              "binding": {
+                "source": "generator",
+                "source_slot": "networks",
+                "target": "drawing_a",
+                "target_slot": "networks"
+              }
+            },
+            {
+              "action": "workflow_boundaries",
+              "after": "Connect Workflow Input to each starting step and each final step to Workflow Output. Data selection remains in Builder; these display edges are excluded from service compilation."
+            }
+          ],
+          "base_updated_at": "2026-11-19T13:28:20.436504"
+        },
+        "clarification": null,
+        "execution_submissions": 0
+      },
+      "actual_response": {
+        "outcome": "proposal",
+        "message": "I’ve prepared the requested configuration for review: the Danish Generator will use up to two layouts with heat exchangers and bypasses enabled, and its networks output will feed Danish Drawing A. This is kept pending until you apply it.",
+        "clarification": null,
+        "solution_edits": [
+          {
+            "kind": "set_node_parameters",
+            "node_id": "dev-danish-e8ea6a346faf44599173fc15d928f0e7",
+            "value": "{\"how_many\":2,\"allow_hx\":true,\"allow_bypass\":true}"
+          },
+          {
+            "kind": "connect",
+            "node_id": null,
+            "value": "{\"source\":\"dev-danish-e8ea6a346faf44599173fc15d928f0e7\",\"target\":\"dev-danish-7578a2ed0b6b4924a1f036f6aad90eee\",\"source_slot\":\"networks\",\"target_slot\":\"networks\"}"
+          }
+        ],
+        "assumptions": [
+          "Using the existing Danish Drawing A node as requested; no alternative drawing view was selected."
+        ]
+      },
+      "actual_response_sha256": "b653d30e97f74245072430465172533d48368200d3555052c0e1cd8a69fd9a3f",
+      "actual_response_hash_verified": true,
+      "request_sha256": "c573a649da5aaf7acab50b573469c60c70e51f7e47777b301d0194e104cf34c7",
+      "usage": {
+        "input_tokens": 4330,
+        "output_tokens": 232,
+        "total_tokens": 4562,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "cache_write_tokens_details": {
+            "ttl_30m_tokens": 0,
+            "ttl_12h_tokens": 0
+          }
+        },
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        }
+      },
+      "provider_stage": "schema_validated",
+      "application_stage": "application_validation",
+      "user_message": "Use the Danish Generator with a maximum of two layouts, heat exchangers and bypasses enabled, and connect its networks output to Danish Drawing A. That is the configuration I want to review; keep it pending until I apply it."
+    },
+    {
+      "case": "I4",
+      "result": "NOT_ATTEMPTED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Stopped after I3 application edit rejection; no extra dispatch authorised"
+    },
+    {
+      "case": "I5",
+      "result": "NOT_ATTEMPTED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Stopped after I3 application edit rejection; no extra dispatch authorised"
+    },
+    {
+      "case": "I6",
+      "result": "NOT_ATTEMPTED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Stopped after I3 application edit rejection; no extra dispatch authorised"
+    },
+    {
+      "case": "J1",
+      "result": "BLOCKED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Conditional gate failed because Phase I ended with a hard failure; Phase J never activated"
+    },
+    {
+      "case": "J2",
+      "result": "BLOCKED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Conditional gate failed because Phase I ended with a hard failure; Phase J never activated"
+    },
+    {
+      "case": "J3",
+      "result": "BLOCKED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Conditional gate failed because Phase I ended with a hard failure; Phase J never activated"
+    },
+    {
+      "case": "J4",
+      "result": "BLOCKED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Conditional gate failed because Phase I ended with a hard failure; Phase J never activated"
+    },
+    {
+      "case": "J5",
+      "result": "BLOCKED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Conditional gate failed because Phase I ended with a hard failure; Phase J never activated"
+    },
+    {
+      "case": "J6",
+      "result": "BLOCKED",
+      "dimensions": {
+        "intent": "NOT_ATTEMPTED",
+        "correctness": "NOT_ATTEMPTED",
+        "progress": "NOT_ATTEMPTED",
+        "state": "NOT_ATTEMPTED"
+      },
+      "reason": "Conditional gate failed because Phase I ended with a hard failure; Phase J never activated"
+    }
+  ],
+  "accounting": {
+    "scope_I_closed": true,
+    "scope_J_activated": false,
+    "aggregate_requests": 3,
+    "known_input_tokens": 10516,
+    "known_output_tokens": 837,
+    "accounted_usd": 0.01281885,
+    "lifetime_reserved_usd": 0.20295
+  },
+  "cost_basis": "Conservative rates include 10% headroom with no cache discounts; base list-price estimate USD 0.01165350; invoice not independently reconciled",
+  "runs": {
+    "first": {
+      "attempted": false,
+      "reason": "Phase J blocked by hard failure"
+    },
+    "second": {
+      "attempted": false,
+      "reason": "Phase J blocked by hard failure"
+    }
+  },
+  "offline_ui_verification": {
+    "provider": "EXPLICIT OFFLINE DISCLOSURE FIXTURE; no model",
+    "solution_id": "918690ec-52dc-419e-b930-27fcfe90c173",
+    "assumption_visible_before_apply": true,
+    "settings_show_maximum_two_and_published_boolean_defaults": true,
+    "reopened_same_solution": true,
+    "explanation_retains_exact_pending_review": true,
+    "pending_id": "052e0e41-79c4-45da-867a-ed95cfefa4e5",
+    "saved_graph_unchanged": true,
+    "workflow_submissions": 0
+  },
+  "checks": [
+    {
+      "suite": "preflight",
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "suite": "rejection-replay",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "preservation": {
+    "health": [
+      {
+        "port": 23124,
+        "http_status": 200
+      },
+      {
+        "port": 23125,
+        "http_status": 200
+      },
+      {
+        "port": 23126,
+        "http_status": 200
+      },
+      {
+        "port": 23127,
+        "http_status": 200
+      },
+      {
+        "port": 23128,
+        "http_status": 200
+      },
+      {
+        "port": 23129,
+        "http_status": 200
+      },
+      {
+        "port": 23130,
+        "http_status": 200
+      },
+      {
+        "port": 23131,
+        "http_status": 200
+      }
+    ],
+    "old_scope_unchanged": true,
+    "dirty_original_entries": 150,
+    "old_results_rechecked_unchanged": [
+      "wf-7596a65908e7",
+      "wf-04a2b43ae794",
+      "wf-c155a6dd6853",
+      "wf-6066f56dcf4b"
+    ]
+  },
+  "serving_sources": [
+    {
+      "phase": "I",
+      "path": "apps/api/app/services/design_ai_provider.py",
+      "git_blob": "b9c7adcbc08a28ee79520922cc2758006381f1f6",
+      "sha256": "b0975ecf1b3b86897f1e551c0f795666357a0d2eba76181e9183634e1afdefa0"
+    },
+    {
+      "phase": "I",
+      "path": "apps/api/app/schemas/solution_assistant.py",
+      "git_blob": "71219eaf8b9456af1205cb4ac0956fe73642e582",
+      "sha256": "818da7cf48f2bcb783a2fabd9ab75ee5af47e2dbb8452d72140e826a74f1f33c"
+    },
+    {
+      "phase": "I",
+      "path": "apps/api/app/routers/solution_assistant.py",
+      "git_blob": "25a34f7a03d9fd4dbed67cb055d0d84680353af4",
+      "sha256": "35b940dec23d61e83806b08dfecf93b8cbc505ecaabe0290d2448c7deede0070"
+    },
+    {
+      "phase": "I",
+      "path": "apps/api/app/services/solution_assistant.py",
+      "git_blob": "71185f00b783386c6d15bb0179acc994c684619b",
+      "sha256": "db07899b84e3591cfd3c7b01f5e95eb4d3ca81a4e199df766d8c36c87159adef"
+    },
+    {
+      "phase": "I",
+      "path": "apps/api/app/services/provider_evidence.py",
+      "git_blob": "80deb663518dd15a34430894e96edbe03d97dd95",
+      "sha256": "c93efdad9fb6a6e79fe79c7f245808dce45ee7944b5e7931b719714be212378f"
+    },
+    {
+      "phase": "J",
+      "path": "apps/api/app/services/design_ai_provider.py",
+      "git_blob": "b9c7adcbc08a28ee79520922cc2758006381f1f6",
+      "sha256": "b0975ecf1b3b86897f1e551c0f795666357a0d2eba76181e9183634e1afdefa0"
+    },
+    {
+      "phase": "J",
+      "path": "apps/api/app/schemas/solution_assistant.py",
+      "git_blob": "71219eaf8b9456af1205cb4ac0956fe73642e582",
+      "sha256": "818da7cf48f2bcb783a2fabd9ab75ee5af47e2dbb8452d72140e826a74f1f33c"
+    },
+    {
+      "phase": "J",
+      "path": "apps/api/app/routers/solution_assistant.py",
+      "git_blob": "25a34f7a03d9fd4dbed67cb055d0d84680353af4",
+      "sha256": "35b940dec23d61e83806b08dfecf93b8cbc505ecaabe0290d2448c7deede0070"
+    },
+    {
+      "phase": "J",
+      "path": "apps/api/app/services/solution_assistant.py",
+      "git_blob": "71185f00b783386c6d15bb0179acc994c684619b",
+      "sha256": "db07899b84e3591cfd3c7b01f5e95eb4d3ca81a4e199df766d8c36c87159adef"
+    },
+    {
+      "phase": "J",
+      "path": "apps/api/app/services/provider_evidence.py",
+      "git_blob": "80deb663518dd15a34430894e96edbe03d97dd95",
+      "sha256": "c93efdad9fb6a6e79fe79c7f245808dce45ee7944b5e7931b719714be212378f"
+    }
+  ],
+  "images": [
+    {
+      "workspace": "cu",
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "fresh_project_and_volume": true
+    },
+    {
+      "workspace": "ci",
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "fresh_project_and_volume": true
+    },
+    {
+      "workspace": "cj",
+      "image": "sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065",
+      "fresh_project_and_volume": true
+    }
+  ],
+  "host_python": "3.12.14",
+  "limitations": [
+    "No Phase J or two-Run acceptance",
+    "No independent renderer consumption established",
+    "No partner scientific approval",
+    "No production readiness or general model reliability",
+    "No paid recovery attempted; all remaining steps blocked/not attempted"
+  ]
+}

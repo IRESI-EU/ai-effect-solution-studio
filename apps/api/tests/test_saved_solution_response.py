@@ -21,7 +21,7 @@ from app.models.operation_contract import OperationContract
 from app.schemas.design_ai import AssistantTurn
 from app.schemas.solution_assistant import SavedSolutionResponse, as_assistant_turn
 from app.services import design_ai_provider, provider_evidence
-from test_saved_solution_assistant import configured, saved, node, scope, turn, apply  # noqa: F401
+from test_saved_solution_assistant import bound, configured, saved, node, scope, turn, apply  # noqa: F401
 from test_assistant_journey import send
 
 
@@ -178,6 +178,36 @@ def test_confirmation_of_matching_pending_proposal_needs_no_duplicate_edits(poli
     assert reopened['pending']['changes'][0]['action'] == 'proposed_assumption'
     assert reopened['pending']['changes'][0]['after'] == proposed['pending']['changes'][0]['after']
     assert provider.contexts[-1]['pending_proposal'] == proposed['pending']
+    with SessionLocal() as db: assert db.query(ExecutionSubmission).count() == 0
+
+
+@pytest.mark.parametrize('use_test_catalogue_ids', [False, True])
+def test_recorded_genuine_confirmation_rejection_preserves_existing_review(bound, provider, use_test_catalogue_ids):
+    """Actual failed I3 reply; mapped variant checks the same catalogue/instance confusion.
+
+    This verifies rejection/preservation, never successful model confirmation.
+    """
+    from pathlib import Path
+    from test_saved_solution_assistant import chat
+    client, _ = bound
+    solution = client.post('/solutions', json={'name': 'Recorded I3 failure replay', 'nodes': [], 'edges': []}).json()
+    edits = [{'kind': 'add_service', 'value': json.dumps({'service_id': sid, 'local_ref': ref})}
+             for sid, ref in [('dutch-ConfigureAndSynthesize', 'source'), ('dutch-RunBenchmark', 'view')]]
+    edits.append({'kind': 'connect', 'value': '{"source":"source","target":"view","source_slot":"grid","target_slot":"grid"}'})
+    pending = chat(client, solution, provider, edits).json()
+    recorded = json.loads((Path(__file__).parent/'fixtures/controlled-rejected-proposal-20261119.json').read_text(encoding='utf-8'))
+    assert provider_evidence.digest(recorded) == 'b653d30e97f74245072430465172533d48368200d3555052c0e1cd8a69fd9a3f'
+    if use_test_catalogue_ids:
+        recorded['solution_edits'][0]['node_id'] = 'dutch-ConfigureAndSynthesize'
+        value = json.loads(recorded['solution_edits'][1]['value'])
+        value.update(source='dutch-ConfigureAndSynthesize', target='dutch-RunBenchmark')
+        recorded['solution_edits'][1]['value'] = json.dumps(value)
+    provider.turn = SavedSolutionResponse.model_validate(recorded)
+    result = send(client, solution, provider, 'Confirm the already matching pending design')
+    assert result.status_code == 422 and result.json()['detail']['stage'] == 'application_validation'
+    assert 'Select one existing service instance' in result.json()['detail']['message']
+    assert client.get(scope(solution)).json() == pending
+    assert client.get('/solutions/' + solution['id']).json() == solution
     with SessionLocal() as db: assert db.query(ExecutionSubmission).count() == 0
 
 

@@ -1,0 +1,20 @@
+{
+  "outcome": "proposal",
+  "message": "I’ve prepared the requested configuration for review: the Danish Generator will use up to two layouts with heat exchangers and bypasses enabled, and its networks output will feed Danish Drawing A. This is kept pending until you apply it.",
+  "clarification": null,
+  "solution_edits": [
+    {
+      "kind": "set_node_parameters",
+      "node_id": "dev-danish-e8ea6a346faf44599173fc15d928f0e7",
+      "value": "{\"how_many\":2,\"allow_hx\":true,\"allow_bypass\":true}"
+    },
+    {
+      "kind": "connect",
+      "node_id": null,
+      "value": "{\"source\":\"dev-danish-e8ea6a346faf44599173fc15d928f0e7\",\"target\":\"dev-danish-7578a2ed0b6b4924a1f036f6aad90eee\",\"source_slot\":\"networks\",\"target_slot\":\"networks\"}"
+    }
+  ],
+  "assumptions": [
+    "Using the existing Danish Drawing A node as requested; no alternative drawing view was selected."
+  ]
+}
