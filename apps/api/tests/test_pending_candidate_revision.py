@@ -91,6 +91,9 @@ def test_cumulative_revision_confirmation_replace_reopen_apply_saved_edit_undo(j
     assert explained['pending']['candidate']['assumptions']==[]
     assert client.get('/solutions/'+solution['id']).json()==solution
     assert apply(client,solution,first).status_code==409
+    superseded=deepcopy(explained);superseded['pending']['id']=first['pending']['id']
+    assert apply(client,solution,superseded).status_code==409 # even with the CURRENT conversation revision
+    assert client.get(scope(solution)).json()==explained
     reviewed=explained['pending']['candidate']
     applied=apply(client,solution,explained); assert applied.status_code==200,applied.text
     current=client.get('/solutions/'+solution['id']).json()
