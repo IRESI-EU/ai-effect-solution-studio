@@ -36,7 +36,13 @@ def edit_fixture(configured):
 
 def request(f,plan,text='Change the maximum to two.'):
     client,s,p=f;p.plan=plan;state=client.get(scope(s)).json()
-    return client.post(scope(s)+'/chat',json={'message':text,**{k:state[k] for k in ('expected_updated_at','conversation_revision')}})
+    # These existing supplied-action fixtures explicitly select their alpha
+    # instance as a Builder user. Unresolved targeting is tested separately.
+    targets=state.get('setting_targets');choice=None
+    if targets:
+        option=next(c for c in targets['choices'] if c['instance_id']=='alpha')
+        choice={k:v for k,v in targets.items() if k!='choices'} | {'target_ref':option['target_ref']}
+    return client.post(scope(s)+'/chat',json={'message':text,**{k:state[k] for k in ('expected_updated_at','conversation_revision')},**({'target_choice':choice} if choice else {})})
 
 def action(c,value=2,base=None,node_id='alpha'):
     base=base or ('pending' if c['pending_candidate'] else 'saved')

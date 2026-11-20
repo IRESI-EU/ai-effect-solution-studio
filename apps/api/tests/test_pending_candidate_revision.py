@@ -40,10 +40,11 @@ def journey(bound):
     return client, solution, provider
 
 
-def ask(journey, plan, text='EXPLICIT OFFLINE design action'):
+def ask(journey, plan, text='EXPLICIT OFFLINE design action', selected_ref=None):
     client, solution, provider = journey; provider.plan = plan
     state = client.get(scope(solution)).json()
-    return client.post(scope(solution)+'/chat',json={'message':text,**{k:state[k] for k in ('expected_updated_at','conversation_revision')}})
+    choice={k:v for k,v in state['setting_targets'].items() if k!='choices'} | {'target_ref':selected_ref} if selected_ref else None
+    return client.post(scope(solution)+'/chat',json={'message':text,**{k:state[k] for k in ('expected_updated_at','conversation_revision')},**({'target_choice':choice} if choice else {})})
 
 
 def reply(context, edits=(), base='pending', assumptions=()):
@@ -132,7 +133,7 @@ def test_two_copies_require_explicit_target_or_clarification(journey):
     clarified=ask(journey,lambda c:{**reply(c), 'outcome':'clarification','clarification':'Which displayed instance should change?'}).json()
     assert clarified['pending']==second['pending']
     chosen=copies[1]['node_id']
-    changed=ask(journey,lambda c:reply(c,[parameter(next(s['target_ref'] for s in c['pending_candidate']['steps'] if s['node_id']==chosen),2)])).json()
+    changed=ask(journey,lambda c:reply(c,[parameter(next(s['target_ref'] for s in c['pending_candidate']['steps'] if s['node_id']==chosen),2)]),selected_ref=copies[1]['target_ref']).json()
     assert [s['effective_settings']['count'] for s in steps(changed) if s['service_id']=='dutch-ConfigureAndSynthesize']==[1,2]
 
 

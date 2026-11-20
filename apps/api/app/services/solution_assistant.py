@@ -61,6 +61,13 @@ def view(solution, row, db=None, user=None):
             review.update(current=False, candidate=None, unavailable_reason=str(exc.detail))
     last = row.state.get('last_applied') if row else None
     applied = bool(last and last['updated_at'] == solution.updated_at.isoformat() and last['sha256'] == digest(content(solution)))
+    targets = setting_targets(solution, row, db, user) if db is not None and user is not None else None
+    clarification = row.state.get('clarification') if row else None
+    target_question = None
+    if clarification and clarification.get('source') == 'application_target_choice':
+        current = bool(targets and target_fingerprint(targets) == clarification['fingerprint'])
+        target_question = {'request':clarification['request'], 'question':clarification['question'], 'current':current,
+            'choices':[c for c in (targets or {}).get('choices', []) if c['instance_id'] in clarification['instance_ids']] if current else []}
     return {"solution_id": solution.id, "expected_updated_at": solution.updated_at.isoformat(),
             "application_notice": "The reviewed changes were applied and saved. Run remains a separate action." if applied else None,
             "conversation_revision": row.revision if row else 0,
@@ -68,7 +75,75 @@ def view(solution, row, db=None, user=None):
             "messages": deepcopy(row.state.get("messages", [])) if row else [],
             "clarification": deepcopy(row.state.get("clarification")) if row else None,
             "catalogue_used": deepcopy(row.state.get("catalogue_used")) if row else None,
+            "setting_targets": targets, "target_question": target_question,
             "pending": review}
+
+
+def setting_targets(solution, row, db, user):
+    """Offer user choices from the current validated saved/pending workflow."""
+    pending = row.state.get('pending') if row else None
+    try:
+        result = materialize(solution, pending, db, user) if pending else content(solution)
+        steps = projection(solution, result, db, pending=pending)['steps']
+        choices = []
+        for step in steps:
+            properties = (step['contract'] or {}).get('definition', {}).get('execution_parameters', {}).get('properties', {})
+            if properties:
+                choices.append({'instance_id':step['node_id'], 'target_ref':step['target_ref'],
+                    'label':step['label'], 'parameter_names':sorted(properties)})
+        return {'solution_id':solution.id, 'base':edit_base(solution, row, pending),
+            'workflow_sha256':digest(result), 'authority_sha256':authority(result['nodes'], db), 'choices':choices}
+    except HTTPException:
+        # Never fall back to a saved base when an existing pending review is stale.
+        return None
+
+
+def target_fingerprint(targets):
+    # Explanatory turns can advance the conversation without changing the choice.
+    base = {k:v for k,v in targets['base'].items() if k != 'conversation_revision'}
+    return digest({k:targets[k] for k in ('solution_id','workflow_sha256','authority_sha256')} | {'base':base})
+
+
+def check_target_choice(solution, row, choice, db, user):
+    if choice is None: return None
+    current = setting_targets(solution, row, db, user)
+    value = choice.model_dump()
+    if current is None or any(value[k] != current[k] for k in ('solution_id','base','workflow_sha256','authority_sha256')):
+        raise HTTPException(409, 'The selected step belongs to a different or changed workflow. Choose again from the current design.')
+    matches = [c for c in current['choices'] if c['target_ref'] == value['target_ref']]
+    if len(matches) != 1:
+        raise HTTPException(409, 'The selected step is no longer available. Choose again from the current design.')
+    return matches[0]
+
+
+def setting_choice_question(solution, row, message, changes, choice, db, user):
+    """A valid model ref proves eligibility, never the user's target choice."""
+    relevant = [c for c in changes if c['action']=='set_node_parameters']
+    if not relevant: return None
+    selected = check_target_choice(solution, row, choice, db, user)
+    targets = setting_targets(solution, row, db, user)
+    for change in relevant:
+        # New instances in a structural proposal are handled by their existing
+        # creation review; this boundary concerns existing workflow instances.
+        offered = (targets or {}).get('choices', [])
+        if not any(c['instance_id']==change['instance_id'] for c in offered): continue
+        if selected:
+            if change['instance_id'] != selected['instance_id']:
+                raise HTTPException(409, 'The assistant targeted a different step from your explicit selection. Existing work is unchanged.')
+            continue
+        names = set(change['requested_overrides'])
+        eligible = [c for c in offered if names <= set(c['parameter_names'])]
+        if len(eligible) > 1:
+            state = deepcopy(row.state)
+            question = 'Which step should receive these setting changes?'
+            state['clarification'] = {'source':'application_target_choice', 'request':message, 'question':question,
+                'fingerprint':target_fingerprint(targets), 'instance_ids':[c['instance_id'] for c in eligible]}
+            state['messages'] = (state.get('messages', []) + [{'role':'user','content':message},
+                {'role':'assistant','content':'Choose a displayed step before I propose setting changes. Your saved design and any earlier pending review are unchanged.',
+                 'question':question,'outcome':'clarification','source':'application_target_choice'}])[-24:]
+            row.state=state;row.revision+=1;db.commit();db.refresh(row)
+            return view(solution, row, db, user)
+    return None
 
 
 def edit_base(solution, row, pending=None):
@@ -386,7 +461,7 @@ def setting_summary(changes, differences, base_kind):
                      'status':'proposed' if differences else 'no_change','changes':differences}
 
 
-def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None, base=None):
+def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None, base=None, target_choice=None):
     if turn.edits or turn.template_key is not None or turn.composition_settings or turn.registered_settings or turn.recommended_seed is not None or (turn.discovery and turn.discovery.candidate_id) or turn.expected_revision is not None:
         raise HTTPException(502, "The assistant returned legacy workflow authority instead of saved-solution edits")
     state = deepcopy(row.state)
@@ -416,6 +491,8 @@ def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assu
         edits = resolve_edits(solution, original, edits, db, previous)
         delta_allocations = {} # additions allocate once, then replay with the same IDs
         revised, changes = candidate(SimpleNamespace(**original), edits, delta_allocations, db, user)
+        choice_question = setting_choice_question(solution, row, message, changes, target_choice, db, user)
+        if choice_question is not None: return choice_question
         if setting_only:
             differences = setting_difference(changes)
             actual_message, change_summary = setting_summary(changes, differences, base.kind)

@@ -14,6 +14,7 @@ from test_saved_solution_assistant import bound, turn, scope, apply, chat
 
 def send(client, solution, provider, message):
     state=client.get(scope(solution)).json()
+    user_choice = None
     # Explicit offline fixture adapter: bind placeholder fixtures to the actual
     # advertised saved base. Real model-path tests supply their exact base/refs.
     if isinstance(getattr(provider, 'turn', None), SavedSolutionResponse) and provider.turn.edit_base and provider.turn.edit_base.expected_updated_at == 'FIXTURE-BIND-BEFORE-SEND':
@@ -37,7 +38,14 @@ def send(client, solution, provider, message):
                 for key in ('source','target'): data[key] = refs.get(data.get(key), data.get(key))
                 edit['value'] = json.dumps(data)
         provider.turn = provider.turn.model_copy(update={'edit_base':EditBase.model_validate(value['edit_base']),'solution_edits':[SolutionEdit.model_validate(e) for e in value['solution_edits']]})
-    return client.post(scope(solution)+'/chat',json={'message':message,**{k:state[k] for k in ('expected_updated_at','conversation_revision')}})
+        # Supplied legacy fixture actions now have an explicit fixture-user
+        # Builder selection. This is not an inference made by production code.
+        refs = {e['node_id'] for e in value['solution_edits'] if e['kind']=='set_node_parameters'}
+        targets = state.get('setting_targets')
+        if len(refs)==1 and targets:
+            option=next((c for c in targets['choices'] if c['target_ref'] in refs),None)
+            if option:user_choice={k:v for k,v in targets.items() if k!='choices'} | {'target_ref':option['target_ref']}
+    return client.post(scope(solution)+'/chat',json={'message':message,**{k:state[k] for k in ('expected_updated_at','conversation_revision')},**({'target_choice':user_choice} if user_choice else {})})
 
 
 def test_fresh_goal_clarification_connected_follow_up_add_and_compatible_replace(bound,provider):

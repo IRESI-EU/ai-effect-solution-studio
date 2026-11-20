@@ -19,7 +19,7 @@ const message = load(path.join(__dirname,'conversation-message.tsx'));
 const state={solution_id:'same-id',expected_updated_at:'version-1',conversation_revision:2,can_undo:true,
   messages:[{role:'assistant',content:'Review **three** topologies. <script>bad</script>'}],
   pending:{id:'proposal-1',base_updated_at:'version-1',changes:[{action:'set_node_parameters',step:'Generate',before:{count:1},after:{count:3}}]}};
-function render({disabled=false,version='version-1',provider=true,workspace=true,pending=state}={}) {
+function render({disabled=false,version='version-1',provider=true,workspace=true,pending=state,selectedInstanceId=null}={}) {
   let index=0; const values=[{enabled:true,saved_solution_workspace:workspace,provider_configured:provider},pending,'Use three',false,''];
   const buttons=[], forms=[], mutations=[]; const runtime=require('react/jsx-runtime');
   const wrap=fn=>(type,props,...rest)=>{if(type==='button')buttons.push(props); if(type==='form')forms.push(props);return fn(type,props,...rest);};
@@ -28,7 +28,7 @@ function render({disabled=false,version='version-1',provider=true,workspace=true
     'react/jsx-runtime':{...runtime,jsx:wrap(runtime.jsx),jsxs:wrap(runtime.jsxs)},
     './conversation-message':message,'../lib/solution-design':{apiErrorMessage:()=> 'Expected offline failure'},
   }).default;
-  return {html:renderToStaticMarkup(React.createElement(Component,{solutionId:'same-id',savedVersion:version,disabled,onMutating:value=>mutations.push(value)})),buttons,forms,mutations};
+  return {html:renderToStaticMarkup(React.createElement(Component,{solutionId:'same-id',savedVersion:version,disabled,selectedInstanceId,onMutating:value=>mutations.push(value)})),buttons,forms,mutations};
 }
 test('review is concrete, escaped and separate from execution',()=>{
   const {html,buttons}=render();
@@ -79,4 +79,21 @@ test('application diff is displayed as factual plain text, with applied notice o
   const {html}=render({pending:fixture});
   assert.match(html,/Application change summary/);assert.match(html,/4 → 2/);assert.match(html,/&lt;script&gt;/);
   assert.match(html,/reviewed changes were applied and saved/);
+});
+
+const options=[{instance_id:'north-id',target_ref:'north-ref',label:'Generator North',parameter_names:['count']},{instance_id:'south-id',target_ref:'south-ref',label:'Generator South',parameter_names:['count']}];
+const targetContext={solution_id:'same-id',base:{kind:'pending',expected_updated_at:'version-1',conversation_revision:2,proposal_id:'proposal-1',candidate_sha256:'hash'},workflow_sha256:'workflow',authority_sha256:'authority',choices:options};
+const questionState={...state,setting_targets:targetContext,target_question:{request:'Original ambiguous request',question:'Which step should receive these setting changes?',current:true,choices:options}};
+test('focused choice sends original request with current user-selected South binding',async()=>{
+ const {buttons,html}=render({pending:questionState});assert.match(html,/Which step/);assert.match(html,/earlier pending review/);
+ const previousFetch=global.fetch,calls=[];global.fetch=async(url,init)=>{calls.push([url,JSON.parse(init.body)]);return {ok:true,json:async()=>state};};
+ try {await buttons.find(b=>String(b.children).includes('Generator South')).onClick();assert.equal(calls.length,1);assert.equal(calls[0][1].message,'Original ambiguous request');assert.equal(calls[0][1].target_choice.target_ref,'south-ref');assert.deepEqual(calls[0][1].target_choice.base,targetContext.base);assert.equal(calls[0][1].target_choice.workflow_sha256,'workflow');}
+ finally{global.fetch=previousFetch;}
+});
+test('Builder selection supplies explicit target and stale choice controls are absent',async()=>{
+ const {forms,html}=render({pending:questionState,selectedInstanceId:'south-id'});assert.match(html,/Chat setting target selected in Builder: <strong>Generator South/);
+ const previousFetch=global.fetch,calls=[];global.fetch=async(url,init)=>{calls.push(JSON.parse(init.body));return {ok:true,json:async()=>state};};
+ try{await forms[0].onSubmit({preventDefault(){}});assert.equal(calls[0].target_choice.target_ref,'south-ref');}
+ finally{global.fetch=previousFetch;}
+ const stale=render({pending:{...questionState,target_question:{...questionState.target_question,current:false,choices:[]}}});assert.ok(!stale.buttons.some(b=>String(b.children).includes('Use Generator')));assert.match(stale.html,/changed/);
 });

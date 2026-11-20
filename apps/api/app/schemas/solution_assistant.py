@@ -104,6 +104,19 @@ class SolutionRevisionRequest(StrictModel):
 
 class SolutionChatRequest(SolutionRevisionRequest):
     message: str = Field(min_length=1, max_length=4000)
+    target_choice: 'SettingTargetChoice | None' = None
+
+
+class SettingTargetChoice(StrictModel):
+    """Authenticated request input only. Never part of the model response."""
+    solution_id: str
+    base: EditBase
+    workflow_sha256: str
+    authority_sha256: str
+    target_ref: str
+
+
+SolutionChatRequest.model_rebuild()
 
 
 class SolutionProposalRequest(SolutionRevisionRequest):

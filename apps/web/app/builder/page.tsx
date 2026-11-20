@@ -1128,6 +1128,7 @@ function BuilderContent() {
 
     </div>
     {loaded && <div className="page"><SavedSolutionAssistant solutionId={currentSolutionId} savedVersion={savedUpdatedAtRef.current}
+      selectedInstanceId={selectedInstanceId}
       disabled={dirty || busy} onMutating={setAssistantMutating} initialGoal={typeof designMetadata?.assistant_goal === "string" ? designMetadata.assistant_goal : ""} /></div>}
     </>
   );

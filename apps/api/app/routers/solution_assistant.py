@@ -39,8 +39,13 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     solution = owned_solution(solution_id, db, user)
     row = service.conversation(solution, db, user, create=True)
     service.check(solution, row, payload.expected_updated_at, payload.conversation_revision)
+    selected = service.check_target_choice(solution, row, payload.target_choice, db, user)
     base_sha = service.digest(service.content(solution))
     context = redact_context(service.context(solution, row, payload.message, db, user))
+    if selected:
+        context['user_selected_target'] = {'target_ref':selected['target_ref'], 'label':selected['label'],
+            'source':'authenticated_request_choice', 'edit_base':payload.target_choice.base.model_dump(),
+            'instruction':'Only this explicitly selected instance may receive setting changes; other instances remain unchanged.'}
     authority_nodes = [*solution.nodes, *[{'data': {'service': {'id': card['service_id']}}} for card in context['catalogue']['services']]]
     authority_sha = service.authority(authority_nodes, db)
     if settings.design_ai_scoped_acceptance_file:
@@ -65,13 +70,15 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     solution = owned_solution(solution_id, db, user, lock=True)
     row = service.conversation(solution, db, user, lock=True)
     service.check(solution, row, payload.expected_updated_at, payload.conversation_revision)
+    service.check_target_choice(solution, row, payload.target_choice, db, user)
     if service.digest(service.content(solution)) != base_sha:
         raise HTTPException(409, "Builder changed the design while AI was responding. Request a new proposal.")
     if service.authority(authority_nodes, db) != authority_sha:
         raise HTTPException(409, 'Catalogue authority changed while AI was responding. Request a new proposal.')
     try:
         return service.propose(solution, row, payload.message, turn, db, user,
-                               catalogue_used=context['catalogue'], assumptions=response.assumptions, outcome=response.outcome, base=response.edit_base)
+                               catalogue_used=context['catalogue'], assumptions=response.assumptions, outcome=response.outcome, base=response.edit_base,
+                               target_choice=payload.target_choice)
     except HTTPException as exc:
         if exc.status_code in {409, 422, 502}:
             db.rollback()

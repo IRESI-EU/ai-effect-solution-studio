@@ -51,7 +51,10 @@ function CompleteCandidate({candidate}:{candidate:Candidate}) {
   </section>;
 }
 
-type State = { solution_id: string; expected_updated_at: string; conversation_revision: number; can_undo: boolean; application_notice?: string | null; messages: { role: string; content: string; question?: string; change_summary?: {source:string} }[]; catalogue_used?: {services:{service_id:string;name:string;operation:string;contract_version:string|null}[];truncated:boolean;total_accessible:number}; pending: { id: string; base_updated_at: string; changes: Record<string, unknown>[]; current?: boolean; candidate?: Candidate | null; supersedes?: string | null; unavailable_reason?: string } | null };
+type State = { setting_targets?:TargetContext|null; target_question?:TargetQuestion|null; solution_id: string; expected_updated_at: string; conversation_revision: number; can_undo: boolean; application_notice?: string | null; messages: { role: string; content: string; question?: string; change_summary?: {source:string} }[]; catalogue_used?: {services:{service_id:string;name:string;operation:string;contract_version:string|null}[];truncated:boolean;total_accessible:number}; pending: { id: string; base_updated_at: string; changes: Record<string, unknown>[]; current?: boolean; candidate?: Candidate | null; supersedes?: string | null; unavailable_reason?: string } | null };
+type TargetOption = {instance_id:string;target_ref:string;label:string;parameter_names:string[]};
+type TargetContext = {solution_id:string;base:Record<string,unknown>;workflow_sha256:string;authority_sha256:string;choices:TargetOption[]};
+type TargetQuestion = {request:string;question:string;current:boolean;choices:TargetOption[]};
 type Config = { enabled: boolean; saved_solution_workspace: boolean; provider_configured: boolean; provider_mode?: string; test_allowance?: { can_request: boolean; message: string } };
 async function request(path: string, body?: unknown) {
   const response = await fetch(`/api/design-ai${path}`, { cache: "no-store", ...(body === undefined ? {} : {
@@ -62,8 +65,8 @@ async function request(path: string, body?: unknown) {
   return value;
 }
 
-export default function SavedSolutionAssistant({ solutionId, savedVersion, disabled, onMutating, initialGoal = "" }: {
-  solutionId: string | null; savedVersion: string | null; disabled: boolean; onMutating: (value: boolean) => void; initialGoal?: string;
+export default function SavedSolutionAssistant({ solutionId, savedVersion, disabled, onMutating, initialGoal = "", selectedInstanceId = null }: {
+  solutionId: string | null; savedVersion: string | null; disabled: boolean; onMutating: (value: boolean) => void; initialGoal?: string; selectedInstanceId?:string|null;
 }) {
   const [config, setConfig] = useState<Config | null>(null);
   const [state, setState] = useState<State | null>(null);
@@ -87,8 +90,13 @@ export default function SavedSolutionAssistant({ solutionId, savedVersion, disab
   if (!config?.enabled || !config.saved_solution_workspace) return null;
   const blocked = disabled || busy || !state || !solutionId || state.expected_updated_at !== savedVersion;
   const canChat = config.provider_configured && config.test_allowance?.can_request !== false;
-  async function action(kind: "chat" | "apply" | "undo" | "dismiss") {
-    if (blocked || !state || inFlight.current || (kind === "chat" && (!canChat || !prompt.trim()))) return;
+  const selectedTarget = state?.setting_targets?.choices.find(choice=>choice.instance_id===selectedInstanceId);
+  async function action(kind: "chat" | "apply" | "undo" | "dismiss", chosen?:TargetOption) {
+    const message = chosen ? state?.target_question?.request : prompt;
+    if (blocked || !state || inFlight.current || (kind === "chat" && (!canChat || !message?.trim()))) return;
+    if (chosen && !state.target_question?.current) return;
+    const target = chosen || selectedTarget;
+    const targetContext = state.setting_targets;
     inFlight.current = true; setBusy(true); setError("");
     const mutating = kind === "apply" || kind === "undo";
     if (mutating) onMutating(true);
@@ -96,7 +104,8 @@ export default function SavedSolutionAssistant({ solutionId, savedVersion, disab
     try {
       const next = await request(`/solutions/${encodeURIComponent(solutionId!)}/${kind}`, {
         expected_updated_at: state.expected_updated_at, conversation_revision: state.conversation_revision,
-        ...(kind === "chat" ? { message: prompt } : kind === "undo" ? {} : { proposal_id: state.pending?.id }),
+        ...(kind === "chat" ? { message, ...(target && targetContext ? {target_choice:{solution_id:targetContext.solution_id,
+          base:targetContext.base,workflow_sha256:targetContext.workflow_sha256,authority_sha256:targetContext.authority_sha256,target_ref:target.target_ref}} : {}) } : kind === "undo" ? {} : { proposal_id: state.pending?.id }),
       });
       setState(next);
       if (kind === "chat") setPrompt("");
@@ -117,6 +126,14 @@ export default function SavedSolutionAssistant({ solutionId, savedVersion, disab
     {!canChat && <p role="status">{config.test_allowance?.can_request === false ? config.test_allowance.message : "AI is not connected. Manual Builder editing remains available."}</p>}
     {error && <p role="alert">{error}</p>}
     {state?.application_notice && <p role="status">{state.application_notice}</p>}
+    {selectedTarget && <p role="status">Chat setting target selected in Builder: <strong>{selectedTarget.label}</strong>.</p>}
+    {state?.target_question && <section aria-label="Choose setting target">
+      <h3>{state.target_question.question}</h3>
+      {state.target_question.current ? <><p>Your saved design and earlier pending review are unchanged. Choose a step to request a new proposal.</p>
+        {state.target_question.choices.map(choice=><button key={choice.target_ref} type="button" disabled={blocked || !canChat}
+          onClick={()=>action("chat",choice)}>Use {choice.label} ({choice.instance_id.slice(-8)})</button>)}
+      </> : <p role="status">The workflow changed. Ask again before choosing a step.</p>}
+    </section>}
     <div aria-label="Solution conversation" aria-live="polite" style={{ maxHeight: 380, overflowY: "auto" }}>
       {state?.messages.map((message, index) => <article key={index}><strong>{message.role === "user" ? "You" : "Assistant"}</strong>{message.change_summary?.source === "application_diff" ? <><small style={{display:"block"}}>Application change summary</small><p>{message.content}</p></> : <ConversationMessage content={message.content} />}{message.question && <p><strong>{message.question}</strong></p>}</article>)}
     </div>
