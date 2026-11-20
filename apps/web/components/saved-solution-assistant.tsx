@@ -118,7 +118,7 @@ export default function SavedSolutionAssistant({ solutionId, savedVersion, disab
     {error && <p role="alert">{error}</p>}
     {state?.application_notice && <p role="status">{state.application_notice}</p>}
     <div aria-label="Solution conversation" aria-live="polite" style={{ maxHeight: 380, overflowY: "auto" }}>
-      {state?.messages.map((message, index) => <article key={index}><strong>{message.role === "user" ? "You" : "Assistant"}</strong>{message.change_summary?.source === "application_diff" ? <><small>Application change summary</small><p>{message.content}</p></> : <ConversationMessage content={message.content} />}{message.question && <p><strong>{message.question}</strong></p>}</article>)}
+      {state?.messages.map((message, index) => <article key={index}><strong>{message.role === "user" ? "You" : "Assistant"}</strong>{message.change_summary?.source === "application_diff" ? <><small style={{display:"block"}}>Application change summary</small><p>{message.content}</p></> : <ConversationMessage content={message.content} />}{message.question && <p><strong>{message.question}</strong></p>}</article>)}
     </div>
     {state?.catalogue_used && <details><summary>Catalogue used for this conversation</summary>
       <p>{state.catalogue_used.services.length} of {state.catalogue_used.total_accessible} accessible services retrieved. {state.catalogue_used.truncated && "Results are limited; this is not an exhaustive search."}</p>

@@ -376,12 +376,12 @@ def setting_summary(changes, differences, base_kind):
         parts = [f"{d['step']} ({d['instance_id'][-8:]}): {d['label']} "
                  f"{json.dumps(d['before'],ensure_ascii=False) if d['before_present'] else 'not set'} → {json.dumps(d['after'],ensure_ascii=False)}"
                  for d in differences]
-        message = 'Proposed setting changes: ' + '; '.join(parts) + '. Nothing has been applied or run.'
+        message = 'Proposed setting changes: ' + '; '.join(parts) + '. These changes have not been applied; Run remains a separate action.'
     else:
         parts = [f"{c['step']} ({c['instance_id'][-8:]}): {c['setting_labels'].get(k,k)} is already {json.dumps(c['after'][k],ensure_ascii=False)}"
                  for c in changes if c['action']=='set_node_parameters' for k in c['requested_overrides']]
         message = 'No change needed in the ' + ('proposed' if base_kind=='pending' else 'saved') + ' design: ' + '; '.join(parts) + '. '
-        message += ('The existing pending review is retained. ' if base_kind=='pending' else '') + 'Nothing has been applied or run.'
+        message += ('The existing pending review is retained. ' if base_kind=='pending' else '') + 'This request made no design changes and did not run the workflow.'
     return message, {'source':'application_diff','base_kind':base_kind,
                      'status':'proposed' if differences else 'no_change','changes':differences}
 

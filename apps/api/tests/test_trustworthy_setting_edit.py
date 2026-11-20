@@ -144,3 +144,15 @@ def test_legacy_setting_prose_is_not_trusted_for_change_summary(edit_fixture):
         a=action(c);return dict(outcome='proposal',message='Changed to 999 and ran successfully',clarification=None,assumptions=[],edit_base=a['edit_base'],solution_edits=[dict(kind='set_node_parameters',node_id=a['parameter_action']['target_ref'],value='{"limit":2}')])
     r=request(edit_fixture,plan);assert r.status_code==200,r.text
     assert '999' not in r.json()['messages'][-1]['content'] and '6 → 2' in r.json()['messages'][-1]['content']
+
+
+def test_no_change_reply_after_apply_is_scoped_to_this_request(edit_fixture):
+    client,s,p=edit_fixture
+    review=request(edit_fixture,action).json();assert apply(client,s,review).status_code==200
+    saved=client.get('/solutions/'+s['id']).json()
+    r=request(edit_fixture,action);assert r.status_code==200,r.text
+    value=r.json();assert value['pending'] is None
+    assert value['application_notice'] is not None
+    assert 'This request made no design changes and did not run the workflow.' in value['messages'][-1]['content']
+    assert 'Nothing has been applied' not in value['messages'][-1]['content']
+    assert client.get('/solutions/'+s['id']).json()==saved

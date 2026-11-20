@@ -18,7 +18,8 @@ class OfflineProvider:
     def __init__(self,directory):self.directory=Path(directory)
     async def respond(self,c):
         path=self.directory/'responses.private.jsonl'
-        n=len(path.read_text(encoding='utf-8').splitlines()) if path.exists() else 0
+        records=[json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()] if path.exists() else []
+        n=sum(r.get('solution_id')==c['solution']['id'] for r in records)
         if n>=len(REQUESTS) or c['request']!=REQUESTS[n]:
             raise ValueError('Only the three documented offline replay messages are supplied; no model was called')
         if n==0:
@@ -52,5 +53,5 @@ class OfflineProvider:
             step,name=candidates[0]
             v=dict(outcome='setting_edit',message=None,clarification=None,solution_edits=[],assumptions=[],edit_base=c['edit_bases'][base],parameter_action=dict(operation='set_parameters',target_ref=step['target_ref'],requested_values=[dict(name=name,value=2)]))
         response=SavedSolutionResponse.model_validate(v)
-        with path.open('a',encoding='utf-8') as stream:stream.write(json.dumps(dict(offline=True,request=c['request'],response=response.model_dump(mode='json')),ensure_ascii=False)+'\n')
+        with path.open('a',encoding='utf-8') as stream:stream.write(json.dumps(dict(offline=True,solution_id=c['solution']['id'],request=c['request'],response=response.model_dump(mode='json')),ensure_ascii=False)+'\n')
         return response
