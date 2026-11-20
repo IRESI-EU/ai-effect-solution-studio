@@ -1,0 +1,243 @@
+{
+  "date": "2026-11-20",
+  "status": "PREPARED_NOT_AUTHORISED",
+  "branch": "codex/setting-interpretation-eval-20261120",
+  "based_on": "62266d0e15a70878c79b6972c7ec73cec3dc0f70",
+  "evaluator_source": "af7f1341d60d866fa6a9202987197423f82a30d0",
+  "frozen_manifest_sha256": "279cb8a6194279b4c3300d9bf19b521b4a7bc07f24ece29b90da206d84561005",
+  "case_spec_sha256": "5a7cdbccfbcca0a5892e66fb246fa7e7ef06dd3405e6793f05324775d5c58de8",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "reasoning": "none",
+  "tier": "default",
+  "store": false,
+  "tools": [],
+  "max_retries": 0,
+  "timeout_seconds": 60,
+  "max_requests": 10,
+  "input_token_limit": 64000,
+  "output_token_limit": 3000,
+  "listed_rate_usd_per_million": {
+    "input": 0.75,
+    "output": 4.5
+  },
+  "list_price_maximum_usd": 0.615,
+  "conservative_maximum_usd": 0.6765,
+  "reservation_per_case_usd": 0.06765,
+  "pricing_source": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+  "pricing_checked": "2026-11-20",
+  "dependencies": {
+    "python": "3.12.14",
+    "packages": {
+      "openai": "2.54.0",
+      "httpx": "0.28.1",
+      "fastapi": "0.142.2",
+      "pydantic": "2.13.5",
+      "sqlalchemy": "2.1.3"
+    }
+  },
+  "cases": [
+    {
+      "id": "01-original",
+      "status": "NOT_ATTEMPTED",
+      "request": "Use up to two layouts and Drawing A for the review. Keep heat exchangers and bypasses enabled. Please revise the pending design to match, leaving it for me to review before Apply or Run.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "993e87fd160f6a353fee51fb15f02c266cee9b62bfd3bcf288820aec34c767ec",
+      "context_sha256": "d945c70b4ce45fcf667364d46333945a801ea091b3441ad1f90eda7b6d2a75f5",
+      "input_bound": 42536,
+      "saved_sha256": "fb803f6c77a273341e12230be2893a546d21b12c15e1716cc7579bd03f32fbae",
+      "expected_candidate_sha256": "22e0595bf6f0612714ab25862324d4b5dc71626f5de53041dd5f44640d8dd4c7",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "02-paraphrase",
+      "status": "NOT_ATTEMPTED",
+      "request": "Please cap Generator North at two candidate layouts instead of four. Leave Drawing A, heat exchangers, bypasses and the rest of the proposed design alone.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "863294f972fafa22335d966da96657ca2b5311b810d29bf92207c7353c7d55b8",
+      "context_sha256": "c64d6cad3ac994882636cb6e70ed33dfcb60a04f80c5540b55cf748857a3425e",
+      "input_bound": 42514,
+      "saved_sha256": "3776d49adecb97364e8f6c36401d9d7492ff970706cd53982acb57eb4fcc184d",
+      "expected_candidate_sha256": "b3ef07ede766087f0e1f85f1fe6e04948886769fd25dccc853aa695b60aca603",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "03-saved",
+      "status": "NOT_ATTEMPTED",
+      "request": "In the saved design, change Generator North's maximum candidate layouts from four to two. Keep every other setting and connection.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "fffa3718eaaee00f29e7ff8420a8346c82f0b35a2c53df586ec0ca6dfa151027",
+      "context_sha256": "c5116807f16f5ba8877a189eb6c41c162048659e3b3d6e7a57e4490415ca8958",
+      "input_bound": 35668,
+      "saved_sha256": "e8c07d4b1ad72f2ff8be1691a977ea0d2ab3937ef67bfafddce38982ef9870ca",
+      "expected_candidate_sha256": "a43ac196e0dc9e1cb7dea8c93b2cb687dc29ae8bb9b002d2be5736ec85b4c4a6",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "04-boolean",
+      "status": "NOT_ATTEMPTED",
+      "request": "Turn off bypasses for Generator North. Leave its maximum candidate layouts at four and heat exchangers enabled; keep Drawing A and its connection.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "allow_bypass": false
+      },
+      "fixture_sha256": "5f2c3ccce6c44c0c2cbe48ac502edf633e6f67ad659a849df21684d087eb4154",
+      "context_sha256": "a3eaf1e64c41b056ce3f058b1edfcdbb63a5434f27aac83812dedd44e048cf73",
+      "input_bound": 35688,
+      "saved_sha256": "30330d196e849554774539dc46d0cd59a4257afe4ad1af17f2c963c926998de3",
+      "expected_candidate_sha256": "26f54448212b46bd7a7232e719bff501c7ca735646699f1da7d41f8330fa8297",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "05-ambiguous",
+      "status": "NOT_ATTEMPTED",
+      "request": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+      "expected": "clarification",
+      "expected_target": null,
+      "expected_values": {},
+      "fixture_sha256": "85d09bb2cc7e1ea0e423548e09f6a605c524bae954450c26263ff191f8ad1142",
+      "context_sha256": "a49785975626eeeb1f97ec069448fae38fb2fdde24821cddae858be4122a5225",
+      "input_bound": 41158,
+      "saved_sha256": "c42b8906d0ad04a25290845baf0372f2d4a1da5159053ad64ccf95488224f4d2",
+      "expected_candidate_sha256": "c42b8906d0ad04a25290845baf0372f2d4a1da5159053ad64ccf95488224f4d2",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "06-follow-up",
+      "status": "NOT_ATTEMPTED",
+      "request": "Generator South only, please. Leave Generator North alone.",
+      "expected": "edit",
+      "expected_target": "Generator South",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "a4fa930cbfdd259264b9af8a108917acf0e30e5734623ce5feabde40abb32b05",
+      "context_sha256": "216009551c16d1f5cc05af30a8607481e011bc38d0c1d9d7bf0b685505cf82a0",
+      "input_bound": 41669,
+      "saved_sha256": "b960505ef6e8e8b017c3cb9dace59d866f97351551dab78fefb66908f3ea1954",
+      "expected_candidate_sha256": "eb3f85d3412dbd67301d3470df943c00ccd3da8d912f5de5c3052792d445e180",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "07-already-satisfied",
+      "status": "NOT_ATTEMPTED",
+      "request": "Set Generator North's maximum candidate layouts to two. Leave all other settings and connections unchanged.",
+      "expected": "no_change",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "97cd1049c44408baf6d2da3cdefbed5b4653ecb200dbebf04bc8c6ec882895ed",
+      "context_sha256": "2b8211ab3dddb69aca4ed5e8fc643e6cac5de930066d19da4ee7ce95b0ad50f5",
+      "input_bound": 35669,
+      "saved_sha256": "40d18e0ba767f250a0dcf3cc3e137605a2151d0efbf6b080a84a1fb45bcaaa96",
+      "expected_candidate_sha256": "40d18e0ba767f250a0dcf3cc3e137605a2151d0efbf6b080a84a1fb45bcaaa96",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "08-invalid",
+      "status": "NOT_ATTEMPTED",
+      "request": "Set Generator North's maximum candidate layouts to 99 and its unlisted turbo_mode setting to true. Keep the rest unchanged.",
+      "expected": "refusal",
+      "expected_target": "Generator North",
+      "expected_values": {},
+      "fixture_sha256": "453610e5e773bc050cb09a085cc9fa607ed0da0c68c8ef9b118c744e56b0e9d8",
+      "context_sha256": "c915b2d3d5dd7031c7d6990e746bdb6c188b1490c708b3f918c19844e0467a87",
+      "input_bound": 35665,
+      "saved_sha256": "c1326bfc0923bffd6471dd6316eda00643b1be864771c3549a0cdab7d05dbb27",
+      "expected_candidate_sha256": "c1326bfc0923bffd6471dd6316eda00643b1be864771c3549a0cdab7d05dbb27",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "09-repeat-original",
+      "status": "NOT_ATTEMPTED",
+      "request": "Use up to two layouts and Drawing A for the review. Keep heat exchangers and bypasses enabled. Please revise the pending design to match, leaving it for me to review before Apply or Run.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "260c8cda6dacd8d8388163be30e91274822aee817ef4878ddc079bd2c5bd748e",
+      "context_sha256": "1315dac950b03dead271ea33d3d1d10c778cc0402a7036fd542344e4d49c130e",
+      "input_bound": 42571,
+      "saved_sha256": "8ca4ea7724bce692b89539648ebac80546f6def6a46c77c68f629e8d2d8c8664",
+      "expected_candidate_sha256": "1ff219958c13e81b1e57264cff2a26d91ee21b9501eeabcc0e9c4835b52087d1",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    },
+    {
+      "id": "10-repeat-paraphrase",
+      "status": "NOT_ATTEMPTED",
+      "request": "Please cap Generator North at two candidate layouts instead of four. Leave Drawing A, heat exchangers, bypasses and the rest of the proposed design alone.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "fixture_sha256": "440545282fc72280bc77fb448097246e6ac986cdac6d4b88a5447f026ce8ea32",
+      "context_sha256": "e2dfbb8ff11a3dafa9c01d4d5c374278111c8f8583903e4f888bb5f20301a130",
+      "input_bound": 42549,
+      "saved_sha256": "ed98009fc1466d40ae4581ffd3191e00ec613ec21f7c9f7494bec9b18f225e88",
+      "expected_candidate_sha256": "bcf1c2182f7db873d925c476ca7c7f05396699ce1a2d8dc523936bcf476d106c",
+      "disabled_route_status": "PASS_DISABLED_BEFORE_DISPATCH"
+    }
+  ],
+  "prompt_sha256": "3e5c65e3dc25e7d7149fe0cc5e4e55a9dc4bed9e53069af4a2fec1b52d7291d8",
+  "wire_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+  "source_files_bound": 184,
+  "metered_requests": 0,
+  "model_interpretation_results": 0,
+  "key_loaded": false,
+  "spending_ledgers_created": 0,
+  "workflow_runs": 0,
+  "apply_actions": 0,
+  "unpaid_test_counts": {
+    "test-eval-final": {
+      "tests": 27,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "provider-contract-final": {
+      "tests": 40,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "normal_real_provider_routes_blocked_before_dispatch": 10,
+  "application_source_unchanged": true,
+  "preservation": {
+    "retained_offline_demo_database_byte_identical": true,
+    "retained_offline_demo_url": "http://127.0.0.1:23135/builder?solutionId=438d2a04-8040-41e1-9133-22688ba7d1d1",
+    "retained_offline_serving_source": "a63697ea5371b59ed23796715357bdb97883f258",
+    "old_closed_ledgers_byte_identical": 4,
+    "original_head": "12aae82dd47b078ba077aca40b0712c375b9d7f3",
+    "original_dirty_entries": 150,
+    "historical_J2_fixture_unchanged": true,
+    "health": {
+      "23124": 200,
+      "23125": 200,
+      "23134": 200,
+      "23135": 200
+    }
+  },
+  "limitations": [
+    "No genuine model request or interpretation result; separate approval required",
+    "Disabled-route and synthetic test checks are not successful model acceptance",
+    "Conditional review starter not started or browser-qualified",
+    "Vendor account model access/rate availability unprobed",
+    "No new service/runtime or execution qualification"
+  ]
+}

@@ -1,3 +1,5 @@
+> Latest preparation checkpoint: [Frozen setting interpretation acceptance —20November2026](SETTING_INTERPRETATION_ACCEPTANCE_2026-11-20.md). Ten cases prepared; zero metered calls; genuine interpretation remains unverified.
+
 # Product alignment and delivery checkpoint — 18 November 2026
 
 > Latest bounded delivery: [20 November trustworthy setting edit](DAILY_DELIVERY_2026-11-20_TRUSTWORTHY_SETTING_EDIT.md) — application diff/review/Apply-and-save/reopen demonstrated in the local browser with offline response replay; genuine model interpretation remains unverified. The 19 November J2 failure stays historical and closed.
