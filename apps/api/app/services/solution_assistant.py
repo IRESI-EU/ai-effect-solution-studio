@@ -59,7 +59,10 @@ def view(solution, row, db=None, user=None):
             review.update(current=True, candidate=projection(solution, result, db, pending=pending))
         except HTTPException as exc:
             review.update(current=False, candidate=None, unavailable_reason=str(exc.detail))
+    last = row.state.get('last_applied') if row else None
+    applied = bool(last and last['updated_at'] == solution.updated_at.isoformat() and last['sha256'] == digest(content(solution)))
     return {"solution_id": solution.id, "expected_updated_at": solution.updated_at.isoformat(),
+            "application_notice": "The reviewed changes were applied and saved. Run remains a separate action." if applied else None,
             "conversation_revision": row.revision if row else 0,
             "can_undo": bool(row and row.state.get("last_applied") and row.state["last_applied"]["updated_at"] == solution.updated_at.isoformat()),
             "messages": deepcopy(row.state.get("messages", [])) if row else [],
@@ -295,12 +298,13 @@ def candidate(solution, edits, allocations, db, user):
             if not contract or not contract.definition.get("execution_parameters"): raise HTTPException(422, "No published settings for this step")
             if old and (old["contract_id"] != contract.id or old["contract_version"] != contract.contract_version):
                 raise HTTPException(409, "Review the changed parameter contract in Builder before editing")
+            if not patch: raise HTTPException(422, "Choose at least one supported setting to change")
             values = {**((old or {}).get("parameters") or {}), **patch}
             data["configuration"] = {"contract_id": contract.id, "contract_version": contract.contract_version, "parameters": values}
             try:
                 effective = effective_parameters(contract.definition["execution_parameters"], values)
             except ValueError as exc: raise HTTPException(422, str(exc)) from exc
-            changes.append({"action": edit.kind, "step": data.get("label"), "before": effective_parameters(contract.definition["execution_parameters"], (old or {}).get("parameters", {})), "after": effective, "requested_overrides": patch,
+            changes.append({"action": edit.kind, "instance_id": target["id"], "step": data.get("label") or service.name, "before": effective_parameters(contract.definition["execution_parameters"], (old or {}).get("parameters", {})), "after": effective, "requested_overrides": patch,
                 "setting_labels":{k:v.get('title',k.replace('_',' ')) for k,v in contract.definition['execution_parameters']['properties'].items()}})
         elif edit.kind == "add_service":
             value = parsed(edit.value, {"service_id", "local_ref", "parameters"})
@@ -353,6 +357,35 @@ def candidate(solution, edits, allocations, db, user):
     return result, changes
 
 
+def setting_difference(changes):
+    result = []
+    for change in changes:
+        if change['action'] != 'set_node_parameters': continue
+        for name, after in change['after'].items():
+            before = change['before'].get(name)
+            if name in change['before'] and digest(before) == digest(after): continue
+            result.append({'instance_id':change['instance_id'], 'step':change['step'],
+                'parameter':name, 'label':change['setting_labels'].get(name,name),
+                'before':before, 'before_present':name in change['before'], 'after':after})
+    return result
+
+
+def setting_summary(changes, differences, base_kind):
+    """Only validated application facts; no interpretation of the user's words."""
+    if differences:
+        parts = [f"{d['step']} ({d['instance_id'][-8:]}): {d['label']} "
+                 f"{json.dumps(d['before'],ensure_ascii=False) if d['before_present'] else 'not set'} → {json.dumps(d['after'],ensure_ascii=False)}"
+                 for d in differences]
+        message = 'Proposed setting changes: ' + '; '.join(parts) + '. Nothing has been applied or run.'
+    else:
+        parts = [f"{c['step']} ({c['instance_id'][-8:]}): {c['setting_labels'].get(k,k)} is already {json.dumps(c['after'][k],ensure_ascii=False)}"
+                 for c in changes if c['action']=='set_node_parameters' for k in c['requested_overrides']]
+        message = 'No change needed in the ' + ('proposed' if base_kind=='pending' else 'saved') + ' design: ' + '; '.join(parts) + '. '
+        message += ('The existing pending review is retained. ' if base_kind=='pending' else '') + 'Nothing has been applied or run.'
+    return message, {'source':'application_diff','base_kind':base_kind,
+                     'status':'proposed' if differences else 'no_change','changes':differences}
+
+
 def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None, base=None):
     if turn.edits or turn.template_key is not None or turn.composition_settings or turn.registered_settings or turn.recommended_seed is not None or (turn.discovery and turn.discovery.candidate_id) or turn.expected_revision is not None:
         raise HTTPException(502, "The assistant returned legacy workflow authority instead of saved-solution edits")
@@ -360,10 +393,13 @@ def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assu
     allocations = {}; edits = turn.solution_edits or []
     clarification = turn.discovery and turn.discovery.outcome == 'clarification_needed'
     if clarification and edits: raise HTTPException(502,'Clarification cannot also propose design changes')
-    pending = None
+    pending = None; change_summary = None; actual_message = turn.message
+    setting_only = bool(edits) and all(e.kind == "set_node_parameters" for e in edits)
     if edits:
         if base is None: raise HTTPException(422, 'An explicit current edit base is required')
         check(solution, row, base.expected_updated_at, base.conversation_revision)
+        if setting_only and state.get('pending') and base.kind != 'pending':
+            raise HTTPException(409, 'Revise the current pending review or dismiss it explicitly before editing the saved design')
         previous = None; prior_edits = []; disclosures = []; batches = []
         if base.kind == 'pending':
             previous = state.get('pending')
@@ -380,28 +416,36 @@ def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assu
         edits = resolve_edits(solution, original, edits, db, previous)
         delta_allocations = {} # additions allocate once, then replay with the same IDs
         revised, changes = candidate(SimpleNamespace(**original), edits, delta_allocations, db, user)
-        if set(allocations) & set(delta_allocations):
-            raise HTTPException(422, 'Use fresh proposal-local references for additional instances')
-        allocations.update(delta_allocations)
-        cumulative = prior_edits + [e.model_dump() for e in edits]
-        if len(cumulative) > 80: raise HTTPException(422, 'Apply or dismiss this review before requesting further revisions')
-        batches.append(len(edits))
-        result = replay(solution, cumulative, batches, allocations, db, user)
-        if digest(result) != digest(revised): raise HTTPException(409, 'Cumulative proposal replay differs from the reviewed candidate')
-        disclosures = list(dict.fromkeys(disclosures))
-        if len(disclosures) > 12: raise HTTPException(422, 'Review existing assumptions before adding more')
-        changes = [{'action': 'proposed_assumption', 'after': text} for text in assumptions] + changes
-        pending = {'id': str(uuid4()), 'base_updated_at': solution.updated_at.isoformat(), 'base_sha256': digest(content(solution)),
-                   'candidate_sha256': digest(result), 'authority_sha256': authority(result['nodes'], db),
-                   'edits': cumulative, 'batch_sizes': batches, 'allocations': allocations, 'changes': changes, 'assumptions': list(assumptions), 'prior_assumptions': disclosures,
-                   'supersedes': previous['id'] if previous else None}
-    reply = {'role':'assistant','content':turn.message}
+        if setting_only:
+            differences = setting_difference(changes)
+            actual_message, change_summary = setting_summary(changes, differences, base.kind)
+            if not differences: edits = []
+        if edits:
+            if set(allocations) & set(delta_allocations):
+                raise HTTPException(422, 'Use fresh proposal-local references for additional instances')
+            allocations.update(delta_allocations)
+            cumulative = prior_edits + [e.model_dump() for e in edits]
+            if len(cumulative) > 80: raise HTTPException(422, 'Apply or dismiss this review before requesting further revisions')
+            batches.append(len(edits))
+            result = replay(solution, cumulative, batches, allocations, db, user)
+            if digest(result) != digest(revised): raise HTTPException(409, 'Cumulative proposal replay differs from the reviewed candidate')
+            disclosures = list(dict.fromkeys(disclosures))
+            if len(disclosures) > 12: raise HTTPException(422, 'Review existing assumptions before adding more')
+            changes = [{'action': 'proposed_assumption', 'after': text} for text in assumptions] + changes
+            pending = {'id': str(uuid4()), 'base_updated_at': solution.updated_at.isoformat(), 'base_sha256': digest(content(solution)),
+                       'candidate_sha256': digest(result), 'authority_sha256': authority(result['nodes'], db),
+                       'edits': cumulative, 'batch_sizes': batches, 'allocations': allocations, 'changes': changes, 'assumptions': list(assumptions), 'prior_assumptions': disclosures,
+                       'supersedes': previous['id'] if previous else None}
+    reply = {'role':'assistant','content':actual_message}
+    if change_summary is not None:
+        reply['change_summary'] = change_summary
+        outcome = 'proposal' if edits else 'answer'
     if outcome is not None:
-        reply.update(outcome=outcome, assumptions=list(assumptions))
+        reply.update(outcome=outcome, assumptions=[] if setting_only and not edits else list(assumptions))
     if clarification:
         reply['question'] = turn.discovery.question
         state['clarification'] = {'request':(state.get('clarification') or {}).get('request',message),'question':turn.discovery.question}
-    elif edits: state['clarification'] = None
+    elif edits or change_summary is not None: state['clarification'] = None
     if catalogue_used is not None:
         state['catalogue_used'] = {'services':[{'service_id':c['service_id'],'name':c['name'],'operation':c['operation_name'],
             'contract_version':c['contract']['contract_version'] if c['contract'] else None} for c in catalogue_used['services']],

@@ -25,6 +25,11 @@ def send(client, solution, provider, message):
         refs = {n['id']:target_ref(base, n['id']) for n in actual['nodes'] if n.get('data', {}).get('service')}
         value = provider.turn.model_dump()
         value['edit_base'] = {'kind':'saved', 'expected_updated_at':state['expected_updated_at'], 'conversation_revision':state['conversation_revision'], 'proposal_id':None, 'candidate_sha256':None}
+        # These are supplied response fixtures, not model interpretation. Bind
+        # setting-only fixtures to the actual pending candidate when present.
+        if state['pending'] and state['pending']['current'] and value['solution_edits'] and all(e['kind']=='set_node_parameters' for e in value['solution_edits']):
+            refs={step['node_id']:step['target_ref'] for step in state['pending']['candidate']['steps']}
+            value['edit_base'].update(kind='pending',proposal_id=state['pending']['id'],candidate_sha256=state['pending']['candidate']['candidate_sha256'])
         for edit in value['solution_edits']:
             if edit['node_id'] in refs: edit['node_id'] = refs[edit['node_id']]
             if edit['kind'] in ('connect','disconnect'):

@@ -72,3 +72,11 @@ test('complete cumulative review shows final settings and separate revision delt
   for(const text of ['Complete proposed design','Candidate maximum','3 (proposed override)','true (published default)','Alternative drawing','Changes since previous review','earlier proposal is superseded','No input is selected'])assert.ok(html.includes(text),text);
   assert.equal(render({pending:{...pending,pending:{...pending.pending,current:false,candidate:null}}}).buttons.find(b=>b.children==='Apply and save reviewed changes').disabled,true);
 });
+
+
+test('application diff is displayed as factual plain text, with applied notice only from server state',()=>{
+  const fixture={...state,application_notice:'The reviewed changes were applied and saved. Run remains a separate action.',messages:[{role:'assistant',content:'Proposed setting changes: maximum 4 → 2. <script>bad</script>',change_summary:{source:'application_diff'}}]};
+  const {html}=render({pending:fixture});
+  assert.match(html,/Application change summary/);assert.match(html,/4 → 2/);assert.match(html,/&lt;script&gt;/);
+  assert.match(html,/reviewed changes were applied and saved/);
+});

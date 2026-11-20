@@ -51,7 +51,7 @@ function CompleteCandidate({candidate}:{candidate:Candidate}) {
   </section>;
 }
 
-type State = { solution_id: string; expected_updated_at: string; conversation_revision: number; can_undo: boolean; messages: { role: string; content: string; question?: string }[]; catalogue_used?: {services:{service_id:string;name:string;operation:string;contract_version:string|null}[];truncated:boolean;total_accessible:number}; pending: { id: string; base_updated_at: string; changes: Record<string, unknown>[]; current?: boolean; candidate?: Candidate | null; supersedes?: string | null; unavailable_reason?: string } | null };
+type State = { solution_id: string; expected_updated_at: string; conversation_revision: number; can_undo: boolean; application_notice?: string | null; messages: { role: string; content: string; question?: string; change_summary?: {source:string} }[]; catalogue_used?: {services:{service_id:string;name:string;operation:string;contract_version:string|null}[];truncated:boolean;total_accessible:number}; pending: { id: string; base_updated_at: string; changes: Record<string, unknown>[]; current?: boolean; candidate?: Candidate | null; supersedes?: string | null; unavailable_reason?: string } | null };
 type Config = { enabled: boolean; saved_solution_workspace: boolean; provider_configured: boolean; provider_mode?: string; test_allowance?: { can_request: boolean; message: string } };
 async function request(path: string, body?: unknown) {
   const response = await fetch(`/api/design-ai${path}`, { cache: "no-store", ...(body === undefined ? {} : {
@@ -116,8 +116,9 @@ export default function SavedSolutionAssistant({ solutionId, savedVersion, disab
     {!solutionId ? <p>Save a solution to start its conversation.</p> : disabled ? <p role="status">Save your Builder changes and finish the current action before using chat.</p> : null}
     {!canChat && <p role="status">{config.test_allowance?.can_request === false ? config.test_allowance.message : "AI is not connected. Manual Builder editing remains available."}</p>}
     {error && <p role="alert">{error}</p>}
+    {state?.application_notice && <p role="status">{state.application_notice}</p>}
     <div aria-label="Solution conversation" aria-live="polite" style={{ maxHeight: 380, overflowY: "auto" }}>
-      {state?.messages.map((message, index) => <article key={index}><strong>{message.role === "user" ? "You" : "Assistant"}</strong><ConversationMessage content={message.content} />{message.question && <p><strong>{message.question}</strong></p>}</article>)}
+      {state?.messages.map((message, index) => <article key={index}><strong>{message.role === "user" ? "You" : "Assistant"}</strong>{message.change_summary?.source === "application_diff" ? <><small>Application change summary</small><p>{message.content}</p></> : <ConversationMessage content={message.content} />}{message.question && <p><strong>{message.question}</strong></p>}</article>)}
     </div>
     {state?.catalogue_used && <details><summary>Catalogue used for this conversation</summary>
       <p>{state.catalogue_used.services.length} of {state.catalogue_used.total_accessible} accessible services retrieved. {state.catalogue_used.truncated && "Results are limited; this is not an exhaustive search."}</p>

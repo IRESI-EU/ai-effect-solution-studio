@@ -105,7 +105,15 @@ def test_offline_policy_outcomes_flow_through_review_and_preserve_state(policy, 
     assert actual.status_code == 200, actual.text
     state = actual.json()
     assert client.get('/solutions/' + solution['id']).json() == solution
-    assert state['messages'][-1]['content'] == fixture['message']
+    if fixture['outcome']=='proposal':
+        assert state['messages'][-1]['change_summary']['source']=='application_diff'
+        if state['messages'][-1]['change_summary']['status']=='no_change':
+            assert state['pending']==old['pending']
+            assert 'No change needed' in state['messages'][-1]['content']
+            return
+        assert 'Proposed setting changes' in state['messages'][-1]['content']
+    else:
+        assert state['messages'][-1]['content'] == fixture['message']
     if fixture['outcome'] == 'proposal':
         assert state['pending']['id'] != old['pending']['id']
         disclosures = [c['after'] for c in state['pending']['changes'] if c['action'] == 'proposed_assumption']
@@ -227,7 +235,8 @@ def test_invalid_response_and_unsupported_proposal_retain_saved_and_pending(poli
 
 
 @pytest.mark.parametrize('consistent', [True, False])
-def test_focused_sdk_wire_schema_budget_audit_and_parser_are_identical(environment, tmp_path, monkeypatch, caplog, consistent):
+@pytest.mark.parametrize('setting_edit', [True, False])
+def test_focused_sdk_wire_schema_budget_audit_and_parser_are_identical(environment, tmp_path, monkeypatch, caplog, consistent, setting_edit):
     """Actual SDK serialization over offline HTTP; synthetic disposable ledger only."""
     from test_scoped_ai_acceptance import new, SCOPE
     from app.services.scoped_ai_acceptance import MODEL
@@ -237,13 +246,15 @@ def test_focused_sdk_wire_schema_budget_audit_and_parser_are_identical(environme
         'openai_api_key': 'OFFLINE DOUBLE NEVER TRANSMITTED'}.items(): monkeypatch.setattr(settings, key, value)
     caplog.set_level(logging.DEBUG, logger='design_ai.provider.audit')
     expected = SavedSolutionResponse.model_validate(response('clarification', clarification='Which labelled instance?'))
+    if setting_edit:
+        expected=SavedSolutionResponse.model_validate(response('setting_edit',message=None,edit_base={'kind':'saved','expected_updated_at':'offline-version','conversation_revision':0,'proposal_id':None,'candidate_sha256':None},parameter_action={'operation':'set_parameters','target_ref':'instance_offline','requested_values':[{'name':'limit','value':2}]}))
     calls = []
     def handler(request):
         body = json.loads(request.content); calls.append(body)
         assert budget.availability()['request_count'] == 1
         format = body['text']['format']
         assert format == provider_evidence.response_format(SavedSolutionResponse)
-        assert set(format['schema']['properties']) == {'outcome', 'message', 'clarification', 'solution_edits', 'assumptions', 'edit_base'}
+        assert set(format['schema']['properties']) == {'outcome', 'message', 'clarification', 'solution_edits', 'assumptions', 'edit_base', 'parameter_action'}
         assert set(format['schema']['required']) == set(format['schema']['properties'])
         assert format['schema']['additionalProperties'] is False
         assert not {'AssistantTurn', 'CompositionSettings', 'Edit', 'DiscoveryDecision'} & set(format['schema']['$defs'])
