@@ -1,0 +1,745 @@
+{
+  "date": "2026-11-20",
+  "result": "DEMONSTRATED_IN_LOCAL_BROWSER_WITH_OFFLINE_RESPONSE_REPLAY",
+  "serving_commit": "a63697ea5371b59ed23796715357bdb97883f258",
+  "branch": "codex/trustworthy-setting-edit-20261120",
+  "solution_id": "438d2a04-8040-41e1-9133-22688ba7d1d1",
+  "working_url": "http://127.0.0.1:23135/builder?solutionId=438d2a04-8040-41e1-9133-22688ba7d1d1",
+  "api_health_url": "http://127.0.0.1:28269/health",
+  "paid_model_calls": 0,
+  "workflow_submissions": 0,
+  "new_spending_ledgers": 0,
+  "wire_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+  "prompt_sha256": "3e5c65e3dc25e7d7149fe0cc5e4e55a9dc4bed9e53069af4a2fec1b52d7291d8",
+  "previous_j2_fixture_sha256": "174512a02f45808eb4f54cb53117058af88ae3c4959b89901d0b006c543979a8",
+  "previous_failure_status": "Still rejected; original evidence unchanged. Not repaired into an invented successful response.",
+  "browser_replays": [
+    {
+      "offline": true,
+      "solution_id": "438d2a04-8040-41e1-9133-22688ba7d1d1",
+      "request": "Prepare the offline starting design for four layouts with Drawing A.",
+      "response": {
+        "outcome": "proposal",
+        "message": "OFFLINE SETUP REPLAY: review the source-derived fixture design with maximum four; no model interpretation or Run occurred.",
+        "clarification": null,
+        "solution_edits": [
+          {
+            "kind": "add_service",
+            "node_id": null,
+            "value": "{\"service_id\": \"dev-danish-6da2254c454743df9cc1faf94cd4611e\", \"local_ref\": \"source\", \"parameters\": {\"how_many\": 4, \"allow_bypass\": false}}"
+          },
+          {
+            "kind": "add_service",
+            "node_id": null,
+            "value": "{\"service_id\": \"dev-danish-1abaf29cb0ba4fac960ea041a2a6bdc4\", \"local_ref\": \"drawing\"}"
+          },
+          {
+            "kind": "connect",
+            "node_id": null,
+            "value": "{\"source\": \"source\", \"target\": \"drawing\", \"source_slot\": \"networks\", \"target_slot\": \"networks\"}"
+          }
+        ],
+        "edit_base": {
+          "kind": "saved",
+          "expected_updated_at": "2026-11-20T12:52:06.604780",
+          "conversation_revision": 0,
+          "proposal_id": null,
+          "candidate_sha256": null
+        },
+        "assumptions": [
+          "OFFLINE software fixture only; no partner scientific approval."
+        ],
+        "parameter_action": null
+      }
+    },
+    {
+      "offline": true,
+      "solution_id": "438d2a04-8040-41e1-9133-22688ba7d1d1",
+      "request": "Please cap the proposed layouts at two instead, leaving the other settings and connection alone.",
+      "response": {
+        "outcome": "setting_edit",
+        "message": null,
+        "clarification": null,
+        "solution_edits": [],
+        "edit_base": {
+          "kind": "pending",
+          "expected_updated_at": "2026-11-20T12:52:06.604780",
+          "conversation_revision": 1,
+          "proposal_id": "0f3e1419-1bc7-4c15-a86c-641a47d02032",
+          "candidate_sha256": "299faff96f6fd7df4bb054b41c5a5e598a2a16b09ea9b2d3c8d3524285d92a99"
+        },
+        "assumptions": [],
+        "parameter_action": {
+          "operation": "set_parameters",
+          "target_ref": "instance_e1baa03881a06c744efa395ef99d0f52",
+          "requested_values": [
+            {
+              "name": "how_many",
+              "value": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "offline": true,
+      "solution_id": "438d2a04-8040-41e1-9133-22688ba7d1d1",
+      "request": "Keep the saved maximum at two. Does anything need to change?",
+      "response": {
+        "outcome": "setting_edit",
+        "message": null,
+        "clarification": null,
+        "solution_edits": [],
+        "edit_base": {
+          "kind": "saved",
+          "expected_updated_at": "2026-11-20T12:53:19.123990",
+          "conversation_revision": 3,
+          "proposal_id": null,
+          "candidate_sha256": null
+        },
+        "assumptions": [],
+        "parameter_action": {
+          "operation": "set_parameters",
+          "target_ref": "instance_78e7054d8e310e0ba21c03559af7b519",
+          "requested_values": [
+            {
+              "name": "how_many",
+              "value": 2
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "before_candidate": {
+    "name": "New AI-EFFECT solution",
+    "description": "",
+    "steps": [
+      {
+        "node_id": "service-c838ddde-e2af-47fc-b14f-6fe3e22b66fc",
+        "target_ref": "instance_d9eb6e0abad0f51da6195dbe8da1fcda",
+        "label": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+        "service_id": "dev-danish-6da2254c454743df9cc1faf94cd4611e",
+        "operation_name": "GenerateTopology",
+        "contract": {
+          "contract_id": "53531709-e802-42f7-a122-8d30ae0e5cd0",
+          "contract_version": "1.1.0",
+          "definition": {
+            "operation_role": "source",
+            "binding_transport": "whole-output-v1",
+            "inputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "run_configuration",
+                "semantic_concept": "urn:development-fixture:danish-run-configuration",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "inline",
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-run-config:1",
+                "compatibility_notes": [],
+                "required": true,
+                "source_requirement": "workflow_input"
+              }
+            ],
+            "outputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "networks",
+                "semantic_concept": "urn:development-fixture:danish-topologies",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                "compatibility_notes": []
+              }
+            ],
+            "adapter_capabilities": [],
+            "compatibility_notes": [
+              "Source-derived whole JSON output reference; no projection, conversion or scientific approval. Separate run configuration supplies/loads are selected in Builder."
+            ],
+            "execution_parameters": {
+              "schema_version": "1.0",
+              "transport": "http-parameters-v1",
+              "properties": {
+                "allow_hx": {
+                  "type": "boolean",
+                  "title": "Heat exchangers",
+                  "description": "Source enumerator allow_hx argument; DEVELOPMENT SOFTWARE FIXTURE only",
+                  "required": false,
+                  "default": true
+                },
+                "allow_bypass": {
+                  "type": "boolean",
+                  "title": "Bypasses",
+                  "description": "Source enumerator allow_bypass argument; DEVELOPMENT SOFTWARE FIXTURE only",
+                  "required": false,
+                  "default": true
+                },
+                "how_many": {
+                  "type": "integer",
+                  "title": "Maximum candidate layouts",
+                  "description": "Source enumerate_networks max_results; up to this number; DEVELOPMENT SOFTWARE FIXTURE bounds, not Danish scientific approval",
+                  "required": false,
+                  "default": 1,
+                  "minimum": 1.0,
+                  "maximum": 4.0
+                }
+              }
+            }
+          }
+        },
+        "effective_settings": {
+          "allow_hx": true,
+          "allow_bypass": false,
+          "how_many": 4
+        },
+        "requested_overrides": {
+          "how_many": 4,
+          "allow_bypass": false
+        },
+        "setting_labels": {
+          "allow_hx": "Heat exchangers",
+          "allow_bypass": "Bypasses",
+          "how_many": "Maximum candidate layouts"
+        }
+      },
+      {
+        "node_id": "service-92ff4bdd-e252-4be7-964a-38ea613e6c3c",
+        "target_ref": "instance_fd9934287003a3199cb299c6b67fe183",
+        "label": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+        "service_id": "dev-danish-1abaf29cb0ba4fac960ea041a2a6bdc4",
+        "operation_name": "RenderTopologies",
+        "contract": {
+          "contract_id": "3bbf24ab-e234-44db-ae20-6f591907ddc7",
+          "contract_version": "1.0.0",
+          "definition": {
+            "operation_role": "reporter",
+            "binding_transport": "whole-output-v1",
+            "inputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "networks",
+                "semantic_concept": "urn:development-fixture:danish-topologies",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                "compatibility_notes": [],
+                "required": true,
+                "source_requirement": "upstream_operation"
+              }
+            ],
+            "outputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "rendered_report",
+                "semantic_concept": "urn:development-fixture:danish-drawings",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-rendered-report:1",
+                "compatibility_notes": []
+              }
+            ],
+            "adapter_capabilities": [],
+            "compatibility_notes": [
+              "Source-derived whole JSON output reference; no projection, conversion or scientific approval. Separate run configuration supplies/loads are selected in Builder."
+            ]
+          }
+        },
+        "effective_settings": {},
+        "requested_overrides": {},
+        "setting_labels": {}
+      }
+    ],
+    "connections": [
+      {
+        "source": "instance_d9eb6e0abad0f51da6195dbe8da1fcda",
+        "target": "instance_fd9934287003a3199cb299c6b67fe183",
+        "binding": {
+          "source_slot": "networks",
+          "target_slot": "networks"
+        }
+      }
+    ],
+    "assumptions": [
+      "OFFLINE software fixture only; no partner scientific approval."
+    ],
+    "prior_assumptions": [],
+    "proposal_id": "e4e3fab5-7959-4252-a18a-2f0526627ecd",
+    "base_updated_at": "2026-11-20T12:34:18.225674",
+    "candidate_sha256": "fc5dbf10abd553139fc73123346e1f2644511ccfdc5b45dc299217a699ccadd0",
+    "workflow_input_selected": false
+  },
+  "reviewed_candidate": {
+    "name": "New AI-EFFECT solution",
+    "description": "",
+    "steps": [
+      {
+        "node_id": "service-cb1cc8c4-b396-436b-8c24-671dd518e04a",
+        "target_ref": "instance_4219c122fd0201fbc1213f96046423a8",
+        "label": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+        "service_id": "dev-danish-6da2254c454743df9cc1faf94cd4611e",
+        "operation_name": "GenerateTopology",
+        "contract": {
+          "contract_id": "53531709-e802-42f7-a122-8d30ae0e5cd0",
+          "contract_version": "1.1.0",
+          "definition": {
+            "operation_role": "source",
+            "binding_transport": "whole-output-v1",
+            "inputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "run_configuration",
+                "semantic_concept": "urn:development-fixture:danish-run-configuration",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "inline",
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-run-config:1",
+                "compatibility_notes": [],
+                "required": true,
+                "source_requirement": "workflow_input"
+              }
+            ],
+            "outputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "networks",
+                "semantic_concept": "urn:development-fixture:danish-topologies",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                "compatibility_notes": []
+              }
+            ],
+            "adapter_capabilities": [],
+            "compatibility_notes": [
+              "Source-derived whole JSON output reference; no projection, conversion or scientific approval. Separate run configuration supplies/loads are selected in Builder."
+            ],
+            "execution_parameters": {
+              "schema_version": "1.0",
+              "transport": "http-parameters-v1",
+              "properties": {
+                "allow_hx": {
+                  "type": "boolean",
+                  "title": "Heat exchangers",
+                  "description": "Source enumerator allow_hx argument; DEVELOPMENT SOFTWARE FIXTURE only",
+                  "required": false,
+                  "default": true
+                },
+                "allow_bypass": {
+                  "type": "boolean",
+                  "title": "Bypasses",
+                  "description": "Source enumerator allow_bypass argument; DEVELOPMENT SOFTWARE FIXTURE only",
+                  "required": false,
+                  "default": true
+                },
+                "how_many": {
+                  "type": "integer",
+                  "title": "Maximum candidate layouts",
+                  "description": "Source enumerate_networks max_results; up to this number; DEVELOPMENT SOFTWARE FIXTURE bounds, not Danish scientific approval",
+                  "required": false,
+                  "default": 1,
+                  "minimum": 1.0,
+                  "maximum": 4.0
+                }
+              }
+            }
+          }
+        },
+        "effective_settings": {
+          "allow_hx": true,
+          "allow_bypass": false,
+          "how_many": 2
+        },
+        "requested_overrides": {
+          "how_many": 2,
+          "allow_bypass": false
+        },
+        "setting_labels": {
+          "allow_hx": "Heat exchangers",
+          "allow_bypass": "Bypasses",
+          "how_many": "Maximum candidate layouts"
+        }
+      },
+      {
+        "node_id": "service-2ff16216-ddd7-4969-b81e-688d83f5a922",
+        "target_ref": "instance_7d48eb7b10290106cd7c74caadc756da",
+        "label": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+        "service_id": "dev-danish-1abaf29cb0ba4fac960ea041a2a6bdc4",
+        "operation_name": "RenderTopologies",
+        "contract": {
+          "contract_id": "3bbf24ab-e234-44db-ae20-6f591907ddc7",
+          "contract_version": "1.0.0",
+          "definition": {
+            "operation_role": "reporter",
+            "binding_transport": "whole-output-v1",
+            "inputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "networks",
+                "semantic_concept": "urn:development-fixture:danish-topologies",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                "compatibility_notes": [],
+                "required": true,
+                "source_requirement": "upstream_operation"
+              }
+            ],
+            "outputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "rendered_report",
+                "semantic_concept": "urn:development-fixture:danish-drawings",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-rendered-report:1",
+                "compatibility_notes": []
+              }
+            ],
+            "adapter_capabilities": [],
+            "compatibility_notes": [
+              "Source-derived whole JSON output reference; no projection, conversion or scientific approval. Separate run configuration supplies/loads are selected in Builder."
+            ]
+          }
+        },
+        "effective_settings": {},
+        "requested_overrides": {},
+        "setting_labels": {}
+      }
+    ],
+    "connections": [
+      {
+        "source": "instance_4219c122fd0201fbc1213f96046423a8",
+        "target": "instance_7d48eb7b10290106cd7c74caadc756da",
+        "binding": {
+          "source_slot": "networks",
+          "target_slot": "networks"
+        }
+      }
+    ],
+    "assumptions": [],
+    "prior_assumptions": [
+      "OFFLINE software fixture only; no partner scientific approval."
+    ],
+    "proposal_id": "6bc068d3-f98e-47b0-b423-01392e8338f9",
+    "base_updated_at": "2026-11-20T12:52:06.604780",
+    "candidate_sha256": "5b5e0d26f9b8dd8e70519e641e0746acce30c28dd2ffa3a2fe14eaecc2c9f391",
+    "workflow_input_selected": false
+  },
+  "application_summary": {
+    "role": "assistant",
+    "content": "Proposed setting changes: DEVELOPMENT SOFTWARE FIXTURE — Danish Generator (d518e04a): Maximum candidate layouts 4 → 2. These changes have not been applied; Run remains a separate action.",
+    "change_summary": {
+      "source": "application_diff",
+      "base_kind": "pending",
+      "status": "proposed",
+      "changes": [
+        {
+          "instance_id": "service-cb1cc8c4-b396-436b-8c24-671dd518e04a",
+          "step": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+          "parameter": "how_many",
+          "label": "Maximum candidate layouts",
+          "before": 4,
+          "before_present": true,
+          "after": 2
+        }
+      ]
+    },
+    "outcome": "proposal",
+    "assumptions": []
+  },
+  "applied_notice": "The reviewed changes were applied and saved. Run remains a separate action.",
+  "no_change_summary": {
+    "role": "assistant",
+    "content": "No change needed in the saved design: DEVELOPMENT SOFTWARE FIXTURE — Danish Generator (d518e04a): Maximum candidate layouts is already 2. This request made no design changes and did not run the workflow.",
+    "change_summary": {
+      "source": "application_diff",
+      "base_kind": "saved",
+      "status": "no_change",
+      "changes": []
+    },
+    "outcome": "answer",
+    "assumptions": []
+  },
+  "stored_candidate_sha256": "5b5e0d26f9b8dd8e70519e641e0746acce30c28dd2ffa3a2fe14eaecc2c9f391",
+  "same_instance_ids": true,
+  "same_connections": true,
+  "unrelated_settings_preserved": true,
+  "saved_graph_unchanged_before_apply": true,
+  "review_equals_applied_stored_graph": true,
+  "applied_equals_reopened": true,
+  "no_change_request_preserves_saved_graph": true,
+  "backend_counts": {
+    "regressions-final": {
+      "tests": 82,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "compatibility-1": {
+      "tests": 28,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "frontend_component_checks": {
+    "passed": 6,
+    "failed": 0
+  },
+  "next_build": "PASS",
+  "copied_api_source_files_verified": 96,
+  "preservation": {
+    "old_closed_ledgers_byte_identical": true,
+    "original_dirty_entries": 150,
+    "original_head": "12aae82dd47b078ba077aca40b0712c375b9d7f3",
+    "historical_j2_unchanged": true,
+    "health": {
+      "23124": 200,
+      "23125": 200,
+      "23134": 200,
+      "23135": 200
+    }
+  },
+  "limitations": [
+    "Offline supplied interpretation; no genuine model call",
+    "Not an open-ended scripted interpreter; only documented fixture messages supplied",
+    "No new runtime/model/algorithm result",
+    "No partner scientific approval",
+    "No production deployment or merge"
+  ],
+  "initial_candidate": {
+    "name": "New AI-EFFECT solution",
+    "description": "",
+    "steps": [
+      {
+        "node_id": "service-cb1cc8c4-b396-436b-8c24-671dd518e04a",
+        "target_ref": "instance_e1baa03881a06c744efa395ef99d0f52",
+        "label": "DEVELOPMENT SOFTWARE FIXTURE — Danish Generator",
+        "service_id": "dev-danish-6da2254c454743df9cc1faf94cd4611e",
+        "operation_name": "GenerateTopology",
+        "contract": {
+          "contract_id": "53531709-e802-42f7-a122-8d30ae0e5cd0",
+          "contract_version": "1.1.0",
+          "definition": {
+            "operation_role": "source",
+            "binding_transport": "whole-output-v1",
+            "inputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "run_configuration",
+                "semantic_concept": "urn:development-fixture:danish-run-configuration",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "inline",
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-run-config:1",
+                "compatibility_notes": [],
+                "required": true,
+                "source_requirement": "workflow_input"
+              }
+            ],
+            "outputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "networks",
+                "semantic_concept": "urn:development-fixture:danish-topologies",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                "compatibility_notes": []
+              }
+            ],
+            "adapter_capabilities": [],
+            "compatibility_notes": [
+              "Source-derived whole JSON output reference; no projection, conversion or scientific approval. Separate run configuration supplies/loads are selected in Builder."
+            ],
+            "execution_parameters": {
+              "schema_version": "1.0",
+              "transport": "http-parameters-v1",
+              "properties": {
+                "allow_hx": {
+                  "type": "boolean",
+                  "title": "Heat exchangers",
+                  "description": "Source enumerator allow_hx argument; DEVELOPMENT SOFTWARE FIXTURE only",
+                  "required": false,
+                  "default": true
+                },
+                "allow_bypass": {
+                  "type": "boolean",
+                  "title": "Bypasses",
+                  "description": "Source enumerator allow_bypass argument; DEVELOPMENT SOFTWARE FIXTURE only",
+                  "required": false,
+                  "default": true
+                },
+                "how_many": {
+                  "type": "integer",
+                  "title": "Maximum candidate layouts",
+                  "description": "Source enumerate_networks max_results; up to this number; DEVELOPMENT SOFTWARE FIXTURE bounds, not Danish scientific approval",
+                  "required": false,
+                  "default": 1,
+                  "minimum": 1.0,
+                  "maximum": 4.0
+                }
+              }
+            }
+          }
+        },
+        "effective_settings": {
+          "allow_hx": true,
+          "allow_bypass": false,
+          "how_many": 4
+        },
+        "requested_overrides": {
+          "how_many": 4,
+          "allow_bypass": false
+        },
+        "setting_labels": {
+          "allow_hx": "Heat exchangers",
+          "allow_bypass": "Bypasses",
+          "how_many": "Maximum candidate layouts"
+        }
+      },
+      {
+        "node_id": "service-2ff16216-ddd7-4969-b81e-688d83f5a922",
+        "target_ref": "instance_32562c04872e328a6960c059f5d2b009",
+        "label": "DEVELOPMENT SOFTWARE FIXTURE — Danish Drawing A",
+        "service_id": "dev-danish-1abaf29cb0ba4fac960ea041a2a6bdc4",
+        "operation_name": "RenderTopologies",
+        "contract": {
+          "contract_id": "3bbf24ab-e234-44db-ae20-6f591907ddc7",
+          "contract_version": "1.0.0",
+          "definition": {
+            "operation_role": "reporter",
+            "binding_transport": "whole-output-v1",
+            "inputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "networks",
+                "semantic_concept": "urn:development-fixture:danish-topologies",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-topology-report:1",
+                "compatibility_notes": [],
+                "required": true,
+                "source_requirement": "upstream_operation"
+              }
+            ],
+            "outputs": [
+              {
+                "min_cardinality": 1,
+                "max_cardinality": 1,
+                "name": "rendered_report",
+                "semantic_concept": "urn:development-fixture:danish-drawings",
+                "value_representation": "data_reference",
+                "data_reference_protocols": [
+                  "file"
+                ],
+                "content_types": [
+                  "application/json"
+                ],
+                "schema_ref": "urn:development-fixture:danish-rendered-report:1",
+                "compatibility_notes": []
+              }
+            ],
+            "adapter_capabilities": [],
+            "compatibility_notes": [
+              "Source-derived whole JSON output reference; no projection, conversion or scientific approval. Separate run configuration supplies/loads are selected in Builder."
+            ]
+          }
+        },
+        "effective_settings": {},
+        "requested_overrides": {},
+        "setting_labels": {}
+      }
+    ],
+    "connections": [
+      {
+        "source": "instance_e1baa03881a06c744efa395ef99d0f52",
+        "target": "instance_32562c04872e328a6960c059f5d2b009",
+        "binding": {
+          "source_slot": "networks",
+          "target_slot": "networks"
+        }
+      }
+    ],
+    "assumptions": [
+      "OFFLINE software fixture only; no partner scientific approval."
+    ],
+    "prior_assumptions": [],
+    "proposal_id": "0f3e1419-1bc7-4c15-a86c-641a47d02032",
+    "base_updated_at": "2026-11-20T12:52:06.604780",
+    "candidate_sha256": "299faff96f6fd7df4bb054b41c5a5e598a2a16b09ea9b2d3c8d3524285d92a99",
+    "workflow_input_selected": false
+  },
+  "screenshots": [
+    "trustworthy-setting-review-final-20261120.png",
+    "trustworthy-setting-reopened-final-20261120.png",
+    "trustworthy-setting-no-change-final-20261120.png"
+  ],
+  "offline_replay_scope": "Three exact documented fixture messages, repeatable per fresh saved solution; no language interpretation."
+}

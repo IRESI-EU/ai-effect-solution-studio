@@ -1,5 +1,7 @@
 # Product alignment and delivery checkpoint — 18 November 2026
 
+> Latest bounded delivery: [20 November trustworthy setting edit](DAILY_DELIVERY_2026-11-20_TRUSTWORTHY_SETTING_EDIT.md) — application diff/review/Apply-and-save/reopen demonstrated in the local browser with offline response replay; genuine model interpretation remains unverified. The 19 November J2 failure stays historical and closed.
+
 > Later same-day delivery: [Portuguese-priority onboarding](DAILY_DELIVERY_2026-11-18_PORTUGUESE_ONBOARDING.md) implements source-query discovery and records the revised priority, concrete demonstration and runtime dependency.
 
 Baseline: the approved eight-page **AI_EFFECT_Product_Reset_and_Delivery_Plan.docx**. This checkpoint supersedes current-status statements in the earlier onboarding and native-execution checkpoints; those files remain historical evidence.
