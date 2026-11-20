@@ -1,0 +1,94 @@
+{
+  "date": "2026-11-20",
+  "result": "OFFLINE_BROWSER_AND_COMPONENT_PASS; GENUINE_RETEST_NOT_ATTEMPTED",
+  "base": "32f099c15545e3223f3f3980e6056f5f1366827e",
+  "serving_source": "7c3f4b752e520cb4e504316118e7a4dcaa396a2f",
+  "web_url": "http://127.0.0.1:23137",
+  "api_url": "http://127.0.0.1:28271",
+  "images": "none: existing host Python and Node dependencies; isolated source copies",
+  "solution_id": "5270b6f1-62c5-4c02-a590-dfcab2e14698",
+  "boundary": {
+    "earlier_pending_id_preserved_on_unresolved": true,
+    "earlier_candidate_sha256_preserved_on_unresolved": true,
+    "saved_unchanged_before_apply": true,
+    "chosen": "Generator South",
+    "north_before": 4,
+    "north_after": 4,
+    "south_before": 4,
+    "south_after": 2,
+    "boolean_settings_preserved": true,
+    "connections_and_input_preserved": true,
+    "earlier_pending_title_retained": true,
+    "pending_review_sha256": "ba3badd18e35440a52598c816632a7534877435719295abe8cfbb76f7392e374",
+    "reopened_saved_sha256": "ba3badd18e35440a52598c816632a7534877435719295abe8cfbb76f7392e374",
+    "same_solution_reopened_via_solutions": true
+  },
+  "tests": {
+    "focused-3": [
+      {
+        "tests": 35,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ],
+    "compat-2": [
+      {
+        "tests": 66,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "component_tests": {
+    "passed": 8,
+    "failed": 0
+  },
+  "next_build": "PASS: Next.js 16.3.8 build and type check",
+  "spending": {
+    "new_metered_attempts": 0,
+    "new_cost_usd": 0,
+    "previous_scope": "CLOSED; byte-for-byte preserved",
+    "previous_attempts": 5,
+    "previous_conservative_accounted_usd": 0.035761275,
+    "previous_uncertain_reservations": 0,
+    "remaining_authorised_attempts": 0,
+    "remaining_authorised_usd": 0
+  },
+  "preservation": {
+    "files_checked": 49,
+    "all_byte_identical": true,
+    "retained_login_health": {
+      "23124": 200,
+      "23125": 200,
+      "23134": 200,
+      "23135": 200,
+      "23136": 200,
+      "23137": 200
+    }
+  },
+  "submissions": 0,
+  "provider_prompt_and_spending_source_unchanged": true,
+  "response_fixture": {
+    "initial": "Captured case-5 validated action with only identity/base rebinding; no model called",
+    "after_choice": "Explicit offline response for the authenticated South selection; no NLP claim",
+    "response_count": 2
+  },
+  "limitations": [
+    "No genuine interpretation retest in this pass",
+    "No workflow Run or runtime/model qualification",
+    "Original case-5 interpretation failure remains FAIL_STOP; cases 6-10 remain NOT_ATTEMPTED",
+    "Conservative eligibility: multiple instances advertising requested parameter names require explicit user choice, even if prose names one"
+  ],
+  "screenshots_sha256": {
+    "target-choice-north-value-20261120.png": "3511d6f6225b8a73c816ef221f8ec63d0fdfa2b6512c77177291e295c579a600",
+    "target-choice-question-20261120.png": "c66d4edc29b30357c914645bc60c7f42489930086956075fdc89b0863a8468c9",
+    "target-choice-reopened-final-20261120.png": "47c9ca09a70d8c85ae8874a10c3e928fee33b281400ff1a4ee4b33428b8bb0d6",
+    "target-choice-reopened-north-20261120.png": "2a4ca400ab832e368764c478d417c4b584dd020acff00091b164cf69b6e7a206",
+    "target-choice-reopened-south-20261120.png": "7b02e5f3e6abd14469ba67a033c3723d8c7eca50c70a61e38ac89627e2cd4c84",
+    "target-choice-review-20261120.png": "13ba5f8a2efdb9f9be6c13fb1ef1464932f12d449f78de3fac93b6378c31a581",
+    "target-choice-south-value-20261120.png": "bfe8e2e17c4a886c03c76ef166b5f879bd4598a0dc0f8ba2dffca24d609ff7c6"
+  },
+  "serving_api_and_web_source_copy_verified": true
+}
