@@ -1,3 +1,5 @@
+> Latest execution checkpoint: [Genuine setting interpretation —20November2026](SETTING_INTERPRETATION_EXECUTION_2026-11-20.md). Cases1–4 passed and case1 passed browser Apply/save/reopen; case5 guessed an ambiguous target. Scope CLOSED; cases6–10 NOT_ATTEMPTED.
+
 > Latest preparation checkpoint: [Frozen setting interpretation acceptance —20November2026](SETTING_INTERPRETATION_ACCEPTANCE_2026-11-20.md). Ten cases prepared; zero metered calls; genuine interpretation remains unverified.
 
 # Product alignment and delivery checkpoint — 18 November 2026

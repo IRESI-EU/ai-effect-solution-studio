@@ -1,3 +1,5 @@
+> Subsequent approved execution: [stopped at case5 ambiguity](SETTING_INTERPRETATION_EXECUTION_2026-11-20.md). This document records the original preparation; its no-call status is historical.
+
 # Setting interpretation acceptance — preparation checkpoint — 20 November 2026
 
 **PREPARED, NOT AUTHORISED OR EXECUTED.** Genuine interpretation is still unverified. This increment adds a frozen acceptance set and runnable guarded evaluator; it changes no application code, model, prompt, schema, Builder, catalogue, service family or execution path. The working offline browser demonstration and historical genuine failures remain intact.
