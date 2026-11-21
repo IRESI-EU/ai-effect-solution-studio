@@ -66,13 +66,57 @@ def test_failure_stage_separate_from_interpretation(stage,detail,category):
     result=grade(case,f,o,a);assert result['status']=='FAIL_STOP' and result['category']==category
 
 
-def test_exact_ten_cases_repeat_requests_and_accounting():
-    spec=runner.read(runner.SPEC);cases=spec['cases'];assert len(cases)==spec['max_requests']==10
-    assert cases[0]['message']==cases[8]['message'] and cases[1]['message']==cases[9]['message']
-    assert spec['limit_nano_usd']==spec['reservation_nano_usd']*10==676500000
+def test_exact_six_cases_real_continuation_repeats_and_accounting():
+    spec=runner.read(runner.SPEC);cases=spec['cases'];assert len(cases)==spec['max_requests']==6
+    assert spec['limit_nano_usd']==spec['reservation_nano_usd']*6==405900000
     assert spec['reservation_nano_usd']==64000*825+3000*4950
-    assert cases[4]['instances']==cases[5]['instances']==2
-    assert cases[5]['clarification_fixture']['request']==cases[4]['message']
+    assert cases[0]['instances']==cases[1]['instances']==2
+    assert cases[1]['conversation_of']==cases[0]['id'] and cases[1]['select_target']=='Generator South'
+    assert cases[1]['message']==cases[0]['message']
+    assert not any('clarification_fixture' in c for c in cases)
+    historical=runner.read(runner.ROOT/'docs/verification/setting-interpretation-executed-20261120.json')['cases']
+    assert cases[4]['message']==historical[0]['request'] and cases[5]['message']==historical[1]['request']
+
+
+def target_choice_example(model='guess'):
+    case,f,o,a=example('target_choice');case.update(message='Ambiguous fixture request',requested_values={'how_many':2})
+    f['expected_candidate_sha256']='unchanged-review';f['eligible_targets']=[dict(label='North',target_ref='scoped-north'),dict(label='South',target_ref='scoped-south')]
+    o.update(pending_unchanged=True,candidate_sha256='unchanged-review',target_question=dict(current=True,request=case['message'],choices=f['eligible_targets']),application_message=dict(source='application_target_choice'))
+    if model=='clarify':a['validated_response']=dict(outcome='clarification',message='Which displayed instance?',clarification='North or South?',parameter_action=None,solution_edits=[],edit_base=None)
+    return case,f,o,a
+
+
+def test_model_guess_and_application_containment_are_reported_separately():
+    result=grade(*target_choice_example());assert result['status']=='REVIEW_REQUIRED'
+    assert result['model_behaviour']=='model guessed; application contained it'
+    result=grade(*target_choice_example('clarify'));assert result['status']=='REVIEW_REQUIRED'
+    assert 'genuine model clarification' in result['model_behaviour']
+
+
+@pytest.mark.parametrize('fault',['replaced_pending','candidate_changed','stale_question','wrong_question','missing_choice','false_success','wrong_value','extra_setting','wrong_ref','wrong_base'])
+def test_ambiguity_never_passes_uncontained_or_false_compliance(fault):
+    c,f,o,a=target_choice_example();r=a['validated_response']
+    if fault=='replaced_pending':o['pending_unchanged']=False
+    if fault=='candidate_changed':o['candidate_sha256']='guessed-pending'
+    if fault=='stale_question':o['target_question']['current']=False
+    if fault=='wrong_question':o['target_question']['request']='Different request'
+    if fault=='missing_choice':o['target_question']['choices']=o['target_question']['choices'][:1]
+    if fault=='false_success':r.update(outcome='answer',message='Done',parameter_action=None)
+    if fault=='wrong_value':r['parameter_action']['requested_values'][0]['value']=4
+    if fault=='extra_setting':r['parameter_action']['requested_values'].append(dict(name='other',value=True))
+    if fault=='wrong_ref':r['parameter_action']['target_ref']='unoffered'
+    if fault=='wrong_base':r['edit_base']={'kind':'saved'}
+    assert grade(c,f,o,a)['status']=='FAIL_STOP'
+
+
+def test_shared_conversation_directory_uses_same_database_and_distinct_ledger(tmp_path):
+    a=tmp_path/'A';b=tmp_path/'B';a.mkdir();b.mkdir()
+    runner.write(a/'case.private.json',dict(id='A'));runner.write(b/'case.private.json',dict(id='B',conversation_of='A'))
+    assert runner.state_directory(a)==runner.state_directory(b)==a
+    ae,be=runner.environment(a),runner.environment(b)
+    assert ae['DATABASE_URL']==be['DATABASE_URL'] and ae['SESSION_COOKIE_NAME']==be['SESSION_COOKIE_NAME']
+    assert ae['DESIGN_AI_SCOPED_ACCEPTANCE_FILE']!=be['DESIGN_AI_SCOPED_ACCEPTANCE_FILE']
+    assert ae['OPENAI_API_KEY']==be['OPENAI_API_KEY']==''
 
 
 def test_no_approval_no_activation_or_key_read(tmp_path,monkeypatch):
@@ -113,3 +157,27 @@ def test_semantic_failure_closes_scope_and_cannot_be_overridden(tmp_path,monkeyp
     with sqlite3.connect(tmp_path/'evaluation.private.sqlite') as db:
         assert db.execute('SELECT closed FROM policy').fetchone()==(1,)
     with pytest.raises(RuntimeError):runner.review(tmp_path,'01-original','pass','Cannot override this recorded failure.')
+
+
+def test_accounting_preserves_uncertainty_and_never_claims_account_balance(tmp_path):
+    runner.write(tmp_path/'manifest.private.json',{});parent(tmp_path,status='STARTED')
+    value=runner.accounting(tmp_path)
+    assert value['uncertain_reserved_usd']==0.06765 and value['cumulative_conservative_estimated_usd']==0
+    assert value['lifetime_reserved_usd']==0.06765 and value['remaining_authorised_calls']==5
+    assert not value['next_dispatch_permitted'] and value['account_balance'].startswith('NOT_OBSERVED')
+    with sqlite3.connect(tmp_path/'evaluation.private.sqlite') as db:db.execute('update policy set closed=1')
+    closed=runner.accounting(tmp_path)
+    assert closed['remaining_authorised_calls']==closed['remaining_authorised_reservations_usd']==0
+    assert closed['uncertain_reserved_usd']==0.06765
+
+
+def test_accounting_reports_actual_settled_usage_separately(tmp_path):
+    runner.write(tmp_path/'manifest.private.json',{});parent(tmp_path,status='PASS')
+    d=tmp_path/'01-original';d.mkdir()
+    with sqlite3.connect(d/'acceptance.private.sqlite') as db:
+        db.execute('create table acceptance_requests(reserved integer,held integer,usage text,state text)')
+        db.execute('insert into acceptance_requests values(?,?,?,?)',(67650000,825000+495000,json.dumps(dict(input_tokens=1000,output_tokens=100)),'settled'))
+    value=runner.accounting(tmp_path)
+    assert value['cumulative_conservative_estimated_usd']==0.00132 and value['uncertain_reserved_usd']==0
+    assert value['usage']==dict(input_tokens=1000,output_tokens=100)
+    assert value['lifetime_reserved_usd']==0.06765 and value['next_dispatch_permitted']

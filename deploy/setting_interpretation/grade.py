@@ -18,6 +18,32 @@ def grade(case, frozen, observation, audit):
     if not response:
         return dict(status='FAIL_STOP', category='evidence', reasons=reasons + ['missing_actual_provider_record'])
     outcome = response['outcome']
+    if case['expected']=='target_choice':
+        if not observation['pending_unchanged'] or observation['candidate_sha256']!=frozen['expected_candidate_sha256']:
+            reasons.append('unresolved_target_created_or_replaced_pending_work')
+        if outcome=='clarification':
+            if response.get('parameter_action') or response.get('solution_edits') or response.get('edit_base'):
+                reasons.append('clarification_contains_action')
+            model_behaviour='genuine model clarification; semantic review required'
+        elif outcome=='setting_edit':
+            action=response.get('parameter_action') or {}
+            values={v['name']:v['value'] for v in action.get('requested_values',[])}
+            targets=frozen['eligible_targets'];question=observation.get('target_question') or {}
+            if (action.get('operation')!='set_parameters' or action.get('target_ref') not in {x['target_ref'] for x in targets}
+                or response.get('edit_base')!=frozen['edit_base'] or json.dumps(values,sort_keys=True)!=json.dumps(case['requested_values'],sort_keys=True)
+                or response.get('solution_edits') or response.get('message') is not None or response.get('assumptions')
+                or not question.get('current') or question.get('request')!=case['message']
+                or {x['target_ref'] for x in question.get('choices',[])}!={x['target_ref'] for x in targets}
+                or (observation.get('application_message') or {}).get('source')!='application_target_choice'):
+                reasons.append('guessed_action_not_safely_contained_by_current_application_choice')
+            model_behaviour='model guessed; application contained it'
+        else:
+            reasons.append('no_genuine_clarification_or_safe_application_choice')
+            model_behaviour='interpretation failure'
+        if reasons:return dict(status='FAIL_STOP',category='interpretation_or_preservation',reasons=reasons,model_behaviour=model_behaviour)
+        return dict(status='REVIEW_REQUIRED',category='human_semantic_review',reasons=[],model_behaviour=model_behaviour,
+            application_behaviour='Existing saved graph and exact earlier pending review preserved; target unresolved.',
+            checklist='Inspect actual question for a useful target choice and no false compliance. Distinguish model clarification from an application-contained guess; confirm no guessed proposal or lost earlier work.')
     if case['expected'] in {'edit','no_change'}:
         action = response.get('parameter_action') or {}
         values = {v['name']:v['value'] for v in action.get('requested_values',[])}

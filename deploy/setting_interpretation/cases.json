@@ -1,90 +1,37 @@
 {
-  "version": 1,
-  "scope": "Existing setting interpretation only; all initial graphs and history are labelled software fixtures, not model-generated results.",
+  "version": 2,
+  "scope": "Corrected target-choice acceptance only. A/B share the same actual owned conversation and database; C-F are isolated fixtures. No fabricated clarification or scripted provider reply.",
   "model": "gpt-5.4-mini-2026-03-17",
   "reasoning": "none",
   "service_tier": "default",
   "max_input_tokens": 64000,
   "max_output_tokens": 3000,
   "timeout_seconds": 60,
-  "max_requests": 10,
-  "limit_nano_usd": 676500000,
+  "max_requests": 6,
+  "limit_nano_usd": 405900000,
   "reservation_nano_usd": 67650000,
-  "pricing_checked": "2026-11-20",
+  "pricing_checked": "2026-11-21",
   "pricing_source": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
   "input_usd_per_million": 0.75,
   "output_usd_per_million": 4.5,
   "accounting_margin": 1.1,
   "cases": [
     {
-      "id": "01-original",
+      "id": "A-ambiguous",
       "base": "pending",
-      "initial_maximum": 4,
-      "instances": 1,
-      "expected": "edit",
-      "target": "Generator North",
-      "values": {
-        "how_many": 2
-      },
-      "message": "Use up to two layouts and Drawing A for the review. Keep heat exchangers and bypasses enabled. Please revise the pending design to match, leaving it for me to review before Apply or Run.",
-      "permitted_unchanged_values": {
-        "allow_hx": true,
-        "allow_bypass": true
-      }
-    },
-    {
-      "id": "02-paraphrase",
-      "base": "pending",
-      "initial_maximum": 4,
-      "instances": 1,
-      "expected": "edit",
-      "target": "Generator North",
-      "values": {
-        "how_many": 2
-      },
-      "message": "Please cap Generator North at two candidate layouts instead of four. Leave Drawing A, heat exchangers, bypasses and the rest of the proposed design alone."
-    },
-    {
-      "id": "03-saved",
-      "base": "saved",
-      "initial_maximum": 4,
-      "instances": 1,
-      "expected": "edit",
-      "target": "Generator North",
-      "values": {
-        "how_many": 2
-      },
-      "message": "In the saved design, change Generator North's maximum candidate layouts from four to two. Keep every other setting and connection."
-    },
-    {
-      "id": "04-boolean",
-      "base": "saved",
-      "initial_maximum": 4,
-      "instances": 1,
-      "expected": "edit",
-      "target": "Generator North",
-      "values": {
-        "allow_bypass": false
-      },
-      "message": "Turn off bypasses for Generator North. Leave its maximum candidate layouts at four and heat exchangers enabled; keep Drawing A and its connection.",
-      "permitted_unchanged_values": {
-        "how_many": 4,
-        "allow_hx": true
-      }
-    },
-    {
-      "id": "05-ambiguous",
-      "base": "saved",
       "initial_maximum": 4,
       "instances": 2,
-      "expected": "clarification",
+      "expected": "target_choice",
       "target": null,
       "values": {},
-      "message": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged."
+      "message": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+      "requested_values": {
+        "how_many": 2
+      }
     },
     {
-      "id": "06-follow-up",
-      "base": "saved",
+      "id": "B-select-south",
+      "base": "pending",
       "initial_maximum": 4,
       "instances": 2,
       "expected": "edit",
@@ -92,14 +39,12 @@
       "values": {
         "how_many": 2
       },
-      "clarification_fixture": {
-        "request": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
-        "question": "Which generator should have a maximum of two layouts: Generator North or Generator South?"
-      },
-      "message": "Generator South only, please. Leave Generator North alone."
+      "message": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+      "conversation_of": "A-ambiguous",
+      "select_target": "Generator South"
     },
     {
-      "id": "07-already-satisfied",
+      "id": "C-already-satisfied",
       "base": "saved",
       "initial_maximum": 2,
       "instances": 1,
@@ -111,7 +56,7 @@
       "message": "Set Generator North's maximum candidate layouts to two. Leave all other settings and connections unchanged."
     },
     {
-      "id": "08-invalid",
+      "id": "D-invalid",
       "base": "saved",
       "initial_maximum": 4,
       "instances": 1,
@@ -121,7 +66,7 @@
       "message": "Set Generator North's maximum candidate layouts to 99 and its unlisted turbo_mode setting to true. Keep the rest unchanged."
     },
     {
-      "id": "09-repeat-original",
+      "id": "E-repeat-original",
       "repeat_of": "01-original",
       "base": "pending",
       "initial_maximum": 4,
@@ -138,7 +83,7 @@
       }
     },
     {
-      "id": "10-repeat-paraphrase",
+      "id": "F-repeat-paraphrase",
       "repeat_of": "02-paraphrase",
       "base": "pending",
       "initial_maximum": 4,
@@ -164,7 +109,9 @@
     "edit": "Exactly setting_edit on the advertised scoped target/base with the requested values; no structural edits, assumptions, provider summary or avoidable clarification. Redundant requested values are permitted only if explicitly requested and already unchanged.",
     "clarification": "One question identifying the North/South ambiguity, no action, no new pending review and no compliance claim.",
     "no_change": "Exactly the requested small action; application establishes no_change and creates no proposal. Model answer-only compliance is not accepted.",
-    "refusal": "unsupported, or one clarification explicitly explaining the invalid limit and unsupported setting and asking for a valid supported choice. No edit or compliance claim. Application rejection is safe containment but not interpretation success."
+    "refusal": "unsupported, or one clarification explicitly explaining the invalid limit and unsupported setting and asking for a valid supported choice. No edit or compliance claim. Application rejection is safe containment but not interpretation success.",
+    "target_choice": "Genuine model clarification, or a genuine guessed valid setting action safely contained by the application. Retain exact earlier pending review and saved graph; no actionable guessed proposal or false success. Record model and application behaviour separately."
   },
-  "stop_policy": "Stop the initial evaluation at the first wrong target/value, false compliance, lost work, parse/application/provider failure or unexpected response. Record the failed attempt and every unattempted case. No retries, fallback, repair request, new scope or expansion. Repeats 9/10 are reached only if 1-8 pass. No Apply is automatic."
+  "stop_policy": "Stop on first failed model/provider/parsing/application/preservation check or failed semantic review. Model guess in A is allowed only when application safely contains it. REVIEW_REQUIRED is not PASS. No retries, fallback, repair request, reservation reuse or replacement spending scope. Browser Apply is explicit after A/B reviewed PASS only.",
+  "continuation": "B uses A actual reviewed post-response state, same database/solution/conversation. Select South from current application-offered targets; only actual A may supply prior clarification. B model context is frozen by this derivation and recorded exactly before dispatch, not invented at preparation."
 }

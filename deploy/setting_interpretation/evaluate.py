@@ -1,8 +1,9 @@
 """Unpaid prepare/check; separately authorised one-at-a-time real-path evaluation.
 
 Never changes production app/provider code. No model overrides in live mode.
-Each case has a separate SQLite copy, cookie, owned solution and fresh one-call
-ledger. Initial graphs/pending/history are explicit fixtures, never model results.
+A/B share one actual SQLite database, cookie, owned solution and conversation.
+C-F are isolated. Every attempt has a fresh one-call ledger under one six-call
+parent. Fixture setup never fabricates clarification or a model result.
 """
 import argparse
 from copy import deepcopy
@@ -41,13 +42,19 @@ def source_files():
     return {p.relative_to(ROOT).as_posix():sha(p) for p in files}
 def dependencies():
     return dict(python=sys.version.split()[0],packages={name:importlib.metadata.version(name) for name in ('openai','httpx','fastapi','pydantic','sqlalchemy')})
+def state_directory(d):
+    case=read(d/'case.private.json')
+    return d.parent/case['conversation_of'] if case.get('conversation_of') else d
+
+
 def environment(d):
+    state=state_directory(d)
     env=dict(os.environ)
     # Do not inherit a key, budget authority, old grant, execution or dotenv profile.
     for k in list(env):
         if k.startswith(('OPENAI_','DESIGN_AI_','ORCHESTRATOR_','PORTUGUESE_','LOCAL_DUTCH_','AIE18_')):env.pop(k)
     env.update(PYTHONPATH=str(ROOT/'apps/api'),PYTHONDONTWRITEBYTECODE='1',OPENAI_API_KEY='',
-        DATABASE_URL='sqlite:///'+(d/'portal.sqlite').as_posix(),SESSION_COOKIE_NAME='aie_interpret_'+d.name,
+        DATABASE_URL='sqlite:///'+(state/'portal.sqlite').as_posix(),SESSION_COOKIE_NAME='aie_interpret_'+state.name,
         BOOTSTRAP_ADMIN_EMAIL='',BOOTSTRAP_ADMIN_PASSWORD='',SERVICE_CONTRACT_PATH=str(d/'service-contracts'),
         DESIGN_AI_ENABLED='true',DESIGN_AI_MODEL='gpt-5.4-mini-2026-03-17',DESIGN_AI_REASONING_EFFORT='none',
         DESIGN_AI_MAX_OUTPUT_TOKENS='3000',DESIGN_AI_TIMEOUT_SECONDS='60',DESIGN_AI_CONTEXT_CHARS='48000',
@@ -91,7 +98,7 @@ def snapshot(d):
         sol=db.get(Solution,m['solution_id']);u=db.get(User,m['user_id']);row=s.conversation(sol,db,u)
         return dict(saved=s.content(sol),conversation=s.view(sol,row,db,u),submissions=db.query(ExecutionSubmission).count())
 def prepare_case(d):
-    app=application();c,uid=client(app,d);case=read(d/'case.private.json')
+    app=application();case=read(d/'case.private.json')
     from app.db import SessionLocal
     from app.models.solution import Solution
     from app.models.service import Service
@@ -103,6 +110,14 @@ def prepare_case(d):
     from app.schemas.design_ai import AssistantTurn,SolutionEdit
     from app.services.scoped_ai_acceptance import binding
     from app.core.config import settings
+    # No credentials are loaded during preparation. This is labelled fixture
+    # setup, not a fabricated authenticated/model conversation. Live login uses
+    # the normal route only after separate approval and a durable reservation.
+    source_id=read(d.parent/'source-binding.private.json')['solution_id']
+    with SessionLocal() as db:
+        source=db.get(Solution,source_id);uid=source.created_by_user_id
+        user=db.get(User,uid)
+        assert user and user.status=='active' and user.role=='solution_designer'
     # Reuse only an existing approved fixture and its current owned catalogue.
     examples=read(d.parent/'source-review.private.json')['steps'];gen=examples[0];drawing=examples[1]
     with SessionLocal() as db:
@@ -122,23 +137,28 @@ def prepare_case(d):
         if case['instances']==2:nodes.append(node('generator-south',gs,'Generator South',dict(settings_values),y=300))
     from app.services.workflow_boundaries import complete
     complete(nodes,edges)
-    r=c.post('/solutions',json=dict(name='FIXTURE '+case['id'],description='Frozen setting-interpretation software fixture; no execution.',nodes=nodes,edges=edges,design_metadata=dict(run_input=dict(fixture_only=True,selected='UNEXECUTED-SETTING-FIXTURE'),fixture_case=case['id'])))
-    if r.status_code not in {200,201}:raise RuntimeError('Normal solution fixture route failed: '+r.text[:300])
-    sid=r.json()['id'];write(d/'binding.private.json',dict(solution_id=sid,user_id=uid))
+    if case.get('conversation_of'):
+        sid=read(state_directory(d)/'binding.private.json')['solution_id']
+    else:
+        sid=str(uuid4())
+        with SessionLocal() as db:
+            db.add(Solution(id=sid,name='FIXTURE '+case['id'],description='Frozen setting-interpretation software fixture; no execution.',nodes=nodes,edges=edges,
+                created_by_user_id=uid,design_metadata=dict(run_input=dict(fixture_only=True,selected='UNEXECUTED-SETTING-FIXTURE'),fixture_case=case['id'])))
+            db.commit()
+    write(d/'binding.private.json',dict(solution_id=sid,user_id=uid))
     with SessionLocal() as db:
         sol=db.get(Solution,sid);user=db.get(User,uid);row=s.conversation(sol,db,user,create=True)
-        if case['base']=='pending':
+        if case['base']=='pending' and not case.get('conversation_of'):
             ref=s.target_ref(sol,'generator-north')
             # Explicit initial pending fixture: not an interpretation attempt.
-            turn=AssistantTurn(message='FIXTURE pending review, not a model response',template_key=None,expected_revision=None,edits=[],solution_edits=[SolutionEdit(kind='rename',value='FIXTURE earlier pending review '+case['id']),SolutionEdit(kind='set_node_label',node_id=ref,value='Generator North'),SolutionEdit(kind='set_node_parameters',node_id=ref,value='{"how_many":4}')])
+            turn=AssistantTurn(message='FIXTURE pending review, not a model response',template_key=None,expected_revision=None,edits=[],solution_edits=[SolutionEdit(kind='rename',value='FIXTURE earlier pending review '+case['id']),SolutionEdit(kind='set_node_label',node_id=ref,value='Generator North')])
             s.propose(sol,row,'FIXTURE: prior pending design',turn,db,user,outcome='proposal',base=EditBase.model_validate(s.edit_base(sol,row)))
-        if case.get('clarification_fixture'):
-            state=deepcopy(row.state);q=case['clarification_fixture']
-            state['clarification']=q;state['messages']=[dict(role='user',content=q['request']),dict(role='assistant',content='FIXTURE prior clarification; not a model result',question=q['question'],outcome='clarification')];row.state=state;row.revision+=1;db.commit()
+        if case.get('clarification_fixture'):raise RuntimeError('Fabricated prior clarification is forbidden')
         ctx=redact_context(s.context(sol,row,case['message'],db,user))
         projection=ctx['pending_candidate'] if case['base']=='pending' else ctx['saved_design']
         step=next((x for x in projection['steps'] if x['label']==case['target']),None)
-        base=ctx['edit_bases'][case['base']]
+        base=deepcopy(ctx['edit_bases'][case['base']])
+        if case.get('conversation_of'):base['conversation_revision']+=1
         current=s.materialize(sol,row.state['pending'],db,user) if row.state.get('pending') else s.content(sol)
         expected=current
         if case['expected'] in {'edit','no_change'}:
@@ -147,7 +167,10 @@ def prepare_case(d):
         bound=len(serialized.encode())+len(SAVED_SOLUTION_SYSTEM.encode())+len(json.dumps(response_format(SavedSolutionResponse)).encode())+8192
         if len(serialized)>48000 or bound>64000:raise RuntimeError('Actual context exceeds frozen provider limits; no dispatch')
         frozen=dict(target_ref=step['target_ref'] if step else None,edit_base=base,saved_sha256=s.digest(s.content(sol)),expected_candidate_sha256=s.digest(expected),
-            context_sha256=audit_digest(ctx),input_bound=bound,prompt_sha256=hashlib.sha256(SAVED_SOLUTION_SYSTEM.encode()).hexdigest(),wire_schema_sha256=audit_digest(response_format(SavedSolutionResponse)['schema']),approved_binding=binding(settings,uid,sid))
+            context_sha256=None if case.get('conversation_of') else audit_digest(ctx),input_bound=64000 if case.get('conversation_of') else bound,prompt_sha256=hashlib.sha256(SAVED_SOLUTION_SYSTEM.encode()).hexdigest(),wire_schema_sha256=audit_digest(response_format(SavedSolutionResponse)['schema']),approved_binding=binding(settings,uid,sid))
+        frozen['conversation_of']=case.get('conversation_of')
+        frozen['select_target']=case.get('select_target')
+        frozen['eligible_targets']=[dict(label=x['label'],target_ref=x['target_ref']) for x in s.setting_targets(sol,row,db,user)['choices']]
         write(d/'frozen.private.json',frozen);write(d/'context.private.json',ctx)
     write(d/'before.private.json',snapshot(d))
     # Configuration with an absent new ledger/key cannot dispatch. No chat call.
@@ -162,18 +185,20 @@ def prepare(d,source):
     if os.name=='nt':
         owner=subprocess.check_output(['whoami'],text=True).strip();subprocess.run(['icacls',str(d),'/inheritance:r','/grant:r',owner+':(OI)(CI)F','*S-1-5-18:(OI)(CI)F'],check=True,stdout=subprocess.DEVNULL)
     source_hash=sha(source/'portal.sqlite')
-    review=read(source/'pending-two-final.private.json')['conversation']['pending']['candidate'];write(d/'source-review.private.json',review)
+    source_review=read(source/'pending-two-final.private.json');review=source_review['conversation']['pending']['candidate'];write(d/'source-review.private.json',review)
+    write(d/'source-binding.private.json',dict(solution_id=source_review['conversation']['solution_id']))
     spec=read(SPEC);summaries=[]
     for case in spec['cases']:
         cd=d/case['id'];cd.mkdir();shutil.copyfile(source/'credentials.private.json',cd/'credentials.private.json');write(cd/'case.private.json',case)
-        with sqlite3.connect((source/'portal.sqlite').as_uri()+'?mode=ro',uri=True) as src,sqlite3.connect(cd/'portal.sqlite') as dest:src.backup(dest)
+        if not case.get('conversation_of'):
+            with sqlite3.connect((source/'portal.sqlite').as_uri()+'?mode=ro',uri=True) as src,sqlite3.connect(cd/'portal.sqlite') as dest:src.backup(dest)
         child(cd,'prepare');f=read(cd/'frozen.private.json');summaries.append(dict(case=case['id'],fixture_sha256=digest(read(cd/'before.private.json')),**f))
     if sha(source/'portal.sqlite')!=source_hash:raise RuntimeError('Retained offline database changed during preparation')
     manifest=dict(version=1,status='PREPARED_NOT_AUTHORISED',spec_sha256=sha(SPEC),source_files=source_files(),git_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),cases=summaries,
         dependencies=dependencies(),
         retained_source_database_sha256=source_hash,credentials_sha256=sha(source/'credentials.private.json'))
     write(d/'manifest.private.json',manifest)
-    print(json.dumps(dict(prepared_cases=10,manifest_sha256=sha(d/'manifest.private.json'),max_requests=10,maximum_usd=spec['limit_nano_usd']/1e9,metered_requests=0,ledger_files_created=0)))
+    print(json.dumps(dict(prepared_cases=spec['max_requests'],manifest_sha256=sha(d/'manifest.private.json'),max_requests=spec['max_requests'],maximum_usd=spec['limit_nano_usd']/1e9,metered_requests=0,ledger_files_created=0)))
 def verify(d):
     m=read(d/'manifest.private.json')
     if m['source_files']!=source_files() or m['spec_sha256']!=sha(SPEC):raise RuntimeError('Frozen source/prompt/schema/harness/set changed; do not run')
@@ -188,7 +213,7 @@ def verify(d):
 def approval(d,p):
     m=verify(d);a=read(p);spec=read(SPEC);now=datetime.now(timezone.utc)
     expiry=datetime.fromisoformat(a['expires_at'])
-    if (a.get('approved') is not True or a.get('manifest_sha256')!=sha(d/'manifest.private.json') or a.get('max_requests')!=10
+    if (a.get('approved') is not True or a.get('manifest_sha256')!=sha(d/'manifest.private.json') or a.get('max_requests')!=spec['max_requests']
         or a.get('limit_nano_usd')!=spec['limit_nano_usd'] or len(a.get('authorization_ref','').strip())<20
         or expiry.tzinfo is None or not now<expiry<=now+timedelta(hours=24)):
         raise RuntimeError('Separate concrete current approval required; no key loaded or ledger created')
@@ -201,7 +226,7 @@ def activate(d,p,key_source,key_project):
     with sqlite3.connect(d/'evaluation.private.sqlite') as db:
         db.executescript('CREATE TABLE policy(value TEXT NOT NULL, closed INTEGER NOT NULL); CREATE TABLE attempts(id TEXT PRIMARY KEY, reserved INTEGER NOT NULL, status TEXT NOT NULL, result TEXT, review TEXT);')
         db.execute('INSERT INTO policy VALUES (?,0)',(canonical(dict(approval=a,manifest_sha256=sha(d/'manifest.private.json'),key_source=str(key_source.resolve()),key_project=str(key_project.resolve()))),))
-    print('Activated one new ten-attempt evaluation after separate approval; no dispatch yet.')
+    print('Activated one new six-attempt evaluation after separate approval; no dispatch yet.')
 def attempt(d):
     verify(d);spec=read(SPEC)
     with sqlite3.connect((d/'evaluation.private.sqlite').as_uri()+'?mode=rw',uri=True) as db:
@@ -209,7 +234,7 @@ def attempt(d):
         a=policy['approval']
         if closed or a['manifest_sha256']!=sha(d/'manifest.private.json') or datetime.fromisoformat(a['expires_at'])<=datetime.now(timezone.utc):raise RuntimeError('Evaluation closed, expired or changed')
         rows=db.execute('SELECT id,reserved,status,review FROM attempts ORDER BY id').fetchall()
-        if any(x[2]!='PASS' for x in rows) or len(rows)>=10 or sum(x[1] for x in rows)+spec['reservation_nano_usd']>a['limit_nano_usd']:raise RuntimeError('Prior attempt needs review, failed, or cap exhausted; no dispatch')
+        if any(x[2]!='PASS' for x in rows) or len(rows)>=spec['max_requests'] or sum(x[1] for x in rows)+spec['reservation_nano_usd']>a['limit_nano_usd']:raise RuntimeError('Prior attempt needs review, failed, or cap exhausted; no dispatch')
         case=spec['cases'][len(rows)];cd=d/case['id']
         db.execute('INSERT INTO attempts VALUES (?,?,?,NULL,NULL)',(case['id'],spec['reservation_nano_usd'],'STARTED'));db.commit()
     write(cd/'authorised.private.json',dict(**policy,case=case['id']))
@@ -219,17 +244,25 @@ def attempt(d):
     with sqlite3.connect(d/'evaluation.private.sqlite') as db:
         db.execute('UPDATE attempts SET status=?,result=? WHERE id=?',(result['status'],canonical(result),case['id']))
         if result['status']=='FAIL_STOP':db.execute('UPDATE policy SET closed=1')
-    print(json.dumps(dict(case=case['id'],**result)))
+    print(json.dumps(dict(case=case['id'],**result,accounting=accounting(d))))
 def live_case(d):
     auth=read(d/'authorised.private.json');parent=d.parent;verify(parent)
     if datetime.fromisoformat(auth['approval']['expires_at'])<=datetime.now(timezone.utc):raise RuntimeError('Approval expired')
     with sqlite3.connect((parent/'evaluation.private.sqlite').as_uri()+'?mode=ro',uri=True) as db:
         raw,closed=db.execute('SELECT value,closed FROM policy').fetchone()
         permit=db.execute('SELECT reserved,status FROM attempts WHERE id=?',(d.name,)).fetchone()
-    if closed or json.loads(raw)!={k:v for k,v in auth.items() if k!='case'} or permit!=(67650000,'STARTED'):
+    if closed or json.loads(raw)!={k:v for k,v in auth.items() if k!='case'} or permit!=(read(SPEC)['reservation_nano_usd'],'STARTED'):
         raise RuntimeError('Missing exclusive current parent reservation; no dispatch')
     app=application();c,uid=client(app,d);before=snapshot(d);f=read(d/'frozen.private.json');case=read(d/'case.private.json')
-    if before!=read(d/'before.private.json'):raise RuntimeError('Initial case state changed; no dispatch')
+    if uid!=read(d/'binding.private.json')['user_id']:raise RuntimeError('Signed-in owner differs from frozen account')
+    if case.get('conversation_of'):
+        prior=parent/case['conversation_of']
+        if before!=read(prior/'after.private.json'):raise RuntimeError('Actual preceding conversation changed; no dispatch')
+        initial=read(prior/'before.private.json')
+        if before['saved']!=initial['saved'] or before['conversation']['pending']!=initial['conversation']['pending']:
+            raise RuntimeError('Preceding ambiguous request changed existing work; no dispatch')
+        write(d/'actual-before.private.json',before)
+    elif before!=read(d/'before.private.json'):raise RuntimeError('Initial case state changed; no dispatch')
     from app.core.config import settings
     from app.services import solution_assistant as s
     from app.services.scoped_ai_acceptance import initialize,Budget,RESERVATION
@@ -241,8 +274,27 @@ def live_case(d):
     with SessionLocal() as db:
         sol=db.get(Solution,m['solution_id']);u=db.get(User,uid);row=s.conversation(sol,db,u)
         ctx=redact_context(s.context(sol,row,case['message'],db,u))
+        choice=None
+        if case.get('select_target'):
+            targets=before['conversation']['setting_targets']
+            matches=[x for x in targets['choices'] if x['label']==case['select_target']]
+            if len(matches)!=1:raise RuntimeError('One current displayed South choice is required; no guessing')
+            selected=matches[0];choice={k:v for k,v in targets.items() if k!='choices'} | {'target_ref':selected['target_ref']}
+            from app.schemas.solution_assistant import SettingTargetChoice
+            s.check_target_choice(sol,row,SettingTargetChoice.model_validate(choice),db,u)
+            if choice['base']!=f['edit_base'] or choice['target_ref']!=f['target_ref']:raise RuntimeError('Current choice differs from frozen expected South/base')
+            ctx['user_selected_target']={'target_ref':selected['target_ref'],'label':selected['label'],'source':'authenticated_request_choice','edit_base':choice['base'],
+                'instruction':'Only this explicitly selected instance may receive setting changes; other instances remain unchanged.'}
     from app.services.provider_evidence import digest as audit_digest
-    if audit_digest(ctx)!=f['context_sha256']:raise RuntimeError('Exact frozen model input changed; no dispatch')
+    if not case.get('conversation_of') and audit_digest(ctx)!=f['context_sha256']:raise RuntimeError('Exact frozen model input changed; no dispatch')
+    from app.services.design_ai_provider import SAVED_SOLUTION_SYSTEM
+    from app.services.provider_evidence import response_format
+    from app.schemas.solution_assistant import SavedSolutionResponse
+    serialized=json.dumps(redact_context(ctx),ensure_ascii=False,allow_nan=False)
+    bound=len(serialized.encode())+len(SAVED_SOLUTION_SYSTEM.encode())+len(json.dumps(response_format(SavedSolutionResponse)).encode())+8192
+    if len(serialized)>48000 or bound>read(SPEC)['max_input_tokens']:raise RuntimeError('Actual continuation exceeds frozen input bound before key loading; no dispatch')
+    write(d/'dispatch-context.private.json',dict(context=ctx,context_sha256=audit_digest(ctx),target_choice=choice,input_bound=bound,derived_from_actual=case.get('conversation_of')))
+
     initialize(d/'acceptance.private.sqlite',approved_binding=f['approved_binding'],authorization_ref=auth['approval']['authorization_ref'],expires_at=auth['approval']['expires_at'],max_requests=1,limit_nano=RESERVATION)
     helper=module('setting_eval_key_reader',ROOT/'deploy/genuine_acceptance/workspace.py')
     settings.openai_api_key=helper.key_from_project(Path(auth['key_source']),Path(auth['key_project']))
@@ -251,33 +303,38 @@ def live_case(d):
     handler=logging.FileHandler(d/'provider-audit.private.jsonl',encoding='utf-8');audit.addHandler(handler)
     try:
         view=before['conversation']
-        r=c.post('/design-ai/solutions/'+m['solution_id']+'/chat',json=dict(message=case['message'],expected_updated_at=view['expected_updated_at'],conversation_revision=view['conversation_revision']))
+        r=c.post('/design-ai/solutions/'+m['solution_id']+'/chat',json=dict(message=case['message'],expected_updated_at=view['expected_updated_at'],conversation_revision=view['conversation_revision'],**({'target_choice':choice} if choice else {})))
         after=snapshot(d);write(d/'after.private.json',after)
         payload=r.json();detail=payload.get('detail',{}) if isinstance(payload,dict) else {};pending=after['conversation']['pending']
         observation=dict(http_status=r.status_code,detail_stage=detail.get('stage') if isinstance(detail,dict) else None,
             saved_sha256=s.digest(after['saved']),submissions=after['submissions'],pending_unchanged=pending==before['conversation']['pending'],
             candidate_sha256=pending['candidate']['candidate_sha256'] if pending else s.digest(after['saved']),
-            summary=(after['conversation']['messages'][-1].get('change_summary') if after['conversation']['messages'] else None))
+            summary=(after['conversation']['messages'][-1].get('change_summary') if after['conversation']['messages'] else None),
+            target_question=after['conversation'].get('target_question'),clarification=after['conversation'].get('clarification'),
+            application_message=after['conversation']['messages'][-1] if after['conversation']['messages'] else None)
         handler.flush();audits=[json.loads(line) for line in (d/'provider-audit.private.jsonl').read_text(encoding='utf-8').splitlines()]
         if len(audits)!=1:raise RuntimeError('Expected exactly one recorded real-provider attempt')
         grader=module('setting_eval_grader',HERE/'grade.py');result=grader.grade(case,f,observation,audits[0]);write(d/'observation.private.json',observation);write(d/'result.private.json',result)
     finally:
         settings.openai_api_key='';Budget(d/'acceptance.private.sqlite').close();audit.removeHandler(handler);handler.close();c.close()
 def check_case(d):
-    app=application();c,uid=client(app,d);m=read(d/'binding.private.json');before=snapshot(d);case=read(d/'case.private.json')
+    # Unpaid preflight loads no credentials: assert provider disabled and the
+    # real protected route rejects an unauthenticated request without dispatch.
+    app=application();before=snapshot(d)
     from app.services.design_ai_provider import get_provider,OpenAIProvider,configured
     from app.core.config import settings
+    from fastapi.testclient import TestClient
     assert isinstance(get_provider(),OpenAIProvider) and not app.dependency_overrides and not configured() and not settings.openai_api_key
-    view=before['conversation']
-    r=c.post('/design-ai/solutions/'+m['solution_id']+'/chat',json=dict(message=case['message'],expected_updated_at=view['expected_updated_at'],conversation_revision=view['conversation_revision']))
-    assert r.status_code==503 and r.json()['detail']=='AI provider not configured'
+    with TestClient(app,raise_server_exceptions=False) as c:
+        r=c.get('/design-ai/solutions/'+before['conversation']['solution_id'])
+        assert r.status_code==401
     assert snapshot(d)==before and not (d/'acceptance.private.sqlite').exists() and not (d/'provider-audit.private.jsonl').exists()
-    write(d/'disabled-route-check.private.json',dict(status='PASS_DISABLED_BEFORE_DISPATCH',provider_class=type(get_provider()).__name__,dependency_overrides=0,http_status=503,ledger_files=0,key_loaded=False,saved_and_pending_unchanged=True))
-    c.close()
+    write(d/'disabled-route-check.private.json',dict(status='PASS_NO_CREDENTIALS_UNAUTHENTICATED_PREFLIGHT',provider_class=type(get_provider()).__name__,dependency_overrides=0,http_status=401,ledger_files=0,key_loaded=False,saved_and_pending_unchanged=True))
+
 def check_routes(d):
     verify(d)
     for case in read(SPEC)['cases']:child(d/case['id'],'check')
-    print('10 normal authenticated real-provider routes blocked before dispatch; no key, ledger or model request. This is not genuine interpretation acceptance.')
+    print('Six unpaid no-credential preflights: real provider disabled; protected route 401; no key, ledger or model request. Authenticated genuine requests remain unattempted.')
 def review(d,case,verdict,reason):
     verify(d)
     if len(reason.strip())<20:raise RuntimeError('Record concrete semantic review evidence')
@@ -286,15 +343,45 @@ def review(d,case,verdict,reason):
         if not row or row[0]!='REVIEW_REQUIRED':raise RuntimeError('Only a machine-checked current attempt can receive semantic review; failures cannot be overridden')
         db.execute('UPDATE attempts SET status=?,review=? WHERE id=?',('PASS' if verdict=='pass' else 'FAIL_STOP',reason,case))
         if verdict!='pass':db.execute('UPDATE policy SET closed=1')
-        elif db.execute("SELECT COUNT(*) FROM attempts WHERE status='PASS'").fetchone()[0]==10:db.execute('UPDATE policy SET closed=1')
+        elif db.execute("SELECT COUNT(*) FROM attempts WHERE status='PASS'").fetchone()[0]==read(SPEC)['max_requests']:db.execute('UPDATE policy SET closed=1')
     print('Semantic review recorded; no model request or Apply dispatched.')
+def accounting(d):
+    spec=read(SPEC);path=d/'evaluation.private.sqlite';rows=[];closed=True;expired=False
+    if path.exists():
+        with sqlite3.connect(path.as_uri()+'?mode=ro',uri=True) as db:
+            raw,closed=db.execute('SELECT value,closed FROM policy').fetchone()
+            expired=datetime.fromisoformat(json.loads(raw)['approval']['expires_at'])<=datetime.now(timezone.utc)
+            rows=db.execute('SELECT id,reserved,status FROM attempts ORDER BY id').fetchall()
+    settled=uncertain=inputs=outputs=0;details=[]
+    for identifier,reserved,status in rows:
+        ledger=d/identifier/'acceptance.private.sqlite';held=reserved;usage=None;state='no_provider_ledger_observed'
+        if ledger.exists():
+            with sqlite3.connect(ledger.as_uri()+'?mode=ro',uri=True) as db:
+                requests=db.execute('SELECT reserved,held,usage,state FROM acceptance_requests').fetchall()
+            if len(requests)>1:raise RuntimeError('More than one provider request for a frozen attempt')
+            if requests:
+                _,held,raw_usage,state=requests[0];usage=json.loads(raw_usage) if raw_usage else None
+        if usage:
+            settled+=held;inputs+=usage['input_tokens'];outputs+=usage['output_tokens']
+        else:uncertain+=reserved
+        details.append(dict(case=identifier,status=status,provider_state=state,usage=usage,estimated_usd=held/1e9 if usage else None,uncertain_reserved_usd=0 if usage else reserved/1e9))
+    available=path.exists() and not closed and not expired
+    return dict(parent_created=path.exists(),closed=bool(closed),expired=expired,attempts=len(rows),usage=dict(input_tokens=inputs,output_tokens=outputs),
+        cumulative_conservative_estimated_usd=settled/1e9,uncertain_reserved_usd=uncertain/1e9,lifetime_reserved_usd=sum(r[1] for r in rows)/1e9,
+        remaining_authorised_calls=spec['max_requests']-len(rows) if available else 0,
+        remaining_authorised_reservations_usd=(spec['limit_nano_usd']-sum(r[1] for r in rows))/1e9 if available else 0,
+        next_dispatch_permitted=bool(available and not uncertain and len(rows)<spec['max_requests'] and all(r[2]=='PASS' for r in rows)),details=details,
+        account_balance='NOT_OBSERVED; this is application accounting only')
+
+
 def report(d):
     verify(d);spec=read(SPEC);dbpath=d/'evaluation.private.sqlite';rows=[]
     if dbpath.exists():
         with sqlite3.connect(dbpath.as_uri()+'?mode=ro',uri=True) as db:rows=db.execute('SELECT id,reserved,status,result,review FROM attempts ORDER BY id').fetchall()
     attempted={r[0]:dict(status=r[2],reserved_nano=r[1],result=json.loads(r[3]) if r[3] else None,review=r[4]) for r in rows}
     print(json.dumps(dict(status='PREPARED_NOT_AUTHORISED' if not dbpath.exists() else 'EVALUATION_RECORD',manifest_sha256=sha(d/'manifest.private.json'),
-        maximum_calls=10,maximum_usd=spec['limit_nano_usd']/1e9,cases=[dict(id=c['id'],**attempted.get(c['id'],dict(status='NOT_ATTEMPTED'))) for c in spec['cases']]),indent=2))
+        maximum_calls=spec['max_requests'],maximum_usd=spec['limit_nano_usd']/1e9,accounting=accounting(d),cases=[dict(id=c['id'],**attempted.get(c['id'],dict(status='NOT_ATTEMPTED'))) for c in spec['cases']]),indent=2))
+
 def serve_case(d):
     app=application()
     from fastapi.responses import JSONResponse
@@ -304,29 +391,33 @@ def serve_case(d):
             return JSONResponse(status_code=409,content={'detail':'Evaluation review only. No additional model request is authorised.'})
         return await call_next(request)
     import uvicorn
-    uvicorn.run(app,host='127.0.0.1',port=28270,log_level='warning',access_log=False)
+    uvicorn.run(app,host='127.0.0.1',port=28272,log_level='warning',access_log=False)
 def start_review(d,case,dependencies):
     verify(d);cd=d/case
     with sqlite3.connect((d/'evaluation.private.sqlite').as_uri()+'?mode=ro',uri=True) as db:
         row=db.execute('SELECT status FROM attempts WHERE id=?',(case,)).fetchone()
-    if not row or row[0]!='PASS' or read(cd/'case.private.json')['expected']!='edit':raise RuntimeError('Only a successful reviewed genuine edit can open this browser proof')
-    for port in (23136,28270):
+    definition=read(cd/'case.private.json')
+    if not row or row[0]!='PASS' or not definition.get('conversation_of'):raise RuntimeError('Only the successful reviewed genuine A/B continuation can open this browser proof')
+    with sqlite3.connect((d/'evaluation.private.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+        prior=db.execute('SELECT status FROM attempts WHERE id=?',(definition['conversation_of'],)).fetchone()
+    if prior!=('PASS',):raise RuntimeError('Actual ambiguous request must pass review before browser proof')
+    for port in (23138,28272):
         with socket.socket() as sock:sock.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1);sock.bind(('127.0.0.1',port))
     helper=module('setting_review_frontend',ROOT/'deploy/parameter_onboarding/review_workspace.py')
-    generation=cd/'builds'/uuid4().hex;generation.mkdir(parents=True)
-    env=environment(cd);env.update(INTERNAL_API_URL='http://127.0.0.1:28270',NEXT_PUBLIC_ENVIRONMENT_LABEL='GENUINE SETTING EVALUATION — REVIEW ONLY / NO RUN',NEXT_TELEMETRY_DISABLED='1')
+    generation=ROOT.parent/'scui'/uuid4().hex[:8];generation.mkdir(parents=True)
+    env=environment(cd);env.update(INTERNAL_API_URL='http://127.0.0.1:28272',NEXT_PUBLIC_ENVIRONMENT_LABEL='GENUINE SETTING EVALUATION — REVIEW ONLY / NO RUN',NEXT_TELEMETRY_DISABLED='1')
     children=[]
     try:
         api=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'_serve','--directory',str(cd)],cwd=cd,env=env,stdout=(cd/'review-api.private.log').open('a'),stderr=subprocess.STDOUT);children.append(api)
-        helper.wait_http('http://127.0.0.1:28270/health',api)
+        helper.wait_http('http://127.0.0.1:28272/health',api)
         web=helper.prepare_frontend(generation,dict(dependencies_directory=str(dependencies.resolve())))
         next_bin=dependencies.resolve().parent/'apps/web/node_modules/next/dist/bin/next'
         with (cd/'review-build.private.log').open('x') as log:result=subprocess.run(['node',str(next_bin),'build'],cwd=web,env=env,stdout=log,stderr=subprocess.STDOUT)
         if result.returncode:raise RuntimeError('Build failed; inspect private log')
-        child=subprocess.Popen(['node',str(next_bin),'start','-H','127.0.0.1','-p','23136'],cwd=web,env=env,stdout=(cd/'review-web.private.log').open('a'),stderr=subprocess.STDOUT);children.append(child)
-        helper.wait_http('http://127.0.0.1:23136/login',child)
+        child=subprocess.Popen(['node',str(next_bin),'start','-H','127.0.0.1','-p','23138'],cwd=web,env=env,stdout=(cd/'review-web.private.log').open('a'),stderr=subprocess.STDOUT);children.append(child)
+        helper.wait_http('http://127.0.0.1:23138/login',child)
         write(cd/'review-serving.private.json',dict(git_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),case=case,model_calls_enabled=False))
-        print('READY: http://127.0.0.1:23136/login — genuine reviewed proposal; model calls and Run disabled',flush=True)
+        print('READY: http://127.0.0.1:23138/login — genuine reviewed proposal; model calls and Run disabled',flush=True)
         while all(child.poll() is None for child in children):time.sleep(.5)
     finally:
         for child in reversed(children):
