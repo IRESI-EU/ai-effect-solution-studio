@@ -1,3 +1,5 @@
+> Latest authorised execution: [Genuine target-choice outcome - 21 November 2026](SETTING_CHOICE_EXECUTION_2026-11-21.md). A contained the model's North guess; B genuinely targeted South and passed browser Apply/save/reopen; C passed no-op handling. D failed by offering an invalid value; E/F NOT_ATTEMPTED. Four calls, USD 0.032472 conservative estimate, scope CLOSED.
+
 > Latest acceptance preparation: [Corrected six-request target-choice evaluation — 21 November 2026](SETTING_CHOICE_ACCEPTANCE_2026-11-21.md). Frozen source and shared A/B continuation prepared; six genuine requests NOT_ATTEMPTED. New paid approval required; previous scopes CLOSED.
 
 > Latest offline correction: [Ambiguous setting target choice — 20 November 2026](SETTING_TARGET_CHOICE_2026-11-20.md). Application-enforced choice preserves earlier pending work; offline browser South-only Apply/save/reopen passed. Genuine case 5 remains failed, cases 6–10 unattempted and spending CLOSED.

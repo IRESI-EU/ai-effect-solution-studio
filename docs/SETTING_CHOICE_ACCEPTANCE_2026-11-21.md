@@ -1,3 +1,5 @@
+> Subsequent authorised execution: [Genuine target-choice outcome](SETTING_CHOICE_EXECUTION_2026-11-21.md). A/B and browser Apply/save/reopen passed; C passed; D failed semantic review. E/F NOT_ATTEMPTED; four calls, USD 0.032472 conservative estimate, scope CLOSED. The preparation record below is preserved as historical evidence.
+
 # Corrected setting-choice acceptance — frozen preparation, 21 November 2026
 
 **PREPARED_NOT_AUTHORISED. Six genuine requests NOT_ATTEMPTED. New calls 0; new cost USD 0; uncertain reservations 0; no parent/provider spending ledger created.** No sign-in or provider credential was interpreted or used. Separate concrete approval is required before activation or key loading.

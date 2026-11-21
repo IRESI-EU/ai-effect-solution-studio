@@ -1,0 +1,958 @@
+{
+  "status": "EVALUATION_RECORD",
+  "manifest_sha256": "63181bd68495454934874a2088fb9c39bca8041c03d7264ca3832012f60bbd0a",
+  "maximum_calls": 6,
+  "maximum_usd": 0.4059,
+  "accounting": {
+    "parent_created": true,
+    "closed": true,
+    "expired": false,
+    "attempts": 4,
+    "usage": {
+      "input_tokens": 35604,
+      "output_tokens": 626
+    },
+    "cumulative_conservative_estimated_usd": 0.032472,
+    "uncertain_reserved_usd": 0.0,
+    "lifetime_reserved_usd": 0.2706,
+    "remaining_authorised_calls": 0,
+    "remaining_authorised_reservations_usd": 0,
+    "next_dispatch_permitted": false,
+    "details": [
+      {
+        "case": "A-ambiguous",
+        "status": "PASS",
+        "provider_state": "settled",
+        "usage": {
+          "input_tokens": 10988,
+          "output_tokens": 186
+        },
+        "estimated_usd": 0.0099858,
+        "uncertain_reserved_usd": 0
+      },
+      {
+        "case": "B-select-south",
+        "status": "PASS",
+        "provider_state": "settled",
+        "usage": {
+          "input_tokens": 11355,
+          "output_tokens": 187
+        },
+        "estimated_usd": 0.010293525,
+        "uncertain_reserved_usd": 0
+      },
+      {
+        "case": "C-already-satisfied",
+        "status": "PASS",
+        "provider_state": "settled",
+        "usage": {
+          "input_tokens": 6616,
+          "output_tokens": 124
+        },
+        "estimated_usd": 0.006072,
+        "uncertain_reserved_usd": 0
+      },
+      {
+        "case": "D-invalid",
+        "status": "FAIL_STOP",
+        "provider_state": "settled",
+        "usage": {
+          "input_tokens": 6645,
+          "output_tokens": 129
+        },
+        "estimated_usd": 0.006120675,
+        "uncertain_reserved_usd": 0
+      }
+    ],
+    "account_balance": "NOT_OBSERVED; this is application accounting only"
+  },
+  "cases": [
+    {
+      "id": "A-ambiguous",
+      "status": "PASS",
+      "reserved_nano": 67650000,
+      "result": {
+        "application_behaviour": "Existing saved graph and exact earlier pending review preserved; target unresolved.",
+        "category": "human_semantic_review",
+        "checklist": "Inspect actual question for a useful target choice and no false compliance. Distinguish model clarification from an application-contained guess; confirm no guessed proposal or lost earlier work.",
+        "model_behaviour": "model guessed; application contained it",
+        "reasons": [],
+        "status": "REVIEW_REQUIRED"
+      },
+      "review": "Actual genuine setting_edit guessed Generator North with how_many=2; model did not clarify. Application returned its own current North/South choice, with no guessed candidate stored, exact prior pending ID/hash/content preserved and saved content unchanged. No false success or workflow submission. User-facing target-choice boundary passes; model guessed; application contained it.",
+      "request": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+      "expected": "target_choice",
+      "expected_target": null,
+      "expected_values": {},
+      "provider_audit": {
+        "audit_format_version": 4,
+        "response_schema_name": "SavedSolutionResponse",
+        "response_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+        "requested_model": "gpt-5.4-mini-2026-03-17",
+        "requested_service_tier": "default",
+        "requested_configuration": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "store": false,
+          "service_tier": "default",
+          "max_output_tokens": 3000,
+          "reasoning": {
+            "effort": "none"
+          },
+          "transport": {
+            "endpoint": "responses",
+            "max_retries": 0,
+            "timeout_seconds": 60
+          }
+        },
+        "request_sha256": "f1886b24dbe0e5b2170c4765d8d29c02ed81901507317237d995cdb5ef897d03",
+        "configuration_sha256": "5d1f2e65cb16d2c651e75c69345c51b615263d495dc460a66ab97e996a6ea0e5",
+        "correlation": {
+          "conversation_id": "caf75eb1-06f6-5eeb-9b1f-a1bd2f803ed5",
+          "draft_id": null,
+          "revision": 1,
+          "accounting_permit": "1"
+        },
+        "returned_model": "gpt-5.4-mini-2026-03-17",
+        "returned_service_tier": "default",
+        "provider_stage": "schema_validated",
+        "response_id": "resp_0078dcbb5534fffe016b02284c838c87d29ebe7f73b8645930",
+        "request_id": "req_4e2cc9920b0f44b2a1b97a0af0cdb9e4",
+        "status": "completed",
+        "usage": {
+          "input_tokens": 10988,
+          "output_tokens": 186,
+          "total_tokens": 11174,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "cache_write_tokens_details": {
+              "ttl_30m_tokens": 0,
+              "ttl_12h_tokens": 0
+            }
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "validated_response": {
+          "outcome": "setting_edit",
+          "message": null,
+          "clarification": null,
+          "solution_edits": [],
+          "edit_base": {
+            "kind": "pending",
+            "expected_updated_at": "2026-11-21T21:05:11.213709",
+            "conversation_revision": 1,
+            "proposal_id": "0874b809-f1b6-45e3-873f-6276675cfe86",
+            "candidate_sha256": "c7e57acad9d8fcb2ad3a9755bfdf91e0db5c43cb50f9fb7c5c8c684e9702f6fa"
+          },
+          "assumptions": [],
+          "parameter_action": {
+            "operation": "set_parameters",
+            "target_ref": "instance_fd5eef48f917abc78888e8ad10c908a5",
+            "requested_values": [
+              {
+                "name": "how_many",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "validated_response_sha256": "90a8d9e54ee0a03cf806c0e3bf30938586ccbb8d9b1897f851f4df7265abab65",
+        "validation": "sdk_schema_validated; canonical application validation remains separate",
+        "visible_output": [
+          "{\"outcome\": \"setting_edit\", \"message\": null, \"clarification\": null, \"solution_edits\": [], \"edit_base\": {\"kind\": \"pending\", \"expected_updated_at\": \"2026-11-21T21:05:11.213709\", \"conversation_revision\": 1, \"proposal_id\": \"0874b809-f1b6-45e3-873f-6276675cfe86\", \"candidate_sha256\": \"c7e57acad9d8fcb2ad3a9755bfdf91e0db5c43cb50f9fb7c5c8c684e9702f6fa\"}, \"assumptions\": [], \"parameter_action\": {\"operation\": \"set_parameters\", \"target_ref\": \"instance_fd5eef48f917abc78888e8ad10c908a5\", \"requested_values\": [{\"name\": \"how_many\", \"value\": 2}]}}"
+        ],
+        "unavailable_fields": []
+      },
+      "application_observation": {
+        "http_status": 200,
+        "detail_stage": null,
+        "saved_sha256": "636243c4baa5e7f98a62045563f0d03d50a290f67c59aec15ccac7fd25ebca1e",
+        "submissions": 0,
+        "pending_unchanged": true,
+        "candidate_sha256": "c7e57acad9d8fcb2ad3a9755bfdf91e0db5c43cb50f9fb7c5c8c684e9702f6fa",
+        "summary": null,
+        "target_question": {
+          "request": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+          "question": "Which step should receive these setting changes?",
+          "current": true,
+          "choices": [
+            {
+              "instance_id": "generator-north",
+              "target_ref": "instance_fd5eef48f917abc78888e8ad10c908a5",
+              "label": "Generator North",
+              "parameter_names": [
+                "allow_bypass",
+                "allow_hx",
+                "how_many"
+              ]
+            },
+            {
+              "instance_id": "generator-south",
+              "target_ref": "instance_0a81ed585d871e7137bc00ef92e66536",
+              "label": "Generator South",
+              "parameter_names": [
+                "allow_bypass",
+                "allow_hx",
+                "how_many"
+              ]
+            }
+          ]
+        },
+        "clarification": {
+          "source": "application_target_choice",
+          "request": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+          "question": "Which step should receive these setting changes?",
+          "fingerprint": "a5a4c4bf7f8758104d9b1780cb3be9f01f81b375d52e5cfd38877f126c608480",
+          "instance_ids": [
+            "generator-north",
+            "generator-south"
+          ]
+        },
+        "application_message": {
+          "role": "assistant",
+          "content": "Choose a displayed step before I propose setting changes. Your saved design and any earlier pending review are unchanged.",
+          "question": "Which step should receive these setting changes?",
+          "outcome": "clarification",
+          "source": "application_target_choice"
+        }
+      },
+      "application_message": {
+        "role": "assistant",
+        "content": "Choose a displayed step before I propose setting changes. Your saved design and any earlier pending review are unchanged.",
+        "question": "Which step should receive these setting changes?",
+        "outcome": "clarification",
+        "source": "application_target_choice"
+      },
+      "saved_unchanged_before_apply": true,
+      "case_ledger_closed": true,
+      "spending_after_attempt": {
+        "parent_created": true,
+        "closed": false,
+        "expired": false,
+        "attempts": 1,
+        "usage": {
+          "input_tokens": 10988,
+          "output_tokens": 186
+        },
+        "cumulative_conservative_estimated_usd": 0.0099858,
+        "uncertain_reserved_usd": 0.0,
+        "lifetime_reserved_usd": 0.06765,
+        "remaining_authorised_calls": 5,
+        "remaining_authorised_reservations_usd": 0.33825,
+        "next_dispatch_permitted": true,
+        "details": [
+          {
+            "case": "A-ambiguous",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 10988,
+              "output_tokens": 186
+            },
+            "estimated_usd": 0.0099858,
+            "uncertain_reserved_usd": 0
+          }
+        ],
+        "account_balance": "NOT_OBSERVED; this is application accounting only"
+      },
+      "interpretation": "Model guessed North; application contained it. User-facing boundary PASS; NOT genuine model clarification."
+    },
+    {
+      "id": "B-select-south",
+      "status": "PASS",
+      "reserved_nano": 67650000,
+      "result": {
+        "category": "human_semantic_review",
+        "checklist": "Confirm the displayed application diff/no-change matches the frozen request; no false compliance or lost work.",
+        "reasons": [],
+        "status": "REVIEW_REQUIRED"
+      },
+      "review": "Actual response is setting_edit on the explicit current authenticated South reference/base with how_many=2 only. Complete materialized content equals the frozen expected candidate 36bac69425d599102f59eda3d21161941c77c20a2ee31f2997b3b25b0246ce16. North=4, both booleans=true, prior pending title, raw edges, input and all other content are preserved. Same actual A conversation; factual application summary says proposed, not applied; saved design unchanged and zero submissions.",
+      "request": "Set the generator's maximum candidate layouts to two. Keep the other settings unchanged.",
+      "expected": "edit",
+      "expected_target": "Generator South",
+      "expected_values": {
+        "how_many": 2
+      },
+      "provider_audit": {
+        "audit_format_version": 4,
+        "response_schema_name": "SavedSolutionResponse",
+        "response_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+        "requested_model": "gpt-5.4-mini-2026-03-17",
+        "requested_service_tier": "default",
+        "requested_configuration": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "store": false,
+          "service_tier": "default",
+          "max_output_tokens": 3000,
+          "reasoning": {
+            "effort": "none"
+          },
+          "transport": {
+            "endpoint": "responses",
+            "max_retries": 0,
+            "timeout_seconds": 60
+          }
+        },
+        "request_sha256": "1c2802a96c2d62221a867c6c59c6a21a6de5abe00d14d99113cd0a5d0d133e96",
+        "configuration_sha256": "5d1f2e65cb16d2c651e75c69345c51b615263d495dc460a66ab97e996a6ea0e5",
+        "correlation": {
+          "conversation_id": "caf75eb1-06f6-5eeb-9b1f-a1bd2f803ed5",
+          "draft_id": null,
+          "revision": 2,
+          "accounting_permit": "1"
+        },
+        "returned_model": "gpt-5.4-mini-2026-03-17",
+        "returned_service_tier": "default",
+        "provider_stage": "schema_validated",
+        "response_id": "resp_07e6bce4cead3b07016b02288c07b087d2bfe1930de955ab80",
+        "request_id": "req_b0334b8e51da465dba9ea20790a535d2",
+        "status": "completed",
+        "usage": {
+          "input_tokens": 11355,
+          "output_tokens": 187,
+          "total_tokens": 11542,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "cache_write_tokens_details": {
+              "ttl_30m_tokens": 0,
+              "ttl_12h_tokens": 0
+            }
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "validated_response": {
+          "outcome": "setting_edit",
+          "message": null,
+          "clarification": null,
+          "solution_edits": [],
+          "edit_base": {
+            "kind": "pending",
+            "expected_updated_at": "2026-11-21T21:05:11.213709",
+            "conversation_revision": 2,
+            "proposal_id": "0874b809-f1b6-45e3-873f-6276675cfe86",
+            "candidate_sha256": "c7e57acad9d8fcb2ad3a9755bfdf91e0db5c43cb50f9fb7c5c8c684e9702f6fa"
+          },
+          "assumptions": [],
+          "parameter_action": {
+            "operation": "set_parameters",
+            "target_ref": "instance_0a81ed585d871e7137bc00ef92e66536",
+            "requested_values": [
+              {
+                "name": "how_many",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "validated_response_sha256": "73c67dc14accf2fd7bb9d775527610786dc12a6e0bbd558ca3a1790ccc5fce6e",
+        "validation": "sdk_schema_validated; canonical application validation remains separate",
+        "visible_output": [
+          "{\"outcome\": \"setting_edit\", \"message\": null, \"clarification\": null, \"solution_edits\": [], \"edit_base\": {\"kind\": \"pending\", \"expected_updated_at\": \"2026-11-21T21:05:11.213709\", \"conversation_revision\": 2, \"proposal_id\": \"0874b809-f1b6-45e3-873f-6276675cfe86\", \"candidate_sha256\": \"c7e57acad9d8fcb2ad3a9755bfdf91e0db5c43cb50f9fb7c5c8c684e9702f6fa\"}, \"assumptions\": [], \"parameter_action\": {\"operation\": \"set_parameters\", \"target_ref\": \"instance_0a81ed585d871e7137bc00ef92e66536\", \"requested_values\": [{\"name\": \"how_many\", \"value\": 2}]}}"
+        ],
+        "unavailable_fields": []
+      },
+      "application_observation": {
+        "http_status": 200,
+        "detail_stage": null,
+        "saved_sha256": "636243c4baa5e7f98a62045563f0d03d50a290f67c59aec15ccac7fd25ebca1e",
+        "submissions": 0,
+        "pending_unchanged": false,
+        "candidate_sha256": "36bac69425d599102f59eda3d21161941c77c20a2ee31f2997b3b25b0246ce16",
+        "summary": {
+          "source": "application_diff",
+          "base_kind": "pending",
+          "status": "proposed",
+          "changes": [
+            {
+              "instance_id": "generator-south",
+              "step": "Generator South",
+              "parameter": "how_many",
+              "label": "Maximum candidate layouts",
+              "before": 4,
+              "before_present": true,
+              "after": 2
+            }
+          ]
+        },
+        "target_question": null,
+        "clarification": null,
+        "application_message": {
+          "role": "assistant",
+          "content": "Proposed setting changes: Generator South (or-south): Maximum candidate layouts 4 \u2192 2. These changes have not been applied; Run remains a separate action.",
+          "change_summary": {
+            "source": "application_diff",
+            "base_kind": "pending",
+            "status": "proposed",
+            "changes": [
+              {
+                "instance_id": "generator-south",
+                "step": "Generator South",
+                "parameter": "how_many",
+                "label": "Maximum candidate layouts",
+                "before": 4,
+                "before_present": true,
+                "after": 2
+              }
+            ]
+          },
+          "outcome": "proposal",
+          "assumptions": []
+        }
+      },
+      "application_message": {
+        "role": "assistant",
+        "content": "Proposed setting changes: Generator South (or-south): Maximum candidate layouts 4 \u2192 2. These changes have not been applied; Run remains a separate action.",
+        "change_summary": {
+          "source": "application_diff",
+          "base_kind": "pending",
+          "status": "proposed",
+          "changes": [
+            {
+              "instance_id": "generator-south",
+              "step": "Generator South",
+              "parameter": "how_many",
+              "label": "Maximum candidate layouts",
+              "before": 4,
+              "before_present": true,
+              "after": 2
+            }
+          ]
+        },
+        "outcome": "proposal",
+        "assumptions": []
+      },
+      "saved_unchanged_before_apply": true,
+      "case_ledger_closed": true,
+      "spending_after_attempt": {
+        "parent_created": true,
+        "closed": false,
+        "expired": false,
+        "attempts": 2,
+        "usage": {
+          "input_tokens": 22343,
+          "output_tokens": 373
+        },
+        "cumulative_conservative_estimated_usd": 0.020279325,
+        "uncertain_reserved_usd": 0.0,
+        "lifetime_reserved_usd": 0.1353,
+        "remaining_authorised_calls": 4,
+        "remaining_authorised_reservations_usd": 0.2706,
+        "next_dispatch_permitted": true,
+        "details": [
+          {
+            "case": "A-ambiguous",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 10988,
+              "output_tokens": 186
+            },
+            "estimated_usd": 0.0099858,
+            "uncertain_reserved_usd": 0
+          },
+          {
+            "case": "B-select-south",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 11355,
+              "output_tokens": 187
+            },
+            "estimated_usd": 0.010293525,
+            "uncertain_reserved_usd": 0
+          }
+        ],
+        "account_balance": "NOT_OBSERVED; this is application accounting only"
+      },
+      "interpretation": "Genuine action honoured explicit application-selected South in actual A conversation; exact whole-candidate match."
+    },
+    {
+      "id": "C-already-satisfied",
+      "status": "PASS",
+      "reserved_nano": 67650000,
+      "result": {
+        "category": "human_semantic_review",
+        "checklist": "Confirm the displayed application diff/no-change matches the frozen request; no false compliance or lost work.",
+        "reasons": [],
+        "status": "REVIEW_REQUIRED"
+      },
+      "review": "Actual genuine setting_edit targets the frozen saved North reference with how_many=2 only. The application independently confirms Maximum candidate layouts is already 2, status no_change, no proposal and no Run. Saved content and pending=None are unchanged; no answer-only model compliance or lost work.",
+      "request": "Set Generator North's maximum candidate layouts to two. Leave all other settings and connections unchanged.",
+      "expected": "no_change",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      },
+      "provider_audit": {
+        "audit_format_version": 4,
+        "response_schema_name": "SavedSolutionResponse",
+        "response_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+        "requested_model": "gpt-5.4-mini-2026-03-17",
+        "requested_service_tier": "default",
+        "requested_configuration": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "store": false,
+          "service_tier": "default",
+          "max_output_tokens": 3000,
+          "reasoning": {
+            "effort": "none"
+          },
+          "transport": {
+            "endpoint": "responses",
+            "max_retries": 0,
+            "timeout_seconds": 60
+          }
+        },
+        "request_sha256": "8191cf2fab49e31fc94a164e9df3b05752ff0ad19d8d94d279909cd4d6c6516d",
+        "configuration_sha256": "5d1f2e65cb16d2c651e75c69345c51b615263d495dc460a66ab97e996a6ea0e5",
+        "correlation": {
+          "conversation_id": "51880649-8229-5781-9516-d1881c079742",
+          "draft_id": null,
+          "revision": 0,
+          "accounting_permit": "1"
+        },
+        "returned_model": "gpt-5.4-mini-2026-03-17",
+        "returned_service_tier": "default",
+        "provider_stage": "schema_validated",
+        "response_id": "resp_0053a5bfc97c07fb016b022a3703bc87d299cfec59fb7623ec",
+        "request_id": "req_e5baf19f92ac43d0832d084cd4845eb2",
+        "status": "completed",
+        "usage": {
+          "input_tokens": 6616,
+          "output_tokens": 124,
+          "total_tokens": 6740,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "cache_write_tokens_details": {
+              "ttl_30m_tokens": 0,
+              "ttl_12h_tokens": 0
+            }
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "validated_response": {
+          "outcome": "setting_edit",
+          "message": null,
+          "clarification": null,
+          "solution_edits": [],
+          "edit_base": {
+            "kind": "saved",
+            "expected_updated_at": "2026-11-21T21:05:20.935113",
+            "conversation_revision": 0,
+            "proposal_id": null,
+            "candidate_sha256": null
+          },
+          "assumptions": [],
+          "parameter_action": {
+            "operation": "set_parameters",
+            "target_ref": "instance_b87bca8a8390a7db962220b1be5bbb94",
+            "requested_values": [
+              {
+                "name": "how_many",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "validated_response_sha256": "e44ab2fd84dca83c08956141e82eab17b3568fce990d80af6a5674122731a276",
+        "validation": "sdk_schema_validated; canonical application validation remains separate",
+        "visible_output": [
+          "{\"outcome\": \"setting_edit\", \"message\": null, \"clarification\": null, \"solution_edits\": [], \"edit_base\": {\"kind\": \"saved\", \"expected_updated_at\": \"2026-11-21T21:05:20.935113\", \"conversation_revision\": 0, \"proposal_id\": null, \"candidate_sha256\": null}, \"assumptions\": [], \"parameter_action\": {\"operation\": \"set_parameters\", \"target_ref\": \"instance_b87bca8a8390a7db962220b1be5bbb94\", \"requested_values\": [{\"name\": \"how_many\", \"value\": 2}]}}"
+        ],
+        "unavailable_fields": []
+      },
+      "application_observation": {
+        "http_status": 200,
+        "detail_stage": null,
+        "saved_sha256": "491036cb1250c65222ba14f672521554f30c29d523ee9ef92608ee4f6906d522",
+        "submissions": 0,
+        "pending_unchanged": true,
+        "candidate_sha256": "491036cb1250c65222ba14f672521554f30c29d523ee9ef92608ee4f6906d522",
+        "summary": {
+          "source": "application_diff",
+          "base_kind": "saved",
+          "status": "no_change",
+          "changes": []
+        },
+        "target_question": null,
+        "clarification": null,
+        "application_message": {
+          "role": "assistant",
+          "content": "No change needed in the saved design: Generator North (or-north): Maximum candidate layouts is already 2. This request made no design changes and did not run the workflow.",
+          "change_summary": {
+            "source": "application_diff",
+            "base_kind": "saved",
+            "status": "no_change",
+            "changes": []
+          },
+          "outcome": "answer",
+          "assumptions": []
+        }
+      },
+      "application_message": {
+        "role": "assistant",
+        "content": "No change needed in the saved design: Generator North (or-north): Maximum candidate layouts is already 2. This request made no design changes and did not run the workflow.",
+        "change_summary": {
+          "source": "application_diff",
+          "base_kind": "saved",
+          "status": "no_change",
+          "changes": []
+        },
+        "outcome": "answer",
+        "assumptions": []
+      },
+      "saved_unchanged_before_apply": true,
+      "case_ledger_closed": true,
+      "spending_after_attempt": {
+        "parent_created": true,
+        "closed": false,
+        "expired": false,
+        "attempts": 3,
+        "usage": {
+          "input_tokens": 28959,
+          "output_tokens": 497
+        },
+        "cumulative_conservative_estimated_usd": 0.026351325,
+        "uncertain_reserved_usd": 0.0,
+        "lifetime_reserved_usd": 0.20295,
+        "remaining_authorised_calls": 3,
+        "remaining_authorised_reservations_usd": 0.20295,
+        "next_dispatch_permitted": true,
+        "details": [
+          {
+            "case": "A-ambiguous",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 10988,
+              "output_tokens": 186
+            },
+            "estimated_usd": 0.0099858,
+            "uncertain_reserved_usd": 0
+          },
+          {
+            "case": "B-select-south",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 11355,
+              "output_tokens": 187
+            },
+            "estimated_usd": 0.010293525,
+            "uncertain_reserved_usd": 0
+          },
+          {
+            "case": "C-already-satisfied",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 6616,
+              "output_tokens": 124
+            },
+            "estimated_usd": 0.006072,
+            "uncertain_reserved_usd": 0
+          }
+        ],
+        "account_balance": "NOT_OBSERVED; this is application accounting only"
+      },
+      "interpretation": "Genuine correct small action; application established no change with no redundant proposal."
+    },
+    {
+      "id": "D-invalid",
+      "status": "FAIL_STOP",
+      "reserved_nano": 67650000,
+      "result": {
+        "category": "human_semantic_review",
+        "checklist": "Confirm the refusal explains both invalid 99 (published maximum 4) and unsupported turbo_mode; no compliance claim.",
+        "reasons": [],
+        "status": "REVIEW_REQUIRED"
+      },
+      "review": "Semantic failure: actual clarification recognises that turbo_mode is unpublished and that how_many maximum is 4, but then asks Should I set how_many to 99. This offers a known invalid value instead of refusing it or requesting a valid supported choice as frozen case D requires. No edits were returned and saved/pending work is unchanged; provider, parsing and application transport succeeded. Stop the evaluation here; E/F must remain NOT_ATTEMPTED.",
+      "request": "Set Generator North's maximum candidate layouts to 99 and its unlisted turbo_mode setting to true. Keep the rest unchanged.",
+      "expected": "refusal",
+      "expected_target": "Generator North",
+      "expected_values": {},
+      "provider_audit": {
+        "audit_format_version": 4,
+        "response_schema_name": "SavedSolutionResponse",
+        "response_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+        "requested_model": "gpt-5.4-mini-2026-03-17",
+        "requested_service_tier": "default",
+        "requested_configuration": {
+          "model": "gpt-5.4-mini-2026-03-17",
+          "store": false,
+          "service_tier": "default",
+          "max_output_tokens": 3000,
+          "reasoning": {
+            "effort": "none"
+          },
+          "transport": {
+            "endpoint": "responses",
+            "max_retries": 0,
+            "timeout_seconds": 60
+          }
+        },
+        "request_sha256": "3dd767576c0ef1ba28adfc8727c9f40358aaa549fbcaa31f9a6ab002aaae9670",
+        "configuration_sha256": "5d1f2e65cb16d2c651e75c69345c51b615263d495dc460a66ab97e996a6ea0e5",
+        "correlation": {
+          "conversation_id": "394f4c95-95b1-51b3-9339-ee01544097ce",
+          "draft_id": null,
+          "revision": 0,
+          "accounting_permit": "1"
+        },
+        "returned_model": "gpt-5.4-mini-2026-03-17",
+        "returned_service_tier": "default",
+        "provider_stage": "schema_validated",
+        "response_id": "resp_095f7d32e485c3bf016b022a81138487d2ac481d8ddf2958bd",
+        "request_id": "req_3d113a1f084841b890ec1a700e100c13",
+        "status": "completed",
+        "usage": {
+          "input_tokens": 6645,
+          "output_tokens": 129,
+          "total_tokens": 6774,
+          "input_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "cache_write_tokens_details": {
+              "ttl_30m_tokens": 0,
+              "ttl_12h_tokens": 0
+            }
+          },
+          "output_tokens_details": {
+            "reasoning_tokens": 0
+          }
+        },
+        "validated_response": {
+          "outcome": "clarification",
+          "message": "I can update Generator North\u2019s editable parameters, but this service only publishes allow_hx, allow_bypass, and how_many. There is no published turbo_mode setting in the available contract. Should I set how_many to 99 (noting the published maximum is 4), or did you mean a different editable parameter?",
+          "clarification": "Which published parameter should be changed instead of turbo_mode, if any?",
+          "solution_edits": [],
+          "edit_base": null,
+          "assumptions": [],
+          "parameter_action": null
+        },
+        "validated_response_sha256": "5dfc7e25e904619816ebd858701c03c02584dc6995229a161e6c0472c1897b27",
+        "validation": "sdk_schema_validated; canonical application validation remains separate",
+        "visible_output": [
+          "{\"outcome\": \"clarification\", \"message\": \"I can update Generator North\u2019s editable parameters, but this service only publishes allow_hx, allow_bypass, and how_many. There is no published turbo_mode setting in the available contract. Should I set how_many to 99 (noting the published maximum is 4), or did you mean a different editable parameter?\", \"clarification\": \"Which published parameter should be changed instead of turbo_mode, if any?\", \"solution_edits\": [], \"edit_base\": null, \"assumptions\": [], \"parameter_action\": null}"
+        ],
+        "unavailable_fields": []
+      },
+      "application_observation": {
+        "http_status": 200,
+        "detail_stage": null,
+        "saved_sha256": "92bd0e74dddb9aa7ef1f3860e2463525dc0eab81b99d1b14bfaab40496d934a7",
+        "submissions": 0,
+        "pending_unchanged": true,
+        "candidate_sha256": "92bd0e74dddb9aa7ef1f3860e2463525dc0eab81b99d1b14bfaab40496d934a7",
+        "summary": null,
+        "target_question": null,
+        "clarification": {
+          "request": "Set Generator North's maximum candidate layouts to 99 and its unlisted turbo_mode setting to true. Keep the rest unchanged.",
+          "question": "Which published parameter should be changed instead of turbo_mode, if any?"
+        },
+        "application_message": {
+          "role": "assistant",
+          "content": "I can update Generator North\u2019s editable parameters, but this service only publishes allow_hx, allow_bypass, and how_many. There is no published turbo_mode setting in the available contract. Should I set how_many to 99 (noting the published maximum is 4), or did you mean a different editable parameter?",
+          "outcome": "clarification",
+          "assumptions": [],
+          "question": "Which published parameter should be changed instead of turbo_mode, if any?"
+        }
+      },
+      "application_message": {
+        "role": "assistant",
+        "content": "I can update Generator North\u2019s editable parameters, but this service only publishes allow_hx, allow_bypass, and how_many. There is no published turbo_mode setting in the available contract. Should I set how_many to 99 (noting the published maximum is 4), or did you mean a different editable parameter?",
+        "outcome": "clarification",
+        "assumptions": [],
+        "question": "Which published parameter should be changed instead of turbo_mode, if any?"
+      },
+      "saved_unchanged_before_apply": true,
+      "case_ledger_closed": true,
+      "spending_after_attempt": {
+        "parent_created": true,
+        "closed": true,
+        "expired": false,
+        "attempts": 4,
+        "usage": {
+          "input_tokens": 35604,
+          "output_tokens": 626
+        },
+        "cumulative_conservative_estimated_usd": 0.032472,
+        "uncertain_reserved_usd": 0.0,
+        "lifetime_reserved_usd": 0.2706,
+        "remaining_authorised_calls": 0,
+        "remaining_authorised_reservations_usd": 0,
+        "next_dispatch_permitted": false,
+        "details": [
+          {
+            "case": "A-ambiguous",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 10988,
+              "output_tokens": 186
+            },
+            "estimated_usd": 0.0099858,
+            "uncertain_reserved_usd": 0
+          },
+          {
+            "case": "B-select-south",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 11355,
+              "output_tokens": 187
+            },
+            "estimated_usd": 0.010293525,
+            "uncertain_reserved_usd": 0
+          },
+          {
+            "case": "C-already-satisfied",
+            "status": "PASS",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 6616,
+              "output_tokens": 124
+            },
+            "estimated_usd": 0.006072,
+            "uncertain_reserved_usd": 0
+          },
+          {
+            "case": "D-invalid",
+            "status": "FAIL_STOP",
+            "provider_state": "settled",
+            "usage": {
+              "input_tokens": 6645,
+              "output_tokens": 129
+            },
+            "estimated_usd": 0.006120675,
+            "uncertain_reserved_usd": 0
+          }
+        ],
+        "account_balance": "NOT_OBSERVED; this is application accounting only"
+      },
+      "interpretation": "Semantic failure: acknowledges maximum 4 and unavailable turbo_mode but offers to set how_many to 99. No refusal/request for a valid supported value."
+    },
+    {
+      "id": "E-repeat-original",
+      "status": "NOT_ATTEMPTED",
+      "request": "Use up to two layouts and Drawing A for the review. Keep heat exchangers and bypasses enabled. Please revise the pending design to match, leaving it for me to review before Apply or Run.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      }
+    },
+    {
+      "id": "F-repeat-paraphrase",
+      "status": "NOT_ATTEMPTED",
+      "request": "Please cap Generator North at two candidate layouts instead of four. Leave Drawing A, heat exchangers, bypasses and the rest of the proposed design alone.",
+      "expected": "edit",
+      "expected_target": "Generator North",
+      "expected_values": {
+        "how_many": 2
+      }
+    }
+  ],
+  "date": "2026-11-21",
+  "recorded_at": "2026-11-21T23:37:02.993498+00:00",
+  "result": "STOPPED_AT_D_SEMANTIC_FAILURE; GENUINE_A_B_BROWSER_PASS",
+  "approved_publication": "33b4231d04b00c2eac9da625278fa2f69d310085",
+  "evaluator_source": "20821d2af5bd9b9a395db29fdb3edacd79aef3ed",
+  "product_source": "439e078d46c5128f3a75d7cbe233bcb4f4d4dda4",
+  "source_unchanged_during_execution": true,
+  "model_prompt_schema_unchanged": true,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "reasoning": "none",
+  "service_tier": "default",
+  "max_retries": 0,
+  "fallbacks": 0,
+  "configuration_sha256": "5d1f2e65cb16d2c651e75c69345c51b615263d495dc460a66ab97e996a6ea0e5",
+  "prompt_sha256": "3e5c65e3dc25e7d7149fe0cc5e4e55a9dc4bed9e53069af4a2fec1b52d7291d8",
+  "wire_schema_sha256": "be5c2f476b825e4ddf105d654f17f65b49b70a442354a7d1ad6eb62bdd09ba93",
+  "base_list_price_estimate_usd": 0.02952,
+  "total_tokens": 36230,
+  "browser": {
+    "status": "PASS_GENUINE_REVIEW_APPLY_SAVE_SOLUTIONS_REOPEN",
+    "solution_id": "f84b2e36-7b5c-4f03-8214-f27a59e69dce",
+    "web_url": "http://127.0.0.1:23138",
+    "api_url": "http://127.0.0.1:28272",
+    "serving_source": "33b4231d04b00c2eac9da625278fa2f69d310085",
+    "product_source": "439e078d46c5128f3a75d7cbe233bcb4f4d4dda4",
+    "saved_sha256": "36bac69425d599102f59eda3d21161941c77c20a2ee31f2997b3b25b0246ce16",
+    "candidate_sha256": "36bac69425d599102f59eda3d21161941c77c20a2ee31f2997b3b25b0246ce16",
+    "south": {
+      "how_many": 2,
+      "allow_hx": true,
+      "allow_bypass": true
+    },
+    "north": {
+      "how_many": 4,
+      "allow_hx": true,
+      "allow_bypass": true
+    },
+    "earlier_work_input_connections_and_full_content_preserved": true,
+    "submissions": 0,
+    "extra_model_calls": 0,
+    "normal_designer_sign_in": true
+  },
+  "preservation": {
+    "hash_baselines": [
+      {
+        "files": 49,
+        "unchanged": true
+      },
+      {
+        "files": 23,
+        "unchanged": true
+      }
+    ],
+    "previous_scopes_closed": true,
+    "retained_login_health": {
+      "23124": 200,
+      "23125": 200,
+      "23134": 200,
+      "23135": 200,
+      "23136": 200,
+      "23137": 200,
+      "23138": 200
+    },
+    "original_dirty_files_preserved": true
+  },
+  "failure": {
+    "case": "D-invalid",
+    "stage": "semantic_review",
+    "category": "invalid_setting_clarification",
+    "evidence_quote": "Should I set how_many to 99 (noting the published maximum is 4)",
+    "provider_parsing_application_transport": "SUCCEEDED; no edit or saved mutation",
+    "remaining": [
+      "E-repeat-original",
+      "F-repeat-paraphrase"
+    ]
+  },
+  "limitations": [
+    "A is application containment of a genuine model guess, not model clarification",
+    "B explicit South selection was supplied through the existing authenticated application choice; normal sign-in/review/Apply/save/Solutions/reopen were then demonstrated in the browser on that SAME actual solution",
+    "E/F are NOT_ATTEMPTED because D failed; this closed scope must not be resumed",
+    "No workflow execution, scientific/runtime qualification or production deployment",
+    "Account balance and invoice are not observed; costs are application/list-price estimates",
+    "Boolean and other earlier-version successes are not automatically current-version genuine acceptance"
+  ],
+  "operator_note": "A manual projected-connection comparison initially encountered deliberately rotated scoped review references. Read-only raw-edge/full-content verification confirmed preservation and the frozen candidate hash; no request was repeated or repaired.",
+  "screenshots_sha256": {
+    "genuine-choice-north-value-20261121.png": "2e54c3578ef26c571a16ebb8a7bddb04696236667c01e63701cc0007f17fa70a",
+    "genuine-choice-reopened-final-20261121.png": "28c8a9252237a84b2339e951ea115feef46b2753a78c409f13b585617bf7ff86",
+    "genuine-choice-reopened-south-20261121.png": "28c8a9252237a84b2339e951ea115feef46b2753a78c409f13b585617bf7ff86",
+    "genuine-choice-review-20261121.png": "049e054e84fc1c2b5ff30b33997121490a73636ed8374f30134799495caafcf9",
+    "genuine-choice-south-value-20261121.png": "a9b5c2c4976029b6320ef822d51bcc39f94cb3651c452a862887fe13442e28ef"
+  }
+}
