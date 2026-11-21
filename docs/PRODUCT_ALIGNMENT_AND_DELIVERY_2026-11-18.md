@@ -1,3 +1,5 @@
+> Latest acceptance preparation: [Corrected six-request target-choice evaluation — 21 November 2026](SETTING_CHOICE_ACCEPTANCE_2026-11-21.md). Frozen source and shared A/B continuation prepared; six genuine requests NOT_ATTEMPTED. New paid approval required; previous scopes CLOSED.
+
 > Latest offline correction: [Ambiguous setting target choice — 20 November 2026](SETTING_TARGET_CHOICE_2026-11-20.md). Application-enforced choice preserves earlier pending work; offline browser South-only Apply/save/reopen passed. Genuine case 5 remains failed, cases 6–10 unattempted and spending CLOSED.
 
 > Latest execution checkpoint: [Genuine setting interpretation —20November2026](SETTING_INTERPRETATION_EXECUTION_2026-11-20.md). Cases1–4 passed and case1 passed browser Apply/save/reopen; case5 guessed an ambiguous target. Scope CLOSED; cases6–10 NOT_ATTEMPTED.
