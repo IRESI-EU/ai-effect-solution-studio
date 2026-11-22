@@ -1,0 +1,405 @@
+{
+  "checkpoint": "R1 / CP01",
+  "date": "2026-11-22",
+  "status": "BLOCKED",
+  "production_writes": false,
+  "paid_calls": 0,
+  "workflow_runs": 0,
+  "source": {
+    "branch": "codex/r1-cp01-20261122",
+    "candidate_commit": "a8a2674bab8f9b752ded2bf1edb17352f166b751",
+    "application_base": "a25750807bdcd0e386ae75fd2cbc8d53df1ea4bd",
+    "canonical_plan_base": "5454f7edca1a75dfa5d2dd1d9bfdbb6a340f4e82",
+    "wp3_commit": "69f7408e12908eb85a5de50af037e4f134e2be49",
+    "wp3_tree": "7d5db96b182241546baafcb38b88bd2b031f56d3",
+    "wp3_worktree_clean": true
+  },
+  "candidate": {
+    "images": {
+      "api": {
+        "tag": "ai-effect-r1-api:a8a2674bab8f",
+        "image_id": "sha256:0f08dbfc4a587ca05963dad275513ea6c914d330c8feeb9ab5d56336ee4fe7ac",
+        "repo_digests": [
+          "ai-effect-r1-api@sha256:0f08dbfc4a587ca05963dad275513ea6c914d330c8feeb9ab5d56336ee4fe7ac"
+        ],
+        "source_revision": "a8a2674bab8f9b752ded2bf1edb17352f166b751",
+        "published_registry": false
+      },
+      "web": {
+        "tag": "ai-effect-r1-web:a8a2674bab8f",
+        "image_id": "sha256:5c769ed455aa1777af4fa17d023735736d0395182e50ff00aefe10ee36d24881",
+        "repo_digests": [
+          "ai-effect-r1-web@sha256:5c769ed455aa1777af4fa17d023735736d0395182e50ff00aefe10ee36d24881"
+        ],
+        "source_revision": "a8a2674bab8f9b752ded2bf1edb17352f166b751",
+        "published_registry": false
+      }
+    },
+    "packaged_source_checks": {
+      "api": {
+        "normalized_tracked_python_files": 89,
+        "all_match": true
+      },
+      "web": {
+        "build_id": "UOiSElh0l2H85khpFgojL",
+        "normalized_selected_source_files": {
+          "app/page.tsx": true,
+          "app/solutions/page.tsx": true,
+          "app/solutions/[id]/page.tsx": true
+        },
+        "all_match": true
+      }
+    }
+  },
+  "production_read_only": {
+    "collected_at": "2026-11-22T17:51:05.602822+00:00",
+    "container_count": 39,
+    "components": [
+      {
+        "component": "ai-effect-solution-studio-web-1",
+        "image_id": "sha256:851115fb98582c8c077ed28e3b6db46c40a1079467cb4e3a11faabf5c19f2a0f",
+        "state": "running",
+        "health": "healthy",
+        "source_label": null,
+        "associated_checkout_only": null
+      },
+      {
+        "component": "ai-effect-solution-studio-api-1",
+        "image_id": "sha256:ded4f325be3769f834f5a40b1e3cf7f85aef0e0d25126b51d9509892cd562340",
+        "state": "running",
+        "health": "healthy",
+        "source_label": null,
+        "associated_checkout_only": null
+      },
+      {
+        "component": "pt-synthetic-data",
+        "image_id": "sha256:4aec8270bcb004ce966dc18f968fbc6aef4b536f248819b24b07cc200973eb30",
+        "state": "running",
+        "health": "healthy",
+        "source_label": null,
+        "associated_checkout_only": "e8914565e966a2d78879c314f980574769d31b87"
+      },
+      {
+        "component": "ai-effect-solution-studio-postgres-1",
+        "image_id": "sha256:81bd698b4594e751a3269e4dcd3e03a4a0ec0daf7b72e7aa1abd43cce9887542",
+        "state": "running",
+        "health": "healthy",
+        "source_label": null,
+        "associated_checkout_only": null
+      },
+      {
+        "component": "orchestrator-api-1",
+        "image_id": "sha256:15ebcb7261be2dd7b0a3a55b5b65953dcfa8a132c0dad46fcbf8fbd0830069cc",
+        "state": "running",
+        "health": null,
+        "source_label": null,
+        "associated_checkout_only": "486ccc702bb2afca79fb7d31258d62ee0f94dbfc"
+      },
+      {
+        "component": "orchestrator-redis-1",
+        "image_id": "sha256:aa189b5a1954929c393585e6dc5717a75b18f75a931df8bdcc00a3d3bd546be6",
+        "state": "running",
+        "health": "healthy",
+        "source_label": null,
+        "associated_checkout_only": "486ccc702bb2afca79fb7d31258d62ee0f94dbfc"
+      },
+      {
+        "component": "orchestrator-worker-1",
+        "image_id": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+        "state": "running",
+        "health": null,
+        "source_label": null,
+        "associated_checkout_only": "486ccc702bb2afca79fb7d31258d62ee0f94dbfc"
+      },
+      {
+        "component": "orchestrator-worker-2",
+        "image_id": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+        "state": "running",
+        "health": null,
+        "source_label": null,
+        "associated_checkout_only": "486ccc702bb2afca79fb7d31258d62ee0f94dbfc"
+      },
+      {
+        "component": "orchestrator-worker-3",
+        "image_id": "sha256:759ed98555799d3e73cfa55be4f72544deb9046b0af412a2f5659c9b56723d28",
+        "state": "running",
+        "health": null,
+        "source_label": null,
+        "associated_checkout_only": "486ccc702bb2afca79fb7d31258d62ee0f94dbfc"
+      }
+    ],
+    "web_build_id": "aLp4c1xkUjCM1v23PtrYY",
+    "api_source_sample": {
+      "commit": "89072340c9a13f3aa49d3e433380de8928cc16dd",
+      "files_matched": 44,
+      "comparison": "Git LF or Windows CRLF hashes; not complete image provenance"
+    },
+    "postgresql": "16.15 Alpine",
+    "table_count": 7,
+    "counts": {
+      "audit_events": 598,
+      "deployments": 66,
+      "operation_contracts": 0,
+      "services": 38,
+      "solutions": 55,
+      "user_sessions": 106,
+      "users": 31
+    },
+    "null_owners": {
+      "deployments": 1,
+      "services": 16,
+      "solutions": 2
+    },
+    "design_metadata_present": false,
+    "execution_tables_present": false,
+    "operation_contract_count": 0,
+    "runtime_openapi_verified": false,
+    "runtime_openapi_note": "Inventory exposed no declared ML port; no production /train or /generate request made. Stored catalogue endpoint is not API confirmation."
+  },
+  "verification": {
+    "postgresql": {
+      "version": "16.13 Debian",
+      "production_exact_binary": false,
+      "data": "current production schema-only fixture; synthetic rows only",
+      "schema_fixture_sha256": "adc1c5e128c6d4ad3d0ab49b39fad103ce63ded57b09decf89ca0ce45d0ff183",
+      "unique_checks_passed": 6,
+      "limitations": [
+        "no production data rehearsal",
+        "no deployed-previous-binary rollback",
+        "no actual repeated workflow Runs",
+        "not shared staging acceptance"
+      ]
+    },
+    "pytest": {
+      "postgresql_core": {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "cases": [
+          "test_current_production_schema_fails_read_only_gate_then_migrates_twice",
+          "test_concurrent_canonical_saves_reject_stale_writer_and_other_owner",
+          "test_separate_immutable_submission_records_and_task_receipt_conflict",
+          "test_synthetic_backup_separate_restore_and_old_column_reads"
+        ],
+        "scope": "synthetic local/component evidence; no model or workflow dispatch"
+      },
+      "postgresql_constraints": {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "cases": [
+          "test_startup_rejects_missing_history_integrity_constraint[workflow]",
+          "test_startup_rejects_missing_history_integrity_constraint[receipt]"
+        ],
+        "scope": "synthetic local/component evidence; no model or workflow dispatch"
+      },
+      "portable_components": {
+        "tests": 96,
+        "failures": 0,
+        "errors": 0,
+        "cases": [
+          "test_csv_is_data_not_a_json_wrapped_setting",
+          "test_old_csv_capability_rejected_without_any_dispatch[wp3]",
+          "test_old_csv_capability_rejected_without_any_dispatch[connector]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[url]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[path]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[huge]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[version]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[name]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[header]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[rows]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[nul]",
+          "test_invalid_csv_or_reference_rejected_before_compilation[extra]",
+          "test_owned_save_reload_stale_input_and_assistant_privacy",
+          "test_authenticated_csv_preview_and_evidence_share_immutable_receipt",
+          "test_bad_authority_denied_before_control_fetch[other_owner]",
+          "test_bad_authority_denied_before_control_fetch[snapshot]",
+          "test_bad_authority_denied_before_control_fetch[runtime]",
+          "test_bad_authority_denied_before_control_fetch[endpoint]",
+          "test_bad_authority_denied_before_control_fetch[task_node]",
+          "test_bad_authority_denied_before_control_fetch[duplicate]",
+          "test_bad_authority_denied_before_control_fetch[input]",
+          "test_bad_authority_denied_before_control_fetch[arbitrary_url]",
+          "test_conflicting_receipt_never_exposes_bytes[workflow_id]",
+          "test_conflicting_receipt_never_exposes_bytes[task_id]",
+          "test_conflicting_receipt_never_exposes_bytes[service_task_id]",
+          "test_conflicting_receipt_never_exposes_bytes[method]",
+          "test_conflicting_receipt_never_exposes_bytes[state]",
+          "test_conflicting_receipt_never_exposes_bytes[configuration]",
+          "test_conflicting_receipt_never_exposes_bytes[parameter_contract_sha256]",
+          "test_conflicting_receipt_never_exposes_bytes[delivered_query]",
+          "test_conflicting_receipt_never_exposes_bytes[output_sha256]",
+          "test_conflicting_receipt_never_exposes_bytes[output_bytes]",
+          "test_conflicting_receipt_never_exposes_bytes[output]",
+          "test_conflicting_receipt_never_exposes_bytes[csv_data_rows]",
+          "test_conflicting_receipt_never_exposes_bytes[observed_sequence_count]",
+          "test_changed_bytes_or_receipt_cannot_replace_prior_output",
+          "test_redirect_or_oversized_receipt_is_refused",
+          "test_uninstalled_target_and_logged_out_user_never_fetch",
+          "test_selected_inline_csv_is_matched_to_received_bytes[False]",
+          "test_selected_inline_csv_is_matched_to_received_bytes[True]",
+          "test_explicit_verified_observation_can_differ_from_requested_delivery",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[workflow_id]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[task_id]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[instance_id]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[operation_identity]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[configuration_sha256]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[parameter_contract_sha256]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[input_sha256]",
+          "test_observation_wrong_binding_is_rejected_before_receipt_is_pinned[source_response_sha256]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[digest]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[untrusted]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[type]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[keys]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[model]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[weights]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[future]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[shape]",
+          "test_observation_must_be_explicit_typed_complete_and_hash_bound[requested]",
+          "test_reject_invalid_and_unsupported[None]",
+          "test_reject_invalid_and_unsupported[value1]",
+          "test_reject_invalid_and_unsupported[value2]",
+          "test_reject_invalid_and_unsupported[value3]",
+          "test_reject_invalid_and_unsupported[value4]",
+          "test_reject_invalid_and_unsupported[value5]",
+          "test_reject_invalid_and_unsupported[value6]",
+          "test_defaults_required_bounds_and_independence",
+          "test_registry_schema_rejects_unbounded_strings_invalid_defaults_and_versions",
+          "test_save_rejects_malformed_configuration[None]",
+          "test_save_rejects_malformed_configuration[bad1]",
+          "test_save_rejects_malformed_configuration[bad2]",
+          "test_unavailable_runtime_cannot_submit",
+          "test_save_reload_ownership_stale_and_unsupported",
+          "test_second_instance_edit_does_not_change_first_after_save_copy_and_compile",
+          "test_duplicate_compilation_downstream_and_legacy",
+          "test_submission_is_durable_and_history_not_reconstructed",
+          "test_ai_proposals_share_registry_validation",
+          "test_evidence_receipt_rejects_rehashed_replacement_and_cross_owner",
+          "test_compatibility_matrix_and_contract_agreement[None]",
+          "test_compatibility_matrix_and_contract_agreement[old-runtime]",
+          "test_compatibility_matrix_and_contract_agreement[unknown]",
+          "test_compatibility_matrix_and_contract_agreement[malformed-transports]",
+          "test_compatibility_matrix_and_contract_agreement[schema]",
+          "test_compatibility_matrix_and_contract_agreement[contract]",
+          "test_compatibility_matrix_and_contract_agreement[digest]",
+          "test_compatibility_matrix_and_contract_agreement[missing-instance]",
+          "test_offline_parameter_proposal_apply_save_reload",
+          "test_owned_task_derivative_hashes_and_parent_are_pinned",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[workflow]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[task]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[node]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[schema]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[digest]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[bytes]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[other-task]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[xml]",
+          "test_invalid_artifact_does_not_gain_authority_or_pin_receipt[duplicate]"
+        ],
+        "scope": "synthetic local/component evidence; no model or workflow dispatch"
+      }
+    },
+    "frontend": {
+      "tests": 58,
+      "passed": 58,
+      "failures": 0,
+      "typecheck": true,
+      "production_build": true,
+      "network": "none for test/build steps"
+    },
+    "package": {
+      "prepared_compose_valid": true,
+      "missing_runtime_rejected": true,
+      "AI_disabled": true,
+      "account_bootstrap_disabled": true,
+      "synthetic_seed_disabled": true,
+      "schema_validate_required": true,
+      "target_mount_readonly": true,
+      "gateway_config_correct": true,
+      "nginx_syntax_passed": true,
+      "services_started": false,
+      "owner_approval": "BLOCKED",
+      "TLS": "temporary syntax-test certificate only; no trust/human shared-staging acceptance"
+    },
+    "packaged_api_startup": {
+      "image": "ai-effect-r1-api:a8a2674bab8f",
+      "before_migration_rejected": true,
+      "before_gate_no_DDL": true,
+      "reviewed_bundle_started": true,
+      "checks": {
+        "health": 200,
+        "unauthenticated_solutions": 401,
+        "AI_disabled": true,
+        "no_bootstrap_or_workflow": true
+      },
+      "persistent_server_started": false,
+      "provider_calls": 0,
+      "workflow_runs": 0
+    },
+    "synthetic_backup": {
+      "synthetic_only": true,
+      "sha256": "0acdf24b5d9b0ae3463ae46cfc0a32cea7237e5c69961a2608abf92fbe5d7c85",
+      "bytes": 28693,
+      "separate_restore": true,
+      "old_column_reads": true
+    }
+  },
+  "preservation": {
+    "retained_files": 82,
+    "unchanged": true,
+    "read_only_endpoint_checks": {
+      "demo": {
+        "url": "http://127.0.0.1:23124/login",
+        "status": 200
+      },
+      "guarded_review": {
+        "url": "http://127.0.0.1:23125/login",
+        "status": 200
+      },
+      "historical_normal_designer": {
+        "url": "http://127.0.0.1:23126/login",
+        "status": 200
+      },
+      "historical_normal_api": {
+        "url": "http://127.0.0.1:28191/health",
+        "status": 200
+      }
+    }
+  },
+  "failures_retained": [
+    "First PostgreSQL fixture setup used pg_dump-cleared search_path; four setup errors retained. Corrected test setup sets public explicitly; four checks then passed, plus two constraint checks.",
+    "First web package guard used wrong normalized hash constants and failed closed. Actual normalized source/dependency manifests matched; corrected recipe passed."
+  ],
+  "owner_dependencies": [
+    {
+      "role": "Portuguese service/data approver",
+      "owner": "UNCONFIRMED",
+      "status": "BLOCKED"
+    },
+    {
+      "role": "deployment operator/shared-staging access owner",
+      "owner": "UNCONFIRMED",
+      "status": "BLOCKED"
+    },
+    {
+      "role": "product date/family decision owner",
+      "owner": "UNASSIGNED",
+      "status": "NOT VERIFIED"
+    },
+    {
+      "role": "independent walkthrough/release reviewer",
+      "owner": "UNASSIGNED",
+      "status": "NOT VERIFIED"
+    }
+  ],
+  "schedule": {
+    "CP01_due": "2026-11-24",
+    "CP01": "BLOCKED",
+    "CP02_due": "2026-11-26",
+    "CP02": "BLOCKED; at risk",
+    "R1_target": "2026-12-04",
+    "confirmation": "UNCONFIRMED; cannot revise defensibly without owner/access ETA"
+  },
+  "fresh_real_model_acceptance": false,
+  "fresh_normal_browser_acceptance": false,
+  "historical_real_DGAN": "Preserved 18 November normal-designer DEVELOPMENT SOFTWARE FIXTURE runs only; requested batch 16 / observed 8. Not provider approval or acceptance of this release package."
+}
