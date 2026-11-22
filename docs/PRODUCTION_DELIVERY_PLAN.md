@@ -101,6 +101,18 @@ The reset requirement remains generic service parameterisation and AI-assisted s
 - Evidence scope: repository documentation review only. This entry claims no new application test, provider call, workflow Run, staging acceptance or deployment.
 - Schedule decision: target dates above remain unconfirmed until CP01. No checkpoint marked PASSED.
 
+### 22 November 2026 — R1 architecture and launch review
+
+- Active release/checkpoint: R1 / CP01; status remains NOT VERIFIED. This is a source/evidence review, not a fresh runtime or production observation.
+- What worked? Existing canonical saved-solution, parameter validation, explicit execution and owned-results foundations should be reused. The Portuguese report records two real DGAN qualification runs.
+- What failed? Those runs did not establish a normal designer Run. Portuguese contracts remained draft with provider attestations false, and their published test bounds were software fixtures. Requested batch 16 became effective batch 8. Source defaults and successful fixture runs must not be treated as production approval.
+- What can I demonstrate now? Preserved historical local demonstrations only; no new R1 release proof from this review.
+- What specific problem are we tackling next? Establish one reviewed Portal/WP3 candidate and the real Portuguese service/data authority; fix the first observed blocker in the ordinary manual configuration-to-results path, or complete independent packaging/migration work if owner/access is missing.
+- Scope decision: keep the generic platform foundations; avoid an R1 rewrite, service-ID exception, new evaluator framework or R2 conversation repair. AI disabled for the R1 release scope means no paid-provider acceptance is on its critical path.
+- Resource discipline: use targeted source reads and focused checks. Reuse the candidate, existing run path and existing tools. Publish one concise checkpoint update per pass; do not create a new general plan, launcher or evidence harness for each minor issue. Preserve affected historical state without copying entire environments unnecessarily.
+- Schedule: 4/11/18 December remain targets pending CP01. No production date is confirmed by this review.
+- Evidence: [Portuguese qualification, fixed source](https://github.com/IRESI-EU/ai-effect-solution-studio/blob/6228504349017fc8cb730f638b9ac18f6984dd60/docs/WINDOWS_PORTUGUESE_QUALIFICATION_2026-11-18.md).
+
 ### Required format for each subsequent pass
 
 Append a dated entry containing the active release/checkpoint, source/running version, previous failure, actual changes, observations/evidence links, blocker/owner, date impact and these four answers:
