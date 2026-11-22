@@ -151,3 +151,34 @@ def test_diagnostic_uses_existing_sdk_strict_schema_offline():
     diagnostic_schema=schema['$defs']['SettingDiagnostic']
     assert diagnostic_schema['additionalProperties'] is False
     assert set(diagnostic_schema['required'])=={'target_ref','requested_values'}
+
+
+def test_captured_genuine_A_B_actions_replayed_OFFLINE_preserve_target_boundary(edit_fixture):
+    from test_setting_target_choice import send, choose, earlier_review, saved_content
+    client,s,p=edit_fixture
+    # Additional software-fixture published definition, matching the historical
+    # action's name/type/range. Existing unrelated settings stay in this fixture.
+    with SessionLocal() as db:
+        contract=db.get(OperationContract,'fixture-contract');d=deepcopy(contract.definition)
+        d['execution_parameters']['properties']['how_many']={'type':'integer','minimum':1,'maximum':4,'default':4}
+        contract.definition=d;db.commit()
+    report=json.loads((Path(__file__).resolve().parents[3]/'docs/verification/setting-choice-executed-20261121.json').read_text(encoding='utf-8'))
+    cases={c['id']:c for c in report['cases']};old=earlier_review(edit_fixture);before=saved_content(s)
+    def replay(case,node):
+        def plan(c):
+            v=deepcopy(cases[case]['provider_audit']['validated_response'])
+            v['edit_base']=c['edit_bases']['pending']
+            v['parameter_action']['target_ref']=next(x['target_ref'] for x in c['pending_candidate']['steps'] if x['node_id']==node)
+            return v
+        return plan
+    q=send(edit_fixture,replay('A-ambiguous','alpha'),text=cases['A-ambiguous']['request']).json()
+    assert q['target_question']['current'] and q['pending']==old['pending']
+    assert saved_content(s)==before
+    r=send(edit_fixture,replay('B-select-south','beta'),selection=choose(q,'beta'),text=cases['B-select-south']['request'])
+    assert r.status_code==200,r.text
+    review=r.json();steps={x['node_id']:x for x in review['pending']['candidate']['steps']}
+    prior={x['node_id']:x for x in old['pending']['candidate']['steps']}
+    assert steps['alpha']['effective_settings']==prior['alpha']['effective_settings']
+    assert steps['beta']['effective_settings']==prior['beta']['effective_settings'] | {'how_many':2}
+    assert review['pending']['candidate']['name']==old['pending']['candidate']['name']
+    assert saved_content(s)==before

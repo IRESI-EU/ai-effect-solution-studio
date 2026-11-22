@@ -1,0 +1,469 @@
+{
+  "date": "2026-11-22",
+  "result": "PASS_OFFLINE_CORRECTION_AND_BROWSER; NO_NEW_GENUINE_ACCEPTANCE",
+  "branch": "codex/setting-guidance-20261122",
+  "parent": "f4674e48eda79f740a2ae9e80cf67572ce38099f",
+  "serving_source": "d270a250ee4c4f55666428d97617a81aaaec5d89",
+  "historical_D_validated_response_sha256": "5dfc7e25e904619816ebd858701c03c02584dc6995229a161e6c0472c1897b27",
+  "tests": {
+    "passed": 76,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "test_exact_captured_D_prose_is_not_displayed_or_parsed",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values0-maximum is 8]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values1-minimum is 1]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values2-expected integer]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values3-expected integer]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values4-expected boolean]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values5-not a published setting]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_structured_guidance_uses_shared_validator_and_preserves_review[values6-maximum is 8]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_next_valid_choice_reviews_and_saves_complete_existing_work",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_diagnostic_cannot_claim_limits_or_mutate_even_when_valid",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_conflicting_and_malformed_diagnostics_cannot_replace_work[base]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_conflicting_and_malformed_diagnostics_cannot_replace_work[target]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_conflicting_and_malformed_diagnostics_cannot_replace_work[conflict]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_conflicting_and_malformed_diagnostics_cannot_replace_work[null]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_conflicting_and_malformed_diagnostics_cannot_replace_work[duplicate]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_conflicting_and_malformed_diagnostics_cannot_replace_work[prose]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_current_contract_change_changes_guidance_not_model_claims",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_partial_diagnostics_validate_types_enums_and_ranges_without_defaults",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_untyped_prose_cannot_manufacture_setting_facts[clarification]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_untyped_prose_cannot_manufacture_setting_facts[unsupported]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_answer_only_compliance_cannot_escape_existing_setting_guidance",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_diagnostic_uses_existing_sdk_strict_schema_offline",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_pending_four_to_two_actual_diff_apply_save_reopen[Change the supported maximum from 4 to 2.]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_pending_four_to_two_actual_diff_apply_save_reopen[Please cap the candidates at two instead, leaving the rest alone.]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_saved_base_and_accurate_already_satisfied_without_proposal",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_pending_already_satisfied_keeps_exact_review_and_no_success_claim",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[empty]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[missing]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[duplicate]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[ambiguous]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[raw_node]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[invalid]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[boolean]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[unknown]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[summary]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[wrong_base]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[stale_revision]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_invalid_action_preserves_prior_review_and_messages[stale_hash]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_manual_save_stales_proposal_and_does_not_apply",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_original_j2_empty_response_is_still_rejected_without_repair",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_legacy_setting_prose_is_not_trusted_for_change_summary",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_no_change_reply_after_apply_is_scoped_to_this_request",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_ambiguous_guess_preserves_exact_earlier_pending_work",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_explicit_south_choice_changes_only_south_then_apply_and_reopen",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_builder_selection_works_without_an_extra_choice_roundtrip",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_or_foreign_selection_rejected_before_provider_and_no_work_changed[save]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_or_foreign_selection_rejected_before_provider_and_no_work_changed[conversation]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_or_foreign_selection_rejected_before_provider_and_no_work_changed[contract]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_or_foreign_selection_rejected_before_provider_and_no_work_changed[wrong_solution]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_or_foreign_selection_rejected_before_provider_and_no_work_changed[wrong_reference]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_stale_or_foreign_selection_rejected_before_provider_and_no_work_changed[pending]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_conflicting_model_target_does_not_replace_prior_review",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_model_cannot_manufacture_choice_or_claim_confirmation",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_single_eligible_instance_stays_straightforward[values0]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_single_eligible_instance_stays_straightforward[values1]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_recorded_case5_action_is_contained_after_only_identity_rebinding",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_choice_question_survives_explanation_but_not_workflow_change",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_chat_review_apply_manual_reload_undo_and_legacy_isolation",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_rejection_failure_and_manual_edit_preserve_prior_proposal",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_authorisation_profiles_archived_and_cross_site",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_manual_input_is_part_of_reviewed_execution",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_three_step_catalogue_proposal_uses_declared_io_and_same_compile",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_provider_race_and_undo_never_overwrite_manual_writes",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_apply_rechecks_catalogue_authority_and_undo_rechecks_registry",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_new_saved_input_declaration_also_pins_unconfigured_graph",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_real_provider_adapter_with_mocked_sdk[valid-200]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_real_provider_adapter_with_mocked_sdk[refusal-502]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_real_provider_adapter_with_mocked_sdk[malformed-502]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_real_provider_adapter_with_mocked_sdk[timeout-504]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_real_provider_adapter_with_mocked_sdk[failure-502]",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_context_is_bounded_before_network_call",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_provider_mode_is_explicit_without_exposing_credentials",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_actual_openai_sdk_serialization_and_parsing_with_offline_http",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_budgeted_sdk_records_usage_before_parsing",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_normal_saved_solution_prompt_uses_real_catalogue_without_template_system",
+        "result": "PASS_OFFLINE"
+      },
+      {
+        "name": "test_captured_genuine_A_B_actions_replayed_OFFLINE_preserve_target_boundary",
+        "result": "PASS_OFFLINE"
+      }
+    ],
+    "warning_summary": "Existing Starlette/httpx, Pydantic config and UTC datetime deprecations retained; no dependency installation"
+  },
+  "implementation": {
+    "facts": "Current active published execution parameter definitions",
+    "diagnostics": "Untrusted scoped target and supplied names/values; same shared parameter validator",
+    "no_model_written_setting_limits_or_correction_questions": true,
+    "no_phrase_matching": true,
+    "no_clamping_or_substitution": true,
+    "malformed_response": "502 with application-derived published choices; preserved prior state",
+    "untyped_clarification": "Neutral application guidance, NOT_VERIFIED interpretation; model prose withheld",
+    "stale_or_conflicting_diagnostic": "409/422; existing work unchanged"
+  },
+  "browser": {
+    "offline": true,
+    "supplied_responses": 2,
+    "normal_sign_in": true,
+    "normal_review_apply_save_solutions_reopen": true,
+    "web_url": "http://127.0.0.1:23139",
+    "api_url": "http://127.0.0.1:28273",
+    "solution_id": "d4bb671d-d14c-4052-b13c-6b71b7bc2cc3",
+    "previous_pending_exactly_preserved_after_invalid": true,
+    "saved_exactly_preserved_after_invalid": true,
+    "application_guidance": {
+      "role": "assistant",
+      "content": "The assistant did not produce a validated setting edit. Published settings for Generator North: allow_hx (boolean); allow_bypass (boolean); how_many (integer, minimum 1.0, maximum 4.0). For these steps, only the listed setting names, types and limits are supported. No value was substituted. Your saved design and any earlier pending review are unchanged; no workflow was run.",
+      "question": "Which published setting and valid value would you like to use?",
+      "outcome": "clarification",
+      "setting_guidance": {
+        "source": "application_setting_guidance",
+        "interpretation": "NOT_VERIFIED",
+        "base": {
+          "kind": "pending",
+          "expected_updated_at": "2026-11-21T21:05:27.516467",
+          "conversation_revision": 1,
+          "proposal_id": "f606f150-0809-40ae-b6bc-08d58cd178e0",
+          "candidate_sha256": "bfc5294597b81be4c0699efd0a669998adcf68fa89a6a8dad75d5a4d100d26d5"
+        },
+        "choices": [
+          {
+            "step": "Generator North",
+            "target_ref": "instance_2f7d9b4701a1d0defd5d9007b9045159",
+            "choices": [
+              {
+                "name": "allow_hx",
+                "type": "boolean"
+              },
+              {
+                "name": "allow_bypass",
+                "type": "boolean"
+              },
+              {
+                "name": "how_many",
+                "type": "integer",
+                "minimum": 1.0,
+                "maximum": 4.0
+              }
+            ]
+          }
+        ],
+        "issues": []
+      }
+    },
+    "followup_summary": {
+      "role": "assistant",
+      "content": "Proposed setting changes: Generator North (or-north): Maximum candidate layouts 4 → 2. These changes have not been applied; Run remains a separate action.",
+      "change_summary": {
+        "source": "application_diff",
+        "base_kind": "pending",
+        "status": "proposed",
+        "changes": [
+          {
+            "instance_id": "generator-north",
+            "step": "Generator North",
+            "parameter": "how_many",
+            "label": "Maximum candidate layouts",
+            "before": 4,
+            "before_present": true,
+            "after": 2
+          }
+        ]
+      },
+      "outcome": "proposal",
+      "assumptions": []
+    },
+    "saved_name": "OFFLINE guidance — earlier pending title",
+    "saved_sha256": "7b97399b952d2dad8dc46c7fb1a05c19e1602afd422cb395b861091766a0bf1f",
+    "reviewed_candidate_sha256": "7b97399b952d2dad8dc46c7fb1a05c19e1602afd422cb395b861091766a0bf1f",
+    "complete_saved_matches_reviewed_candidate": true,
+    "maximum": 2,
+    "allow_hx": true,
+    "allow_bypass": true,
+    "earlier_title_input_connections_preserved": true,
+    "workflow_submissions": 0,
+    "offline_label": "OFFLINE SETTING GUIDANCE — SCRIPTED RESPONSES / NO MODEL / NO RUN",
+    "screenshots_sha256": {
+      "offline-setting-guidance-invalid-20261122.png": "2685fd7ffaf8e1a24ba3a49d79f2dc502871e315ededddad6d6d9a7e8b0764bc",
+      "offline-setting-guidance-published-20261122.png": "0ccd1a50f385a20164f3d50dd5730c912f840eefb1077dfbdc092d0047129a35",
+      "offline-setting-guidance-reopened-20261122.png": "f7c7ef4d9f6f2c4b1f38e746a23ed8525d74fc625e04c5fc3800f82924e7686c",
+      "offline-setting-guidance-review-20261122.png": "8903ca781ec3260c0682a5b9a5ac43b2157638a7ee3a5e919aa0f0748c13ab4d"
+    },
+    "capture_note": "An attempted focus click on the numeric stepper was blocked by automatic review; completed with read-only capture and existing accessibility value instead. No approval-dependent step remains."
+  },
+  "spending": {
+    "new_metered_calls": 0,
+    "new_spending_scopes": 0,
+    "new_cost_usd": 0,
+    "previous_scopes": "CLOSED_UNCHANGED",
+    "historical_latest": {
+      "attempts": 4,
+      "estimated_conservative_usd": 0.032472,
+      "uncertain_usd": 0,
+      "remaining_authority": 0,
+      "E": "NOT_ATTEMPTED",
+      "F": "NOT_ATTEMPTED"
+    }
+  },
+  "preservation": {
+    "historical_hashed_files": 77,
+    "all_byte_identical": true,
+    "original_dirty_entries": 150,
+    "login_health": {
+      "23124": 200,
+      "23125": 200,
+      "23134": 200,
+      "23135": 200,
+      "23136": 200,
+      "23137": 200,
+      "23138": 200,
+      "23139": 200
+    },
+    "genuine_AB_demo": "http://127.0.0.1:23138/builder?solutionId=f84b2e36-7b5c-4f03-8214-f27a59e69dce",
+    "containers_and_volumes": "untouched"
+  },
+  "runtime": {
+    "mode": "Existing host Python/Node source starter",
+    "next": "16.3.8",
+    "docker_images_started": [],
+    "paid_provider_key_loaded": false,
+    "workflow_execution_disabled": true
+  },
+  "limitations": [
+    "All current-version response replays are OFFLINE, not genuine model interpretation proof.",
+    "Historical D remains FAIL_STOP; E/F remain NOT_ATTEMPTED. No old evaluation was resumed.",
+    "Untyped clarification/unsupported replies now receive neutral published-choice guidance; their original model question is not displayed. Answer-only replies in an explicit setting-target or existing guidance context receive the same fallback.",
+    "Unselected general answer prose and broader workflow conversation are not newly qualified by this settings-only pass.",
+    "No runtime, scientific-provider, shared-user pilot or production readiness is established."
+  ],
+  "next_genuine_check": {
+    "authorised": false,
+    "requests": 2,
+    "description": "Fresh isolated D invalid request, then one valid explicit setting choice in the same actual conversation with an earlier pending review. Inspect diagnostic versus fallback honestly; browser review/save/reopen adds zero model calls. No retries/fallback; stop on failure. New concrete approval/accounting required. E/F remain historical unattempted cases."
+  }
+}

@@ -1,3 +1,5 @@
+> Latest offline correction: [Published-definition setting guidance - 22 November 2026](SETTING_VALIDATION_GUIDANCE_2026-11-22.md). Captured D safely contained; 76 offline checks and invalid request -> valid choice -> browser Apply/save/reopen passed. Zero paid calls/new scopes. Genuine A/B demo preserved; historical D failed and E/F remain unattempted.
+
 > Latest authorised execution: [Genuine target-choice outcome - 21 November 2026](SETTING_CHOICE_EXECUTION_2026-11-21.md). A contained the model's North guess; B genuinely targeted South and passed browser Apply/save/reopen; C passed no-op handling. D failed by offering an invalid value; E/F NOT_ATTEMPTED. Four calls, USD 0.032472 conservative estimate, scope CLOSED.
 
 > Latest acceptance preparation: [Corrected six-request target-choice evaluation — 21 November 2026](SETTING_CHOICE_ACCEPTANCE_2026-11-21.md). Frozen source and shared A/B continuation prepared; six genuine requests NOT_ATTEMPTED. New paid approval required; previous scopes CLOSED.
