@@ -401,5 +401,11 @@
   },
   "fresh_real_model_acceptance": false,
   "fresh_normal_browser_acceptance": false,
-  "historical_real_DGAN": "Preserved 18 November normal-designer DEVELOPMENT SOFTWARE FIXTURE runs only; requested batch 16 / observed 8. Not provider approval or acceptance of this release package."
+  "historical_real_DGAN": "Preserved 18 November normal-designer DEVELOPMENT SOFTWARE FIXTURE runs only; requested batch 16 / observed 8. Not provider approval or acceptance of this release package.",
+  "publication": {
+    "canonical_tracker_commit": "8808fa831329effb83a69536dabbe7ee9c3dd0a9",
+    "canonical_tracker_scope": "documentation-only fast-forward of main; no application merge or deployment",
+    "synchronisation": "COMPLETE",
+    "initial_evidence_commit": "74bacf229fc9343b9d824bf65a0a8e99f74c6e55"
+  }
 }
