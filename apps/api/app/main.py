@@ -91,7 +91,12 @@ from app.services.solution_design import (
 from app.services.audit import record_audit_event
 
 
-Base.metadata.create_all(bind=engine)
+from app.core.config import settings as startup_settings
+if startup_settings.database_schema_mode == 'validate':
+    from app.services.database_schema import require_migrated_schema
+    require_migrated_schema(engine, Base.metadata)
+else:
+    Base.metadata.create_all(bind=engine)
 
 with SessionLocal() as bootstrap_db:
     bootstrap_admin(bootstrap_db)

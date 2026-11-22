@@ -1,8 +1,12 @@
 from pydantic_settings import BaseSettings
+from typing import Literal
 
 
 class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://solution_studio:solution_studio@postgres:5432/solution_studio"
+    # R1 release/staging validates operator-applied migrations; no startup DDL.
+    # Preserve existing local/test bootstrap behaviour unless explicitly selected.
+    database_schema_mode: Literal['create', 'validate'] = 'create'
     orchestrator_base_url: str = "http://host.docker.internal:18000"
     orchestrator_api_key: str = ""
     # Server-only per-workflow service credential; never a Builder parameter or snapshot field.
