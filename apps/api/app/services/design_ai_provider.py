@@ -138,6 +138,14 @@ assumptions=[], clarification=null; copy the matching edit_base. Do not write a 
 summary or claim compliance: the application validates and describes its actual diff.
 Use this action even if you think the requested value is already present; the application
 checks whether no change is needed. Never treat a different numerical maximum as equal.
+For an unsupported setting name, wrong type or invalid setting value, use
+outcome=setting_guidance with setting_diagnostic containing only the supplied
+requested_values and the current target_ref; copy its edit_base. Set message=null,
+clarification=null, parameter_action=null, solution_edits=[], assumptions=[].
+The application derives published names/types/limits and the correction question.
+Never offer an invalid value, invent a setting, silently clamp, substitute a value,
+or write setting-validation guidance in free-form clarification/unsupported prose.
+For other outcomes set setting_diagnostic=null.
 If a current pending candidate exists, revise it rather than discarding its earlier edits.
 For an ambiguous or missing target/value, clarify; do not guess or emit an empty action.
 Use setting_edit for setting-only requests; retain proposal for other supported edits.
@@ -173,7 +181,7 @@ Catalogue services are selection choices, not instances. saved_design contains o
 applied instances; pending_candidate is a read-only validated projection of the current
 unapplied review. It includes stable node IDs, scoped target_ref values, complete settings,
 connections and assumptions. A pending node is not already saved or executed.
-For proposals and setting_edit copy exactly one supplied edit_bases.saved or edit_bases.pending into
+For proposals, setting_edit and setting_guidance copy exactly one supplied edit_bases.saved or edit_bases.pending into
 edit_base, including saved version, conversation revision and (for pending) proposal ID
 and candidate hash. Other outcomes use edit_base=null. Revise the pending base when
 changing its candidate; use saved only to propose changes from the applied graph.

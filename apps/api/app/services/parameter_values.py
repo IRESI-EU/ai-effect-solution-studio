@@ -43,6 +43,26 @@ def effective_parameters(definition, requested):
     return result
 
 
+def parameter_issues(definition, requested):
+    """Diagnose a partial request with the SAME validator, without defaults/repair.
+
+    Each supplied property is checked independently so one unsupported name does
+    not hide a second type/range error. Messages come from application code only.
+    Omitted required properties are not missing from a partial setting edit.
+    """
+    properties = definition.get('properties', {})
+    issues = []
+    for name, value in requested.items():
+        if name not in properties:
+            issues.append({'name': name, 'message': 'This supplied name is not a published setting.'})
+            continue
+        try:
+            effective_parameters({'properties': {name: properties[name]}}, {name: value})
+        except ValueError as exc:
+            issues.append({'name': name, 'message': str(exc)})
+    return issues
+
+
 TRANSPORT = "http-parameters-v1"
 CAPABILITY_SCHEMA = "1.0"
 

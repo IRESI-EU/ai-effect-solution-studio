@@ -14,7 +14,7 @@ from uuid import uuid4
 from workspace import module, ROOT
 
 
-def prepare(directory, case, offline):
+def prepare(directory, case, offline, *, title='OFFLINE target choice — earlier pending title'):
     if directory.exists():raise RuntimeError('A fresh directory is required; never replace a retained fixture')
     directory.mkdir(parents=True)
     if os.name=='nt':
@@ -44,18 +44,19 @@ def prepare(directory, case, offline):
     from app.services import solution_assistant as service
     with SessionLocal() as db:
         solution=db.get(Solution,binding['solution_id']);user=db.get(User,binding['user_id']);row=service.conversation(solution,db,user)
-        turn=SavedSolutionResponse.model_validate(dict(outcome='proposal',message='OFFLINE setup only: earlier title review, not applied.',clarification=None,assumptions=[],solution_edits=[dict(kind='rename',value='OFFLINE target choice — earlier pending title')],edit_base=service.edit_base(solution,row)))
+        turn=SavedSolutionResponse.model_validate(dict(outcome='proposal',message='OFFLINE setup only: earlier title review, not applied.',clarification=None,assumptions=[],solution_edits=[dict(kind='rename',value=title)],edit_base=service.edit_base(solution,row)))
         service.propose(solution,row,'OFFLINE fixture setup: retain this earlier pending title.',as_assistant_turn(turn),db,user,base=turn.edit_base)
         initial=dict(saved=service.content(solution),conversation=service.view(solution,row,db,user))
     (directory/'initial.private.json').write_text(json.dumps(initial,indent=2),encoding='utf-8')
-    print('Prepared fresh OFFLINE copy with earlier pending review; retained case 5 untouched',flush=True)
+    print('Prepared fresh OFFLINE copy with earlier pending review; retained source untouched',flush=True)
 
 
 def environment(directory):
     helper=module('existing_setting_walkthrough',ROOT/'deploy/setting_edit_walkthrough/workspace.py')
     env=helper.environment(directory)
     credentials=json.loads((directory/'credentials.private.json').read_text(encoding='utf-8'))
-    env.update(BOOTSTRAP_ADMIN_EMAIL=credentials['administrator']['email'],BOOTSTRAP_ADMIN_PASSWORD=credentials['administrator']['password'],SERVICE_API_KEY='',NEXT_PUBLIC_ENVIRONMENT_LABEL='OFFLINE TARGET CHOICE FIXTURE — NO MODEL / NO RUN')
+    profile=json.loads((directory/'profile.private.json').read_text(encoding='utf-8'))
+    env.update(BOOTSTRAP_ADMIN_EMAIL=credentials['administrator']['email'],BOOTSTRAP_ADMIN_PASSWORD=credentials['administrator']['password'],SERVICE_API_KEY='',NEXT_PUBLIC_ENVIRONMENT_LABEL=profile.get('environment_label','OFFLINE TARGET CHOICE FIXTURE — NO MODEL / NO RUN'))
     return env
 
 
@@ -101,24 +102,25 @@ def serve(directory):
     uvicorn.run(app,host='127.0.0.1',port=28271,log_level='warning',access_log=False)
 
 
-def start(directory):
+def start(directory, *, script=None, build_parent='ctui'):
     profile=json.loads((directory/'profile.private.json').read_text(encoding='utf-8'));env=environment(directory)
-    for port in (23137,28271):
+    from urllib.parse import urlsplit
+    for port in (urlsplit(profile['web_url']).port,urlsplit(profile['api_url']).port):
         with socket.socket() as sock:sock.setsockopt(socket.SOL_SOCKET,socket.SO_EXCLUSIVEADDRUSE,1);sock.bind(('127.0.0.1',port))
     helper=module('choice_frontend_helper',ROOT/'deploy/parameter_onboarding/review_workspace.py')
     # Keep the build cwd below the Windows path limit.
-    generation=ROOT.parent/'ctui'/uuid4().hex[:8];generation.mkdir(parents=True)
+    generation=ROOT.parent/build_parent/uuid4().hex[:8];generation.mkdir(parents=True)
     shutil.copytree(ROOT/'apps/api/app',generation/'api/app',ignore=shutil.ignore_patterns('__pycache__'))
     children=[]
     try:
         api_env=dict(env);api_env['PYTHONPATH']=str(generation/'api')
-        api=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'_serve','--directory',str(directory)],cwd=directory,env=api_env,stdout=(directory/'api.private.log').open('a'),stderr=subprocess.STDOUT);children.append(api)
+        api=subprocess.Popen([sys.executable,str(Path(script or __file__).resolve()),'_serve','--directory',str(directory)],cwd=directory,env=api_env,stdout=(directory/'api.private.log').open('a'),stderr=subprocess.STDOUT);children.append(api)
         helper.wait_http(profile['api_url']+'/health',api)
         web=helper.prepare_frontend(generation,profile)
         next_bin=Path(profile['dependencies_directory']).parent/'apps/web/node_modules/next/dist/bin/next'
         with (directory/'build.private.log').open('w') as log:result=subprocess.run(['node',str(next_bin),'build'],cwd=web,env=env,stdout=log,stderr=subprocess.STDOUT)
         if result.returncode:raise RuntimeError('Build failed; inspect ignored local diagnostics')
-        child=subprocess.Popen(['node',str(next_bin),'start','-H','127.0.0.1','-p','23137'],cwd=web,env=env,stdout=(directory/'web.private.log').open('a'),stderr=subprocess.STDOUT);children.append(child)
+        child=subprocess.Popen(['node',str(next_bin),'start','-H','127.0.0.1','-p',str(urlsplit(profile['web_url']).port)],cwd=web,env=env,stdout=(directory/'web.private.log').open('a'),stderr=subprocess.STDOUT);children.append(child)
         helper.wait_http(profile['web_url']+'/login',child)
         (directory/'serving.private.json').write_text(json.dumps(dict(generation=str(generation),commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),offline=True),indent=2),encoding='utf-8')
         print('READY: '+profile['web_url']+'/login — OFFLINE scripted responses; no model or Run',flush=True)

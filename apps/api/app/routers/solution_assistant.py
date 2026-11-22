@@ -54,16 +54,21 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
     identifier = row.id
     # No transaction or row lock is held across a provider request.
     db.rollback()
+    invalid_response = None
     try:
         from app.services.provider_evidence import correlation
         with correlation(conversation_id=identifier, draft_id=None, revision=payload.conversation_revision):
             async with asyncio.timeout(min(max(settings.design_ai_timeout_seconds, 1), 90) + 2):
                 response = SavedSolutionResponse.model_validate(await provider.respond(context))
-                turn = as_assistant_turn(response)
+                turn = as_assistant_turn(response) if response.outcome != 'setting_guidance' else None
     except TimeoutError as exc:
         raise HTTPException(504, {"code": "assistant_timeout", "stage": "provider_call", "message": "AI response timed out. Your saved solution and pending proposal are unchanged."}) from exc
     except (ValidationError, ValueError) as exc:
-        raise HTTPException(502, {"code": "assistant_response_invalid", "stage": "response_validation", "message": "AI returned an invalid response. Your saved solution and pending proposal are unchanged."}) from exc
+        invalid_response = {"code":"assistant_response_invalid", "stage":"response_validation"}
+    except HTTPException as exc:
+        if exc.status_code != 502: raise
+        invalid_response = (dict(exc.detail) if isinstance(exc.detail, dict) else
+                            {"code":"assistant_provider_failed", "stage":"provider_response"})
     db.rollback()
     if await request.is_disconnected(): raise HTTPException(499, "Request cancelled; no proposal was stored")
     workspace_user(request, user)
@@ -75,7 +80,20 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
         raise HTTPException(409, "Builder changed the design while AI was responding. Request a new proposal.")
     if service.authority(authority_nodes, db) != authority_sha:
         raise HTTPException(409, 'Catalogue authority changed while AI was responding. Request a new proposal.')
+    if invalid_response is not None:
+        if settings.design_ai_scoped_acceptance_file:
+            from app.services.scoped_ai_acceptance import Budget
+            Budget(settings.design_ai_scoped_acceptance_file).close()
+        text, question, facts = service.setting_guidance(solution, row, db, user, target_choice=payload.target_choice)
+        raise HTTPException(502, {**invalid_response, 'message':text+' '+question, 'setting_guidance':facts})
     try:
+        guidance_context = (payload.target_choice is not None or
+            (row.state.get('clarification') or {}).get('source') == 'application_setting_guidance')
+        if response.outcome in {'setting_guidance', 'clarification', 'unsupported'} or (response.outcome == 'answer' and guidance_context):
+            # No phrase matching: legacy/untyped correction prose is not a
+            # trusted source of limits or questions. Preserve pending work.
+            return service.record_setting_guidance(solution, row, payload.message, db, user,
+                diagnostic=response.setting_diagnostic, base=response.edit_base, target_choice=payload.target_choice)
         return service.propose(solution, row, payload.message, turn, db, user,
                                catalogue_used=context['catalogue'], assumptions=response.assumptions, outcome=response.outcome, base=response.edit_base,
                                target_choice=payload.target_choice)
@@ -86,6 +104,10 @@ async def chat(solution_id: str, payload: SolutionChatRequest, request: Request,
                 from app.services.scoped_ai_acceptance import Budget
                 Budget(settings.design_ai_scoped_acceptance_file).close()
             detail = exc.detail if isinstance(exc.detail, str) else "The proposed edit is incompatible"
+            if exc.status_code == 422 and response.outcome == 'setting_edit':
+                text, question, facts = service.setting_guidance(solution, row, db, user, target_choice=payload.target_choice)
+                raise HTTPException(422, {'code':'assistant_edit_rejected', 'stage':'application_validation',
+                    'message':detail+'. '+text+' '+question, 'setting_guidance':facts}) from exc
             raise HTTPException(exc.status_code, {"code": "assistant_edit_rejected", "stage": "application_validation",
                 "message": detail + ". The saved solution and previous pending proposal are unchanged."}) from exc
         raise

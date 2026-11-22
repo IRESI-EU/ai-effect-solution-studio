@@ -17,7 +17,7 @@ from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.schemas.solution import SolutionUpdate
 from app.services.instance_configuration import validate_builder_configurations
-from app.services.parameter_values import effective_parameters
+from app.services.parameter_values import effective_parameters, parameter_issues
 from app.services.solution_design import service_to_builder_data
 from app.services.solution_editing import owned_solution, update
 
@@ -459,6 +459,75 @@ def setting_summary(changes, differences, base_kind):
         message += ('The existing pending review is retained. ' if base_kind=='pending' else '') + 'This request made no design changes and did not run the workflow.'
     return message, {'source':'application_diff','base_kind':base_kind,
                      'status':'proposed' if differences else 'no_change','changes':differences}
+
+
+def setting_guidance(solution, row, db, user, *, diagnostic=None, base=None, target_choice=None):
+    """Facts from current owned/published definitions, never model-written prose.
+
+    An untyped clarification cannot establish either what the user requested or
+    any correction. Show neutral, useful published choices instead. A diagnostic
+    only supplies an interpretation to check; it grants no target/edit authority.
+    """
+    pending = row.state.get('pending') if row else None
+    result = materialize(solution, pending, db, user) if pending else content(solution)
+    current_base = edit_base(solution, row, pending)
+    steps = projection(solution, result, db, pending=pending)['steps']
+    selected = check_target_choice(solution, row, target_choice, db, user)
+    if diagnostic:
+        if base is None or base.model_dump() != current_base:
+            raise HTTPException(409, 'The diagnostic belongs to a changed review. Reload before choosing settings.')
+        matches = [s for s in steps if s['target_ref'] == diagnostic.target_ref]
+        if len(matches) != 1:
+            raise HTTPException(422, 'The diagnostic did not identify a current workflow step. Choose a displayed step.')
+        if selected and selected['target_ref'] != diagnostic.target_ref:
+            raise HTTPException(409, 'The diagnostic targeted a different step from your selection. Existing work is unchanged.')
+    elif selected:
+        steps = [s for s in steps if s['target_ref'] == selected['target_ref']]
+    facts = []; problems = []
+    for step in steps:
+        definition = (step['contract'] or {}).get('definition', {}).get('execution_parameters') or {}
+        properties = definition.get('properties', {})
+        choices = []
+        for name, spec in properties.items():
+            # Deliberately exclude descriptions/defaults/recommendations: only
+            # the current contract's explicit validation constraints are facts.
+            choice = {'name': name, **{k:deepcopy(spec[k]) for k in ('type','minimum','maximum','enum') if spec.get(k) is not None}}
+            choices.append(choice)
+        if choices: facts.append({'step':step['label'], 'target_ref':step['target_ref'], 'choices':choices})
+        if diagnostic and step['target_ref'] == diagnostic.target_ref:
+            requested = {v.name:v.value for v in diagnostic.requested_values}
+            problems = parameter_issues(definition, requested)
+    text = 'The assistant did not produce a validated setting edit. '
+    if problems:
+        text += 'Application validation: ' + ' '.join(p['message'] for p in problems) + ' '
+    for fact in facts:
+        options = []
+        for choice in fact['choices']:
+            parts = [choice['type']]
+            for key in ('minimum','maximum','enum'):
+                if key in choice: parts.append(key + ' ' + json.dumps(choice[key], ensure_ascii=False))
+            options.append(choice['name'] + ' (' + ', '.join(parts) + ')')
+        text += 'Published settings for ' + fact['step'] + ': ' + '; '.join(options) + '. '
+    if facts: text += 'For these steps, only the listed setting names, types and limits are supported. '
+    else: text += 'This current design has no published adjustable settings. '
+    text += 'No value was substituted. Your saved design and any earlier pending review are unchanged; no workflow was run.'
+    question = ('Choose a displayed step, a published setting name and a value within its listed type and limits.'
+                if len(facts)>1 else 'Which published setting and valid value would you like to use?') if facts else 'Would you like to choose another published service in Builder?'
+    return text, question, {'source':'application_setting_guidance', 'interpretation':'NOT_VERIFIED',
+        'base':current_base, 'choices':facts, 'issues':problems}
+
+
+def record_setting_guidance(solution, row, message, db, user, **options):
+    text, question, diagnostic = setting_guidance(solution, row, db, user, **options)
+    state = deepcopy(row.state)
+    state['clarification'] = {'source':'application_setting_guidance', 'request':message, 'question':question,
+                              'diagnostic':diagnostic}
+    state['messages'] = (state.get('messages', []) + [{'role':'user','content':message},
+        {'role':'assistant','content':text, 'question':question, 'outcome':'clarification',
+         'setting_guidance':diagnostic}])[-24:]
+    row.state=state; row.revision+=1
+    db.commit(); db.refresh(row)
+    return view(solution, row, db, user)
 
 
 def propose(solution, row, message, turn, db, user, *, catalogue_used=None, assumptions=(), outcome=None, base=None, target_choice=None):

@@ -45,19 +45,40 @@ class ParameterAction(StrictModel):
         return self
 
 
+class SettingDiagnostic(StrictModel):
+    """Untrusted interpretation, not a validation result or edit authority."""
+    target_ref: str = Field(min_length=1, max_length=100)
+    requested_values: list[RequestedSetting] = Field(min_length=1, max_length=32)
+
+    @model_validator(mode='after')
+    def distinct_names(self):
+        names = [value.name for value in self.requested_values]
+        if len(names) != len(set(names)):
+            raise ValueError('Each diagnostic setting must have one unambiguous value')
+        return self
+
+
 class SavedSolutionResponse(StrictModel):
     """Model-only contract. No creation, legacy template or execution authority."""
     model_config = ConfigDict(extra='forbid', strict=True, revalidate_instances='always')
-    outcome: Literal['answer', 'clarification', 'proposal', 'unsupported', 'setting_edit']
+    outcome: Literal['answer', 'clarification', 'proposal', 'unsupported', 'setting_edit', 'setting_guidance']
     message: str | None = Field(max_length=5000)
     clarification: str | None = Field(max_length=500)
     solution_edits: list[SolutionEdit] = Field(max_length=10)
-    edit_base: EditBase | None = Field(default=None, description='Copy an advertised edit base for proposals and setting_edit; null for answers, clarification and unsupported. Use only target_ref values from that base, or unique local_ref for new additions.')
+    edit_base: EditBase | None = Field(default=None, description='Copy an advertised edit base for proposals, setting_edit and setting_guidance; null for answers, clarification and unsupported. Use only target_ref values from that base, or unique local_ref for new additions.')
     assumptions: list[Annotated[str, Field(min_length=1, max_length=500)]] = Field(max_length=4)
     parameter_action: ParameterAction | None = Field(default=None, description='For setting_edit only: the intended operation, one advertised scoped target and requested values. The application computes before/after and all change prose.')
+    setting_diagnostic: SettingDiagnostic | None = Field(default=None, description='For setting_guidance only: the interpreted supplied names/values and current scoped target. No model-written limits, corrections or question; the application validates and renders current published choices. This never proposes an edit.')
 
     @model_validator(mode='after')
     def consistent_outcome(self):
+        if self.outcome == 'setting_guidance':
+            if (self.setting_diagnostic is None or self.edit_base is None or self.parameter_action is not None
+                    or self.message is not None or self.clarification is not None or self.solution_edits or self.assumptions):
+                raise ValueError('Setting guidance requires only a diagnostic and current base, without prose or edits')
+            return self
+        if self.setting_diagnostic is not None:
+            raise ValueError('Only setting_guidance may contain a setting diagnostic')
         if self.outcome == 'setting_edit':
             if (self.parameter_action is None or self.edit_base is None or self.message is not None
                     or self.solution_edits or self.assumptions or self.clarification is not None):
@@ -86,6 +107,8 @@ class SavedSolutionResponse(StrictModel):
 def as_assistant_turn(response: SavedSolutionResponse) -> AssistantTurn:
     """Explicit adapter into the existing candidate/review engine, after validation."""
     response = SavedSolutionResponse.model_validate(response)
+    if response.outcome == 'setting_guidance':
+        raise ValueError('Setting diagnostics must be rendered by the application, never adapted into edits')
     if response.parameter_action is not None:
         action = response.parameter_action
         return AssistantTurn(message='Setting action awaiting application validation.', template_key=None,
