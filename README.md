@@ -7,12 +7,16 @@ AI-EFFECT Solution Studio is the consortium-facing MVP for discovering, governin
 
 The MVP is intended for local consortium testing. It is not a production certification authority, identity provider, or replacement for the WP3 runtime.
 
+## Production delivery checkpoints
+
+The [production delivery plan](docs/PRODUCTION_DELIVERY_PLAN.md) records the R1–R3 user outcomes, target dates, verification gates, current blockers and required checkpoint log. Start release work there. It is a delivery plan, not a claim that those enhancements are deployed.
+
 ## Product positioning
 
 Solution Studio supports three main activities:
 
-- node providers publish service metadata and submit services for governance;
-- solution designers compose approved services into saved workflows;
+- node providers publish service metadata and submit services for governance.
+- solution designers compose approved services into saved workflows.
 - TEF operators review services and monitor deployments, tasks, and evidence.
 
 The role selector in the shell is a persona preview. It changes guidance only and does not grant permissions.
