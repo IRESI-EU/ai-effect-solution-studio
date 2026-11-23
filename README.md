@@ -7,9 +7,9 @@ AI-EFFECT Solution Studio is the consortium-facing MVP for discovering, governin
 
 The MVP is intended for local consortium testing. It is not a production certification authority, identity provider, or replacement for the WP3 runtime.
 
-## Production delivery checkpoints
+## Roadmap
 
-The [production delivery plan](docs/PRODUCTION_DELIVERY_PLAN.md) records the R1–R3 user outcomes, target dates, verification gates, current blockers and required checkpoint log. Start release work there. It is a delivery plan, not a claim that those enhancements are deployed.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the current plan for service settings and Design with AI.
 
 ## Product positioning
 
