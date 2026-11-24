@@ -208,7 +208,7 @@ export function ServiceSettingsEditor({
                   ))}
                 </select>
               </label>
-              <Field label="Default" value={row.defaultText} onChange={(v) => update(index, { defaultText: v })} placeholder={row.type === "boolean" ? "true / false" : "10"} />
+              <Field label="Default (what your service uses when empty)" value={row.defaultText} onChange={(v) => update(index, { defaultText: v })} placeholder={row.type === "boolean" ? "true / false" : "10"} />
               {(row.type === "integer" || row.type === "number") && (
                 <>
                   <Field label="Minimum" value={row.minimum} onChange={(v) => update(index, { minimum: v })} placeholder="1" />

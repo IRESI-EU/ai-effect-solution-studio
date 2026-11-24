@@ -90,10 +90,11 @@ class TestDefinition:
 
 
 class TestValues:
-    def test_defaults_fill_missing_values(self):
+    def test_only_set_values_are_sent(self):
         effective, errors = resolve_values(normalize_definition(CHRONICS_SETTINGS), {"round_decimals": 2})
         assert errors == []
-        assert effective == {"round_decimals": 2, "compress": False}
+        assert effective == {"round_decimals": 2}
+        assert resolve_values(normalize_definition(CHRONICS_SETTINGS), {}) == ({}, [])
 
     def test_out_of_range_and_unknown_values_reported(self):
         _, errors = resolve_values(normalize_definition(CHRONICS_SETTINGS), {"round_decimals": 42, "speed": 1})
@@ -111,7 +112,7 @@ class TestCompiler:
         workflow = WorkflowSubmitRequest(name="w", nodes=[_node("n1", chronics, {"round_decimals": 2})], edges=[])
         with session_factory() as db:
             compiled = compile_to_wp3_payload(workflow, db)
-        assert compiled["parameters"] == {"villas-chronics:GenerateChronics": {"round_decimals": 2, "compress": False}}
+        assert compiled["parameters"] == {"villas-chronics:GenerateChronics": {"round_decimals": 2}}
         node_meta = compiled["solution_studio_metadata"]["nodes"][0]
         assert node_meta["settings"]["values"]["round_decimals"] == 2
 
@@ -182,3 +183,16 @@ class TestEndpoints:
     def test_anonymous_cannot_declare(self, anonymous_client, services):
         response = anonymous_client.put("/services/set-fixed/settings", json=CHRONICS_SETTINGS)
         assert response.status_code in (401, 403)
+
+
+def test_unset_downstream_setting_does_not_override_upstream_value(services, session_factory):
+    """Setting a value on one step must not send defaults to another step."""
+    loader, chronics = services["set-loader"], services["set-chronics"]
+    workflow = WorkflowSubmitRequest(
+        name="w",
+        nodes=[_node("a", loader, {"max_rows": 20}), _node("b", chronics)],
+        edges=[WorkflowSubmitEdge(source="a", target="b")],
+    )
+    with session_factory() as db:
+        compiled = compile_to_wp3_payload(workflow, db)
+    assert "parameters" not in compiled

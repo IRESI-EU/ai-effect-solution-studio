@@ -158,10 +158,13 @@ def resolve_values(
     definition: dict[str, Any],
     values: dict[str, Any] | None,
 ) -> tuple[dict[str, Any], list[str]]:
-    """Merge saved values over defaults and validate them.
+    """Validate the values a person set and return those to send.
 
-    Returns the effective values and a list of error messages. Values for
-    settings that are not declared are reported, never silently sent.
+    Only explicitly set values are returned. Settings left empty are not
+    sent, so the service applies its own default; this keeps values that
+    reach the service in another way (e.g. from an upstream step) intact.
+    Declared defaults are shown to designers but never injected. Values
+    for settings that are not declared are reported, never silently sent.
     """
     values = values or {}
     if not isinstance(values, dict):
@@ -177,10 +180,8 @@ def resolve_values(
     for name, prop in properties.items():
         if name in values and values[name] is not None:
             value = values[name]
-        elif "default" in prop:
-            value = prop["default"]
         else:
-            if name in definition["schema"].get("required", []):
+            if name in definition["schema"].get("required", []) and "default" not in prop:
                 errors.append(f"'{name}' is required")
             continue
         error = _check_value(name, value, prop)
