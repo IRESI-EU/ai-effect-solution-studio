@@ -131,12 +131,12 @@ export function ServiceRuntimeManager({
           <button type="button" disabled={busy !== null} onClick={save} style={buttonStyle}>{busy === "save" ? "Saving…" : "Save technical metadata"}</button>
           <button type="button" disabled={busy !== null} onClick={verify} style={{ ...buttonStyle, background: "#047857" }}>{busy === "verify" ? "Checking from API network…" : "Verify runtime connection"}</button>
         </div>
-        <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: verification?.status === "verified" ? "#ecfdf3" : "#fffaeb", color: verification?.status === "verified" ? "#027a48" : "#92400e" }}>
+        <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: verification?.status === "verified" ? "#ecfdf3" : "var(--warning-100)", color: verification?.status === "verified" ? "var(--success-600)" : "#92400e" }}>
           <strong>{verification?.status === "verified" ? "Connectivity verified" : verification?.status === "failed" ? "Verification failed" : "Not currently verified"}</strong>
           <div style={{ marginTop: 4 }}>{verification?.message || "Run verification from the portal API network before treating this service as runnable."}</div>
           <small style={{ display: "block", marginTop: 5 }}>A successful health response proves network connectivity only; it does not prove that the operation contract or output is correct.</small>
         </div>
-        {notice && <p style={{ color: "#027a48", fontWeight: 750 }}>{notice}</p>}
+        {notice && <p style={{ color: "var(--success-600)", fontWeight: 750 }}>{notice}</p>}
         {error && <p style={{ color: "#b42318", fontWeight: 750 }}>{error}</p>}
       </div>
     </details>
@@ -170,6 +170,6 @@ function formatError(detail: unknown) {
   return detail ? JSON.stringify(detail) : "";
 }
 
-const cardStyle: CSSProperties = { border: "1px solid #ddd8f4", borderRadius: 13, padding: 14, background: "#fff" };
+const cardStyle: CSSProperties = { border: "1px solid #ddd8f4", borderRadius: 8, padding: 14, background: "#fff" };
 const gridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 11 };
 const buttonStyle: CSSProperties = { border: 0, borderRadius: 9, padding: "9px 12px", background: "#5b2cf2", color: "white", fontWeight: 800, cursor: "pointer" };

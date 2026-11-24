@@ -287,16 +287,18 @@ export default function PublishServicePage() {
   }
 
   return (
-    <main className="page publish-page" style={{ maxWidth: 1380 }}>
-      <header className="publish-hero">
-        <p style={eyebrowStyle}>Service onboarding</p>
-        <h1>Publish a service</h1>
-        <p>
-          Describe your service, add its technical connection details, and submit it for platform review.
-        </p>
-        <div className="registration-boundary">Registration records service metadata. It does not deploy, approve, or activate a service.</div>
-        <Link href="/catalogue" style={secondaryButtonStyle}>View catalogue</Link>
-        {user?.role === "platform_admin" && <Link href="/admin" style={secondaryButtonStyle}>Admin governance</Link>}
+    <main className="page publish-page">
+      <header className="page-header">
+        <div className="page-header__text">
+          <h1 className="page-header__title">Publish a service</h1>
+          <p className="page-header__lead">
+            Describe your service and how the platform connects to it, then submit it for review. Publishing records the service; an administrator approves it before it appears in the catalogue.
+          </p>
+        </div>
+        <div className="page-header__actions">
+          <Link href="/catalogue" className="ae-btn ae-btn--secondary">View catalogue</Link>
+          {user?.role === "platform_admin" && <Link href="/admin" className="ae-btn ae-btn--secondary">Review submissions</Link>}
+        </div>
       </header>
 
       <section className="onboarding-boundary-grid" aria-label="Who does what">
@@ -696,32 +698,32 @@ function statusBadgeStyle(status: PreviewResponse["status"]): CSSProperties {
 
 function validationItemStyle(level: ValidationMessage["level"]): CSSProperties {
   const colors = level === "error" ? { borderColor: "#fecaca", background: "#fef2f2" } : { borderColor: "#fde68a", background: "var(--warning-100)" };
-  return { display: "grid", gap: 4, padding: 13, border: "1px solid", borderRadius: 12, ...colors };
+  return { display: "grid", gap: 4, padding: 13, border: "1px solid", borderRadius: 8, ...colors };
 }
 
-const eyebrowStyle: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "#6543df" };
-const cardStyle: CSSProperties = { background: "#fff", border: "1px solid #e5e4f1", borderRadius: 18, padding: 22, boxShadow: "0 12px 32px rgba(30,24,70,.07)", marginBottom: 22 };
-const successCardStyle: CSSProperties = { ...cardStyle, borderColor: "#bbf7d0", background: "#f0fdf4" };
-const sectionTitleStyle: CSSProperties = { margin: "6px 0 16px", fontSize: 24, color: "var(--ink-900)" };
-const tabRowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 };
-const tabStyle: CSSProperties = { border: "1px solid #cbd5e1", background: "var(--surface-sunken)", color: "#334155", borderRadius: 999, padding: "9px 14px", fontWeight: 750, cursor: "pointer" };
-const activeTabStyle: CSSProperties = { ...tabStyle, background: "#f0ecff", color: "#4f2bc9", borderColor: "#c9bcfa" };
-const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 7, fontSize: 13, fontWeight: 750, color: "#334155" };
-const inputStyle: CSSProperties = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 11, padding: "10px 11px", fontSize: 14, background: "#fff" };
-const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 280, fontFamily: "ui-monospace, monospace", resize: "vertical" };
-const fieldHelpStyle: CSSProperties = { color: "#73778d", fontWeight: 500, lineHeight: 1.4 };
-const helpTextStyle: CSSProperties = { margin: "8px 0", color: "#64748b", fontSize: 13, lineHeight: 1.5 };
-const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 11, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 600, cursor: "pointer" };
-const smallButtonStyle: CSSProperties = { border: "1px solid #cbd5e1", borderRadius: 9, padding: "7px 10px", background: "#fff", color: "#334155", fontWeight: 750, cursor: "pointer" };
-const secondaryButtonStyle: CSSProperties = { display: "inline-flex", margin: "8px 8px 0 0", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: 11, padding: "9px 13px", background: "#fff", color: "#334155", textDecoration: "none", fontWeight: 600 };
-const primaryLinkStyle: CSSProperties = { ...secondaryButtonStyle, background: "var(--brand-600)", borderColor: "var(--brand-600)", color: "#fff" };
-const errorBoxStyle: CSSProperties = { marginTop: 16, padding: 14, border: "1px solid #fecaca", borderRadius: 13, background: "#fef2f2", color: "#991b1b", fontWeight: 700 };
+const eyebrowStyle: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 600, color: "var(--brand-600)" };
+const cardStyle: CSSProperties = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, marginBottom: 16 };
+const successCardStyle: CSSProperties = { ...cardStyle, borderColor: "var(--mint-100)", background: "var(--mint-100)" };
+const sectionTitleStyle: CSSProperties = { margin: "4px 0 16px", font: "600 19px/26px var(--font-sans)", color: "var(--ink-900)" };
+const tabRowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 16, borderBottom: "1px solid var(--border)" };
+const tabStyle: CSSProperties = { border: 0, borderBottom: "2px solid transparent", background: "transparent", color: "var(--ink-600)", borderRadius: 0, padding: "8px 12px", font: "600 13px/18px var(--font-sans)", cursor: "pointer", marginBottom: -1 };
+const activeTabStyle: CSSProperties = { ...tabStyle, color: "var(--brand-600)", borderBottomColor: "var(--brand-600)" };
+const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 4, font: "600 13px/18px var(--font-sans)", color: "var(--ink-900)" };
+const inputStyle: CSSProperties = { width: "100%", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "8px 12px", font: "400 14px/20px var(--font-sans)", background: "var(--surface)", color: "var(--ink-900)" };
+const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 280, fontFamily: "var(--font-mono), ui-monospace, monospace", fontSize: 13, resize: "vertical" };
+const fieldHelpStyle: CSSProperties = { color: "var(--ink-600)", fontWeight: 400, fontSize: 12, lineHeight: "16px" };
+const helpTextStyle: CSSProperties = { margin: "8px 0", color: "var(--ink-600)", fontSize: 13, lineHeight: "20px" };
+const primaryButtonStyle: CSSProperties = { marginTop: 16, border: 0, borderRadius: 8, height: 36, padding: "0 16px", color: "var(--on-brand)", background: "var(--brand-600)", font: "600 13px/18px var(--font-sans)", cursor: "pointer" };
+const smallButtonStyle: CSSProperties = { border: "1px solid var(--border-strong)", borderRadius: 8, height: 30, padding: "0 12px", background: "var(--surface)", color: "var(--ink-900)", font: "600 12px/16px var(--font-sans)", cursor: "pointer" };
+const secondaryButtonStyle: CSSProperties = { display: "inline-flex", margin: "8px 8px 0 0", alignItems: "center", height: 36, border: "1px solid var(--border-strong)", borderRadius: 8, padding: "0 16px", background: "var(--surface)", color: "var(--ink-900)", textDecoration: "none", font: "600 13px/18px var(--font-sans)" };
+const primaryLinkStyle: CSSProperties = { ...secondaryButtonStyle, background: "var(--brand-600)", borderColor: "var(--brand-600)", color: "var(--on-brand)" };
+const errorBoxStyle: CSSProperties = { marginTop: 16, padding: "12px 16px", border: 0, borderRadius: 8, background: "var(--danger-100)", color: "var(--danger-600)", fontWeight: 500 };
 const rowBetweenStyle: CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 };
-const badgeStyle: CSSProperties = { border: "1px solid", borderRadius: 999, padding: "7px 11px", fontSize: 12, fontWeight: 600 };
-const previewBoxStyle: CSSProperties = { marginTop: 18, padding: 18, border: "1px solid #ddd8f4", borderRadius: 14, background: "#faf9ff" };
-const previewTitleStyle: CSSProperties = { margin: 0, color: "#171a38", fontSize: 22 };
-const previewDescriptionStyle: CSSProperties = { color: "#666b82", lineHeight: 1.5 };
-const detailsGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10 };
-const detailStyle: CSSProperties = { display: "grid", gap: 3, padding: 10, borderRadius: 9, background: "#fff", overflowWrap: "anywhere" };
-const detailLabelStyle: CSSProperties = { color: "#777d92", fontSize: 11, fontWeight: 600, textTransform: "uppercase" };
-const detailValueStyle: CSSProperties = { color: "#252842", fontSize: 13, fontWeight: 700 };
+const badgeStyle: CSSProperties = { border: "1px solid", borderRadius: 999, padding: "2px 8px", fontSize: 12, fontWeight: 500 };
+const previewBoxStyle: CSSProperties = { marginTop: 16, padding: 16, border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface-sunken)" };
+const previewTitleStyle: CSSProperties = { margin: 0, color: "var(--ink-900)", font: "600 17px/24px var(--font-sans)" };
+const previewDescriptionStyle: CSSProperties = { color: "var(--ink-600)", lineHeight: "21px" };
+const detailsGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 8 };
+const detailStyle: CSSProperties = { display: "grid", gap: 2, padding: 10, borderRadius: 8, background: "var(--surface)", overflowWrap: "anywhere" };
+const detailLabelStyle: CSSProperties = { color: "var(--ink-600)", fontSize: 12, fontWeight: 500 };
+const detailValueStyle: CSSProperties = { color: "var(--ink-900)", fontSize: 13, fontWeight: 600 };

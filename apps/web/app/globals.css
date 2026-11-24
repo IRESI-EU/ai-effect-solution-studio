@@ -140,7 +140,7 @@ textarea:focus-visible {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .sidebar-nav {
@@ -269,7 +269,7 @@ textarea:focus-visible {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .role-mode-select {
@@ -449,7 +449,7 @@ th {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 td {
@@ -790,14 +790,14 @@ tbody tr:hover {
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(340px, .9fr) minmax(520px, 1.1fr); background: #f7f7ff; }
 .auth-brand-panel { display: flex; padding: clamp(44px, 7vw, 100px); flex-direction: column; justify-content: center; color: #fff; background: radial-gradient(circle at 20% 5%, rgba(123,91,244,.7), transparent 30%), linear-gradient(145deg,#10083b,#4320ca 65%,#5575e8); }
 .auth-brand-mark { display: grid; width: 54px; height: 54px; place-items: center; margin-bottom: 24px; border-radius: 16px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); font-weight: 600; }
-.auth-brand-panel > span { font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.auth-brand-panel > span { font-weight: 600; letter-spacing: .08em; text-transform: none; }
 .auth-brand-panel h1 { max-width: 680px; margin: 28px 0 18px; font-size: clamp(38px,5vw,62px); line-height: 1.04; letter-spacing: -.05em; }
 .auth-brand-panel p { max-width: 610px; color: rgba(255,255,255,.78); font-size: 17px; line-height: 1.75; }
 .auth-form-panel { display: grid; place-items: center; padding: 40px; }
 .auth-form-card { width: min(100%,470px); padding: 38px; border: 1px solid var(--border); border-radius: 22px; background: #fff; box-shadow: 0 24px 70px rgba(38,25,94,.11); }
 .auth-form-card-wide { width: min(100%,650px); }
 .auth-form-icon { display: grid; width: 48px; height: 48px; place-items: center; margin-bottom: 18px; border-radius: 14px; color: #5935cf; background: #eee9ff; }
-.auth-eyebrow { color: #6844df; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.auth-eyebrow { color: #6844df; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: none; }
 .auth-form-card h1,.auth-form-card h2 { margin: 7px 0 9px; letter-spacing: -.03em; }
 .auth-form-card h2 { font-size: 32px; }.auth-form-card > p { color: var(--text-secondary); line-height: 1.65; }
 .auth-form { display: grid; gap: 17px; margin-top: 28px; }.auth-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -870,7 +870,7 @@ tbody tr:hover {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .08em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .onboarding-boundary-card strong { color: #20233f; font-size: 16px; }
@@ -1006,7 +1006,7 @@ tbody tr:hover {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: .04em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .generated-json,
@@ -1075,7 +1075,7 @@ tbody tr:hover {
   background: #fbfaff;
 }
 
-.onboarding-source-options strong { color: #4e35b4; font-size: 11px; text-transform: uppercase; }
+.onboarding-source-options strong { color: #4e35b4; font-size: 11px; text-transform: none; }
 .onboarding-source-options span { color: #73778d; font-size: 12px; line-height: 1.4; }
 
 .workshop-example-panel {
@@ -1210,7 +1210,7 @@ tbody tr:hover {
 .package-preview { display: grid; gap: 16px; margin-top: 20px; }
 .package-status-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
 .package-status-grid > div { display: grid; gap: 4px; padding: 12px; border: 1px solid #ddd8f4; border-radius: 12px; background: #faf9ff; }
-.package-status-grid span { color: #73778d; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+.package-status-grid span { color: #73778d; font-size: 11px; font-weight: 600; text-transform: none; }
 .package-status-grid strong { color: #252842; font-size: 13px; text-transform: capitalize; }
 .package-service-list { display: grid; gap: 14px; }
 .package-service-card { padding: 16px; border: 1px solid #ddd8f4; border-radius: 15px; background: #fff; }
@@ -1355,7 +1355,7 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .builder-name-row input {
@@ -1459,7 +1459,7 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .builder-panel-heading h2 {
@@ -1675,7 +1675,7 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .runtime-readiness-heading h2 {
@@ -1753,7 +1753,7 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .runtime-readiness-card h3 {
@@ -1841,7 +1841,7 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .builder-workflow-health div {
@@ -1975,7 +1975,7 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .dashboard-hero h1 {
@@ -2067,7 +2067,7 @@ tbody tr:hover {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .dashboard-section-heading h2 {
@@ -2346,7 +2346,7 @@ tbody tr:hover {
   font-weight: 600;
   letter-spacing: 0.03em;
   line-height: 1.35;
-  text-transform: uppercase;
+  text-transform: none;
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -2682,7 +2682,7 @@ tbody tr:hover {
   color: #5a38d1;
   font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .deployment-json-preview {
@@ -2764,7 +2764,7 @@ tbody tr:hover {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.07em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .deployment-drawing-actions {

@@ -198,7 +198,7 @@ export default function SolutionDetailsPage({
               marginTop: 20,
               background: "linear-gradient(135deg, #ffffff 0%, #f7f4ff 100%)",
               border: "1px solid #ded7f5",
-              boxShadow: "0 18px 46px rgba(48, 35, 104, 0.08)",
+              
             }}
           >
             <div
@@ -233,9 +233,9 @@ export default function SolutionDetailsPage({
                   style={{
                     border: "1px solid #d7ceff",
                     background: refreshing ? "var(--surface-sunken)" : "white",
-                    color: "#6941c6",
+                    color: "var(--brand-600)",
                     padding: "12px 16px",
-                    borderRadius: 12,
+                    borderRadius: 8,
                     fontWeight: 600,
                     cursor: refreshing ? "not-allowed" : "pointer",
                     whiteSpace: "nowrap",
@@ -251,7 +251,7 @@ export default function SolutionDetailsPage({
                       background: "#6d4aff",
                       color: "white",
                       padding: "12px 16px",
-                      borderRadius: 12,
+                      borderRadius: 8,
                       fontWeight: 600,
                       textDecoration: "none",
                       whiteSpace: "nowrap",
@@ -262,10 +262,10 @@ export default function SolutionDetailsPage({
                 ) : (
                   <span
                     style={{
-                      background: "#f2f4f7",
+                      background: "var(--surface-sunken)",
                       color: "var(--ink-600)",
                       padding: "12px 16px",
-                      borderRadius: 12,
+                      borderRadius: 8,
                       fontWeight: 600,
                       whiteSpace: "nowrap",
                     }}
@@ -281,7 +281,7 @@ export default function SolutionDetailsPage({
                 style={{
                   marginTop: 18,
                   padding: 14,
-                  borderRadius: 14,
+                  borderRadius: 8,
                   background: "var(--surface-sunken)",
                   color: "var(--ink-900)",
                 }}
@@ -327,13 +327,13 @@ export default function SolutionDetailsPage({
             }}
           >
             <div>
-              <h2 style={{ marginTop: 0 }}>Latest run</h2>
+              <h2 className="section__title">Latest run</h2>
 
               {!latestDeployment && (
                 <div
                   style={{
                     padding: 18,
-                    borderRadius: 14,
+                    borderRadius: 8,
                     background: "var(--surface-sunken)",
                     color: "var(--ink-600)",
                   }}
@@ -346,7 +346,7 @@ export default function SolutionDetailsPage({
                 <div
                   style={{
                     padding: 18,
-                    borderRadius: 16,
+                    borderRadius: 8,
                     background: statusBackground(latestDeployment.status),
                     border: "1px solid #d6dee9",
                   }}
@@ -399,7 +399,7 @@ export default function SolutionDetailsPage({
             </div>
 
             <div>
-              <h2 style={{ marginTop: 0 }}>Run health</h2>
+              <h2 className="section__title">Run health</h2>
 
               <div
                 style={{
@@ -417,7 +417,7 @@ export default function SolutionDetailsPage({
                 style={{
                   marginTop: 14,
                   padding: 14,
-                  borderRadius: 14,
+                  borderRadius: 8,
                   background: "var(--surface-sunken)",
                   color: "var(--ink-600)",
                   lineHeight: 1.6,
@@ -436,7 +436,7 @@ export default function SolutionDetailsPage({
               padding: 30,
               marginTop: 20,
               border: "1px solid #e8e4f4",
-              boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+              
             }}
           >
             <div
@@ -458,7 +458,7 @@ export default function SolutionDetailsPage({
               style={{
                 height: 340,
                 border: "1px solid #e4e9f2",
-                borderRadius: 16,
+                borderRadius: 8,
                 overflow: "hidden",
                 background: "var(--surface-sunken)",
               }}
@@ -484,7 +484,7 @@ export default function SolutionDetailsPage({
               padding: 30,
               marginTop: 20,
               border: "1px solid #e8e4f4",
-              boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+              
             }}
           >
             <div
@@ -538,7 +538,7 @@ export default function SolutionDetailsPage({
               <div
                 style={{
                   padding: 18,
-                  borderRadius: 14,
+                  borderRadius: 8,
                   background: "var(--surface-sunken)",
                   color: "var(--ink-600)",
                 }}
@@ -553,7 +553,7 @@ export default function SolutionDetailsPage({
               <div
                 style={{
                   border: "1px solid #e4e9f2",
-                  borderRadius: 16,
+                  borderRadius: 8,
                   overflow: "hidden",
                 }}
               >
@@ -623,7 +623,7 @@ export default function SolutionDetailsPage({
                                 background: "transparent",
                                 color:
                                   solution.status === "archived"
-                                    ? "#98a2b3"
+                                    ? "var(--ink-400)"
                                     : "var(--danger-600)",
                                 fontWeight: 600,
                                 cursor:
@@ -659,7 +659,7 @@ function Info({ label, value }: { label: string; value: string }) {
       style={{
         background: "rgba(255, 255, 255, 0.88)",
         padding: 16,
-        borderRadius: 14,
+        borderRadius: 8,
         border: "1px solid #e8e4f4",
       }}
     >
@@ -682,7 +682,7 @@ function HealthCard({
     tone === "good" ? "var(--mint-100)" : tone === "bad" ? "var(--danger-100)" : "var(--surface-sunken)";
 
   const color =
-    tone === "good" ? "#027a48" : tone === "bad" ? "var(--danger-600)" : "var(--ink-900)";
+    tone === "good" ? "var(--success-600)" : tone === "bad" ? "var(--danger-600)" : "var(--ink-900)";
 
   return (
     <div
@@ -690,7 +690,7 @@ function HealthCard({
         background,
         color,
         padding: 16,
-        borderRadius: 14,
+        borderRadius: 8,
         textAlign: "center",
       }}
     >
@@ -727,21 +727,21 @@ function statusBackground(status: string) {
 function statusBadgeStyle(status: string) {
   if (status === "completed") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "failed") {
     return {
-      background: "#fee4e2",
+      background: "var(--danger-100)",
       color: "var(--danger-600)",
     };
   }
 
   if (status === "running") {
     return {
-      background: "#e0f2fe",
+      background: "var(--brand-50)",
       color: "var(--brand-600)",
     };
   }
@@ -753,12 +753,12 @@ function solutionStatusBadgeStyle(status: string) {
   const normalized = status.toLowerCase();
 
   if (normalized === "archived") {
-    return { background: "#f2f4f7", color: "var(--ink-600)" };
+    return { background: "var(--surface-sunken)", color: "var(--ink-600)" };
   }
 
   if (normalized === "submitted" || normalized === "running") {
-    return { background: "#eaf2ff", color: "#2457a6" };
+    return { background: "var(--brand-50)", color: "var(--brand-600)" };
   }
 
-  return { background: "#eee8ff", color: "#6941c6" };
+  return { background: "#eee8ff", color: "var(--brand-600)" };
 }

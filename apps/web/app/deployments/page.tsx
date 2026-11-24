@@ -183,7 +183,7 @@ export default function DeploymentsPage() {
               border: "1px solid #d0d5dd",
               color: "var(--ink-900)",
               background: "white",
-              borderRadius: 12,
+              borderRadius: 8,
               padding: "12px 16px",
               fontWeight: 600,
               textDecoration: "none",
@@ -198,9 +198,9 @@ export default function DeploymentsPage() {
             disabled={syncing}
             style={{
               border: "1px solid #d7ceff",
-              background: syncing ? "#f8f7fc" : "#6d4aff",
-              color: syncing ? "#6941c6" : "white",
-              borderRadius: 12,
+              background: syncing ? "var(--surface-sunken)" : "#6d4aff",
+              color: syncing ? "var(--brand-600)" : "white",
+              borderRadius: 8,
               padding: "12px 16px",
               fontWeight: 600,
               cursor: syncing ? "not-allowed" : "pointer",
@@ -409,10 +409,10 @@ function MetricCard({
 }) {
   const tones = {
     neutral: { background: "#ffffff", color: "#17152b", accent: "#6d4aff" },
-    blue: { background: "#eef5ff", color: "#2457a6", accent: "#4f7cff" },
-    good: { background: "#effbf4", color: "#027a48", accent: "#12b76a" },
+    blue: { background: "#eef5ff", color: "var(--brand-600)", accent: "#4f7cff" },
+    good: { background: "#effbf4", color: "var(--success-600)", accent: "#12b76a" },
     bad: { background: "#fff2f1", color: "var(--danger-600)", accent: "#f04438" },
-    muted: { background: "#f7f7fb", color: "var(--ink-600)", accent: "#98a2b3" },
+    muted: { background: "#f7f7fb", color: "var(--ink-600)", accent: "var(--ink-400)" },
   };
   const selected = tones[tone];
 
@@ -469,21 +469,21 @@ function formatDate(value: string) {
 function statusBadgeStyle(status: string) {
   if (status === "completed") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "failed") {
     return {
-      background: "#fee4e2",
+      background: "var(--danger-100)",
       color: "var(--danger-600)",
     };
   }
 
   if (status === "running") {
     return {
-      background: "#e0f2fe",
+      background: "var(--brand-50)",
       color: "var(--brand-600)",
     };
   }

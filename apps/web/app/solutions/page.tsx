@@ -133,7 +133,7 @@ export default async function SolutionsPage() {
       color: "var(--ink-900)",
       background: "white",
       padding: "12px 16px",
-      borderRadius: 12,
+      borderRadius: 8,
       fontWeight: 600,
       textDecoration: "none",
       whiteSpace: "nowrap",
@@ -148,7 +148,7 @@ export default async function SolutionsPage() {
       background: "#6d4aff",
       color: "white",
       padding: "12px 16px",
-      borderRadius: 12,
+      borderRadius: 8,
       fontWeight: 600,
       textDecoration: "none",
       whiteSpace: "nowrap",
@@ -196,7 +196,7 @@ export default async function SolutionsPage() {
 
       {!error && solutions.length === 0 && (
         <section className="card" style={{ padding: 30, marginTop: 28 }}>
-          <h2 style={{ marginTop: 0 }}>No saved solutions yet</h2>
+          <h2 className="section__title">No saved solutions yet</h2>
           <p style={{ color: "var(--ink-600)" }}>
             Create one from the Builder using Save draft.
           </p>
@@ -233,7 +233,7 @@ export default async function SolutionsPage() {
                 Saved designs and their latest orchestrator activity.
               </p>
             </div>
-            <span style={{ color: "#6941c6", fontWeight: 600, fontSize: 14 }}>
+            <span style={{ color: "var(--brand-600)", fontWeight: 600, fontSize: 14 }}>
               {solutions.length} active
             </span>
           </div>
@@ -481,8 +481,8 @@ function MetricCard({
   const tones = {
     neutral: { background: "#ffffff", color: "#17152b", accent: "#6d4aff" },
     purple: { background: "#f5f1ff", color: "#4d2ca3", accent: "#8b5cf6" },
-    blue: { background: "#eef5ff", color: "#2457a6", accent: "#4f7cff" },
-    muted: { background: "#f7f7fb", color: "var(--ink-600)", accent: "#98a2b3" },
+    blue: { background: "#eef5ff", color: "var(--brand-600)", accent: "#4f7cff" },
+    muted: { background: "#f7f7fb", color: "var(--ink-600)", accent: "var(--ink-400)" },
   };
   const selected = tones[tone];
 
@@ -540,7 +540,7 @@ function MiniHealth({
     tone === "good" ? "var(--mint-100)" : tone === "bad" ? "var(--danger-100)" : "var(--surface-sunken)";
 
   const color =
-    tone === "good" ? "#027a48" : tone === "bad" ? "var(--danger-600)" : "var(--ink-900)";
+    tone === "good" ? "var(--success-600)" : tone === "bad" ? "var(--danger-600)" : "var(--ink-900)";
 
   return (
     <span
@@ -581,21 +581,21 @@ function formatDate(value: string) {
 function statusBadgeStyle(status: string) {
   if (status === "completed") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "failed") {
     return {
-      background: "#fee4e2",
+      background: "var(--danger-100)",
       color: "var(--danger-600)",
     };
   }
 
   if (status === "running") {
     return {
-      background: "#e0f2fe",
+      background: "var(--brand-50)",
       color: "var(--brand-600)",
     };
   }
@@ -607,12 +607,12 @@ function solutionStatusBadgeStyle(status: string) {
   const normalized = status.toLowerCase();
 
   if (normalized === "submitted" || normalized === "running") {
-    return { background: "#eaf2ff", color: "#2457a6" };
+    return { background: "var(--brand-50)", color: "var(--brand-600)" };
   }
 
   if (normalized === "archived") {
-    return { background: "#f2f4f7", color: "var(--ink-600)" };
+    return { background: "var(--surface-sunken)", color: "var(--ink-600)" };
   }
 
-  return { background: "#f2edff", color: "#6941c6" };
+  return { background: "var(--brand-50)", color: "var(--brand-600)" };
 }

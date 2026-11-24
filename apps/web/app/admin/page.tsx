@@ -302,27 +302,14 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <button
-            onClick={() => void Promise.all([loadServices(), loadUsers(), loadLegacyOwnership()])}
-            style={{
-              border: "1px solid #bae6fd",
-              background: "white",
-              color: "#075985",
-              borderRadius: 12,
-              padding: "12px 16px",
-              fontWeight: 600,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <button className="ae-btn ae-btn--secondary" onClick={() => void Promise.all([loadServices(), loadUsers(), loadLegacyOwnership()])}>
             Refresh
           </button>
         </div>
 
         <section className="card" style={{ marginTop: 24, overflow: "hidden" }}>
           <div style={{ padding: 20, borderBottom: "1px solid #e4e9f2" }}>
-            <span className="badge">User access</span>
-            <h2 style={{ margin: "10px 0 5px" }}>Registrations and onboarded users</h2>
+            <h2 className="section__title">Registrations and onboarded users</h2>
             <p style={{ margin: 0, color: "var(--ink-600)" }}>Verify each email and affiliation before approval. Node Managers can only govern services belonging to their assigned node.</p>
           </div>
           <div style={{ overflowX: "auto" }}>
@@ -337,7 +324,7 @@ export default function AdminPage() {
                     <Td><select value={user.role} disabled={busy || user.status === "active"} onChange={(event) => editUser(user.id, { role: event.target.value as UserRole, node: event.target.value === "platform_admin" ? null : user.node })} style={{ padding: "8px 10px" }}><option value="solution_designer">Solution Designer</option><option value="node_manager">Node Manager</option><option value="platform_admin">Platform Admin</option></select></Td>
                     <Td><select value={user.node || ""} disabled={busy || user.status === "active" || user.role === "platform_admin"} onChange={(event) => editUser(user.id, { node: (event.target.value || null) as NodeCode | null })} style={{ padding: "8px 10px" }}><option value="">No node</option><option value="germany">German</option><option value="portugal">Portuguese</option><option value="denmark">Danish</option><option value="dutch">Dutch</option></select></Td>
                     <Td><span className="badge" style={userStatusStyle(user.status)}>{user.status}</span></Td>
-                    <Td><span style={{ display: "block", color: "var(--ink-600)" }}>Joined {formatAdminDate(user.created_at)}</span><small style={{ color: "#98a2b3" }}>{user.last_login_at ? `Last login ${formatAdminDate(user.last_login_at)}` : "Never signed in"}</small></Td>
+                    <Td><span style={{ display: "block", color: "var(--ink-600)" }}>Joined {formatAdminDate(user.created_at)}</span><small style={{ color: "var(--ink-400)" }}>{user.last_login_at ? `Last login ${formatAdminDate(user.last_login_at)}` : "Never signed in"}</small></Td>
                     <Td><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {(user.status === "pending" || user.status === "rejected") && <button disabled={busy || (user.role === "node_manager" && !user.node)} onClick={() => updateUserStatus(user, "approve")} style={buttonStyle("success", busy)}>Approve</button>}
                       {user.status === "pending" && <button disabled={busy} onClick={() => updateUserStatus(user, "reject")} style={buttonStyle("danger", busy)}>Reject</button>}
@@ -352,8 +339,7 @@ export default function AdminPage() {
         </section>
 
         <section className="card" style={{ marginTop: 24, padding: 20 }}>
-          <span className="badge">Runtime verification</span>
-          <h2 style={{ margin: "10px 0 5px" }}>Service connection and WP3 metadata</h2>
+            <h2 className="section__title">Service connection and WP3 metadata</h2>
           <p style={{ margin: "0 0 16px", color: "var(--ink-600)" }}>Edit the platform-network address separately from the logical WP3 container name, then verify connectivity from the portal API network. Connectivity does not certify operation correctness.</p>
           <div style={{ display: "grid", gap: 10 }}>
             {services.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadServices} />)}
@@ -362,12 +348,11 @@ export default function AdminPage() {
 
         <section className="card" style={{ marginTop: 24, overflow: "hidden" }}>
           <div style={{ padding: 20, borderBottom: "1px solid #e4e9f2" }}>
-            <span className="badge">Data preservation</span>
-            <h2 style={{ margin: "10px 0 5px" }}>Existing records awaiting ownership</h2>
+            <h2 className="section__title">Existing records awaiting ownership</h2>
             <p style={{ margin: 0, color: "var(--ink-600)" }}>Records created before user login remain unchanged. Assign them after approving the correct account. Assigning a solution also assigns its currently unowned linked deployments.</p>
           </div>
           {legacy.solutions.length + legacy.deployments.length + legacy.services.length === 0 ? (
-            <div style={{ padding: 24, color: "#027a48", fontWeight: 600 }}>All existing records have an owner.</div>
+            <div style={{ padding: 24, color: "var(--success-600)", fontWeight: 600 }}>All existing records have an owner.</div>
           ) : (
             <div style={{ padding: 20, display: "grid", gap: 24 }}>
               <LegacyTable title="Solutions" empty="No unassigned solutions." rows={legacy.solutions.map((item) => ({ id: item.id, primary: item.name, secondary: `${item.status} · updated ${formatAdminDate(item.updated_at)}` }))} choices={ownershipChoices} setChoice={(id, value) => setOwnershipChoices((current) => ({ ...current, [id]: value }))} options={users.filter((user) => user.status === "active").map((user) => ({ value: user.id, label: `${user.display_name} (${user.email})` }))} busyId={actionOwnershipId} onAssign={(id) => assignLegacyRecord("solutions", id)} />
@@ -540,7 +525,7 @@ export default function AdminPage() {
                           <div
                             style={{
                               marginTop: 8,
-                              color: "#b54708",
+                              color: "var(--warning-600)",
                               fontSize: 13,
                               maxWidth: 220,
                             }}
@@ -586,7 +571,7 @@ export default function AdminPage() {
                         <div style={{ color: "var(--ink-600)", fontSize: 13, marginTop: 6 }}>
                           {service.operation_name || "No operation"}
                         </div>
-                        <div style={{ marginTop: 7, fontSize: 12, fontWeight: 600, color: service.interface_contract?.runtime_verification?.status === "verified" ? "#027a48" : "#b54708" }}>
+                        <div style={{ marginTop: 7, fontSize: 12, fontWeight: 600, color: service.interface_contract?.runtime_verification?.status === "verified" ? "var(--success-600)" : "var(--warning-600)" }}>
                           {service.interface_contract?.runtime_verification?.status === "verified"
                             ? `Runtime verified${service.interface_contract.runtime_verification.http_status ? ` · HTTP ${service.interface_contract.runtime_verification.http_status}` : ""}`
                             : service.status === "approved"
@@ -595,7 +580,7 @@ export default function AdminPage() {
                         </div>
                         {service.interface_contract?.onboarding && (
                           <div style={{ marginTop: 9, fontSize: 12, color: "var(--ink-600)", lineHeight: 1.45 }}>
-                            <strong style={{ display: "block", color: service.interface_contract.onboarding.runtime_status === "already_running" ? "#027a48" : "#b54708" }}>
+                            <strong style={{ display: "block", color: service.interface_contract.onboarding.runtime_status === "already_running" ? "var(--success-600)" : "var(--warning-600)" }}>
                               {service.interface_contract.onboarding.runtime_status === "already_running"
                                 ? "Provider claims runtime is running"
                                 : "Operator deployment required"}
@@ -736,16 +721,16 @@ function SummaryCard({
     tone === "good"
       ? "var(--mint-100)"
       : tone === "warning"
-      ? "#fffaeb"
+      ? "var(--warning-100)"
       : tone === "muted"
-      ? "#f2f4f7"
+      ? "var(--surface-sunken)"
       : "var(--surface-sunken)";
 
   const color =
     tone === "good"
-      ? "#027a48"
+      ? "var(--success-600)"
       : tone === "warning"
-      ? "#b54708"
+      ? "var(--warning-600)"
       : "var(--ink-900)";
 
   return (
@@ -774,8 +759,8 @@ function FilterButton({
       onClick={onClick}
       style={{
         border: active ? "1px solid #075985" : "1px solid #d0d5dd",
-        background: active ? "#e0f2fe" : "white",
-        color: active ? "#075985" : "var(--ink-900)",
+        background: active ? "var(--brand-50)" : "white",
+        color: active ? "var(--brand-600)" : "var(--ink-900)",
         padding: "8px 12px",
         borderRadius: 999,
         fontWeight: 600,
@@ -788,12 +773,12 @@ function FilterButton({
 }
 
 function Th({ children }: { children: React.ReactNode }) {
-  return <th style={{ textAlign: "left", padding: 16 }}>{children}</th>;
+  return <th style={{ textAlign: "left", padding: "10px 16px", font: "600 12px/16px var(--font-sans)", color: "var(--ink-600)", borderBottom: "1px solid var(--border)" }}>{children}</th>;
 }
 
 function Td({ children }: { children: React.ReactNode }) {
   return (
-    <td style={{ padding: 16, color: "var(--ink-900)", verticalAlign: "top" }}>
+    <td style={{ padding: "12px 16px", color: "var(--ink-900)", verticalAlign: "top", fontSize: 13, borderTop: "1px solid var(--border)" }}>
       {children}
     </td>
   );
@@ -804,10 +789,10 @@ function getLifecycle(service: Service) {
 }
 
 function userStatusStyle(status: PortalUser["status"]) {
-  if (status === "active") return { background: "#dcfae6", color: "#027a48" };
-  if (status === "pending") return { background: "#fef0c7", color: "#b54708" };
-  if (status === "suspended") return { background: "#f2f4f7", color: "var(--ink-600)" };
-  return { background: "#fee4e2", color: "var(--danger-600)" };
+  if (status === "active") return { background: "var(--mint-100)", color: "var(--success-600)" };
+  if (status === "pending") return { background: "var(--warning-100)", color: "var(--warning-600)" };
+  if (status === "suspended") return { background: "var(--surface-sunken)", color: "var(--ink-600)" };
+  return { background: "var(--danger-100)", color: "var(--danger-600)" };
 }
 
 function formatAdminDate(value: string) {
@@ -836,42 +821,42 @@ function getReviewState(service: Service) {
 function reviewBadgeStyle(status: string) {
   if (status === "validated") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "rejected") {
     return {
-      background: "#fee4e2",
+      background: "var(--danger-100)",
       color: "var(--danger-600)",
     };
   }
 
   return {
-    background: "#f4ebff",
-    color: "#6941c6",
+    background: "var(--brand-50)",
+    color: "var(--brand-600)",
   };
 }
 
 function lifecycleBadgeStyle(status: string) {
   if (status === "active") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "deprecated") {
     return {
-      background: "#fef0c7",
-      color: "#b54708",
+      background: "var(--warning-100)",
+      color: "var(--warning-600)",
     };
   }
 
   if (status === "archived") {
     return {
-      background: "#f2f4f7",
+      background: "var(--surface-sunken)",
       color: "var(--ink-900)",
     };
   }
@@ -887,17 +872,17 @@ function buttonStyle(
     primary: {
       border: "1px solid #bae6fd",
       background: "white",
-      color: "#075985",
+      color: "var(--brand-600)",
     },
     success: {
       border: "1px solid #abefc6",
       background: "white",
-      color: "#027a48",
+      color: "var(--success-600)",
     },
     warning: {
       border: "1px solid #fedf89",
       background: "white",
-      color: "#b54708",
+      color: "var(--warning-600)",
     },
     danger: {
       border: "1px solid #fecdca",
@@ -913,8 +898,9 @@ function buttonStyle(
 
   return {
     ...colors[tone],
-    padding: "8px 10px",
-    borderRadius: 10,
+    padding: "6px 12px",
+    borderRadius: 8,
+    fontSize: 13,
     fontWeight: 600,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.6 : 1,

@@ -385,7 +385,7 @@ function PreviewPanel({
       <div
         style={{
           border: "1px solid #e4e9f2",
-          borderRadius: 14,
+          borderRadius: 8,
           overflow: "hidden",
           background: "white",
         }}
@@ -512,7 +512,7 @@ function PreviewPanel({
       <div
         style={{
           padding: 18,
-          borderRadius: 14,
+          borderRadius: 8,
           background: "var(--danger-100)",
           color: "var(--danger-600)",
           border: "1px solid #fecdca",
@@ -529,7 +529,7 @@ function PreviewPanel({
             style={{
               marginTop: 14,
               padding: 14,
-              borderRadius: 12,
+              borderRadius: 8,
               background: "white",
               color: "var(--ink-900)",
             }}
@@ -566,7 +566,7 @@ function PreviewPanel({
     <div
       style={{
         padding: 16,
-        borderRadius: 14,
+        borderRadius: 8,
         background: "var(--surface-sunken)",
         color: "var(--ink-900)",
         whiteSpace: "pre-wrap",
@@ -699,7 +699,7 @@ function Info({ label, value }: { label: string; value: string }) {
       style={{
         background: "rgba(255, 255, 255, 0.9)",
         padding: 16,
-        borderRadius: 14,
+        borderRadius: 8,
         border: "1px solid #e8e4f4",
       }}
     >
@@ -713,18 +713,18 @@ function statusBadgeStyle(status: string) {
   const normalized = status.toLowerCase();
 
   if (normalized === "completed") {
-    return { background: "#dcfae6", color: "#027a48" };
+    return { background: "var(--mint-100)", color: "var(--success-600)" };
   }
 
   if (normalized === "failed") {
-    return { background: "#fee4e2", color: "var(--danger-600)" };
+    return { background: "var(--danger-100)", color: "var(--danger-600)" };
   }
 
   if (normalized === "running") {
-    return { background: "#eaf2ff", color: "#2457a6" };
+    return { background: "var(--brand-50)", color: "var(--brand-600)" };
   }
 
-  return { background: "#f2edff", color: "#6941c6" };
+  return { background: "var(--brand-50)", color: "var(--brand-600)" };
 }
 
 function ReferenceList({

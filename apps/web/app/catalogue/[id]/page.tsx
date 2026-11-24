@@ -320,7 +320,6 @@ const metadataBadgeStyle: CSSProperties = {
   padding: "5px 9px",
   fontSize: 11,
   fontWeight: 800,
-  textTransform: "uppercase",
   letterSpacing: "0.03em",
   background: "#ffffff",
   color: "#334155",
