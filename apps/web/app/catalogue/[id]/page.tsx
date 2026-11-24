@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ArrowLeft, Plus } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ServiceSettingsEditor } from "../../../components/service-settings-editor";
 import { settingsDefinitionOf } from "../../../lib/service-settings";
+import { serviceText } from "../../../lib/service-presentation";
 
 type Service = {
   id: string;
@@ -179,138 +181,103 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const service = await getService(id);
   const presentation = getPresentation(service);
+  const text = serviceText(service);
   const interfaceType = service.interface_type || "control";
   const orchestrationMode = service.orchestration_mode || "native";
   const healthPath = service.health_path || "/health";
 
+  const lifecycle = service.lifecycle_status || "active";
+  const statusTone = lifecycle === "deprecated" ? "warning" : lifecycle === "archived" ? "" : "success";
+  const technical: [string, string | null | undefined][] = [
+    ["Operation", service.operation_name],
+    ["Interface", formatValue(interfaceType)],
+    ["Orchestration", formatValue(orchestrationMode)],
+    ["Adapter", service.adapter_type || "none"],
+    ["Input message", service.input_type],
+    ["Output message", service.output_type],
+    ["Container", service.container_name],
+    ["Image", service.image],
+    ["Internal address", service.internal_host ? `${service.internal_host}:${service.internal_port || ""}` : null],
+    ["Health endpoint", healthPath],
+    ["Contract", service.contract_uri],
+    ["Proto", service.proto_uri],
+    ["Repository", service.repository_url ? `${service.repository_url}${service.repository_branch ? ` (${service.repository_branch})` : ""}` : null],
+  ];
+
   return (
-    <div className="page service-detail-page">
-      <Link href="/catalogue" className="service-detail-back">
-        ← Back to catalogue
-      </Link>
+    <div className="page service-page">
+      <Link href="/catalogue" className="back-link"><ArrowLeft size={16} aria-hidden="true" />Catalogue</Link>
 
-      <section className="card service-detail-hero">
-        <div className="service-detail-badges">
-          <span className="badge">{formatValue(service.trust_badge || "pending review")}</span>
-          <span style={lifecycleBadgeStyle(service.lifecycle_status || "active")}>
-            {formatValue(service.lifecycle_status || "active")}
-          </span>
-          <span style={interfaceBadgeStyle(interfaceType)}>{formatValue(interfaceType)}</span>
-          <span style={orchestrationBadgeStyle(orchestrationMode)}>{formatValue(orchestrationMode)}</span>
+      <header className="page-header">
+        <div className="page-header__text">
+          <div className="service-page__meta">
+            <span className="ae-service__node">{service.provider || "Unknown provider"}</span>
+            <span className={`ae-badge ${statusTone ? `ae-badge--${statusTone}` : ""}`}>{formatValue(lifecycle)}</span>
+          </div>
+          <h1 className="page-header__title">{text.title}</h1>
+          <p className="page-header__lead">{text.purpose}</p>
         </div>
-        <p className="service-detail-eyebrow">Service building block</p>
-        <h1>{presentation.title}</h1>
-        <p className="service-detail-technical-name">{service.name}</p>
-        <p className="service-detail-purpose">{presentation.purpose}</p>
-
-        <div className="service-detail-facts">
-          <Info title="Provided by" value={service.provider || "Unknown provider"} />
-          <Info title="Category" value={service.category || "Uncategorised"} />
-          <Info title="Governance" value={formatValue(service.status || "pending review")} />
-          <Info title="Version" value={`v${service.version || "1.0.0"}`} />
+        <div className="page-header__actions">
+          <Link href={`/builder?serviceId=${encodeURIComponent(service.id)}`} className="ae-btn ae-btn--primary"><Plus size={16} aria-hidden="true" />Add to a solution</Link>
         </div>
-      </section>
+      </header>
 
-      <section className="service-detail-layout">
-        <div className="service-detail-main">
-          <section className="card service-detail-section">
-            <p className="service-detail-eyebrow">Outcome</p>
-            <h2>What this service contributes</h2>
-            <p className="service-detail-lead">{presentation.value}</p>
+      <div className="service-page__layout">
+        <div className="service-page__main">
+          <section className="ae-card service-section">
+            <h2 className="section__title">Where it fits</h2>
+            <p>{text.stage}</p>
           </section>
 
-          <section className="service-detail-io-grid">
-            <div className="card service-detail-io-card">
-              <span className="service-detail-io-icon">IN</span>
-              <div>
-                <p className="service-detail-eyebrow">Required input</p>
-                <h2>{service.input_type || "Workflow input"}</h2>
-                <p>{presentation.input}</p>
-              </div>
+          <section className="service-io">
+            <div className="ae-card service-io__item">
+              <span className="service-io__label">Needs</span>
+              <p>{text.needs}</p>
             </div>
-            <div className="card service-detail-io-card">
-              <span className="service-detail-io-icon service-detail-io-icon-output">OUT</span>
-              <div>
-                <p className="service-detail-eyebrow">Produced output</p>
-                <h2>{service.output_type || "Workflow output"}</h2>
-                <p>{presentation.output}</p>
-              </div>
+            <div className="ae-card service-io__item">
+              <span className="service-io__label">Produces</span>
+              <p>{text.produces}</p>
             </div>
           </section>
 
-          <ServiceSettingsEditor
-            serviceId={service.id}
-            ownerNode={service.owner_node || null}
-            initial={settingsDefinitionOf(service)}
-          />
+          <ServiceSettingsEditor serviceId={service.id} ownerNode={service.owner_node || null} initial={settingsDefinitionOf(service)} />
 
-          <section className="card service-detail-section">
-            <p className="service-detail-eyebrow">Workflow guidance</p>
-            <h2>Where it fits</h2>
-            <p className="service-detail-lead">{presentation.stage}</p>
-          </section>
-
-          <section className="card service-detail-section">
-            <p className="service-detail-eyebrow">Responsible use</p>
-            <h2>Limitations to consider</h2>
-            <ul className="service-detail-limitations">
-              {presentation.limitations.map((limitation) => (
-                <li key={limitation}>{limitation}</li>
-              ))}
+          <section className="ae-card service-section">
+            <h2 className="section__title">Limitations</h2>
+            <ul className="service-list">
+              {presentation.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}
             </ul>
           </section>
+
+          <details className="details">
+            <summary>Technical details</summary>
+            <div className="details__body">
+              <dl className="kv">
+                {technical.filter(([, value]) => value).map(([label, value]) => (
+                  <div key={label} style={{ display: "contents" }}><dt>{label}</dt><dd className="ae-mono">{value}</dd></div>
+                ))}
+              </dl>
+              {service.interface_contract && (
+                <details className="details">
+                  <summary>Raw interface contract</summary>
+                  <pre className="code-block">{JSON.stringify(service.interface_contract, null, 2)}</pre>
+                </details>
+              )}
+            </div>
+          </details>
         </div>
 
-        <aside className="card service-detail-action-card">
-          <p className="service-detail-eyebrow">Build with this service</p>
-          <h2>Add it to a solution</h2>
-          <p>
-            Open the visual Builder with this service selected. Compatibility, governance and runtime
-            readiness are checked before deployment.
-          </p>
-          <Link href={`/builder?serviceId=${encodeURIComponent(service.id)}`} className="service-detail-primary-action">
-            Add to solution <span aria-hidden="true">→</span>
-          </Link>
-          <div className="service-detail-readiness-note">
-            <strong>Current catalogue state</strong>
-            <span>{formatValue(service.lifecycle_status || "active")} · {formatValue(service.status || "pending review")}</span>
-            <small>Runtime availability is checked when you prepare the complete solution.</small>
+        <aside className="service-page__aside">
+          <div className="ae-card">
+            <dl className="kv kv--stacked">
+              <dt>Provided by</dt><dd>{service.provider || "Unknown provider"}</dd>
+              <dt>Category</dt><dd>{service.category || "Uncategorised"}</dd>
+              <dt>Version</dt><dd>{service.version || "1.0.0"}</dd>
+              <dt>Review status</dt><dd>{formatValue(service.status || "pending review")}</dd>
+            </dl>
           </div>
         </aside>
-      </section>
-
-      <details className="card service-technical-panel">
-        <summary>Technical integration details</summary>
-        <div className="service-technical-grid">
-          <div>
-            <h2>Interface contract</h2>
-            <ContractRow label="Interface type" value={formatValue(interfaceType)} />
-            <ContractRow label="Orchestration" value={formatValue(orchestrationMode)} />
-            <ContractRow label="Adapter" value={service.adapter_type || "none"} />
-            <ContractRow label="Operation" value={service.operation_name || "Not specified"} />
-            <ContractRow label="Contract URI" value={service.contract_uri || "Not declared"} />
-            <ContractRow label="Proto URI" value={service.proto_uri || "Not declared"} />
-            <ContractRow label="Health endpoint" value={healthPath} />
-          </div>
-          <div>
-            <h2>Runtime &amp; source</h2>
-            <ContractRow label="Container" value={service.container_name || "Not declared"} />
-            <ContractRow label="Image" value={service.image || "Not declared"} />
-            <ContractRow label="Internal host" value={service.internal_host || "Not declared"} />
-            <ContractRow label="Internal port" value={service.internal_port || "Not declared"} />
-            <ContractRow label="Repository" value={service.repository_url || "Not recorded"} />
-            <ContractRow label="Branch" value={service.repository_branch || "Not recorded"} />
-            <ContractRow label="Manifest" value={service.manifest_path || "Not recorded"} />
-          </div>
-        </div>
-
-        {service.interface_contract && (
-          <details className="service-raw-contract">
-            <summary>View raw interface contract</summary>
-            <pre>{JSON.stringify(service.interface_contract, null, 2)}</pre>
-          </details>
-        )}
-      </details>
+      </div>
     </div>
   );
 }

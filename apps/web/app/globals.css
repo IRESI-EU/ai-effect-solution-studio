@@ -138,7 +138,7 @@ textarea:focus-visible {
   padding: 0 13px 9px;
   color: #747198;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
@@ -267,7 +267,7 @@ textarea:focus-visible {
 .role-mode-card .sidebar-user-copy > span:first-child {
   color: #aaa3cf;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -281,7 +281,7 @@ textarea:focus-visible {
   background: #272050;
   color: #f4f1ff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -348,7 +348,7 @@ textarea:focus-visible {
   background: #f6f3ff;
   color: #53458d;
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .topbar-avatar {
@@ -361,7 +361,7 @@ textarea:focus-visible {
   color: #ffffff;
   box-shadow: 0 5px 13px rgba(82, 47, 224, 0.25);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .content-surface {
@@ -396,7 +396,7 @@ textarea:focus-visible {
   background: var(--primary-soft);
   color: var(--primary-dark);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -408,22 +408,21 @@ textarea:focus-visible {
   content: "";
 }
 
-.page button {
-  min-height: 38px;
-  padding: 9px 14px;
+/* Legacy buttons without a design-system class: flat brand primary. */
+.page button:not([class*="ae-"]) {
+  min-height: 36px;
+  padding: 0 16px;
   border: 0;
-  border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  color: #ffffff;
-  box-shadow: 0 6px 14px rgba(79, 47, 218, 0.15);
-  font-size: 12px;
-  font-weight: 750;
-  transition: filter 160ms ease, transform 160ms ease;
+  border-radius: var(--radius-md);
+  background: var(--brand-600);
+  color: var(--on-brand);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 120ms ease;
 }
 
-.page button:hover {
-  filter: brightness(1.04);
-  transform: translateY(-1px);
+.page button:not([class*="ae-"]):hover {
+  background: var(--brand-700);
 }
 
 table {
@@ -448,7 +447,7 @@ td {
 th {
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -628,7 +627,7 @@ tbody tr:hover {
   display: block !important;
   color: #070738 !important;
   font-size: 14px !important;
-  font-weight: 900 !important;
+  font-weight: 600 !important;
   line-height: 1.25 !important;
   opacity: 1 !important;
   visibility: visible !important;
@@ -819,30 +818,30 @@ tbody tr:hover {
 /* Account onboarding and authenticated shell */
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(340px, .9fr) minmax(520px, 1.1fr); background: #f7f7ff; }
 .auth-brand-panel { display: flex; padding: clamp(44px, 7vw, 100px); flex-direction: column; justify-content: center; color: #fff; background: radial-gradient(circle at 20% 5%, rgba(123,91,244,.7), transparent 30%), linear-gradient(145deg,#10083b,#4320ca 65%,#5575e8); }
-.auth-brand-mark { display: grid; width: 54px; height: 54px; place-items: center; margin-bottom: 24px; border-radius: 16px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); font-weight: 900; }
-.auth-brand-panel > span { font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.auth-brand-mark { display: grid; width: 54px; height: 54px; place-items: center; margin-bottom: 24px; border-radius: 16px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); font-weight: 600; }
+.auth-brand-panel > span { font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .auth-brand-panel h1 { max-width: 680px; margin: 28px 0 18px; font-size: clamp(38px,5vw,62px); line-height: 1.04; letter-spacing: -.05em; }
 .auth-brand-panel p { max-width: 610px; color: rgba(255,255,255,.78); font-size: 17px; line-height: 1.75; }
 .auth-form-panel { display: grid; place-items: center; padding: 40px; }
 .auth-form-card { width: min(100%,470px); padding: 38px; border: 1px solid var(--border); border-radius: 22px; background: #fff; box-shadow: 0 24px 70px rgba(38,25,94,.11); }
 .auth-form-card-wide { width: min(100%,650px); }
 .auth-form-icon { display: grid; width: 48px; height: 48px; place-items: center; margin-bottom: 18px; border-radius: 14px; color: #5935cf; background: #eee9ff; }
-.auth-eyebrow { color: #6844df; font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.auth-eyebrow { color: #6844df; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
 .auth-form-card h1,.auth-form-card h2 { margin: 7px 0 9px; letter-spacing: -.03em; }
 .auth-form-card h2 { font-size: 32px; }.auth-form-card > p { color: var(--text-secondary); line-height: 1.65; }
 .auth-form { display: grid; gap: 17px; margin-top: 28px; }.auth-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-.auth-form label { display: grid; gap: 7px; color: #343852; font-size: 13px; font-weight: 800; }
+.auth-form label { display: grid; gap: 7px; color: #343852; font-size: 13px; font-weight: 600; }
 .auth-form input,.auth-form select { width: 100%; min-height: 47px; padding: 0 13px; }.auth-form label small { color: #777d95; font-weight: 500; }
-.auth-form-full { grid-column: 1 / -1; }.auth-form button,.auth-primary-link { min-height: 48px; border: 0; border-radius: 11px; color: #fff; background: linear-gradient(135deg,#5b2cf2,#4320ca); font-weight: 850; box-shadow: 0 10px 24px rgba(70,34,190,.2); }
+.auth-form-full { grid-column: 1 / -1; }.auth-form button,.auth-primary-link { min-height: 48px; border: 0; border-radius: 11px; color: #fff; background: linear-gradient(135deg,#5b2cf2,#4320ca); font-weight: 600; box-shadow: 0 10px 24px rgba(70,34,190,.2); }
 .auth-form button:disabled { cursor: wait; opacity: .65; }.auth-error { padding: 11px 13px; border: 1px solid #fecaca; border-radius: 10px; color: #b42318; background: #fff1f2; font-weight: 700; }
-.auth-footer-copy { margin: 22px 0 0; text-align: center; }.auth-footer-copy a,.auth-public-link { color: #5b36d6; font-weight: 850; }.auth-public-link { display: block; margin-top: 13px; text-align: center; }
+.auth-footer-copy { margin: 22px 0 0; text-align: center; }.auth-footer-copy a,.auth-public-link { color: #5b36d6; font-weight: 600; }.auth-public-link { display: block; margin-top: 13px; text-align: center; }
 .auth-page-centered { display: grid; place-items: center; padding: 30px; background: linear-gradient(145deg,#f4f1ff,#eef4ff); }.pending-card { text-align: center; }.pending-card .auth-form-icon { margin-inline: auto; }.auth-primary-link { display: grid; place-items: center; margin-top: 25px; }
-.auth-loading { display: grid; min-height: 100vh; place-items: center; color: #625d78; background: #f7f7ff; font-weight: 800; }
-.access-denied-card { width: min(90%,460px); padding: 36px; border-radius: 20px; background: #fff; box-shadow: var(--shadow); text-align: center; }.access-denied-card svg { color: #6b46df; }.access-denied-card a { display: inline-block; margin-top: 15px; color: #5b36d6; font-weight: 850; }
+.auth-loading { display: grid; min-height: 100vh; place-items: center; color: #625d78; background: #f7f7ff; font-weight: 600; }
+.access-denied-card { width: min(90%,460px); padding: 36px; border-radius: 20px; background: #fff; box-shadow: var(--shadow); text-align: center; }.access-denied-card svg { color: #6b46df; }.access-denied-card a { display: inline-block; margin-top: 15px; color: #5b36d6; font-weight: 600; }
 .authenticated-user-card { align-items: flex-start; }.authenticated-user-card small { color: #aaa8c8; }.sidebar-logout { display: grid; width: 32px; height: 32px; place-items: center; border: 0; border-radius: 9px; color: #aaa8c8; background: transparent; }.sidebar-logout:hover { color: #fff; background: rgba(255,255,255,.08); }
-.sidebar-auth-actions { display: grid; gap: 8px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.09); }.sidebar-auth-actions a { display: flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; color: #ddd8f8; background: rgba(255,255,255,.07); font-weight: 800; }
-.topbar-sign-in { padding: 8px 13px; border-radius: 9px; color: #5b36d6; background: #f0ecff; font-weight: 850; }
-.account-details { display: grid; gap: 0; margin: 20px 0 0; }.account-details > div { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 13px 0; border-bottom: 1px solid #eeedf5; }.account-details dt { color: #777d95; }.account-details dd { margin: 0; color: #242741; font-weight: 800; overflow-wrap: anywhere; }
+.sidebar-auth-actions { display: grid; gap: 8px; padding-top: 13px; border-top: 1px solid rgba(255,255,255,.09); }.sidebar-auth-actions a { display: flex; min-height: 40px; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; color: #ddd8f8; background: rgba(255,255,255,.07); font-weight: 600; }
+.topbar-sign-in { padding: 8px 13px; border-radius: 9px; color: #5b36d6; background: #f0ecff; font-weight: 600; }
+.account-details { display: grid; gap: 0; margin: 20px 0 0; }.account-details > div { display: grid; grid-template-columns: 90px 1fr; gap: 12px; padding: 13px 0; border-bottom: 1px solid #eeedf5; }.account-details dt { color: #777d95; }.account-details dd { margin: 0; color: #242741; font-weight: 600; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .auth-page { grid-template-columns: 1fr; }.auth-brand-panel { padding: 45px 28px; }.auth-brand-panel h1 { font-size: 38px; }.auth-form-panel { padding: 30px 18px; } }
 @media (max-width: 600px) { .auth-form-grid { grid-template-columns: 1fr; }.auth-form-full { grid-column: auto; }.auth-form-card { padding: 28px 22px; } }
 
@@ -898,7 +897,7 @@ tbody tr:hover {
 .onboarding-boundary-card > span {
   color: #6744df;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: .08em;
   text-transform: uppercase;
 }
@@ -951,7 +950,7 @@ tbody tr:hover {
   background: #faf9ff;
   color: #6d7286;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .publish-step-active .publish-step-number {
@@ -1034,7 +1033,7 @@ tbody tr:hover {
   margin-top: -4px;
   color: #6a48dd;
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -1055,7 +1054,7 @@ tbody tr:hover {
   padding: 12px 14px;
   color: #3f2d88;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1119,7 +1118,7 @@ tbody tr:hover {
 .workshop-example-panel > summary {
   color: #20105f;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -1240,7 +1239,7 @@ tbody tr:hover {
 .package-preview { display: grid; gap: 16px; margin-top: 20px; }
 .package-status-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
 .package-status-grid > div { display: grid; gap: 4px; padding: 12px; border: 1px solid #ddd8f4; border-radius: 12px; background: #faf9ff; }
-.package-status-grid span { color: #73778d; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.package-status-grid span { color: #73778d; font-size: 11px; font-weight: 600; text-transform: uppercase; }
 .package-status-grid strong { color: #252842; font-size: 13px; text-transform: capitalize; }
 .package-service-list { display: grid; gap: 14px; }
 .package-service-card { padding: 16px; border: 1px solid #ddd8f4; border-radius: 15px; background: #fff; }
@@ -1333,7 +1332,7 @@ tbody tr:hover {
   background: #6744e6;
   color: #ffffff;
   font-family: Georgia, serif;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .publish-review-callout strong {
@@ -1383,7 +1382,7 @@ tbody tr:hover {
 .builder-name-row > div:first-child span {
   color: #74798d;
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1391,7 +1390,7 @@ tbody tr:hover {
 .builder-name-row input {
   min-height: 38px;
   padding: 0 11px;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .builder-health-summary {
@@ -1415,7 +1414,7 @@ tbody tr:hover {
 
 .builder-health-summary span {
   color: #5532ce;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .builder-workbench {
@@ -1487,7 +1486,7 @@ tbody tr:hover {
   display: block;
   color: #6847df;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1647,7 +1646,7 @@ tbody tr:hover {
 .runtime-preflight-statuses span {
   color: #667085;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .runtime-preflight-statuses strong {
@@ -1681,7 +1680,7 @@ tbody tr:hover {
 
 .runtime-preflight-compact > a {
   color: #5b36d6;
-  font-weight: 800;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -1703,7 +1702,7 @@ tbody tr:hover {
 .runtime-readiness-heading span {
   color: #6741d9;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1781,7 +1780,7 @@ tbody tr:hover {
 .runtime-readiness-card > span {
   color: #be123c;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1807,7 +1806,7 @@ tbody tr:hover {
 .runtime-readiness-card dt {
   color: #667085;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .runtime-readiness-card dd {
@@ -1834,7 +1833,7 @@ tbody tr:hover {
   background: #fff;
   color: #5b36d6;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -1869,7 +1868,7 @@ tbody tr:hover {
   grid-column: 1 / -1;
   color: #6b47df;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -2003,7 +2002,7 @@ tbody tr:hover {
   background: rgba(255, 255, 255, 0.11);
   color: #f1edff;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -2041,7 +2040,7 @@ tbody tr:hover {
   gap: 8px;
   padding: 0 18px;
   border-radius: 11px;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .dashboard-primary-action {
@@ -2095,7 +2094,7 @@ tbody tr:hover {
 .service-detail-eyebrow {
   color: #6844df;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -2172,7 +2171,7 @@ tbody tr:hover {
   gap: 6px;
   margin-top: 13px;
   color: #5b36d6;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .dashboard-card-header {
@@ -2243,7 +2242,7 @@ tbody tr:hover {
   padding: 4px 8px;
   border-radius: 999px;
   font-size: 10px;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: capitalize;
 }
 
@@ -2373,7 +2372,7 @@ tbody tr:hover {
   border: 1px solid currentColor;
   border-radius: 12px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.03em;
   line-height: 1.35;
   text-transform: uppercase;
@@ -2457,7 +2456,7 @@ tbody tr:hover {
 
 .service-detail-back {
   color: #5b36d6;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .service-detail-hero {
@@ -2574,7 +2573,7 @@ tbody tr:hover {
   background: #eee9ff;
   color: #5a38d1;
   font-size: 10px;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .service-detail-io-icon-output {
@@ -2605,7 +2604,7 @@ tbody tr:hover {
   background: linear-gradient(135deg, #5b2cf2, #4320ca);
   box-shadow: 0 10px 24px rgba(70, 34, 190, 0.2);
   color: #fff;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .service-detail-readiness-note {
@@ -2625,7 +2624,7 @@ tbody tr:hover {
   margin: 4px 0;
   color: #4f3c8c;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .service-detail-readiness-note small {
@@ -2643,7 +2642,7 @@ tbody tr:hover {
 .deployment-raw-output > summary {
   cursor: pointer;
   color: #493095;
-  font-weight: 850;
+  font-weight: 600;
 }
 
 .service-technical-grid {
@@ -2711,7 +2710,7 @@ tbody tr:hover {
   background: #eee9ff;
   color: #5a38d1;
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -2765,7 +2764,7 @@ tbody tr:hover {
   background: #e9e2ff;
   color: #5534c8;
   font-size: 11px;
-  font-weight: 850;
+  font-weight: 600;
   white-space: nowrap;
 }
 
@@ -2792,7 +2791,7 @@ tbody tr:hover {
   margin-bottom: 4px;
   color: #7a8096;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -2810,7 +2809,7 @@ tbody tr:hover {
   border-radius: 9px;
   background: #fff;
   color: #5738c8;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .deployment-drawing-actions button:hover {

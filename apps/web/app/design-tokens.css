@@ -1,0 +1,77 @@
+/* AI-EFFECT Platform tokens. Generated from the design system's tokens.json; do not edit by hand. */
+:root {
+  --brand-600: #3c3ee1;
+  --brand-700: #2124d4;
+  --brand-100: #e2e4fd;
+  --brand-50: #f1f2fe;
+  --on-brand: #ffffff;
+  --mint-300: #a1ffd6;
+  --mint-100: #dcfbee;
+  --ink-900: #212121;
+  --ink-600: #4e4b66;
+  --ink-400: #6e6c85;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f5f6fa;
+  --border: #e3e5ee;
+  --border-strong: #8f93ab;
+  --nav-bg: #14153a;
+  --nav-ink: #c9cbf0;
+  --success-600: #0b7a53;
+  --warning-600: #9a5200;
+  --warning-100: #fff2df;
+  --danger-600: #c01733;
+  --danger-100: #fde8eb;
+  --focus-ring: var(--brand-600);
+  --shadow-1: 0 1px 2px rgba(20, 21, 58, 0.06);
+  --shadow-2: 0 8px 24px rgba(20, 21, 58, 0.14), 0 2px 6px rgba(20, 21, 58, 0.08);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+}
+[data-theme="dark"] {
+  --brand-600: #8f91ff;
+  --brand-700: #a9abff;
+  --brand-100: #2a2d6b;
+  --brand-50: #1e2050;
+  --on-brand: #0d0e24;
+  --mint-300: #a1ffd6;
+  --mint-100: #123b2e;
+  --ink-900: #ecedf7;
+  --ink-600: #b4b6cf;
+  --ink-400: #8a8ca8;
+  --surface: #121329;
+  --surface-raised: #1a1c38;
+  --surface-sunken: #0b0c1d;
+  --border: #2c2f55;
+  --border-strong: #5d6194;
+  --nav-bg: #181a4a;
+  --nav-ink: #b4b6cf;
+  --success-600: #5fe0ad;
+  --warning-600: #ffb862;
+  --warning-100: #3d2a10;
+  --danger-600: #ff8a9b;
+  --danger-100: #43161f;
+  --focus-ring: var(--brand-600);
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+.t-display { font-family: var(--font-sans); font-size: 36px; line-height: 44px; font-weight: 700; letter-spacing: -0.01em; }
+.t-h1 { font-family: var(--font-sans); font-size: 26px; line-height: 34px; font-weight: 650; }
+.t-h2 { font-family: var(--font-sans); font-size: 19px; line-height: 26px; font-weight: 600; }
+.t-h3 { font-family: var(--font-sans); font-size: 16px; line-height: 22px; font-weight: 600; }
+.t-body { font-family: var(--font-sans); font-size: 15px; line-height: 23px; font-weight: 400; }
+.t-body-sm { font-family: var(--font-sans); font-size: 13px; line-height: 20px; font-weight: 400; }
+.t-label { font-family: var(--font-sans); font-size: 13px; line-height: 18px; font-weight: 600; }
+.t-overline { font-family: var(--font-sans); font-size: 11px; line-height: 16px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.t-caption { font-family: var(--font-sans); font-size: 12px; line-height: 16px; font-weight: 500; }
+.t-mono { font-family: var(--font-mono); font-size: 12.5px; line-height: 18px; font-weight: 400; }

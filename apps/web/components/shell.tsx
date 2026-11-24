@@ -4,21 +4,25 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Boxes, ChevronRight, CircleUserRound, CloudCog, Database, LayoutDashboard,
-  LogIn, LogOut, Menu, Network, PackagePlus, ShieldCheck, UserPlus, X,
+  Boxes, CloudCog, Database, LayoutDashboard, LogIn, LogOut, Menu, Network, PackagePlus, ShieldCheck, UserPlus, X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { nodeLabels, roleLabels, useAuth, type UserRole } from "./auth-context";
 
-const allNavItems = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: null },
-  { label: "Catalogue", href: "/catalogue", icon: Boxes, roles: null },
-  { label: "Publish service", href: "/publish", icon: PackagePlus, roles: ["node_manager", "platform_admin"] as UserRole[] },
-  { label: "Build solution", href: "/builder", icon: Network, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
-  { label: "Solutions", href: "/solutions", icon: Database, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
-  { label: "Deployments", href: "/deployments", icon: CloudCog, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
-  { label: "My account", href: "/account", icon: CircleUserRound, roles: ["solution_designer", "node_manager", "platform_admin"] as UserRole[] },
-  { label: "Admin", href: "/admin", icon: ShieldCheck, roles: ["platform_admin"] as UserRole[] },
+const signedIn: UserRole[] = ["solution_designer", "node_manager", "platform_admin"];
+const navGroups: { label: string; items: { label: string; href: string; icon: typeof LayoutDashboard; roles: UserRole[] | null }[] }[] = [
+  {
+    label: "Workspace",
+    items: [
+      { label: "Dashboard", href: "/", icon: LayoutDashboard, roles: null },
+      { label: "Catalogue", href: "/catalogue", icon: Boxes, roles: null },
+      { label: "Builder", href: "/builder", icon: Network, roles: signedIn },
+      { label: "Solutions", href: "/solutions", icon: Database, roles: signedIn },
+      { label: "Runs", href: "/deployments", icon: CloudCog, roles: signedIn },
+    ],
+  },
+  { label: "Node team", items: [{ label: "Publish a service", href: "/publish", icon: PackagePlus, roles: ["node_manager", "platform_admin"] }] },
+  { label: "Administration", items: [{ label: "Users and services", href: "/admin", icon: ShieldCheck, roles: ["platform_admin"] }] },
 ];
 
 const authPages = new Set(["/login", "/register", "/registration-pending"]);
@@ -34,8 +38,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const environmentLabel = process.env.NEXT_PUBLIC_ENVIRONMENT_LABEL || "Local environment";
   const [navigationOpen, setNavigationOpen] = useState(false);
 
-  const navItems = useMemo(
-    () => allNavItems.filter((item) => !item.roles || (user && item.roles.includes(user.role))),
+  const visibleGroups = useMemo(
+    () =>
+      navGroups
+        .map((group) => ({ ...group, items: group.items.filter((item) => !item.roles || (user && item.roles.includes(user.role))) }))
+        .filter((group) => group.items.length > 0),
     [user],
   );
   const deniedByRole = !!user && (
@@ -82,43 +89,52 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <aside className={`sidebar${navigationOpen ? " sidebar-open" : ""}`}>
         <Link className="brand" href="/" aria-label="AI-EFFECT home">
-          <Image className="brand-logo" src="/ai-effect-logo.png" alt="AI-EFFECT" width={184} height={48} priority />
+          <Image className="brand-logo" src="/brand/ai-effect-logo-white.png" alt="AI-EFFECT" width={115} height={30} priority />
         </Link>
-        <div className="sidebar-section-label">Workspace</div>
-        <nav className="sidebar-nav" aria-label="Primary navigation">
-          {navItems.map(({ label, href, icon: Icon }) => {
-            const active = isActive(href);
-            return <Link key={href} href={href} className={active ? "active" : undefined} aria-current={active ? "page" : undefined} onClick={() => setNavigationOpen(false)}>
-              <Icon size={19} strokeWidth={1.9} aria-hidden="true" /><span>{label}</span>{active && <ChevronRight className="nav-arrow" size={16} aria-hidden="true" />}
-            </Link>;
-          })}
-        </nav>
-
-        <div className="orchestrator-card">
-          <div className="orchestrator-title"><span className="status-dot" aria-hidden="true" /><strong>WP3 Orchestrator</strong></div>
-          <p>Workflow submissions are checked by the backend before they reach WP3.</p>
-          <div className="orchestrator-status"><span>Connection</span><strong>Checked on deploy</strong></div>
-        </div>
+        {visibleGroups.map((group) => (
+          <div key={group.label}>
+            <div className="sidebar-section-label">{group.label}</div>
+            <nav className="sidebar-nav" aria-label={group.label}>
+              {group.items.map(({ label, href, icon: Icon }) => {
+                const active = isActive(href);
+                return (
+                  <Link key={href} href={href} className={active ? "active" : undefined} aria-current={active ? "page" : undefined} onClick={() => setNavigationOpen(false)}>
+                    <Icon strokeWidth={1.75} aria-hidden="true" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
+        <div className="sidebar-spacer" />
 
         {user ? (
-          <div className="sidebar-user authenticated-user-card">
-            <div className="sidebar-user-avatar"><CircleUserRound size={22} aria-hidden="true" /></div>
-            <Link href="/account" className="sidebar-user-copy"><strong>{user.display_name}</strong><span>{roleLabels[user.role]}</span>{user.node && <small>{nodeLabels[user.node]}</small>}</Link>
-            <button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out" title="Sign out"><LogOut size={17} /></button>
+          <div className="sidebar-user">
+            <div className="sidebar-user-avatar" aria-hidden="true">{user.display_name.slice(0, 2).toUpperCase()}</div>
+            <Link href="/account" className="sidebar-user-copy" onClick={() => setNavigationOpen(false)}>
+              <strong>{user.display_name}</strong>
+              <span>{roleLabels[user.role]}{user.node ? ` · ${nodeLabels[user.node]}` : ""}</span>
+            </Link>
+            <button type="button" className="sidebar-logout" onClick={signOut} aria-label="Sign out" title="Sign out"><LogOut size={16} /></button>
           </div>
         ) : (
           <div className="sidebar-auth-actions">
-            <Link href="/login"><LogIn size={17} /> Sign in</Link>
-            <Link href="/register"><UserPlus size={17} /> Request access</Link>
+            <Link href="/login"><LogIn size={16} /> Sign in</Link>
+            <Link href="/register"><UserPlus size={16} /> Request access</Link>
           </div>
         )}
       </aside>
 
       <div className="app-main">
         <header className="topbar">
-          <div className="topbar-copy"><strong>Trusted Energy AI Marketplace</strong><span>Discover, compose, validate, and run energy AI services</span></div>
-          <div className="topbar-actions"><span className="environment-pill"><span aria-hidden="true" /> {environmentLabel}</span>
-            {user ? <div className="topbar-avatar" aria-label={`Signed in as ${user.display_name}`}>{user.display_name.slice(0, 2).toUpperCase()}</div> : <Link className="topbar-sign-in" href="/login">Sign in</Link>}
+          <div className="topbar-actions">
+            {environmentLabel !== "Production" && <span className="environment-pill"><span aria-hidden="true" />{environmentLabel}</span>}
+            {user ? (
+              <Link href="/account" className="topbar-avatar" aria-label={`Account: ${user.display_name}`}>{user.display_name.slice(0, 2).toUpperCase()}</Link>
+            ) : (
+              <Link className="topbar-sign-in" href="/login">Sign in</Link>
+            )}
           </div>
         </header>
         <main className="content-surface">{children}</main>
