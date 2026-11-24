@@ -13,6 +13,8 @@ class WorkflowSubmitNode(BaseModel):
     output_message_name: str | None = None
     internal_host: str | None = None
     internal_port: str | None = None
+    # Values for the service's declared settings (see services/service_settings.py).
+    settings: dict | None = None
 
 
 class WorkflowSubmitEdge(BaseModel):

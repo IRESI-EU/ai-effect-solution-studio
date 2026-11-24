@@ -22,6 +22,7 @@ from app.dependencies.auth import (
 from app.routers.auth import bootstrap_admin, router as auth_router
 from app.routers.admin_users import router as admin_users_router
 from app.routers.operation_contracts import router as operation_contracts_router
+from app.routers.service_settings import router as service_settings_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
     DeploymentCreate,
@@ -86,6 +87,7 @@ with SessionLocal() as bootstrap_db:
 
 app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
 app.include_router(operation_contracts_router)
+app.include_router(service_settings_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
 
@@ -709,6 +711,12 @@ def submit_workflow_to_orchestrator_endpoint(
 
     if "services_api_key" in compiled_payload:
         orchestrator_payload["services_api_key"] = compiled_payload["services_api_key"]
+
+    # Per-node settings. Only sent when present, so orchestrators without
+    # settings support keep accepting workflows that use none.
+    for key in ("parameters", "node_inputs"):
+        if compiled_payload.get(key):
+            orchestrator_payload[key] = compiled_payload[key]
 
     orchestrator_result = submit_to_orchestrator(orchestrator_payload)
 

@@ -6,6 +6,9 @@ from fastapi import HTTPException
 
 from app.models.service import Service
 from app.schemas.workflow_submit import WorkflowSubmitRequest
+from app.services.service_settings import get_definition, resolve_values
+
+MAX_INLINE_JSON_BYTES = 65536
 
 
 def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None = None):
@@ -89,6 +92,12 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
     ]
 
     warnings = build_compile_warnings(resolved_nodes)
+    parameters, node_inputs, effective_settings = compile_node_settings(
+        workflow, resolved_nodes, warnings
+    )
+    for onboarding_node in onboarding_nodes:
+        if onboarding_node["node_id"] in effective_settings:
+            onboarding_node["settings"] = effective_settings[onboarding_node["node_id"]]
 
     result = {
         "blueprint": {
@@ -113,15 +122,78 @@ def compile_to_wp3_payload(workflow: WorkflowSubmitRequest, db: Session | None =
         },
     }
     if workflow.run_input is not None:
-        encoded = json.dumps(workflow.run_input, ensure_ascii=False, allow_nan=False).encode("utf-8")
-        if len(encoded) > 65536:
-            raise HTTPException(status_code=422, detail="Run input must be at most 64 KiB of JSON.")
-        result["inputs"] = [{
-            "protocol": "inline",
-            "uri": base64.b64encode(encoded).decode("ascii"),
-            "format": "json",
-        }]
+        result["inputs"] = [inline_json_reference(workflow.run_input, "Run input")]
+    if parameters:
+        result["parameters"] = parameters
+    if node_inputs:
+        result["node_inputs"] = node_inputs
     return result
+
+
+def inline_json_reference(value: dict, label: str) -> dict:
+    encoded = json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8")
+    if len(encoded) > MAX_INLINE_JSON_BYTES:
+        raise HTTPException(status_code=422, detail=f"{label} must be at most 64 KiB of JSON.")
+    return {
+        "protocol": "inline",
+        "uri": base64.b64encode(encoded).decode("ascii"),
+        "format": "json",
+    }
+
+
+def compile_node_settings(workflow: WorkflowSubmitRequest, resolved_nodes: dict, warnings: list):
+    """Validate each node's settings and map them onto orchestrator fields.
+
+    Returns (parameters, node_inputs, effective settings by node_id).
+    ``parameters`` settings go to the orchestrator's per-node ``parameters``;
+    ``run_input`` settings become the inline input of that start node, with
+    any run input typed for this run taking precedence.
+    """
+    targets = {edge.target for edge in workflow.edges}
+    parameters: dict[str, dict] = {}
+    node_inputs: dict[str, list] = {}
+    effective_by_node: dict[str, dict] = {}
+    errors: list[str] = []
+
+    for node in workflow.nodes:
+        resolved = resolved_nodes[node.node_id]
+        label = resolved.get("service_name") or resolved.get("container_name") or node.node_id
+        definition = resolved.get("settings_definition")
+        if not definition:
+            if node.settings:
+                warnings.append({
+                    "level": "warning",
+                    "node_id": node.node_id,
+                    "service_id": resolved.get("service_id"),
+                    "message": f"{label} has fixed settings; the saved values were not sent.",
+                })
+            continue
+
+        effective, node_errors = resolve_values(definition, node.settings)
+        errors.extend(f"{label}: {message}" for message in node_errors)
+        if node_errors or not effective:
+            continue
+
+        node_key = f"{resolved['container_name']}:{resolved['operation_name']}"
+        effective_by_node[node.node_id] = {"channel": definition["channel"], "values": effective}
+        if definition["channel"] == "parameters":
+            parameters[node_key] = effective
+        elif node.node_id in targets:
+            errors.append(
+                f"{label}: its settings are read from the workflow input, so it must be a first step "
+                "(no incoming connection)."
+            )
+        else:
+            node_inputs[node_key] = [
+                inline_json_reference({**effective, **(workflow.run_input or {})}, f"{label} input")
+            ]
+
+    if errors:
+        raise HTTPException(
+            status_code=422,
+            detail={"message": "Some service settings are invalid.", "errors": errors},
+        )
+    return parameters, node_inputs, effective_by_node
 
 
 def resolve_node_runtime_metadata(node, db: Session | None):
@@ -221,6 +293,7 @@ def resolve_node_runtime_metadata(node, db: Session | None):
         "repository_branch": service.repository_branch if service else None,
         "manifest_path": service.manifest_path if service else None,
         "compatibility_mode": compatibility_mode,
+        "settings_definition": get_definition(service) if service else None,
     }
 
 
