@@ -19,6 +19,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
+import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsValues } from "../../components/node-settings";
 
 type Service = {
   id: string;
@@ -49,6 +50,7 @@ type Service = {
   adapter_type?: string | null;
   health_path?: string | null;
   contract_uri?: string | null;
+  interface_contract?: Record<string, unknown> | null;
 };
 
 type RuntimePreflightCheck = {
@@ -119,6 +121,25 @@ function BuilderContent() {
 
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  function catalogueEntry(service: Service) {
+    return services.find((candidate) => candidate.id === service.id) || service;
+  }
+
+  function isStartServiceNode(nodeId: string) {
+    const serviceNodeIds = new Set(nodes.filter((node) => Boolean(node.data?.service)).map((node) => node.id));
+    return !edges.some((edge) => edge.target === nodeId && serviceNodeIds.has(edge.source));
+  }
+
+  function updateNodeSettings(nodeId: string, values: SettingsValues) {
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === nodeId ? { ...node, data: { ...node.data, settings: values } } : node
+      )
+    );
+    invalidateWorkflowResults();
+  }
   const [validationResults, setValidationResults] = useState<string[]>([]);
   const [runtimePreflight, setRuntimePreflight] = useState<RuntimePreflightResult | null>(null);
   const [workflowDesignStatus, setWorkflowDesignStatus] = useState<"valid" | "invalid" | null>(null);
@@ -305,6 +326,7 @@ function BuilderContent() {
         output_message_name: service.output_message_name || "Response",
         internal_host: service.internal_host || service.container_name,
         internal_port: service.internal_port || "8080",
+        settings: (node.data?.settings as SettingsValues | undefined) || undefined,
       };
     });
     const validNodeIds = new Set(serviceNodes.map((node) => node.id));
@@ -408,6 +430,13 @@ function BuilderContent() {
 
     serviceNodes.forEach((node) => {
       const service = node.data.service as Service;
+      const definition = settingsDefinitionOf(catalogueEntry(service));
+      settingsErrors(definition, node.data?.settings as SettingsValues | undefined).forEach((error) => {
+        blockers.push(`Blocked: ${service.name} settings: ${error}`);
+      });
+      if (definition?.channel === "run_input" && !isStartServiceNode(node.id)) {
+        blockers.push(`Blocked: ${service.name} reads its settings from the workflow input, so it must be a first step.`);
+      }
       if (getLifecycleStatus(service) === "deprecated") {
         notices.push(`Warning: ${service.name} is deprecated. Prefer an active replacement for new designs.`);
       }
@@ -812,6 +841,7 @@ function BuilderContent() {
               onNodeClick={(_, node) => {
                 const service = node.data?.service as Service | undefined;
                 setSelectedService(service || null);
+                setSelectedNodeId(service ? node.id : null);
               }}
               fitView
             >
@@ -842,6 +872,15 @@ function BuilderContent() {
               </div>
 
               <ServiceBadges service={selectedService} />
+
+              {selectedNodeId && nodes.some((node) => node.id === selectedNodeId) && (
+                <NodeSettingsPanel
+                  definition={settingsDefinitionOf(catalogueEntry(selectedService))}
+                  values={nodes.find((node) => node.id === selectedNodeId)?.data?.settings as SettingsValues | undefined}
+                  onChange={(values) => updateNodeSettings(selectedNodeId, values)}
+                  isStartNode={isStartServiceNode(selectedNodeId)}
+                />
+              )}
 
               <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
 
