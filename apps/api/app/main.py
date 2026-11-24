@@ -160,9 +160,12 @@ def admin_import_wp3_package(
 @app.post("/data-references/preview")
 def preview_data_reference_endpoint(
     payload: DataReferencePreviewRequest,
+    db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    return preview_data_reference(payload.protocol, payload.uri, payload.task_id)
+    return preview_data_reference(
+        payload.protocol, payload.uri, payload.task_id, format_hint=payload.format, db=db
+    )
 
 
 # ---------------------------------------------------------------------

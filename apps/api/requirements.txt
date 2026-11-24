@@ -6,3 +6,4 @@ sqlalchemy
 psycopg[binary]
 requests
 python-multipart
+grpcio-tools>=1.66
