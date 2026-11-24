@@ -47,7 +47,7 @@ export default function RegisterPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-brand-panel"><div className="auth-brand-mark">AI</div><span>AI-EFFECT Solution Studio</span><h1>Request access to the shared AI-EFFECT workspace.</h1><p>Select your intended responsibility and affiliated node. An administrator will verify the request before access is activated.</p></section>
+      <section className="auth-brand-panel"><div className="auth-brand-mark" role="img" aria-label="AI-EFFECT">AI</div><span>AI-EFFECT Platform</span><h1>Request access to the shared AI-EFFECT workspace.</h1><p>Select your intended responsibility and affiliated node. An administrator will verify the request before access is activated.</p></section>
       <section className="auth-form-panel">
         <div className="auth-form-card auth-form-card-wide">
           <div className="auth-form-icon"><UserPlus size={24} /></div><span className="auth-eyebrow">Approval required</span><h2>Create an access request</h2>

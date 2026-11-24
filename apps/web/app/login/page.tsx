@@ -40,7 +40,7 @@ function LoginForm() {
 
   return (
     <main className="auth-page">
-      <section className="auth-brand-panel"><div className="auth-brand-mark">AI</div><span>AI-EFFECT Solution Studio</span><h1>Trusted energy AI, with access matched to each responsibility.</h1><p>Node teams publish services, solution designers compose deployments, and platform administrators govern the workspace.</p></section>
+      <section className="auth-brand-panel"><div className="auth-brand-mark" role="img" aria-label="AI-EFFECT">AI</div><span>AI-EFFECT Platform</span><h1>Trusted energy AI, from catalogue to running solution.</h1><p>Node teams publish services, solution designers compose deployments, and platform administrators govern the workspace.</p></section>
       <section className="auth-form-panel">
         <div className="auth-form-card">
           <div className="auth-form-icon"><LockKeyhole size={24} /></div>

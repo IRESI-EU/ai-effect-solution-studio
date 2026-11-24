@@ -102,18 +102,16 @@ function ArchivedDeploymentsContent() {
 
   return (
     <div className="page">
-      <Link href="/deployments" style={{ color: "#075985", fontWeight: 800 }}>
+      <Link href="/deployments" style={{ color: "#075985", fontWeight: 600 }}>
         ← Back to active deployments
       </Link>
 
       <div style={{ marginTop: 24 }}>
-        <span className="badge">Deployment Lifecycle</span>
-
-        <h1 style={{ fontSize: 40, marginBottom: 8 }}>
+        <h1 className="page-header__title">
           Archived deployments
         </h1>
 
-        <p style={{ color: "#526173", fontSize: 17, maxWidth: 950 }}>
+        <p className="page-header__lead">
           {solutionId
             ? "Showing archived deployments for the selected solution."
             : "Archived deployments are hidden from operational monitoring but kept for audit, traceability, and historical review."}
@@ -123,7 +121,7 @@ function ArchivedDeploymentsContent() {
           <div
             style={{
               marginTop: 12,
-              color: "#667085",
+              color: "var(--ink-600)",
               fontFamily: "monospace",
               fontSize: 13,
             }}
@@ -150,10 +148,10 @@ function ArchivedDeploymentsContent() {
               border: "1px solid #ded5ff",
             }}
           >
-            <div style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ color: "var(--ink-600)", fontSize: 13, fontWeight: 700 }}>
               Archived deployments
             </div>
-            <div style={{ color: "#4d2ca3", fontSize: 32, fontWeight: 900, marginTop: 6 }}>
+            <div style={{ color: "#4d2ca3", fontSize: 32, fontWeight: 600, marginTop: 6 }}>
               {deployments.length}
             </div>
           </div>
@@ -163,7 +161,7 @@ function ArchivedDeploymentsContent() {
               padding: 20,
               display: "flex",
               alignItems: "center",
-              color: "#526173",
+              color: "var(--ink-600)",
               border: "1px solid #e8e4f4",
             }}
           >
@@ -183,12 +181,12 @@ function ArchivedDeploymentsContent() {
         }}
       >
         {loading && (
-          <div style={{ padding: 24, color: "#667085" }}>
+          <div style={{ padding: 24, color: "var(--ink-600)" }}>
             Loading archived deployments...
           </div>
         )}
 
-        {error && <div style={{ padding: 24, color: "#b42318" }}>{error}</div>}
+        {error && <div style={{ padding: 24, color: "var(--danger-600)" }}>{error}</div>}
 
         {!loading && !error && (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -206,7 +204,7 @@ function ArchivedDeploymentsContent() {
             <tbody>
               {deployments.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: 24, color: "#667085" }}>
+                  <td colSpan={6} style={{ padding: 24, color: "var(--ink-600)" }}>
                     No archived deployments found.
                   </td>
                 </tr>
@@ -219,7 +217,7 @@ function ArchivedDeploymentsContent() {
                 >
                   <Td>
                     <strong>{deployment.name}</strong>
-                    <div style={{ color: "#667085", fontSize: 13, marginTop: 4 }}>
+                    <div style={{ color: "var(--ink-600)", fontSize: 13, marginTop: 4 }}>
                       {deployment.solution_id
                         ? `Solution: ${deployment.solution_id}`
                         : "No linked solution"}
@@ -250,7 +248,7 @@ function ArchivedDeploymentsContent() {
                         href={`/deployments/${deployment.workflow_id}`}
                         style={{
                           color: "#075985",
-                          fontWeight: 800,
+                          fontWeight: 600,
                           textDecoration: "none",
                         }}
                       >
@@ -266,7 +264,7 @@ function ArchivedDeploymentsContent() {
                           color: "white",
                           padding: "8px 10px",
                           borderRadius: 10,
-                          fontWeight: 800,
+                          fontWeight: 600,
                           cursor:
                             restoringId === deployment.id
                               ? "not-allowed"
@@ -294,7 +292,7 @@ function Th({ children }: { children: React.ReactNode }) {
 }
 
 function Td({ children }: { children: React.ReactNode }) {
-  return <td style={{ padding: 16, color: "#344054" }}>{children}</td>;
+  return <td style={{ padding: 16, color: "var(--ink-900)" }}>{children}</td>;
 }
 
 function formatDate(value: string) {
@@ -312,7 +310,7 @@ function statusBadgeStyle(status: string) {
   if (status === "failed") {
     return {
       background: "#fee4e2",
-      color: "#b42318",
+      color: "var(--danger-600)",
     };
   }
 

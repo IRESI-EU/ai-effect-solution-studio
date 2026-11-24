@@ -160,7 +160,6 @@ export default function DeploymentsPage() {
 
   return (
     <div className="page">
-      <span className="badge">Execution Monitoring</span>
 
       <div
         style={{
@@ -171,10 +170,9 @@ export default function DeploymentsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 40, marginBottom: 8 }}>Deployments</h1>
-          <p style={{ color: "#526173", fontSize: 17, maxWidth: 760 }}>
-            Track submitted workflows, execution states, and orchestrator
-            results.
+          <h1 className="page-header__title">Runs</h1>
+          <p className="page-header__lead">
+            Every workflow you deployed, its status and its results.
           </p>
         </div>
 
@@ -183,11 +181,11 @@ export default function DeploymentsPage() {
             href="/deployments/archived"
             style={{
               border: "1px solid #d0d5dd",
-              color: "#344054",
+              color: "var(--ink-900)",
               background: "white",
               borderRadius: 12,
               padding: "12px 16px",
-              fontWeight: 800,
+              fontWeight: 600,
               textDecoration: "none",
               whiteSpace: "nowrap",
             }}
@@ -204,7 +202,7 @@ export default function DeploymentsPage() {
               color: syncing ? "#6941c6" : "white",
               borderRadius: 12,
               padding: "12px 16px",
-              fontWeight: 800,
+              fontWeight: 600,
               cursor: syncing ? "not-allowed" : "pointer",
               whiteSpace: "nowrap",
             }}
@@ -239,8 +237,8 @@ export default function DeploymentsPage() {
           style={{
             marginTop: 20,
             padding: 18,
-            background: "#f8fafc",
-            color: "#344054",
+            background: "var(--surface-sunken)",
+            color: "var(--ink-900)",
           }}
         >
           Status sync complete: <strong>{syncSummary.updated}</strong> updated,{" "}
@@ -288,12 +286,12 @@ export default function DeploymentsPage() {
         }}
       >
         {loading && (
-          <div style={{ padding: 24, color: "#667085" }}>
+          <div style={{ padding: 24, color: "var(--ink-600)" }}>
             Loading deployments...
           </div>
         )}
 
-        {error && <div style={{ padding: 24, color: "#b42318" }}>{error}</div>}
+        {error && <div style={{ padding: 24, color: "var(--danger-600)" }}>{error}</div>}
 
         {!loading && !error && (
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -311,7 +309,7 @@ export default function DeploymentsPage() {
             <tbody>
               {filteredDeployments.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: 24, color: "#667085" }}>
+                  <td colSpan={6} style={{ padding: 24, color: "var(--ink-600)" }}>
                     No deployments match the current view. Submit a workflow
                     from the Builder or check archived deployments.
                   </td>
@@ -325,7 +323,7 @@ export default function DeploymentsPage() {
                 >
                   <Td>
                     <strong>{deployment.name}</strong>
-                    <div style={{ color: "#667085", fontSize: 13, marginTop: 4 }}>
+                    <div style={{ color: "var(--ink-600)", fontSize: 13, marginTop: 4 }}>
                       {deployment.solution_id
                         ? `Solution: ${deployment.solution_id}`
                         : "No linked solution"}
@@ -357,7 +355,7 @@ export default function DeploymentsPage() {
                         style={{
                           color: "white",
                           background: "#6d4aff",
-                          fontWeight: 800,
+                          fontWeight: 600,
                           textDecoration: "none",
                           padding: "8px 11px",
                           borderRadius: 9,
@@ -373,8 +371,8 @@ export default function DeploymentsPage() {
                         style={{
                           border: "1px solid #fecdca",
                           background: "white",
-                          color: "#b42318",
-                          fontWeight: 800,
+                          color: "var(--danger-600)",
+                          fontWeight: 600,
                           cursor:
                             archivingId === deployment.id
                               ? "not-allowed"
@@ -413,8 +411,8 @@ function MetricCard({
     neutral: { background: "#ffffff", color: "#17152b", accent: "#6d4aff" },
     blue: { background: "#eef5ff", color: "#2457a6", accent: "#4f7cff" },
     good: { background: "#effbf4", color: "#027a48", accent: "#12b76a" },
-    bad: { background: "#fff2f1", color: "#b42318", accent: "#f04438" },
-    muted: { background: "#f7f7fb", color: "#475467", accent: "#98a2b3" },
+    bad: { background: "#fff2f1", color: "var(--danger-600)", accent: "#f04438" },
+    muted: { background: "#f7f7fb", color: "var(--ink-600)", accent: "#98a2b3" },
   };
   const selected = tones[tone];
 
@@ -429,7 +427,7 @@ function MetricCard({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-        <span style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+        <span style={{ color: "var(--ink-600)", fontSize: 13, fontWeight: 700 }}>
           {label}
         </span>
         <span
@@ -446,7 +444,7 @@ function MetricCard({
         style={{
           color: selected.color,
           fontSize: typeof value === "number" ? 29 : 20,
-          fontWeight: 900,
+          fontWeight: 600,
           marginTop: 8,
         }}
       >
@@ -461,7 +459,7 @@ function Th({ children }: { children: React.ReactNode }) {
 }
 
 function Td({ children }: { children: React.ReactNode }) {
-  return <td style={{ padding: 16, color: "#344054" }}>{children}</td>;
+  return <td style={{ padding: 16, color: "var(--ink-900)" }}>{children}</td>;
 }
 
 function formatDate(value: string) {
@@ -479,14 +477,14 @@ function statusBadgeStyle(status: string) {
   if (status === "failed") {
     return {
       background: "#fee4e2",
-      color: "#b42318",
+      color: "var(--danger-600)",
     };
   }
 
   if (status === "running") {
     return {
       background: "#e0f2fe",
-      color: "#075985",
+      color: "var(--brand-600)",
     };
   }
 

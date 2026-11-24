@@ -195,7 +195,7 @@ export default function DeploymentDetailPage({
 
   return (
     <div className="page">
-      <Link href="/deployments" style={{ color: "#075985", fontWeight: 800 }}>
+      <Link href="/deployments" style={{ color: "#075985", fontWeight: 600 }}>
         ← Back to deployments
       </Link>
 
@@ -209,7 +209,6 @@ export default function DeploymentDetailPage({
           boxShadow: "0 18px 46px rgba(48, 35, 104, 0.08)",
         }}
       >
-        <span className="badge">Orchestrator Deployment</span>
         <div
           style={{
             display: "flex",
@@ -220,11 +219,11 @@ export default function DeploymentDetailPage({
           }}
         >
           <div>
-            <h1 style={{ fontSize: 40, margin: 0 }}>Run details</h1>
+            <h1 className="page-header__title">Run details</h1>
             <div
               style={{
                 marginTop: 10,
-                color: "#667085",
+                color: "var(--ink-600)",
                 fontFamily: "monospace",
                 wordBreak: "break-all",
               }}
@@ -245,7 +244,7 @@ export default function DeploymentDetailPage({
           )}
         </div>
 
-        {error && <p style={{ color: "#b42318" }}>{error}</p>}
+        {error && <p style={{ color: "var(--danger-600)" }}>{error}</p>}
 
         {workflow && (
           <div
@@ -268,8 +267,8 @@ export default function DeploymentDetailPage({
               marginTop: 18,
               padding: 14,
               borderRadius: 14,
-              background: "#f8fafc",
-              color: "#526173",
+              background: "var(--surface-sunken)",
+              color: "var(--ink-600)",
               fontSize: 14,
             }}
           >
@@ -293,7 +292,7 @@ export default function DeploymentDetailPage({
         }}
       >
         <h2 style={{ marginTop: 0 }}>Tasks &amp; Data References</h2>
-        <p style={{ color: "#667085", marginTop: -4, marginBottom: 20 }}>
+        <p style={{ color: "var(--ink-600)", marginTop: -4, marginBottom: 20 }}>
           Orchestrator task states and the input or output artifacts attached to
           each workflow node.
         </p>
@@ -304,7 +303,7 @@ export default function DeploymentDetailPage({
               padding: 18,
               borderRadius: 14,
               background: "#f8f7fc",
-              color: "#667085",
+              color: "var(--ink-600)",
             }}
           >
             No task records are available for this workflow yet.
@@ -318,7 +317,7 @@ export default function DeploymentDetailPage({
               style={{
                 padding: 18,
                 borderRadius: 16,
-                background: task.status === "completed" ? "#ecfdf3" : "#f8fafc",
+                background: task.status === "completed" ? "var(--mint-100)" : "var(--surface-sunken)",
                 border: "1px solid #d6dee9",
               }}
             >
@@ -331,7 +330,7 @@ export default function DeploymentDetailPage({
               >
                 <div>
                   <strong>{task.node_key}</strong>
-                  <div style={{ color: "#526173", marginTop: 6 }}>
+                  <div style={{ color: "var(--ink-600)", marginTop: 6 }}>
                     Task ID: {task.task_id}
                   </div>
                 </div>
@@ -402,8 +401,8 @@ export default function DeploymentDetailPage({
               style={{
                 padding: 16,
                 borderRadius: 14,
-                background: "#f8fafc",
-                color: "#667085",
+                background: "var(--surface-sunken)",
+                color: "var(--ink-600)",
               }}
             >
               Loading preview...
@@ -506,8 +505,8 @@ function PreviewPanel({
                       textAlign: "left",
                       padding: 12,
                       borderBottom: "1px solid #d6dee9",
-                      background: "#f8fafc",
-                      color: "#344054",
+                      background: "var(--surface-sunken)",
+                      color: "var(--ink-900)",
                     }}
                   >
                     {column}
@@ -525,7 +524,7 @@ function PreviewPanel({
                       style={{
                         padding: 12,
                         borderBottom: "1px solid #e4e9f2",
-                        color: "#344054",
+                        color: "var(--ink-900)",
                       }}
                     >
                       {String(row[column] ?? "")}
@@ -540,9 +539,9 @@ function PreviewPanel({
         <div
           style={{
             padding: 12,
-            color: "#667085",
+            color: "var(--ink-600)",
             fontSize: 13,
-            background: "#f8fafc",
+            background: "var(--surface-sunken)",
           }}
         >
           Showing up to {preview.row_preview_limit || 20} rows.
@@ -561,7 +560,7 @@ function PreviewPanel({
     return (
       <div className="deployment-json-preview">
         <PreviewHeader preview={preview} />
-        {preview.note && <p style={{ color: "#667085", fontSize: 13, margin: "4px 0 8px" }}>{String(preview.note)}</p>}
+        {preview.note && <p style={{ color: "var(--ink-600)", fontSize: 13, margin: "4px 0 8px" }}>{String(preview.note)}</p>}
         {report && typeof report === "object" && (
           <div className="deployment-report-summary">
             <div>
@@ -609,8 +608,8 @@ function PreviewPanel({
         style={{
           padding: 18,
           borderRadius: 14,
-          background: "#fef3f2",
-          color: "#b42318",
+          background: "var(--danger-100)",
+          color: "var(--danger-600)",
           border: "1px solid #fecdca",
         }}
       >
@@ -627,7 +626,7 @@ function PreviewPanel({
               padding: 14,
               borderRadius: 12,
               background: "white",
-              color: "#344054",
+              color: "var(--ink-900)",
             }}
           >
             <strong>Recommended artifact publishing options</strong>
@@ -663,8 +662,8 @@ function PreviewPanel({
       style={{
         padding: 16,
         borderRadius: 14,
-        background: "#f8fafc",
-        color: "#344054",
+        background: "var(--surface-sunken)",
+        color: "var(--ink-900)",
         whiteSpace: "pre-wrap",
         fontFamily: "monospace",
         overflowX: "auto",
@@ -775,13 +774,13 @@ function PreviewHeader({ preview }: { preview: any }) {
       <span className="badge">{preview.kind || "reference"}</span>
 
       {preview.format && (
-        <span style={{ color: "#667085", fontSize: 13 }}>
+        <span style={{ color: "var(--ink-600)", fontSize: 13 }}>
           format: {preview.format}
         </span>
       )}
 
       {preview.content_type && (
-        <span style={{ color: "#667085", fontSize: 13 }}>
+        <span style={{ color: "var(--ink-600)", fontSize: 13 }}>
           content-type: {preview.content_type}
         </span>
       )}
@@ -799,7 +798,7 @@ function Info({ label, value }: { label: string; value: string }) {
         border: "1px solid #e8e4f4",
       }}
     >
-      <div style={{ color: "#667085", fontSize: 13 }}>{label}</div>
+      <div style={{ color: "var(--ink-600)", fontSize: 13 }}>{label}</div>
       <strong>{value}</strong>
     </div>
   );
@@ -813,7 +812,7 @@ function statusBadgeStyle(status: string) {
   }
 
   if (normalized === "failed") {
-    return { background: "#fee4e2", color: "#b42318" };
+    return { background: "#fee4e2", color: "var(--danger-600)" };
   }
 
   if (normalized === "running") {
@@ -837,7 +836,7 @@ function ReferenceList({
       <strong>{title}</strong>
 
       {refs.length === 0 && (
-        <p style={{ color: "#667085", marginBottom: 0 }}>None</p>
+        <p style={{ color: "var(--ink-600)", marginBottom: 0 }}>None</p>
       )}
 
       <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
@@ -847,13 +846,13 @@ function ReferenceList({
             style={{
               padding: 12,
               borderRadius: 12,
-              background: "#f8fafc",
+              background: "var(--surface-sunken)",
               border: "1px solid #e4e9f2",
             }}
           >
             <div>
               <span className="badge">{ref.protocol}</span>
-              <span style={{ marginLeft: 8, color: "#667085", fontSize: 13 }}>
+              <span style={{ marginLeft: 8, color: "var(--ink-600)", fontSize: 13 }}>
                 {ref.format}
               </span>
             </div>
@@ -863,7 +862,7 @@ function ReferenceList({
                 marginTop: 10,
                 fontFamily: "monospace",
                 fontSize: 13,
-                color: "#344054",
+                color: "var(--ink-900)",
                 wordBreak: "break-all",
               }}
             >
@@ -880,7 +879,7 @@ function ReferenceList({
                 color: "#6941c6",
                 borderRadius: 10,
                 padding: "8px 12px",
-                fontWeight: 800,
+                fontWeight: 600,
                 cursor: "pointer",
               }}
             >

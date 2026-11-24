@@ -82,7 +82,7 @@ export default async function ArchivedSolutionsPage() {
 
   return (
     <div className="page">
-      <Link href="/solutions" style={{ color: "#075985", fontWeight: 800 }}>
+      <Link href="/solutions" style={{ color: "#075985", fontWeight: 600 }}>
         ← Back to active solutions
       </Link>
 
@@ -96,13 +96,11 @@ export default async function ArchivedSolutionsPage() {
         }}
       >
         <div>
-          <span className="badge">Lifecycle Management</span>
-
-          <h1 style={{ fontSize: 40, marginBottom: 8 }}>
+          <h1 className="page-header__title">
             Archived solutions
           </h1>
 
-          <p style={{ color: "#526173", fontSize: 17, maxWidth: 950 }}>
+          <p className="page-header__lead">
             Archived solutions are hidden from the active workspace but retain
             their deployment history, workflow records, and audit trail.
           </p>
@@ -126,10 +124,10 @@ export default async function ArchivedSolutionsPage() {
               border: "1px solid #ded5ff",
             }}
           >
-            <div style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+            <div style={{ color: "var(--ink-600)", fontSize: 13, fontWeight: 700 }}>
               Archived solutions
             </div>
-            <div style={{ color: "#4d2ca3", fontSize: 32, fontWeight: 900, marginTop: 6 }}>
+            <div style={{ color: "#4d2ca3", fontSize: 32, fontWeight: 600, marginTop: 6 }}>
               {solutions.length}
             </div>
           </div>
@@ -139,7 +137,7 @@ export default async function ArchivedSolutionsPage() {
               padding: 20,
               display: "flex",
               alignItems: "center",
-              color: "#526173",
+              color: "var(--ink-600)",
               border: "1px solid #e8e4f4",
             }}
           >
@@ -155,8 +153,8 @@ export default async function ArchivedSolutionsPage() {
           style={{
             padding: 24,
             marginTop: 28,
-            background: "#fef3f2",
-            color: "#b42318",
+            background: "var(--danger-100)",
+            color: "var(--danger-600)",
           }}
         >
           <strong>Unable to load archived solutions</strong>
@@ -167,7 +165,7 @@ export default async function ArchivedSolutionsPage() {
       {!error && solutions.length === 0 && (
         <section className="card" style={{ padding: 30, marginTop: 28 }}>
           <h2 style={{ marginTop: 0 }}>No archived solutions</h2>
-          <p style={{ color: "#526173", marginBottom: 0 }}>
+          <p style={{ color: "var(--ink-600)", marginBottom: 0 }}>
             Archived solutions will appear here when you archive them from the
             active solutions list.
           </p>
@@ -203,14 +201,14 @@ export default async function ArchivedSolutionsPage() {
                   style={{ borderTop: "1px solid #e4e9f2" }}
                 >
                   <Td>
-                    <div style={{ fontWeight: 900, color: "#0f172a" }}>
+                    <div style={{ fontWeight: 600, color: "var(--ink-900)" }}>
                       {solution.name}
                     </div>
 
                     <div
                       style={{
                         marginTop: 6,
-                        color: "#667085",
+                        color: "var(--ink-600)",
                         fontSize: 13,
                         maxWidth: 420,
                       }}
@@ -221,7 +219,7 @@ export default async function ArchivedSolutionsPage() {
                     <div style={{ marginTop: 10 }}>
                       <span
                         className="badge"
-                        style={{ background: "#f2f4f7", color: "#344054" }}
+                        style={{ background: "#f2f4f7", color: "var(--ink-900)" }}
                       >
                         archived
                       </span>
@@ -233,7 +231,7 @@ export default async function ArchivedSolutionsPage() {
                       <span>
                         <strong>{solution.services_count}</strong> services
                       </span>
-                      <span style={{ color: "#667085" }}>
+                      <span style={{ color: "var(--ink-600)" }}>
                         {solution.connections_count} connections
                       </span>
                     </div>
@@ -260,7 +258,7 @@ export default async function ArchivedSolutionsPage() {
                             href={`/deployments/${solution.latest_workflow_id}`}
                             style={{
                               color: "#075985",
-                              fontWeight: 800,
+                              fontWeight: 600,
                               fontSize: 13,
                               textDecoration: "none",
                               fontFamily: "monospace",
@@ -271,14 +269,14 @@ export default async function ArchivedSolutionsPage() {
                         )}
                       </div>
                     ) : (
-                      <span style={{ color: "#667085" }}>Not deployed</span>
+                      <span style={{ color: "var(--ink-600)" }}>Not deployed</span>
                     )}
                   </Td>
 
                   <Td>
                     <div style={{ display: "grid", gap: 6 }}>
                       <span>{formatDate(solution.updated_at)}</span>
-                      <span style={{ color: "#667085", fontSize: 13 }}>
+                      <span style={{ color: "var(--ink-600)", fontSize: 13 }}>
                         Archived / restored state changed
                       </span>
                     </div>
@@ -290,7 +288,7 @@ export default async function ArchivedSolutionsPage() {
                         href={`/solutions/${solution.id}`}
                         style={{
                           color: "#075985",
-                          fontWeight: 800,
+                          fontWeight: 600,
                           textDecoration: "none",
                           whiteSpace: "nowrap",
                         }}
@@ -312,7 +310,7 @@ export default async function ArchivedSolutionsPage() {
                             color: "white",
                             padding: "8px 10px",
                             borderRadius: 10,
-                            fontWeight: 800,
+                            fontWeight: 600,
                             cursor: "pointer",
                           }}
                         >
@@ -369,7 +367,7 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function Td({ children }: { children: React.ReactNode }) {
   return (
-    <td style={{ padding: 16, color: "#344054", verticalAlign: "top" }}>
+    <td style={{ padding: 16, color: "var(--ink-900)", verticalAlign: "top" }}>
       {children}
     </td>
   );
@@ -390,7 +388,7 @@ function statusBadgeStyle(status: string) {
   if (status === "failed") {
     return {
       background: "#fee4e2",
-      color: "#b42318",
+      color: "var(--danger-600)",
     };
   }
 

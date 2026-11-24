@@ -282,7 +282,6 @@ export default function AdminPage() {
   return (
     
       <div className="page">
-        <span className="badge">Admin Governance</span>
 
         <div
           style={{
@@ -293,11 +292,11 @@ export default function AdminPage() {
           }}
         >
           <div>
-            <h1 style={{ fontSize: 40, marginBottom: 8 }}>
+            <h1 className="page-header__title">
               Platform administration
             </h1>
 
-            <p style={{ color: "#526173", fontSize: 17, maxWidth: 950 }}>
+            <p className="page-header__lead">
               Approve user registrations, assign roles and nodes, and govern
               services available in Catalogue and Builder.
             </p>
@@ -311,7 +310,7 @@ export default function AdminPage() {
               color: "#075985",
               borderRadius: 12,
               padding: "12px 16px",
-              fontWeight: 800,
+              fontWeight: 600,
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}
@@ -324,21 +323,21 @@ export default function AdminPage() {
           <div style={{ padding: 20, borderBottom: "1px solid #e4e9f2" }}>
             <span className="badge">User access</span>
             <h2 style={{ margin: "10px 0 5px" }}>Registrations and onboarded users</h2>
-            <p style={{ margin: 0, color: "#667085" }}>Verify each email and affiliation before approval. Node Managers can only govern services belonging to their assigned node.</p>
+            <p style={{ margin: 0, color: "var(--ink-600)" }}>Verify each email and affiliation before approval. Node Managers can only govern services belonging to their assigned node.</p>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
-              <thead style={{ background: "#f8fafc" }}><tr><Th>User</Th><Th>Access level</Th><Th>Node</Th><Th>Status</Th><Th>Activity</Th><Th>Actions</Th></tr></thead>
+              <thead style={{ background: "var(--surface-sunken)" }}><tr><Th>User</Th><Th>Access level</Th><Th>Node</Th><Th>Status</Th><Th>Activity</Th><Th>Actions</Th></tr></thead>
               <tbody>
-                {users.length === 0 && <tr><td colSpan={6} style={{ padding: 24, color: "#667085" }}>No user registrations found.</td></tr>}
+                {users.length === 0 && <tr><td colSpan={6} style={{ padding: 24, color: "var(--ink-600)" }}>No user registrations found.</td></tr>}
                 {users.map((user) => {
                   const busy = actionUserId === user.id;
                   return <tr key={user.id} style={{ borderTop: "1px solid #e4e9f2" }}>
-                    <Td><strong style={{ display: "block" }}>{user.display_name}</strong><span style={{ color: "#667085" }}>{user.email}</span></Td>
+                    <Td><strong style={{ display: "block" }}>{user.display_name}</strong><span style={{ color: "var(--ink-600)" }}>{user.email}</span></Td>
                     <Td><select value={user.role} disabled={busy || user.status === "active"} onChange={(event) => editUser(user.id, { role: event.target.value as UserRole, node: event.target.value === "platform_admin" ? null : user.node })} style={{ padding: "8px 10px" }}><option value="solution_designer">Solution Designer</option><option value="node_manager">Node Manager</option><option value="platform_admin">Platform Admin</option></select></Td>
                     <Td><select value={user.node || ""} disabled={busy || user.status === "active" || user.role === "platform_admin"} onChange={(event) => editUser(user.id, { node: (event.target.value || null) as NodeCode | null })} style={{ padding: "8px 10px" }}><option value="">No node</option><option value="germany">German</option><option value="portugal">Portuguese</option><option value="denmark">Danish</option><option value="dutch">Dutch</option></select></Td>
                     <Td><span className="badge" style={userStatusStyle(user.status)}>{user.status}</span></Td>
-                    <Td><span style={{ display: "block", color: "#667085" }}>Joined {formatAdminDate(user.created_at)}</span><small style={{ color: "#98a2b3" }}>{user.last_login_at ? `Last login ${formatAdminDate(user.last_login_at)}` : "Never signed in"}</small></Td>
+                    <Td><span style={{ display: "block", color: "var(--ink-600)" }}>Joined {formatAdminDate(user.created_at)}</span><small style={{ color: "#98a2b3" }}>{user.last_login_at ? `Last login ${formatAdminDate(user.last_login_at)}` : "Never signed in"}</small></Td>
                     <Td><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       {(user.status === "pending" || user.status === "rejected") && <button disabled={busy || (user.role === "node_manager" && !user.node)} onClick={() => updateUserStatus(user, "approve")} style={buttonStyle("success", busy)}>Approve</button>}
                       {user.status === "pending" && <button disabled={busy} onClick={() => updateUserStatus(user, "reject")} style={buttonStyle("danger", busy)}>Reject</button>}
@@ -355,7 +354,7 @@ export default function AdminPage() {
         <section className="card" style={{ marginTop: 24, padding: 20 }}>
           <span className="badge">Runtime verification</span>
           <h2 style={{ margin: "10px 0 5px" }}>Service connection and WP3 metadata</h2>
-          <p style={{ margin: "0 0 16px", color: "#667085" }}>Edit the platform-network address separately from the logical WP3 container name, then verify connectivity from the portal API network. Connectivity does not certify operation correctness.</p>
+          <p style={{ margin: "0 0 16px", color: "var(--ink-600)" }}>Edit the platform-network address separately from the logical WP3 container name, then verify connectivity from the portal API network. Connectivity does not certify operation correctness.</p>
           <div style={{ display: "grid", gap: 10 }}>
             {services.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadServices} />)}
           </div>
@@ -365,10 +364,10 @@ export default function AdminPage() {
           <div style={{ padding: 20, borderBottom: "1px solid #e4e9f2" }}>
             <span className="badge">Data preservation</span>
             <h2 style={{ margin: "10px 0 5px" }}>Existing records awaiting ownership</h2>
-            <p style={{ margin: 0, color: "#667085" }}>Records created before user login remain unchanged. Assign them after approving the correct account. Assigning a solution also assigns its currently unowned linked deployments.</p>
+            <p style={{ margin: 0, color: "var(--ink-600)" }}>Records created before user login remain unchanged. Assign them after approving the correct account. Assigning a solution also assigns its currently unowned linked deployments.</p>
           </div>
           {legacy.solutions.length + legacy.deployments.length + legacy.services.length === 0 ? (
-            <div style={{ padding: 24, color: "#027a48", fontWeight: 800 }}>All existing records have an owner.</div>
+            <div style={{ padding: 24, color: "#027a48", fontWeight: 600 }}>All existing records have an owner.</div>
           ) : (
             <div style={{ padding: 20, display: "grid", gap: 24 }}>
               <LegacyTable title="Solutions" empty="No unassigned solutions." rows={legacy.solutions.map((item) => ({ id: item.id, primary: item.name, secondary: `${item.status} · updated ${formatAdminDate(item.updated_at)}` }))} choices={ownershipChoices} setChoice={(id, value) => setOwnershipChoices((current) => ({ ...current, [id]: value }))} options={users.filter((user) => user.status === "active").map((user) => ({ value: user.id, label: `${user.display_name} (${user.email})` }))} busyId={actionOwnershipId} onAssign={(id) => assignLegacyRecord("solutions", id)} />
@@ -410,7 +409,7 @@ export default function AdminPage() {
             flexWrap: "wrap",
           }}
         >
-          <div style={{ color: "#526173" }}>
+          <div style={{ color: "var(--ink-600)" }}>
             Active services are available normally. Deprecated services remain
             visible with a warning. Archived services are hidden from Catalogue
             and Builder but retained for audit and old solution history.
@@ -446,20 +445,20 @@ export default function AdminPage() {
 
         <section className="card" style={{ marginTop: 24, overflow: "hidden" }}>
           {loading && (
-            <div style={{ padding: 24, color: "#667085" }}>
+            <div style={{ padding: 24, color: "var(--ink-600)" }}>
               Loading services...
             </div>
           )}
 
           {error && (
-            <div style={{ padding: 24, color: "#b42318", fontWeight: 800 }}>
+            <div style={{ padding: 24, color: "var(--danger-600)", fontWeight: 600 }}>
               {error}
             </div>
           )}
 
           {!loading && !error && (
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead style={{ background: "#f8fafc" }}>
+              <thead style={{ background: "var(--surface-sunken)" }}>
                 <tr>
                   <Th>Service</Th>
                   <Th>Provider</Th>
@@ -473,7 +472,7 @@ export default function AdminPage() {
               <tbody>
                 {filteredServices.length === 0 && (
                   <tr>
-                    <td colSpan={6} style={{ padding: 24, color: "#667085" }}>
+                    <td colSpan={6} style={{ padding: 24, color: "var(--ink-600)" }}>
                       No services found for this filter.
                     </td>
                   </tr>
@@ -490,13 +489,13 @@ export default function AdminPage() {
                       style={{ borderTop: "1px solid #e4e9f2" }}
                     >
                       <Td>
-                        <div style={{ fontWeight: 900, color: "#0f172a" }}>
+                        <div style={{ fontWeight: 600, color: "var(--ink-900)" }}>
                           {service.name}
                         </div>
 
                         <div
                           style={{
-                            color: "#667085",
+                            color: "var(--ink-600)",
                             fontSize: 13,
                             marginTop: 5,
                             maxWidth: 420,
@@ -507,7 +506,7 @@ export default function AdminPage() {
 
                         <div
                           style={{
-                            color: "#667085",
+                            color: "var(--ink-600)",
                             fontSize: 12,
                             marginTop: 8,
                             fontFamily: "monospace",
@@ -518,13 +517,13 @@ export default function AdminPage() {
                       </Td>
 
                       <Td>
-                        <div style={{ fontWeight: 800 }}>
+                        <div style={{ fontWeight: 600 }}>
                           {service.provider}
                         </div>
-                        <div style={{ color: "#667085", fontSize: 13 }}>
+                        <div style={{ color: "var(--ink-600)", fontSize: 13 }}>
                           {service.category}
                         </div>
-                        <div style={{ color: "#667085", fontSize: 13 }}>
+                        <div style={{ color: "var(--ink-600)", fontSize: 13 }}>
                           v{service.version}
                         </div>
                       </Td>
@@ -555,7 +554,7 @@ export default function AdminPage() {
                           <div
                             style={{
                               marginTop: 8,
-                              color: "#667085",
+                              color: "var(--ink-600)",
                               fontSize: 13,
                               maxWidth: 220,
                             }}
@@ -573,7 +572,7 @@ export default function AdminPage() {
                           {service.trust_badge}
                         </span>
                         <div
-                          style={{ color: "#667085", fontSize: 13, marginTop: 8 }}
+                          style={{ color: "var(--ink-600)", fontSize: 13, marginTop: 8 }}
                         >
                           Status: {service.status}
                         </div>
@@ -584,10 +583,10 @@ export default function AdminPage() {
                           {service.internal_host || service.container_name}:
                           {service.internal_port || "?"}
                         </div>
-                        <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
+                        <div style={{ color: "var(--ink-600)", fontSize: 13, marginTop: 6 }}>
                           {service.operation_name || "No operation"}
                         </div>
-                        <div style={{ marginTop: 7, fontSize: 12, fontWeight: 800, color: service.interface_contract?.runtime_verification?.status === "verified" ? "#027a48" : "#b54708" }}>
+                        <div style={{ marginTop: 7, fontSize: 12, fontWeight: 600, color: service.interface_contract?.runtime_verification?.status === "verified" ? "#027a48" : "#b54708" }}>
                           {service.interface_contract?.runtime_verification?.status === "verified"
                             ? `Runtime verified${service.interface_contract.runtime_verification.http_status ? ` · HTTP ${service.interface_contract.runtime_verification.http_status}` : ""}`
                             : service.status === "approved"
@@ -595,7 +594,7 @@ export default function AdminPage() {
                               : "Runtime not verified"}
                         </div>
                         {service.interface_contract?.onboarding && (
-                          <div style={{ marginTop: 9, fontSize: 12, color: "#667085", lineHeight: 1.45 }}>
+                          <div style={{ marginTop: 9, fontSize: 12, color: "var(--ink-600)", lineHeight: 1.45 }}>
                             <strong style={{ display: "block", color: service.interface_contract.onboarding.runtime_status === "already_running" ? "#027a48" : "#b54708" }}>
                               {service.interface_contract.onboarding.runtime_status === "already_running"
                                 ? "Provider claims runtime is running"
@@ -735,30 +734,30 @@ function SummaryCard({
 }) {
   const background =
     tone === "good"
-      ? "#ecfdf3"
+      ? "var(--mint-100)"
       : tone === "warning"
       ? "#fffaeb"
       : tone === "muted"
       ? "#f2f4f7"
-      : "#f8fafc";
+      : "var(--surface-sunken)";
 
   const color =
     tone === "good"
       ? "#027a48"
       : tone === "warning"
       ? "#b54708"
-      : "#344054";
+      : "var(--ink-900)";
 
   return (
     <div style={{ background, color, padding: 16, borderRadius: 14 }}>
       <div style={{ fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 900, marginTop: 4 }}>{value}</div>
+      <div style={{ fontSize: 28, fontWeight: 600, marginTop: 4 }}>{value}</div>
     </div>
   );
 }
 
 function LegacyTable({ title, empty, rows, choices, setChoice, options, busyId, onAssign }: { title: string; empty: string; rows: Array<{ id: string; primary: string; secondary: string }>; choices: Record<string, string>; setChoice: (id: string, value: string) => void; options: Array<{ value: string; label: string }>; busyId: string | null; onAssign: (id: string) => void }) {
-  return <div><h3 style={{ margin: "0 0 10px" }}>{title}</h3>{rows.length === 0 ? <p style={{ color: "#667085" }}>{empty}</p> : <div style={{ display: "grid", gap: 8 }}>{rows.map((row) => <div key={row.id} style={{ display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(240px, .7fr) auto", gap: 10, alignItems: "center", padding: 12, border: "1px solid #e4e9f2", borderRadius: 12 }}><div><strong style={{ display: "block" }}>{row.primary}</strong><small style={{ color: "#667085" }}>{row.secondary}</small></div><select value={choices[row.id] || ""} onChange={(event) => setChoice(row.id, event.target.value)} style={{ padding: "9px 10px" }}><option value="">Select owner</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><button disabled={!choices[row.id] || busyId === row.id} onClick={() => onAssign(row.id)} style={buttonStyle("primary", busyId === row.id)}>{busyId === row.id ? "Assigning…" : "Assign"}</button></div>)}</div>}</div>;
+  return <div><h3 style={{ margin: "0 0 10px" }}>{title}</h3>{rows.length === 0 ? <p style={{ color: "var(--ink-600)" }}>{empty}</p> : <div style={{ display: "grid", gap: 8 }}>{rows.map((row) => <div key={row.id} style={{ display: "grid", gridTemplateColumns: "minmax(220px, 1fr) minmax(240px, .7fr) auto", gap: 10, alignItems: "center", padding: 12, border: "1px solid #e4e9f2", borderRadius: 12 }}><div><strong style={{ display: "block" }}>{row.primary}</strong><small style={{ color: "var(--ink-600)" }}>{row.secondary}</small></div><select value={choices[row.id] || ""} onChange={(event) => setChoice(row.id, event.target.value)} style={{ padding: "9px 10px" }}><option value="">Select owner</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select><button disabled={!choices[row.id] || busyId === row.id} onClick={() => onAssign(row.id)} style={buttonStyle("primary", busyId === row.id)}>{busyId === row.id ? "Assigning…" : "Assign"}</button></div>)}</div>}</div>;
 }
 
 function FilterButton({
@@ -776,10 +775,10 @@ function FilterButton({
       style={{
         border: active ? "1px solid #075985" : "1px solid #d0d5dd",
         background: active ? "#e0f2fe" : "white",
-        color: active ? "#075985" : "#344054",
+        color: active ? "#075985" : "var(--ink-900)",
         padding: "8px 12px",
         borderRadius: 999,
-        fontWeight: 800,
+        fontWeight: 600,
         cursor: "pointer",
       }}
     >
@@ -794,7 +793,7 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function Td({ children }: { children: React.ReactNode }) {
   return (
-    <td style={{ padding: 16, color: "#344054", verticalAlign: "top" }}>
+    <td style={{ padding: 16, color: "var(--ink-900)", verticalAlign: "top" }}>
       {children}
     </td>
   );
@@ -807,8 +806,8 @@ function getLifecycle(service: Service) {
 function userStatusStyle(status: PortalUser["status"]) {
   if (status === "active") return { background: "#dcfae6", color: "#027a48" };
   if (status === "pending") return { background: "#fef0c7", color: "#b54708" };
-  if (status === "suspended") return { background: "#f2f4f7", color: "#475467" };
-  return { background: "#fee4e2", color: "#b42318" };
+  if (status === "suspended") return { background: "#f2f4f7", color: "var(--ink-600)" };
+  return { background: "#fee4e2", color: "var(--danger-600)" };
 }
 
 function formatAdminDate(value: string) {
@@ -845,7 +844,7 @@ function reviewBadgeStyle(status: string) {
   if (status === "rejected") {
     return {
       background: "#fee4e2",
-      color: "#b42318",
+      color: "var(--danger-600)",
     };
   }
 
@@ -873,7 +872,7 @@ function lifecycleBadgeStyle(status: string) {
   if (status === "archived") {
     return {
       background: "#f2f4f7",
-      color: "#344054",
+      color: "var(--ink-900)",
     };
   }
 
@@ -903,12 +902,12 @@ function buttonStyle(
     danger: {
       border: "1px solid #fecdca",
       background: "white",
-      color: "#b42318",
+      color: "var(--danger-600)",
     },
     neutral: {
       border: "1px solid #d0d5dd",
       background: "white",
-      color: "#344054",
+      color: "var(--ink-900)",
     },
   };
 
@@ -916,7 +915,7 @@ function buttonStyle(
     ...colors[tone],
     padding: "8px 10px",
     borderRadius: 10,
-    fontWeight: 800,
+    fontWeight: 600,
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.6 : 1,
   };

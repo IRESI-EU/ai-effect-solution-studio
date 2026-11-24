@@ -691,37 +691,37 @@ function formatApiError(detail: unknown): string | null {
 }
 
 function statusBadgeStyle(status: PreviewResponse["status"]): CSSProperties {
-  return { ...badgeStyle, ...(status === "valid" ? { background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" } : status === "warning" ? { background: "#fffbeb", color: "#92400e", borderColor: "#fde68a" } : { background: "#fef2f2", color: "#b91c1c", borderColor: "#fecaca" }) };
+  return { ...badgeStyle, ...(status === "valid" ? { background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" } : status === "warning" ? { background: "var(--warning-100)", color: "var(--warning-600)", borderColor: "#fde68a" } : { background: "#fef2f2", color: "#b91c1c", borderColor: "#fecaca" }) };
 }
 
 function validationItemStyle(level: ValidationMessage["level"]): CSSProperties {
-  const colors = level === "error" ? { borderColor: "#fecaca", background: "#fef2f2" } : { borderColor: "#fde68a", background: "#fffbeb" };
+  const colors = level === "error" ? { borderColor: "#fecaca", background: "#fef2f2" } : { borderColor: "#fde68a", background: "var(--warning-100)" };
   return { display: "grid", gap: 4, padding: 13, border: "1px solid", borderRadius: 12, ...colors };
 }
 
-const eyebrowStyle: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: "#6543df" };
+const eyebrowStyle: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "#6543df" };
 const cardStyle: CSSProperties = { background: "#fff", border: "1px solid #e5e4f1", borderRadius: 18, padding: 22, boxShadow: "0 12px 32px rgba(30,24,70,.07)", marginBottom: 22 };
 const successCardStyle: CSSProperties = { ...cardStyle, borderColor: "#bbf7d0", background: "#f0fdf4" };
-const sectionTitleStyle: CSSProperties = { margin: "6px 0 16px", fontSize: 24, color: "#0f172a" };
+const sectionTitleStyle: CSSProperties = { margin: "6px 0 16px", fontSize: 24, color: "var(--ink-900)" };
 const tabRowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 };
-const tabStyle: CSSProperties = { border: "1px solid #cbd5e1", background: "#f8fafc", color: "#334155", borderRadius: 999, padding: "9px 14px", fontWeight: 750, cursor: "pointer" };
+const tabStyle: CSSProperties = { border: "1px solid #cbd5e1", background: "var(--surface-sunken)", color: "#334155", borderRadius: 999, padding: "9px 14px", fontWeight: 750, cursor: "pointer" };
 const activeTabStyle: CSSProperties = { ...tabStyle, background: "#f0ecff", color: "#4f2bc9", borderColor: "#c9bcfa" };
 const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 7, fontSize: 13, fontWeight: 750, color: "#334155" };
 const inputStyle: CSSProperties = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 11, padding: "10px 11px", fontSize: 14, background: "#fff" };
 const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 280, fontFamily: "ui-monospace, monospace", resize: "vertical" };
 const fieldHelpStyle: CSSProperties = { color: "#73778d", fontWeight: 500, lineHeight: 1.4 };
 const helpTextStyle: CSSProperties = { margin: "8px 0", color: "#64748b", fontSize: 13, lineHeight: 1.5 };
-const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 11, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 800, cursor: "pointer" };
+const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 11, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 600, cursor: "pointer" };
 const smallButtonStyle: CSSProperties = { border: "1px solid #cbd5e1", borderRadius: 9, padding: "7px 10px", background: "#fff", color: "#334155", fontWeight: 750, cursor: "pointer" };
-const secondaryButtonStyle: CSSProperties = { display: "inline-flex", margin: "8px 8px 0 0", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: 11, padding: "9px 13px", background: "#fff", color: "#334155", textDecoration: "none", fontWeight: 800 };
-const primaryLinkStyle: CSSProperties = { ...secondaryButtonStyle, background: "#5b2cf2", borderColor: "#5b2cf2", color: "#fff" };
+const secondaryButtonStyle: CSSProperties = { display: "inline-flex", margin: "8px 8px 0 0", alignItems: "center", border: "1px solid #cbd5e1", borderRadius: 11, padding: "9px 13px", background: "#fff", color: "#334155", textDecoration: "none", fontWeight: 600 };
+const primaryLinkStyle: CSSProperties = { ...secondaryButtonStyle, background: "var(--brand-600)", borderColor: "var(--brand-600)", color: "#fff" };
 const errorBoxStyle: CSSProperties = { marginTop: 16, padding: 14, border: "1px solid #fecaca", borderRadius: 13, background: "#fef2f2", color: "#991b1b", fontWeight: 700 };
 const rowBetweenStyle: CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 };
-const badgeStyle: CSSProperties = { border: "1px solid", borderRadius: 999, padding: "7px 11px", fontSize: 12, fontWeight: 900 };
+const badgeStyle: CSSProperties = { border: "1px solid", borderRadius: 999, padding: "7px 11px", fontSize: 12, fontWeight: 600 };
 const previewBoxStyle: CSSProperties = { marginTop: 18, padding: 18, border: "1px solid #ddd8f4", borderRadius: 14, background: "#faf9ff" };
 const previewTitleStyle: CSSProperties = { margin: 0, color: "#171a38", fontSize: 22 };
 const previewDescriptionStyle: CSSProperties = { color: "#666b82", lineHeight: 1.5 };
 const detailsGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10 };
 const detailStyle: CSSProperties = { display: "grid", gap: 3, padding: 10, borderRadius: 9, background: "#fff", overflowWrap: "anywhere" };
-const detailLabelStyle: CSSProperties = { color: "#777d92", fontSize: 11, fontWeight: 800, textTransform: "uppercase" };
+const detailLabelStyle: CSSProperties = { color: "#777d92", fontSize: 11, fontWeight: 600, textTransform: "uppercase" };
 const detailValueStyle: CSSProperties = { color: "#252842", fontSize: 13, fontWeight: 700 };

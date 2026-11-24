@@ -137,23 +137,18 @@ export default function Page() {
   return (
     <div className="page">
       <section className="dashboard-hero">
-        <div className="dashboard-hero-orb dashboard-hero-orb-one" />
-        <div className="dashboard-hero-orb dashboard-hero-orb-two" />
         <div className="dashboard-hero-content">
-          <span className="dashboard-hero-label">
-            <Sparkles size={15} /> AI-EFFECT Web portal
-          </span>
-          <h1>Turn trusted energy AI services into deployable solutions.</h1>
+          <h1>Build trusted energy AI solutions</h1>
           <p>
-            Explore services from AI-EFFECT nodes, compose a visual workflow,
-            validate deployment readiness, and inspect evidence from WP3 runs.
+            Find services from AI-EFFECT nodes, combine them into a workflow by hand or with Design with AI, and run
+            them on the AI-EFFECT testing and experimentation facility.
           </p>
           <div className="dashboard-hero-actions">
-            <Link href="/catalogue" className="dashboard-primary-action">
-              Explore services <ArrowRight size={17} />
+            <Link href="/builder" className="ae-btn ae-btn--primary">
+              Build a solution <ArrowRight size={16} />
             </Link>
-            <Link href="/builder" className="dashboard-secondary-action">
-              Build a solution
+            <Link href="/catalogue" className="ae-btn ae-btn--secondary">
+              Browse the catalogue
             </Link>
           </div>
         </div>
@@ -161,11 +156,11 @@ export default function Page() {
 
       {!data.apiAvailable && (
         <div className="dashboard-data-warning" role="status">
-          Live portal data is temporarily unavailable. Start the local API and refresh this page.
+          Live data is temporarily unavailable. Refresh the page in a moment.
         </div>
       )}
 
-      <SectionHeading eyebrow="Live workspace" title="Portal overview" />
+      <SectionHeading eyebrow="" title="Your workspace" />
       <section className="dashboard-metric-grid">
         {stats.map(({ icon: Icon, ...stat }) => (
           <article className="card dashboard-metric-card" key={stat.label}>
@@ -179,7 +174,7 @@ export default function Page() {
         ))}
       </section>
 
-      <SectionHeading eyebrow="Choose a path" title="What do you want to accomplish?" />
+      <SectionHeading eyebrow="" title="What would you like to do?" />
       <section className="dashboard-role-grid">
         {journeys.map(({ icon: Icon, ...item }) => (
           <article className="card dashboard-role-card" key={item.title}>
@@ -198,12 +193,12 @@ export default function Page() {
       <section className="dashboard-lower-grid">
         <div className="card dashboard-panel-card">
           <CardHeader
-            title="Recent deployment activity"
-            subtitle="Latest records stored by the portal"
-            action={<Link href="/deployments">View deployments</Link>}
+            title="Recent runs"
+            subtitle="The latest workflows you deployed"
+            action={<Link href="/deployments">View all runs</Link>}
           />
           {recentDeployments.length === 0 ? (
-            <p className="dashboard-empty-copy">No deployment activity is available yet.</p>
+            <p className="dashboard-empty-copy">No runs yet. Build a solution and deploy it to see it here.</p>
           ) : (
             recentDeployments.map((deployment) => (
               <div className="dashboard-activity-row" key={deployment.workflow_id}>
@@ -225,25 +220,25 @@ export default function Page() {
 
         <div className="card dashboard-panel-card">
           <CardHeader
-            title="Connection model"
-            subtitle="What the portal verifies automatically"
+            title="Platform status"
+            subtitle="Checked automatically"
             action={
               <span className={data.apiAvailable ? "dashboard-api-online" : "dashboard-api-offline"}>
-                {data.apiAvailable ? "API available" : "API unavailable"}
+                {data.apiAvailable ? "Online" : "Offline"}
               </span>
             }
           />
-          <StatusRow name="Catalogue API" detail={data.apiAvailable ? "Responding locally" : "Not reachable"} active={data.apiAvailable} />
-          <StatusRow name="Service runtimes" detail="Checked during deployment preparation" />
-          <StatusRow name="WP3 submission" detail="Confirmed immediately before every run" />
+          <StatusRow name="Catalogue" detail={data.apiAvailable ? "Available" : "Not reachable"} active={data.apiAvailable} />
+          <StatusRow name="Node services" detail="Checked when you prepare a deployment" />
+          <StatusRow name="Orchestrator" detail="Confirmed before every run" />
         </div>
       </section>
     </div>
   );
 }
 
-function SectionHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
-  return <div className="dashboard-section-heading"><div><span>{eyebrow}</span><h2>{title}</h2></div></div>;
+function SectionHeading({ title }: { eyebrow?: string; title: string }) {
+  return <div className="dashboard-section-heading"><h2 className="section__title">{title}</h2></div>;
 }
 
 function CardHeader({ title, subtitle, action }: { title: string; subtitle: string; action: React.ReactNode }) {
