@@ -56,7 +56,7 @@ from app.services.runtime_preflight import (
     run_runtime_preflight,
 )
 from app.services.workflow_compiler import compile_to_wp3_payload
-from app.services.run_snapshots import saved_preview, watch_workflow
+from app.services.run_snapshots import delete_expired_snapshots, saved_preview, watch_workflow
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.service_import import (
     ServiceImportManualConfirmRequest,
@@ -86,6 +86,7 @@ Base.metadata.create_all(bind=engine)
 
 with SessionLocal() as bootstrap_db:
     bootstrap_admin(bootstrap_db)
+    delete_expired_snapshots(bootstrap_db)
 
 app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
 app.include_router(operation_contracts_router)

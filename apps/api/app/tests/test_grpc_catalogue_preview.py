@@ -150,3 +150,35 @@ def test_run_output_is_saved_and_survives_later_runs(grpc_report_service, sessio
     from app.models.run_output_snapshot import RunOutputSnapshot
     with session_factory() as db:
         assert db.query(RunOutputSnapshot).filter_by(workflow_id="wf-first").count() == 1
+
+
+def test_large_output_is_saved_trimmed():
+    from app.services.run_snapshots import fit_to_size_cap
+
+    preview = {"kind": "json", "available": True, "content": {"summary": "ok", "records": [{"v": i} for i in range(5000)]}}
+    saved = fit_to_size_cap(preview, max_bytes=10_000)
+    assert saved["truncated"] is True
+    assert saved["original_size_bytes"] > 10_000
+    assert saved["content"]["summary"] == "ok"
+    assert len(saved["content"]["records"]) == 21
+    assert "4980 more items not saved" in saved["content"]["records"][-1]
+    small = {"kind": "json", "available": True, "content": {"a": 1}}
+    assert fit_to_size_cap(small, max_bytes=10_000) is small
+
+
+def test_expired_outputs_are_deleted(session_factory):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.run_output_snapshot import RunOutputSnapshot
+    from app.services.run_snapshots import delete_expired_snapshots
+
+    now = datetime.now(timezone.utc)
+    with session_factory() as db:
+        for wf, age in (("wf-old", 120), ("wf-recent", 10)):
+            db.add(RunOutputSnapshot(workflow_id=wf, task_id="task_x", protocol="grpc", uri="h:1",
+                                     preview={"available": True}, captured_at=now - timedelta(days=age)))
+        db.commit()
+        assert delete_expired_snapshots(db, retention_days=0) == 0
+        assert delete_expired_snapshots(db, retention_days=90) == 1
+        remaining = {r.workflow_id for r in db.query(RunOutputSnapshot).filter(RunOutputSnapshot.workflow_id.in_(["wf-old", "wf-recent"]))}
+        assert remaining == {"wf-recent"}

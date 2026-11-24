@@ -28,4 +28,4 @@ class RunOutputSnapshot(Base):
     uri = Column(Text, nullable=False)
     format = Column(String, nullable=True)
     preview = Column(JSONB, nullable=False)
-    captured_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    captured_at = Column(DateTime(timezone=True), nullable=False, index=True, default=lambda: datetime.now(timezone.utc))

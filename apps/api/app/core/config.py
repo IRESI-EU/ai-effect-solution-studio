@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     bootstrap_admin_password: str = ""
     bootstrap_admin_name: str = "Platform Administrator"
     service_contract_path: str = "/service-contracts"
+    # Saved run outputs (see services/run_snapshots.py)
+    run_snapshot_max_bytes: int = 1_048_576  # larger outputs are saved trimmed
+    run_snapshot_retention_days: int = 90  # 0 keeps saved outputs forever
 
 
 settings = Settings()
