@@ -78,6 +78,7 @@ export default function DeploymentDetailPage({
           uri: ref.uri,
           format: ref.format,
           task_id: taskId,
+          workflow_id: workflowId || undefined,
         }),
       });
 

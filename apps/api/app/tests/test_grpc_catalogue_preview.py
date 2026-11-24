@@ -115,3 +115,38 @@ def test_service_without_stored_proto_explains(session_factory):
         preview = preview_data_reference("grpc", "manual-host:50051", None, format_hint="Run", db=db)
     assert preview["available"] is False
     assert "no stored .proto" in preview["message"]
+
+
+def test_run_output_is_saved_and_survives_later_runs(grpc_report_service, session_factory, client, monkeypatch):
+    from app.services import run_snapshots
+
+    uri = f"127.0.0.1:{grpc_report_service}"
+    tasks = {"tasks": [{
+        "task_id": "task_report", "node_key": "report_generator1:GenerateReport", "status": "completed",
+        "output_refs": [{"protocol": "grpc", "uri": uri, "format": "GenerateReport", "metadata": {}}],
+    }]}
+    monkeypatch.setattr(run_snapshots, "get_workflow_status", lambda wf: {"status": "completed"})
+    monkeypatch.setattr(run_snapshots, "get_workflow_tasks", lambda wf: tasks)
+
+    run_snapshots.watch_workflow("wf-first", session_factory=session_factory, sleep=lambda s: None)
+
+    # A later run changes what the service returns; the first run keeps its copy.
+    def stop_server(*args, **kwargs):
+        raise AssertionError("saved preview must not call the service again")
+
+    monkeypatch.setattr("app.services.grpc_preview.call_grpc_method", stop_server)
+    response = client.post("/data-references/preview", json={
+        "protocol": "grpc", "uri": uri, "format": "GenerateReport",
+        "task_id": "task_report", "workflow_id": "wf-first",
+    })
+    body = response.json()
+    assert response.status_code == 200, body
+    assert body["snapshot"] is True
+    assert body["content"]["summary"] == "15 anomalies in 40 records"
+    assert "Saved from this run" in body["note"]
+
+    # Watching again does not duplicate the snapshot.
+    run_snapshots.watch_workflow("wf-first", session_factory=session_factory, sleep=lambda s: None)
+    from app.models.run_output_snapshot import RunOutputSnapshot
+    with session_factory() as db:
+        assert db.query(RunOutputSnapshot).filter_by(workflow_id="wf-first").count() == 1

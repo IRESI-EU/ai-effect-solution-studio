@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app.db import Base, SessionLocal, engine, get_db
 from app.models.deployment import Deployment
+from app.models.run_output_snapshot import RunOutputSnapshot  # noqa: F401  (table creation)
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.models.solution import Solution
@@ -55,6 +56,7 @@ from app.services.runtime_preflight import (
     run_runtime_preflight,
 )
 from app.services.workflow_compiler import compile_to_wp3_payload
+from app.services.run_snapshots import saved_preview, watch_workflow
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.service_import import (
     ServiceImportManualConfirmRequest,
@@ -163,6 +165,10 @@ def preview_data_reference_endpoint(
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
+    if payload.workflow_id and payload.task_id:
+        saved = saved_preview(db, payload.workflow_id, payload.task_id, payload.uri)
+        if saved is not None:
+            return saved
     return preview_data_reference(
         payload.protocol, payload.uri, payload.task_id, format_hint=payload.format, db=db
     )
@@ -673,6 +679,7 @@ def runtime_preflight_endpoint(
 @app.post("/workflows/submit-to-orchestrator")
 def submit_workflow_to_orchestrator_endpoint(
     workflow: WorkflowSubmitRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -722,6 +729,11 @@ def submit_workflow_to_orchestrator_endpoint(
             orchestrator_payload[key] = compiled_payload[key]
 
     orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+
+    # Save each step's gRPC output as it completes, so this run's results stay
+    # viewable after later runs replace the services' in-memory copies.
+    if isinstance(orchestrator_result, dict) and orchestrator_result.get("workflow_id"):
+        background_tasks.add_task(watch_workflow, orchestrator_result["workflow_id"])
 
     if isinstance(orchestrator_result, dict):
         orchestrator_result["solution_studio_metadata"] = compiled_payload.get(
