@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeft, CircleX } from "lucide-react";
+import { serviceText } from "../../../lib/service-presentation";
 import { useEffect, useRef, useState } from "react";
 
 type DeploymentRecord = {
@@ -193,199 +195,89 @@ export default function DeploymentDetailPage({
     };
   }, [params]);
 
+  const runStatus = (workflow?.status || deploymentRecord?.status || "").toLowerCase();
+  const completedSteps = tasks.filter((task: any) => task.status === "completed").length;
+
   return (
-    <div className="page">
-      <Link href="/deployments" style={{ color: "#075985", fontWeight: 600 }}>
-        ← Back to deployments
-      </Link>
+    <div className="page run-page">
+      <Link href="/deployments" className="back-link"><ArrowLeft size={16} aria-hidden="true" />Runs</Link>
 
-      <section
-        className="card"
-        style={{
-          padding: 30,
-          marginTop: 20,
-          background: "linear-gradient(135deg, #ffffff 0%, #f5f1ff 100%)",
-          border: "1px solid #ded7f5",
-          boxShadow: "0 18px 46px rgba(48, 35, 104, 0.08)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: 20,
-            alignItems: "flex-start",
-            margin: "16px 0 24px",
-          }}
-        >
-          <div>
-            <h1 className="page-header__title">Run details</h1>
-            <div
-              style={{
-                marginTop: 10,
-                color: "var(--ink-600)",
-                fontFamily: "monospace",
-                wordBreak: "break-all",
-              }}
-            >
-              Workflow {workflowId}
-            </div>
+      <header className="page-header">
+        <div className="page-header__text">
+          <div className="service-page__meta">
+            {runStatus && <span className={"ae-badge " + statusTone(runStatus)}>{capitalise(runStatus)}</span>}
+            <span className="ae-mono">{workflowId}</span>
           </div>
-          {workflow?.status && (
-            <span
-              className="badge"
-              style={{
-                ...statusBadgeStyle(workflow.status),
-                padding: "8px 12px",
-              }}
-            >
-              {workflow.status}
-            </span>
-          )}
+          <h1 className="page-header__title">{deploymentRecord?.name || "Run details"}</h1>
+          <p className="page-header__lead">
+            {tasks.length > 0 ? completedSteps + " of " + tasks.length + " steps completed." : "Waiting for the orchestrator to report steps."}
+          </p>
         </div>
-
-        {error && <p style={{ color: "var(--danger-600)" }}>{error}</p>}
-
-        {workflow && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 16,
-            }}
-          >
-            <Info label="Status" value={workflow.status} />
-            <Info label="Created" value={workflow.created_at || "-"} />
-            <Info label="Updated" value={workflow.updated_at || "-"} />
-            <Info label="Error" value={workflow.error || "None"} />
+        {deploymentRecord?.solution_id && (
+          <div className="page-header__actions">
+            <Link href={"/builder?solutionId=" + encodeURIComponent(deploymentRecord.solution_id)} className="ae-btn ae-btn--secondary">Open in Builder</Link>
           </div>
         )}
+      </header>
 
-        {deploymentRecord && (
-          <div
-            style={{
-              marginTop: 18,
-              padding: 14,
-              borderRadius: 14,
-              background: "var(--surface-sunken)",
-              color: "var(--ink-600)",
-              fontSize: 14,
-            }}
-          >
-            <strong>{deploymentRecord.name}</strong>
-            {deploymentRecord.solution_id
-              ? ` · Solution ${deploymentRecord.solution_id}`
-              : " · No linked solution"}
-            {" · "}Backend record synced as{" "}
-            <strong>{deploymentRecord.status}</strong>.
-          </div>
-        )}
-      </section>
+      {error && <div className="ae-alert ae-alert--danger run-alert"><CircleX size={20} aria-hidden="true" /><div>{error}</div></div>}
+      {workflow?.error && <div className="ae-alert ae-alert--danger run-alert"><CircleX size={20} aria-hidden="true" /><div><span className="ae-alert__title">The run failed.</span> {workflow.error}</div></div>}
 
-      <section
-        className="card"
-        style={{
-          padding: 30,
-          marginTop: 20,
-          border: "1px solid #e8e4f4",
-          boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Tasks &amp; Data References</h2>
-        <p style={{ color: "var(--ink-600)", marginTop: -4, marginBottom: 20 }}>
-          Orchestrator task states and the input or output artifacts attached to
-          each workflow node.
-        </p>
+      {workflow && (
+        <section className="ae-card run-summary">
+          <dl className="run-summary__grid">
+            <div><dt>Status</dt><dd>{capitalise(runStatus || "unknown")}</dd></div>
+            <div><dt>Started</dt><dd>{formatWhen(workflow.created_at)}</dd></div>
+            <div><dt>Last update</dt><dd>{formatWhen(workflow.updated_at)}</dd></div>
+            <div><dt>Solution</dt><dd>{deploymentRecord?.solution_id ? <Link href={"/solutions/" + deploymentRecord.solution_id}>Open solution</Link> : "Not linked"}</dd></div>
+          </dl>
+        </section>
+      )}
 
+      <section className="section">
+        <h2 className="section__title">Steps</h2>
         {!error && workflow && tasks.length === 0 && (
-          <div
-            style={{
-              padding: 18,
-              borderRadius: 14,
-              background: "#f8f7fc",
-              color: "var(--ink-600)",
-            }}
-          >
-            No task records are available for this workflow yet.
-          </div>
+          <div className="ae-card empty-state"><h3>No steps yet</h3><p>Steps appear here as the orchestrator starts them.</p></div>
         )}
-
-        <div style={{ display: "grid", gap: 16 }}>
-          {tasks.map((task: any) => (
-            <div
-              key={task.task_id}
-              style={{
-                padding: 18,
-                borderRadius: 16,
-                background: task.status === "completed" ? "var(--mint-100)" : "var(--surface-sunken)",
-                border: "1px solid #d6dee9",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                }}
-              >
-                <div>
-                  <strong>{task.node_key}</strong>
-                  <div style={{ color: "var(--ink-600)", marginTop: 6 }}>
-                    Task ID: {task.task_id}
-                  </div>
+        <ol className="run-steps">
+          {tasks.map((task: any, index: number) => (
+            <li key={task.task_id} className="ae-card run-step">
+              <div className="run-step__head">
+                <span className="run-step__number" aria-hidden="true">{index + 1}</span>
+                <div className="run-step__title">
+                  <h3>{stepName(task.node_key)}</h3>
+                  <span className="ae-mono">{task.node_key}</span>
                 </div>
-
-                <span
-                  className="badge"
-                  style={statusBadgeStyle(task.status)}
-                >
-                  {task.status}
-                </span>
+                <span className={"ae-badge " + statusTone(task.status)}>{capitalise(task.status)}</span>
               </div>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 14,
-                  marginTop: 18,
-                }}
-              >
-                <ReferenceList
-                  title="Input References"
-                  refs={task.input_refs || []}
-                  onPreview={(ref) =>
-                    previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
-                  }
-                />
-
-                <ReferenceList
-                  title="Output References"
-                  refs={task.output_refs || []}
-                  onPreview={(ref) =>
-                    previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
-                  }
-                />
-              </div>
-            </div>
+              {task.error && <p className="ae-field__error run-step__error">{task.error}</p>}
+              <ReferenceList
+                title="Results"
+                refs={task.output_refs || []}
+                onPreview={(ref) => previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))}
+              />
+              {(task.input_refs || []).length > 0 && (
+                <details className="details run-step__inputs">
+                  <summary>Inputs ({(task.input_refs || []).length})</summary>
+                  <div className="details__body">
+                    <ReferenceList
+                      title=""
+                      refs={task.input_refs || []}
+                      onPreview={(ref) => previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))}
+                    />
+                  </div>
+                </details>
+              )}
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       {(previewLoading || preview) && (
-        <section
-          ref={previewSectionRef}
-          className="card deployment-preview-card"
-          aria-live="polite"
-        >
-          <div className="deployment-preview-heading">
-            <div>
-              <span className="badge">Result preview</span>
-              <h2>Artifact / DataReference Preview</h2>
-            </div>
-            {!previewLoading && preview?.kind && (
-              <span className="deployment-preview-kind">{preview.kind}</span>
-            )}
+        <section ref={previewSectionRef} className="ae-card section run-preview deployment-preview-card" aria-live="polite">
+          <div className="run-preview__head">
+            <h2 className="section__title">Result</h2>
+            {!previewLoading && preview?.kind && <span className="ae-badge ae-badge--plain ae-badge--info">{String(preview.kind).toUpperCase()}</span>}
           </div>
 
           {(previewDirectory || preview?.kind === "directory") && (
@@ -396,18 +288,7 @@ export default function DeploymentDetailPage({
             />
           )}
 
-          {previewLoading && (
-            <div
-              style={{
-                padding: 16,
-                borderRadius: 14,
-                background: "var(--surface-sunken)",
-                color: "var(--ink-600)",
-              }}
-            >
-              Loading preview...
-            </div>
-          )}
+          {previewLoading && <p className="muted" style={{ margin: 0 }}>Loading the result...</p>}
 
           {!previewLoading && preview && (
             <PreviewPanel
@@ -421,6 +302,30 @@ export default function DeploymentDetailPage({
       )}
     </div>
   );
+}
+
+function capitalise(value: string) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : value;
+}
+
+function statusTone(status: string) {
+  const s = (status || "").toLowerCase();
+  if (s === "completed") return "ae-badge--success";
+  if (s === "failed") return "ae-badge--danger";
+  if (s === "running" || s === "submitted" || s === "pending") return "ae-badge--info";
+  return "";
+}
+
+function formatWhen(value?: string) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-IE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(date);
+}
+
+function stepName(nodeKey: string) {
+  const [container, operation] = String(nodeKey || "").split(":");
+  return serviceText({ name: container || nodeKey, operation_name: operation || null }).title;
 }
 
 function PreviewPanel({
@@ -832,62 +737,19 @@ function ReferenceList({
   onPreview: (ref: any) => void;
 }) {
   return (
-    <div style={{ background: "white", borderRadius: 14, padding: 14 }}>
-      <strong>{title}</strong>
-
-      {refs.length === 0 && (
-        <p style={{ color: "var(--ink-600)", marginBottom: 0 }}>None</p>
-      )}
-
-      <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-        {refs.map((ref, index) => (
-          <div
-            key={`${ref.protocol}-${ref.uri}-${index}`}
-            style={{
-              padding: 12,
-              borderRadius: 12,
-              background: "var(--surface-sunken)",
-              border: "1px solid #e4e9f2",
-            }}
-          >
-            <div>
-              <span className="badge">{ref.protocol}</span>
-              <span style={{ marginLeft: 8, color: "var(--ink-600)", fontSize: 13 }}>
-                {ref.format}
-              </span>
-            </div>
-
-            <div
-              style={{
-                marginTop: 10,
-                fontFamily: "monospace",
-                fontSize: 13,
-                color: "var(--ink-900)",
-                wordBreak: "break-all",
-              }}
-            >
-              {ref.uri}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onPreview(ref)}
-              style={{
-                marginTop: 10,
-                border: "1px solid #d7ceff",
-                background: "white",
-                color: "#6941c6",
-                borderRadius: 10,
-                padding: "8px 12px",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Preview
-            </button>
+    <div className="run-refs">
+      {title && <span className="run-refs__title">{title}</span>}
+      {refs.length === 0 && <p className="muted run-refs__empty">None yet</p>}
+      {refs.map((ref, index) => (
+        <div key={ref.protocol + "-" + ref.uri + "-" + index} className="run-ref">
+          <div className="run-ref__meta">
+            <span className="ae-badge ae-badge--plain">{String(ref.protocol).toUpperCase()}</span>
+            {ref.format && <span className="run-ref__format">{ref.format}</span>}
           </div>
-        ))}
-      </div>
+          <span className="ae-mono run-ref__uri" title={ref.uri}>{ref.protocol === "inline" ? "Inline data" : ref.uri}</span>
+          <button type="button" className="ae-btn ae-btn--secondary ae-btn--sm" onClick={() => onPreview(ref)}>View</button>
+        </div>
+      ))}
     </div>
   );
 }
