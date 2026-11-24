@@ -2,30 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-export type SettingProperty = {
-  type: "string" | "integer" | "number" | "boolean" | "array" | "object";
-  title?: string;
-  description?: string;
-  default?: unknown;
-  minimum?: number;
-  maximum?: number;
-  enum?: unknown[];
-  minLength?: number;
-  maxLength?: number;
-  unit?: string;
-};
+import { settingsDefinitionOf, type SettingProperty, type SettingsDefinition, type SettingsValues } from "../lib/service-settings";
 
-export type SettingsDefinition = {
-  channel: "parameters" | "run_input";
-  schema: { type: "object"; properties: Record<string, SettingProperty>; required?: string[] };
-};
-
-export type SettingsValues = Record<string, unknown>;
-
-export function settingsDefinitionOf(service: { interface_contract?: Record<string, unknown> | null } | null | undefined) {
-  const settings = service?.interface_contract?.settings as SettingsDefinition | undefined;
-  return settings && settings.schema?.properties ? settings : null;
-}
+export { settingsDefinitionOf };
+export type { SettingProperty, SettingsDefinition, SettingsValues };
 
 /** Returns an error message for a value, mirroring the API's checks. */
 export function validateSetting(name: string, value: unknown, prop: SettingProperty): string | null {
@@ -96,9 +76,14 @@ type Props = {
   values: SettingsValues | undefined;
   onChange: (values: SettingsValues) => void;
   isStartNode: boolean;
+  /** "run" = values apply to one run only and fall back to the saved values. */
+  mode?: "saved" | "run";
+  title?: string;
+  /** Keeps field ids unique when several panels are on one page. */
+  idPrefix?: string;
 };
 
-export function NodeSettingsPanel({ definition, values, onChange, isStartNode }: Props) {
+export function NodeSettingsPanel({ definition, values, onChange, isStartNode, mode = "saved", title = "Settings", idPrefix = "setting" }: Props) {
   const [jsonErrors, setJsonErrors] = useState<Record<string, string>>({});
 
   if (!definition) {
@@ -124,9 +109,9 @@ export function NodeSettingsPanel({ definition, values, onChange, isStartNode }:
   return (
     <section aria-label="Service settings" style={{ borderTop: "1px solid #eaecf0", paddingTop: 12, display: "grid", gap: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h4 style={{ margin: 0 }}>Settings</h4>
+        <h4 style={{ margin: 0 }}>{title}</h4>
         {Object.keys(current).length > 0 && (
-          <button type="button" className="button secondary" onClick={() => onChange({})} style={{ fontSize: 12, padding: "4px 8px" }}>
+          <button type="button" onClick={() => onChange({})} style={{ ...secondaryButton, fontSize: 12, padding: "4px 8px" }}>
             Reset to defaults
           </button>
         )}
@@ -137,7 +122,7 @@ export function NodeSettingsPanel({ definition, values, onChange, isStartNode }:
         </p>
       )}
       {properties.map(([name, prop]) => {
-        const id = `setting-${name}`;
+        const id = `${idPrefix}-${name}`;
         const label = prop.title || name;
         const value = current[name];
         const error = jsonErrors[name] || (value !== undefined ? validateSetting(name, value, prop) : null);
@@ -201,7 +186,21 @@ export function NodeSettingsPanel({ definition, values, onChange, isStartNode }:
           </div>
         );
       })}
-      <small style={{ color: "#667085" }}>Empty fields use the provider&apos;s default. Values are saved with the solution.</small>
+      <small style={{ color: "#667085" }}>
+        {mode === "run"
+          ? "Empty fields keep the solution's saved value (or the provider's default). These values apply to this run only."
+          : "Empty fields use the provider's default. Values are saved with the solution."}
+      </small>
     </section>
   );
 }
+
+const primaryButton = {
+  background: "linear-gradient(135deg, #5b2cf2, #4320ca)", color: "white", padding: "8px 12px",
+  borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer",
+} as const;
+
+const secondaryButton = {
+  background: "white", color: "#5635ce", padding: "8px 12px",
+  borderRadius: 10, border: "1px solid #d1c8f3", fontWeight: 700, cursor: "pointer",
+} as const;

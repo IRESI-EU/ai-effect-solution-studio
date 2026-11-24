@@ -154,6 +154,7 @@ function BuilderContent() {
   const [runInputMode, setRunInputMode] = useState<"prompt" | "json">("prompt");
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
+  const [runOverrides, setRunOverrides] = useState<Record<string, SettingsValues>>({});
   const [solutionLoadError, setSolutionLoadError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
   const roleMode: UserRole = user?.role || "solution_designer";
@@ -596,6 +597,14 @@ function BuilderContent() {
       if (input && new TextEncoder().encode(JSON.stringify(input)).length > 65536) {
         throw new Error("Run input must be at most 64 KiB of JSON.");
       }
+      const overrideErrors = nodes.flatMap((node) => {
+        const service = node.data?.service as Service | undefined;
+        if (!service || !runOverrides[node.id]) return [];
+        return settingsErrors(settingsDefinitionOf(catalogueEntry(service)), runOverrides[node.id]).map(
+          (error) => `${service.name}: ${error}`
+        );
+      });
+      if (overrideErrors.length) throw new Error(`Settings for this run: ${overrideErrors.join(" ")}`);
       setRunInputError("");
     } catch (error) {
       setRunInputError(error instanceof Error ? error.message : "Invalid run input.");
@@ -607,7 +616,17 @@ function BuilderContent() {
     setDeploymentResult(null);
 
     try {
-      const workflowPayload = { ...buildWorkflowPayload(preparedSolutionId), ...(input === undefined ? {} : { run_input: input }) };
+      const basePayload = buildWorkflowPayload(preparedSolutionId);
+      const workflowPayload = {
+        ...basePayload,
+        // Per-run overrides sit on top of the saved settings and are not saved.
+        nodes: basePayload.nodes.map((node) =>
+          runOverrides[node.node_id] && Object.keys(runOverrides[node.node_id]).length
+            ? { ...node, settings: { ...(node.settings || {}), ...runOverrides[node.node_id] } }
+            : node
+        ),
+        ...(input === undefined ? {} : { run_input: input }),
+      };
       const res = await fetch(`${API_BASE_URL}/workflows/submit-to-orchestrator`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1000,6 +1019,36 @@ function BuilderContent() {
             </select>
             <textarea aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={5} placeholder={runInputMode === "prompt" ? "Describe what this workflow should do..." : '{"prompt":"...", "option":true}'} style={{ width: "100%", padding: 10, boxSizing: "border-box" }} />
             <p style={{ color: "#667085", fontSize: 13, marginTop: 5 }}>Sent as JSON to the first service when you confirm deployment. Leave empty to use the service default.</p>
+            {nodes.some((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service))) && (
+              <details style={{ margin: "12px 0", border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}>
+                <summary style={{ fontWeight: 600, cursor: "pointer" }}>
+                  Settings for this run only (optional)
+                  {Object.values(runOverrides).some((values) => Object.keys(values).length) ? " · changed" : ""}
+                </summary>
+                <p style={{ color: "#667085", fontSize: 13 }}>
+                  Try different values without changing the saved solution.
+                </p>
+                <div style={{ display: "grid", gap: 12 }}>
+                  {nodes
+                    .filter((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service)))
+                    .map((node) => {
+                      const service = node.data.service as Service;
+                      return (
+                        <NodeSettingsPanel
+                          key={node.id}
+                          title={service.name}
+                          mode="run"
+                          idPrefix={`run-${node.id}`}
+                          definition={settingsDefinitionOf(catalogueEntry(service))}
+                          values={runOverrides[node.id]}
+                          onChange={(values) => setRunOverrides((current) => ({ ...current, [node.id]: values }))}
+                          isStartNode={isStartServiceNode(node.id)}
+                        />
+                      );
+                    })}
+                </div>
+              </details>
+            )}
             {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
 
             {!deploymentResult && (
