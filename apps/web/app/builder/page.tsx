@@ -20,6 +20,7 @@ import "@xyflow/react/dist/style.css";
 import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
 import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsValues } from "../../components/node-settings";
+import { DesignAssistant, type ProposedWorkflow } from "../../components/design-assistant";
 
 type Service = {
   id: string;
@@ -122,6 +123,83 @@ function BuilderContent() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [rightTab, setRightTab] = useState<"assistant" | "inspector">("assistant");
+  const [aiUndo, setAiUndo] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
+
+  function canvasAsProposal() {
+    const serviceNodes = nodes.filter((node) => Boolean(node.data?.service));
+    if (serviceNodes.length === 0) return null;
+    const ids = new Set(serviceNodes.map((node) => node.id));
+    return {
+      steps: serviceNodes.map((node) => ({
+        ref: node.id,
+        service_id: (node.data.service as Service).id,
+        why: "",
+        settings: (node.data?.settings as SettingsValues | undefined) || {},
+      })),
+      connections: edges
+        .filter((edge) => ids.has(edge.source) && ids.has(edge.target))
+        .map((edge) => ({ from_ref: edge.source, to_ref: edge.target })),
+    };
+  }
+
+  function applyAiWorkflow(workflow: ProposedWorkflow) {
+    setAiUndo({ nodes, edges });
+    const depth: Record<string, number> = {};
+    const incoming = new Map<string, string[]>();
+    workflow.connections.forEach((c) => incoming.set(c.to_ref, [...(incoming.get(c.to_ref) || []), c.from_ref]));
+    const depthOf = (ref: string, seen = new Set<string>()): number => {
+      if (depth[ref] !== undefined) return depth[ref];
+      if (seen.has(ref)) return 0;
+      seen.add(ref);
+      const parents = incoming.get(ref) || [];
+      depth[ref] = parents.length ? Math.max(...parents.map((p) => depthOf(p, seen))) + 1 : 0;
+      return depth[ref];
+    };
+    workflow.steps.forEach((step) => depthOf(step.ref));
+    const rows: Record<number, number> = {};
+    const stamp = Date.now();
+    const idFor = (ref: string) => `service-ai-${ref}-${stamp}`;
+    const serviceNodes: Node[] = workflow.steps.map((step) => {
+      const service = services.find((candidate) => candidate.id === step.service_id);
+      const d = depth[step.ref] || 0;
+      const row = (rows[d] = (rows[d] ?? -1) + 1);
+      return {
+        id: idFor(step.ref),
+        position: { x: 340 + d * 260, y: 120 + row * 130 },
+        data: {
+          node_kind: "service",
+          label: service ? service.name : step.service_name,
+          service: service || { id: step.service_id, name: step.service_name },
+          settings: step.settings && Object.keys(step.settings).length ? step.settings : undefined,
+        },
+      };
+    });
+    const maxDepth = Math.max(0, ...Object.values(depth));
+    const startRefs = workflow.steps.filter((s) => !(incoming.get(s.ref) || []).length).map((s) => s.ref);
+    const endRefs = workflow.steps.filter((s) => !workflow.connections.some((c) => c.from_ref === s.ref)).map((s) => s.ref);
+    setNodes([
+      { ...initialNodes[0], position: { x: 80, y: 150 } },
+      ...serviceNodes,
+      { ...initialNodes[1], position: { x: 340 + (maxDepth + 1) * 260, y: 150 } },
+    ]);
+    setEdges([
+      ...startRefs.map((ref) => ({ id: `e-input-${idFor(ref)}`, source: "input", target: idFor(ref) })),
+      ...workflow.connections.map((c) => ({ id: `e-${idFor(c.from_ref)}-${idFor(c.to_ref)}`, source: idFor(c.from_ref), target: idFor(c.to_ref) })),
+      ...endRefs.map((ref) => ({ id: `e-${idFor(ref)}-output`, source: idFor(ref), target: "output" })),
+    ]);
+    setSelectedService(null);
+    setSelectedNodeId(null);
+    invalidateWorkflowResults();
+  }
+
+  function undoAiWorkflow() {
+    if (!aiUndo) return;
+    setNodes(aiUndo.nodes);
+    setEdges(aiUndo.edges);
+    setAiUndo(null);
+    invalidateWorkflowResults();
+  }
 
   function catalogueEntry(service: Service) {
     return services.find((candidate) => candidate.id === service.id) || service;
@@ -861,6 +939,7 @@ function BuilderContent() {
                 const service = node.data?.service as Service | undefined;
                 setSelectedService(service || null);
                 setSelectedNodeId(service ? node.id : null);
+                if (service) setRightTab("inspector");
               }}
               fitView
             >
@@ -872,16 +951,38 @@ function BuilderContent() {
         </main>
 
         <aside className="card builder-details-card">
-          <div className="builder-panel-heading"><div><span>Inspector</span><h2>Service details</h2></div></div>
+          <div role="tablist" aria-label="Right panel" style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+            {(["assistant", "inspector"] as const).map((tab) => (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={rightTab === tab}
+                onClick={() => setRightTab(tab)}
+                style={{
+                  flex: 1, padding: "8px 10px", borderRadius: 10, fontWeight: 700, cursor: "pointer",
+                  border: rightTab === tab ? "1px solid #5b2cf2" : "1px solid #e4e7ec",
+                  background: rightTab === tab ? "#f4f0ff" : "white", color: rightTab === tab ? "#4320ca" : "#475467",
+                }}
+              >
+                {tab === "assistant" ? "Design with AI" : "Service details"}
+              </button>
+            ))}
+          </div>
 
-          {!selectedService && (
+          {rightTab === "assistant" && (
+            <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} />
+          )}
+
+          {rightTab === "inspector" && <div className="builder-panel-heading"><div><span>Inspector</span><h2>Service details</h2></div></div>}
+
+          {rightTab === "inspector" && !selectedService && (
             <p style={{ color: "#667085", lineHeight: 1.6 }}>
               Select a service on the canvas to inspect its provider, interface, lifecycle, and
               trust status.
             </p>
           )}
 
-          {selectedService && (
+          {rightTab === "inspector" && selectedService && (
             <div style={{ display: "grid", gap: 12 }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <span className="badge">{selectedService.trust_badge}</span>
