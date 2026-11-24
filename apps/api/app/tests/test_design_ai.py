@@ -133,3 +133,23 @@ def test_endpoint_respects_switch_and_daily_limit(client, ai_catalogue, monkeypa
     used = client.get("/design-ai/status").json()["used_last_24h"]
     monkeypatch.setattr(settings, "design_ai_daily_requests_per_user", used)
     assert client.post("/design-ai/compose", json=body).status_code == 429
+
+
+def test_workflow_that_stops_early_is_flagged(ai_catalogue):
+    import copy
+    proposal = copy.deepcopy(GOOD)
+    proposal["steps"] = proposal["steps"][:2]
+    proposal["connections"] = proposal["connections"][:1]
+    _, errors = validate_proposal(proposal, ai_catalogue)
+    assert any("stops at" in e and "FormatOutput" in e for e in errors), errors
+
+
+def test_services_that_cannot_connect_are_hidden_from_the_model():
+    from app.design_ai.catalogue import connectable
+    cards = [card_for(s) for s in (
+        _svc("a", "ProvideData", "Workflow Start", "villas_chronics1 Input"),
+        _svc("b", "GenerateChronics", "villas_chronics1 Input", "Workflow Output"),
+        _svc("dup", "RunBenchmark", "RunBenchmarkRequest", "RunBenchmarkResponse"),
+        _svc("orphan", "Mid", "Workflow Start", "nothing-consumes-this"),
+    )]
+    assert [c.id for c in connectable(cards)] == ["a", "b"]

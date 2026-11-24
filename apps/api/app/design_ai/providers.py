@@ -106,6 +106,13 @@ class OpenAICompatibleModel:
         self.model = model
         self.timeout = timeout
 
+    def _body(self, messages: list[dict], response_format: dict) -> dict:
+        body = {"model": self.model, "messages": messages, "response_format": response_format}
+        # Reasoning models (o-series, gpt-5 family) only accept their default temperature.
+        if not self.model.startswith(("o1", "o3", "o4", "gpt-5")):
+            body["temperature"] = 0.2
+        return body
+
     def _post(self, messages: list[dict], response_format: dict) -> requests.Response:
         headers = {"Content-Type": "application/json"}
         if self.api_key:
@@ -113,7 +120,7 @@ class OpenAICompatibleModel:
         return requests.post(
             f"{self.base_url}/chat/completions",
             headers=headers,
-            json={"model": self.model, "messages": messages, "temperature": 0.2, "response_format": response_format},
+            json=self._body(messages, response_format),
             timeout=self.timeout,
         )
 

@@ -87,8 +87,10 @@ def validate_proposal(proposal: dict | None, cards: list[ServiceCard]) -> tuple[
             continue
         a, b = refs[source], refs[target]
         if a.output_type != b.input_type:
+            producers = [c.name for c in cards if c.output_type == b.input_type]
+            hint = f" Services that produce what {b.name} needs: {', '.join(producers[:3])}." if producers else ""
             errors.append(
-                f"{a.name} cannot feed {b.name}: it produces '{a.output_type}' but {b.name} needs '{b.input_type}'."
+                f"{a.name} cannot feed {b.name}: it produces '{a.output_type}' but {b.name} needs '{b.input_type}'.{hint}"
             )
             continue
         if {"from_ref": source, "to_ref": target} in connections_out:
@@ -112,10 +114,21 @@ def validate_proposal(proposal: dict | None, cards: list[ServiceCard]) -> tuple[
     if any(has_cycle(r) for r in refs if r not in done):
         errors.append("The connections form a loop; workflows must flow in one direction.")
 
+    outgoing = {ref: len(adjacency[ref]) for ref in refs}
     for step in steps_out:
         card = refs[step["ref"]]
+        # A workflow should not stop while a catalogue service can take its result further.
+        if outgoing[step["ref"]] == 0 and not card.is_end:
+            followers = [c.name for c in cards if c.input_type == card.output_type and c.id not in {x.id for x in refs.values()}]
+            if followers:
+                errors.append(
+                    f"The workflow stops at {card.name}, but its result ('{card.output_type}') can be taken further. "
+                    f"Add a final step such as: {', '.join(followers[:3])}."
+                )
         if incoming[step["ref"]] == 0 and not card.is_start and len(refs) > 1:
-            errors.append(f"{card.name} needs input '{card.input_type}' but nothing is connected to it.")
+            producers = [c.name for c in cards if c.output_type == card.input_type]
+            hint = f" Services that produce it: {', '.join(producers[:3])}." if producers else ""
+            errors.append(f"{card.name} needs input '{card.input_type}' but nothing is connected to it.{hint}")
         if card.settings and card.settings["channel"] == "run_input" and incoming[step["ref"]] > 0 and step["settings"]:
             errors.append(f"{card.name} reads its settings from the workflow input, so it must be a first step.")
 

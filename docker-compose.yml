@@ -32,7 +32,7 @@ services:
       DESIGN_AI_PROVIDER: ${DESIGN_AI_PROVIDER:-offline}
       DESIGN_AI_BASE_URL: ${DESIGN_AI_BASE_URL:-https://api.openai.com/v1}
       DESIGN_AI_API_KEY: ${DESIGN_AI_API_KEY:-}
-      DESIGN_AI_MODEL: ${DESIGN_AI_MODEL:-gpt-4o-mini}
+      DESIGN_AI_MODEL: ${DESIGN_AI_MODEL:-gpt-4.1-mini}
       DESIGN_AI_DAILY_REQUESTS_PER_USER: ${DESIGN_AI_DAILY_REQUESTS_PER_USER:-40}
     ports:
       - "${API_PORT:-18080}:8080"

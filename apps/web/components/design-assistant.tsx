@@ -83,7 +83,11 @@ export function DesignAssistant({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(typeof data?.detail === "string" ? data.detail : `The assistant is unavailable (HTTP ${res.status}).`);
-      const reply = [data.reply, data.clarifying_question].filter(Boolean).join("\n\n") || "I could not produce a workflow for that request.";
+      const replyText: string = data.reply || "";
+      const askAgain = data.clarifying_question && !replyText.trim().endsWith("?");
+      const reply =
+        [replyText, askAgain ? data.clarifying_question : null].filter(Boolean).join("\n\n") ||
+        "I could not produce a workflow for that request.";
       const turn: ChatTurn = {
         role: "assistant",
         content: reply,

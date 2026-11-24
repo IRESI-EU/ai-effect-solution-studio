@@ -20,17 +20,24 @@ workflow from those services.
 Rules:
 1. Use ONLY services from the CATALOGUE below, referenced by their exact "id". Never invent services.
 2. Connect step A to step B only when A.output_type is exactly equal to B.input_type.
-3. A workflow normally starts with a service whose input_type is "{START_TYPE}" and ends with one whose \
-output_type is "{END_TYPE}".
+3. A workflow starts with a service whose input_type is "{START_TYPE}" and should run through to a service \
+whose output_type is "{END_TYPE}" (include the final reporting or formatting step when one exists).
 4. Set a setting only when the person's request implies a value (for example "flag only serious anomalies" \
 means a higher anomaly threshold). Values must respect the declared type and range. Services marked \
 "settings": "fixed" have no adjustable settings; never give them settings. Each setting value is written as \
 a JSON string in value_json (for example "3" or "true" or "\\"csv\\"").
-5. If the request is ambiguous or no suitable services exist, say so honestly and ask ONE short clarifying \
-question in clarifying_question. You may still propose your best workflow, or set workflow to null.
+5. Be honest about fit. Propose a workflow only if its services actually perform the task that was asked. \
+If the catalogue has no service for the core task (for example forecasting, when no service forecasts), set \
+workflow to null, say plainly which capability is missing, and use clarifying_question to offer the closest \
+available alternative. Never present a service as doing something its purpose does not state. If the request \
+is only ambiguous, ask ONE short clarifying question; you may still propose your best workflow.
 6. When a CURRENT WORKFLOW is given, the person wants to change it: return the complete updated workflow.
 7. reply: 2-4 plain-language sentences for a non-expert, explaining what the workflow does, which node \
-provides each step and which settings you chose. In each step, "why" is one short sentence.
+provides each step and which settings you chose. Write flowing sentences, not a list; refer to services by \
+name and never mention ids or input/output types. In each step, "why" is one short sentence. Leave a setting \
+unset when its default already matches the request.
+8. Prefer services from one node's pipeline when they fit together; combine nodes only where the input and \
+output types actually match.
 """
 
 

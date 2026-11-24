@@ -165,9 +165,30 @@ def card_for(service: Service) -> ServiceCard:
     )
 
 
+def connectable(cards: list[ServiceCard]) -> list[ServiceCard]:
+    """Keep only services that can be part of a valid workflow.
+
+    A service qualifies when something can feed it (or it starts a workflow)
+    and its result can go somewhere (or it ends one). Entries whose types
+    match nothing - e.g. duplicates imported with technical message names -
+    are hidden from the model, because any workflow using them is invalid.
+    """
+    usable = list(cards)
+    while True:
+        outputs = {c.output_type for c in usable}
+        inputs = {c.input_type for c in usable}
+        kept = [
+            c for c in usable
+            if (c.is_start or c.input_type in outputs) and (c.is_end or c.output_type in inputs)
+        ]
+        if len(kept) == len(usable):
+            return kept
+        usable = kept
+
+
 def build_catalogue(db: Session) -> list[ServiceCard]:
     services = db.query(Service).all()
-    return [card_for(s) for s in services if _eligible(s)]
+    return connectable([card_for(s) for s in services if _eligible(s)])
 
 
 _WORD = re.compile(r"[a-z0-9]+")

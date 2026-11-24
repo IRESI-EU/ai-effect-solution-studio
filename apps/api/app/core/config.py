@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     design_ai_provider: str = "offline"  # "openai" or "offline"
     design_ai_base_url: str = "https://api.openai.com/v1"
     design_ai_api_key: str = ""
-    design_ai_model: str = "gpt-4o-mini"
+    design_ai_model: str = "gpt-4.1-mini"
     design_ai_timeout_seconds: int = 60
     design_ai_daily_requests_per_user: int = 40
 
