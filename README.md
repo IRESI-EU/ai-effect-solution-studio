@@ -1,12 +1,15 @@
 # AI-EFFECT Solution Studio
 
+Authentication, account approval and role permissions are documented in
+[`docs/AUTHENTICATION_AND_RBAC.md`](docs/AUTHENTICATION_AND_RBAC.md).
+
 AI-EFFECT Solution Studio is the consortium-facing MVP for discovering, governing, composing, deploying, and monitoring Dockerized AI services. It provides a product layer over the AI-EFFECT WP3 Orchestrator: users work with catalogue services and visual solutions, while WP3 remains the execution mechanism.
 
 The MVP is intended for local consortium testing. It is not a production certification authority, identity provider, or replacement for the WP3 runtime.
 
-## Production delivery checkpoints
+## Roadmap
 
-The [production delivery plan](docs/PRODUCTION_DELIVERY_PLAN.md) records the R1–R3 user outcomes, target dates, verification gates, current blockers and required checkpoint log. Start release work there. It is a delivery plan, not a claim that those enhancements are deployed.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the current plan for service settings and Design with AI.
 
 ## Product positioning
 

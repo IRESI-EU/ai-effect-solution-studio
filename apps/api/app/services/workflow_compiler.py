@@ -167,8 +167,8 @@ def resolve_node_runtime_metadata(node, db: Session | None):
         "service_id": service.id if service else service_id,
         "service_name": service.name if service else getattr(node, "name", None),
         "container_name": first_non_empty(
-            getattr(node, "container_name", None),
             service.container_name if service else None,
+            getattr(node, "container_name", None),
             getattr(node, "operation_name", None),
             getattr(node, "node_id", None),
         ),

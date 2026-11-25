@@ -3,7 +3,7 @@ import csv
 import json
 import os
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import requests
 
@@ -12,6 +12,12 @@ MAX_TEXT_PREVIEW_CHARS = 5000
 MAX_CSV_ROWS = 20
 HTTP_TIMEOUT_SECONDS = 10
 MAX_SVG_BYTES = 2 * 1024 * 1024
+MAX_REMOTE_PREVIEW_BYTES = 5 * 1024 * 1024
+MAX_DIRECTORY_PREVIEW_FILES = 50
+GRPC_PREVIEW_TARGETS = {
+    "grid_synth_service:50051": "http://grid_synth_service:8080",
+    "benchmark-runner:50051": "http://benchmark-runner:8080",
+}
 
 
 def artifact_roots() -> list[Path]:
@@ -30,8 +36,8 @@ def artifact_roots() -> list[Path]:
     return roots
 
 
-def resolve_artifact_file(uri: str) -> Path | None:
-    """Resolve a file URI only when it belongs to a configured artifact root."""
+def resolve_artifact_path(uri: str) -> Path | None:
+    """Resolve an existing URI only when it belongs to a configured artifact root."""
     source = Path(uri)
     if not source.is_absolute():
         return None
@@ -41,14 +47,19 @@ def resolve_artifact_file(uri: str) -> Path | None:
         relative_parts = source.parts[2:]
         for root in roots:
             candidate = root.joinpath(*relative_parts).resolve()
-            if candidate.is_relative_to(root) and candidate.is_file():
+            if candidate.is_relative_to(root) and candidate.exists():
                 return candidate
         return None
 
     path = source.resolve()
-    if any(path.is_relative_to(root) for root in roots) and path.is_file():
+    if any(path.is_relative_to(root) for root in roots) and path.exists():
         return path
     return None
+
+
+def resolve_artifact_file(uri: str) -> Path | None:
+    path = resolve_artifact_path(uri)
+    return path if path is not None and path.is_file() else None
 
 
 def preview_svg_file(uri: str):
@@ -92,7 +103,7 @@ def decode_inline_reference(uri: str):
 def preview_file_reference(uri: str):
     if Path(uri).suffix.lower() == ".svg":
         return preview_svg_file(uri)
-    path = resolve_artifact_file(uri)
+    path = resolve_artifact_path(uri)
 
     if path is None:
         return {
@@ -109,6 +120,31 @@ def preview_file_reference(uri: str):
                 "local_demo": "Mount a shared artifact volume if local file preview is required.",
                 "platform_ready": "Prefer http, https, s3, or artifact protocol for future node submissions.",
             },
+        }
+
+    if path.is_dir():
+        files = []
+        for child in sorted(path.iterdir(), key=lambda item: item.name.lower()):
+            if not child.is_file():
+                continue
+            files.append(
+                {
+                    "name": child.name,
+                    "protocol": "file",
+                    "uri": str(Path(uri) / child.name),
+                    "format": child.suffix.lower().removeprefix(".") or "text",
+                    "size_bytes": child.stat().st_size,
+                }
+            )
+            if len(files) >= MAX_DIRECTORY_PREVIEW_FILES:
+                break
+        return {
+            "kind": "directory",
+            "available": True,
+            "format": "directory",
+            "uri": uri,
+            "files": files,
+            "truncated": len(files) >= MAX_DIRECTORY_PREVIEW_FILES,
         }
 
     try:
@@ -161,6 +197,53 @@ def preview_http_reference(uri: str):
         format_hint=format_hint,
         source_uri=uri,
         kind="http",
+        content_type=content_type,
+    )
+
+
+def preview_grpc_reference(uri: str, task_id: str | None):
+    """Bridge approved Dutch gRPC references to their private control-data API."""
+    base_url = GRPC_PREVIEW_TARGETS.get(uri)
+    if not base_url:
+        return {
+            "kind": "grpc",
+            "available": False,
+            "uri": uri,
+            "message": "This gRPC output does not have an approved portal preview bridge.",
+        }
+    if not task_id:
+        return {
+            "kind": "grpc",
+            "available": False,
+            "uri": uri,
+            "message": "The workflow task identifier is required to preview this gRPC result.",
+        }
+
+    preview_url = f"{base_url}/control/data/{quote(task_id, safe='')}"
+    try:
+        response = requests.get(preview_url, timeout=HTTP_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        if len(response.content) > MAX_REMOTE_PREVIEW_BYTES:
+            return {
+                "kind": "grpc",
+                "available": False,
+                "uri": uri,
+                "message": "The Dutch node result exceeds the 5 MiB portal preview limit.",
+            }
+    except Exception as exc:
+        return {
+            "kind": "grpc",
+            "available": False,
+            "uri": uri,
+            "message": f"Could not fetch the Dutch node result: {exc}",
+        }
+
+    content_type = response.headers.get("content-type", "application/json")
+    return parse_content_preview(
+        content=response.text,
+        format_hint=infer_format_from_uri_or_content_type(preview_url, content_type) or "json",
+        source_uri=f"grpc://{uri}/{task_id}",
+        kind="grpc",
         content_type=content_type,
     )
 
@@ -301,7 +384,7 @@ def looks_like_csv(content: str):
     return "," in first_line and "," in second_line
 
 
-def preview_data_reference(protocol: str, uri: str):
+def preview_data_reference(protocol: str, uri: str, task_id: str | None = None):
     protocol = (protocol or "").lower().strip()
 
     if protocol == "inline":
@@ -337,15 +420,7 @@ def preview_data_reference(protocol: str, uri: str):
         }
 
     if protocol == "grpc":
-        return {
-            "kind": "grpc",
-            "available": False,
-            "uri": uri,
-            "message": (
-                "gRPC DataReference preview is not directly supported in the portal. "
-                "Expose previewable outputs through inline, HTTP, S3, or artifact references."
-            ),
-        }
+        return preview_grpc_reference(uri, task_id)
 
     return {
         "kind": protocol or "unknown",

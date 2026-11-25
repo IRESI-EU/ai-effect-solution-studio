@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +35,14 @@ function getApiBaseUrls() {
     return [process.env.INTERNAL_API_URL];
   }
 
-  return ["http://api:8080", "http://localhost:18080"];
+  return ["http://api:8080"];
+}
+
+async function authenticatedApiFetch(url: string, init: RequestInit = {}) {
+  const cookieHeader = (await cookies()).toString();
+  const headers = new Headers(init.headers);
+  if (cookieHeader) headers.set("cookie", cookieHeader);
+  return fetch(url, { ...init, headers });
 }
 
 async function getSolutions(): Promise<SolutionsResult> {
@@ -42,7 +50,7 @@ async function getSolutions(): Promise<SolutionsResult> {
 
   for (const baseUrl of urls) {
     try {
-      const res = await fetch(`${baseUrl}/solutions/summary`, {
+      const res = await authenticatedApiFetch(`${baseUrl}/solutions/summary`, {
         cache: "no-store",
       });
 
@@ -54,7 +62,7 @@ async function getSolutions(): Promise<SolutionsResult> {
       let archivedCount = 0;
 
       try {
-        const archivedRes = await fetch(
+        const archivedRes = await authenticatedApiFetch(
           `${baseUrl}/solutions/summary?archived_only=true`,
           { cache: "no-store" }
         );
@@ -444,7 +452,7 @@ async function archiveSolutionAction(formData: FormData) {
 
   for (const baseUrl of urls) {
     try {
-      const res = await fetch(`${baseUrl}/solutions/${solutionId}/archive`, {
+      const res = await authenticatedApiFetch(`${baseUrl}/solutions/${solutionId}/archive`, {
         method: "PUT",
       });
 

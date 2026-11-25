@@ -157,6 +157,25 @@ def normalize_manifest(
     trust_badge = optional_str(service.get("trust_badge")) or "pending_review"
 
     container_name = required_str(runtime, "container_name", validation)
+    supplied_internal_host = optional_str(runtime.get("internal_host"))
+    internal_host = supplied_internal_host or container_name
+    if supplied_internal_host:
+        validation.append(
+            ValidationMessage(
+                level="success",
+                message="Runtime network host declared separately from the logical container name.",
+            )
+        )
+    else:
+        validation.append(
+            ValidationMessage(
+                level="warning",
+                message=(
+                    "runtime.internal_host is missing, so the logical container_name will be used as a "
+                    "backward-compatible fallback. Verify that this name resolves from the platform network."
+                ),
+            )
+        )
     image = optional_str(runtime.get("image"))
     dockerfile = optional_str(runtime.get("dockerfile"))
     internal_port = optional_str(runtime.get("internal_port")) or "8080"
@@ -263,6 +282,7 @@ def normalize_manifest(
         orchestration_mode=orchestration_mode,
         adapter_type=optional_str(adapter_type),
         container_name=container_name,
+        internal_host=internal_host,
         image=image,
         dockerfile=dockerfile,
         internal_port=internal_port,
@@ -326,7 +346,13 @@ def build_interface_contract(interface: dict[str, Any], interface_type: str) -> 
     if isinstance(specific, dict):
         contract[interface_type] = specific
 
-    for key in ["operation_name", "contract_uri", "proto_uri"]:
+    for key in [
+        "operation_name",
+        "input_message_name",
+        "output_message_name",
+        "contract_uri",
+        "proto_uri",
+    ]:
         if key in interface:
             contract[key] = interface[key]
 

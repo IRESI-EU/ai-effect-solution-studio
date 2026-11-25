@@ -42,3 +42,5 @@ class Service(Base):
 
     health_path = Column(String, default="/health")
     contract_uri = Column(Text, nullable=True)
+    owner_node = Column(String(40), nullable=True, index=True)
+    created_by_user_id = Column(String, nullable=True, index=True)

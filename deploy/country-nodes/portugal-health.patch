@@ -1,0 +1,26 @@
+diff --git a/use-cases/portugal-node-integrated/data_provision/main.py b/use-cases/portugal-node-integrated/data_provision/main.py
+--- a/use-cases/portugal-node-integrated/data_provision/main.py
++++ b/use-cases/portugal-node-integrated/data_provision/main.py
+@@ -244,3 +244,8 @@
+ @app.get("/", include_in_schema=False)
+ async def root():
+     return {"message": "Welcome to the ClickHouse Query API. See /docs for usage."}
++
++
++@app.get("/health", include_in_schema=False)
++async def health():
++    return {"status": "ok"}
+diff --git a/use-cases/portugal-node-integrated/synthetic_data_generation/main.py b/use-cases/portugal-node-integrated/synthetic_data_generation/main.py
+--- a/use-cases/portugal-node-integrated/synthetic_data_generation/main.py
++++ b/use-cases/portugal-node-integrated/synthetic_data_generation/main.py
+@@ -46,5 +46,10 @@
+ except ImportError as e:
+     import logging as _logging
+     _logging.warning(f"AI-Effect control interface not available: {e}")
++
++
++@app.get("/health", include_in_schema=False)
++async def health():
++    return {"status": "ok"}
+ 
+ model_Root = "models"

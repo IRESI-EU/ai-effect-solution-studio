@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.dependencies.auth import can_manage_service, require_service_publisher
+from app.models.service import Service
+from app.models.user import User
 from app.schemas.operation_contract import (
     OperationContractCreate,
     OperationContractRead,
@@ -21,6 +24,20 @@ from app.services.operation_contract_registry import (
 
 
 router = APIRouter(tags=["operation-contracts"])
+
+
+def require_service_ownership(service_id: str, db: Session, user: User) -> None:
+    service = db.query(Service).filter(Service.id == service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Service not found")
+    if not can_manage_service(user, service.owner_node):
+        raise HTTPException(status_code=403, detail="You can only manage contracts for your node's services")
+
+
+def require_contract_ownership(contract_id: str, db: Session, user: User):
+    contract = get_contract_or_404(contract_id, db)
+    require_service_ownership(contract.service_id, db, user)
+    return contract
 
 
 @router.get(
@@ -43,7 +60,9 @@ def create_service_operation_contract(
     service_id: str,
     payload: OperationContractCreate,
     db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
 ):
+    require_service_ownership(service_id, db, user)
     return create_contract(service_id, payload, db)
 
 
@@ -66,7 +85,9 @@ def update_operation_contract(
     contract_id: str,
     payload: OperationContractUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
 ):
+    require_contract_ownership(contract_id, db, user)
     return update_contract(contract_id, payload, db)
 
 
@@ -77,7 +98,9 @@ def update_operation_contract(
 def activate_operation_contract(
     contract_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
 ):
+    require_contract_ownership(contract_id, db, user)
     return activate_contract(contract_id, db)
 
 
@@ -88,7 +111,9 @@ def activate_operation_contract(
 def deprecate_operation_contract(
     contract_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
 ):
+    require_contract_ownership(contract_id, db, user)
     return deprecate_contract(contract_id, db)
 
 
@@ -99,7 +124,9 @@ def deprecate_operation_contract(
 def withdraw_operation_contract(
     contract_id: str,
     db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
 ):
+    require_contract_ownership(contract_id, db, user)
     return withdraw_contract(contract_id, db)
 
 

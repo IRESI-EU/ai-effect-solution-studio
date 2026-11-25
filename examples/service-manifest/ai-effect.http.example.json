@@ -12,6 +12,7 @@
   "runtime": {
     "type": "docker",
     "container_name": "example-http-service-adapter",
+    "internal_host": "example-http-service-adapter",
     "image": "ghcr.io/iresi-eu/example-http-service-adapter:1.0.0",
     "internal_port": "8080",
     "health_path": "/health"

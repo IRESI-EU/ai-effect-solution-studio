@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -33,7 +34,14 @@ function getApiBaseUrls() {
     return [process.env.INTERNAL_API_URL];
   }
 
-  return ["http://api:8080", "http://localhost:18080"];
+  return ["http://api:8080"];
+}
+
+async function authenticatedApiFetch(url: string, init: RequestInit = {}) {
+  const cookieHeader = (await cookies()).toString();
+  const headers = new Headers(init.headers);
+  if (cookieHeader) headers.set("cookie", cookieHeader);
+  return fetch(url, { ...init, headers });
 }
 
 async function getArchivedSolutions(): Promise<SolutionsResult> {
@@ -41,7 +49,7 @@ async function getArchivedSolutions(): Promise<SolutionsResult> {
 
   for (const baseUrl of urls) {
     try {
-      const res = await fetch(
+      const res = await authenticatedApiFetch(
         `${baseUrl}/solutions/summary?archived_only=true`,
         {
           cache: "no-store",
@@ -336,7 +344,7 @@ async function restoreSolutionAction(formData: FormData) {
 
   for (const baseUrl of urls) {
     try {
-      const res = await fetch(`${baseUrl}/solutions/${solutionId}/restore`, {
+      const res = await authenticatedApiFetch(`${baseUrl}/solutions/${solutionId}/restore`, {
         method: "PUT",
       });
 

@@ -17,5 +17,6 @@ class Deployment(Base):
     is_archived = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)
+    created_by_user_id = Column(String, nullable=True, index=True)
 
     solution = relationship("Solution")

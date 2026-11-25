@@ -1,0 +1,28 @@
+services:
+  config-assistant:
+    ports: !reset []
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  ollama:
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  topology-generator:
+    ports: !reset []
+
+  draw-topology:
+    ports: !reset []
+
+  web-ui:
+    profiles:
+      - operator-ui
+    ports: !reset []
+    environment:
+      DATA_DIR: /data
+      ORCHESTRATOR_URL: http://orchestrator-api-1:8000
+      USE_CASE_DIR: /workspace/use-cases/denmark-node

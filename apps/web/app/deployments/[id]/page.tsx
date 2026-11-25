@@ -35,6 +35,7 @@ export default function DeploymentDetailPage({
   const [tasks, setTasks] = useState<any[]>([]);
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<any>(null);
+  const [previewDirectory, setPreviewDirectory] = useState<any>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewDrawings, setPreviewDrawings] = useState<DrawingReference[]>([]);
   const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number | null>(null);
@@ -50,14 +51,24 @@ export default function DeploymentDetailPage({
     return () => window.cancelAnimationFrame(frame);
   }, [previewLoading, preview]);
 
-  async function previewReference(ref: any, drawingOptions?: DrawingPreviewOptions) {
+  async function previewReference(
+    ref: any,
+    drawingOptions?: DrawingPreviewOptions,
+    taskId?: string,
+    directoryContext?: any,
+  ) {
     setPreviewDrawings(drawingOptions?.drawings || []);
     setSelectedDrawingIndex(drawingOptions?.selectedIndex ?? null);
+    if (directoryContext) {
+      setPreviewDirectory(directoryContext);
+    } else {
+      setPreviewDirectory(null);
+    }
     setPreviewLoading(true);
     setPreview(null);
 
     try {
-      const res = await fetch("http://localhost:18080/data-references/preview", {
+      const res = await fetch("/api/data-references/preview", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,6 +77,7 @@ export default function DeploymentDetailPage({
           protocol: ref.protocol,
           uri: ref.uri,
           format: ref.format,
+          task_id: taskId,
         }),
       });
 
@@ -74,6 +86,9 @@ export default function DeploymentDetailPage({
       }
 
       const data = await res.json();
+      if (data.kind === "directory" && data.available) {
+        setPreviewDirectory(data);
+      }
       setPreview(data);
     } catch {
       setPreview({
@@ -89,7 +104,7 @@ export default function DeploymentDetailPage({
   async function syncDeploymentStatus(workflowId: string, status: string) {
     try {
       const deploymentRes = await fetch(
-        `http://localhost:18080/deployments/by-workflow/${workflowId}`
+        `/api/deployments/by-workflow/${workflowId}`
       );
 
       if (!deploymentRes.ok) {
@@ -101,7 +116,7 @@ export default function DeploymentDetailPage({
 
       if (deployment.status !== status) {
         const updateRes = await fetch(
-          `http://localhost:18080/deployments/${deployment.id}`,
+          `/api/deployments/${deployment.id}`,
           {
             method: "PUT",
             headers: {
@@ -135,7 +150,7 @@ export default function DeploymentDetailPage({
 
       try {
         const workflowRes = await fetch(
-          `http://localhost:18080/orchestrator/workflows/${id}`
+          `/api/orchestrator/workflows/${id}`
         );
 
         if (!workflowRes.ok) {
@@ -152,7 +167,7 @@ export default function DeploymentDetailPage({
         }
 
         const tasksRes = await fetch(
-          `http://localhost:18080/orchestrator/workflows/${id}/tasks`
+          `/api/orchestrator/workflows/${id}/tasks`
         );
 
         if (!tasksRes.ok) {
@@ -339,13 +354,17 @@ export default function DeploymentDetailPage({
                 <ReferenceList
                   title="Input References"
                   refs={task.input_refs || []}
-                  onPreview={previewReference}
+                  onPreview={(ref) =>
+                    previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
+                  }
                 />
 
                 <ReferenceList
                   title="Output References"
                   refs={task.output_refs || []}
-                  onPreview={previewReference}
+                  onPreview={(ref) =>
+                    previewReference(ref, undefined, findReferenceTaskId(ref, task.task_id, tasks))
+                  }
                 />
               </div>
             </div>
@@ -368,6 +387,14 @@ export default function DeploymentDetailPage({
               <span className="deployment-preview-kind">{preview.kind}</span>
             )}
           </div>
+
+          {(previewDirectory || preview?.kind === "directory") && (
+            <ArtifactFileTabs
+              directory={preview?.kind === "directory" ? preview : previewDirectory}
+              activeUri={preview?.kind === "directory" ? null : preview?.uri}
+              onPreview={previewReference}
+            />
+          )}
 
           {previewLoading && (
             <div
@@ -405,8 +432,23 @@ function PreviewPanel({
   preview: any;
   drawings: DrawingReference[];
   selectedDrawingIndex: number | null;
-  onPreview: (ref: any, drawingOptions?: DrawingPreviewOptions) => void;
+  onPreview: (
+    ref: any,
+    drawingOptions?: DrawingPreviewOptions,
+    taskId?: string,
+    directoryContext?: any,
+  ) => void;
 }) {
+  if (preview.kind === "directory" && preview.available && Array.isArray(preview.files)) {
+    return (
+      <div className="deployment-json-preview">
+        <PreviewHeader preview={preview} />
+        {preview.files.length === 0 && <p>No previewable files were found in this output directory.</p>}
+        {preview.files.length > 0 && <p>Select a file tab above to inspect its contents.</p>}
+      </div>
+    );
+  }
+
   if (preview.kind === "svg" && preview.available && preview.image_data_url) {
     return (
       <div className="deployment-svg-preview">
@@ -614,6 +656,50 @@ function PreviewPanel({
   );
 }
 
+function ArtifactFileTabs({
+  directory,
+  activeUri,
+  onPreview,
+}: {
+  directory: any;
+  activeUri?: string | null;
+  onPreview: (
+    ref: any,
+    drawingOptions?: DrawingPreviewOptions,
+    taskId?: string,
+    directoryContext?: any,
+  ) => void;
+}) {
+  if (!directory?.available || !Array.isArray(directory.files) || directory.files.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="deployment-drawing-buttons" aria-label="Output files">
+      {directory.files.map((file: any) => {
+        const isSelected = activeUri === file.uri;
+        return (
+          <button
+            key={file.uri}
+            type="button"
+            className={isSelected ? "btn btn-primary" : "btn btn-secondary"}
+            aria-pressed={isSelected}
+            onClick={() => onPreview(file, undefined, undefined, directory)}
+          >
+            {file.name} ({formatArtifactSize(file.size_bytes)})
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function formatArtifactSize(value: number | undefined) {
+  if (!value || value < 1024) return `${value || 0} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KiB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MiB`;
+}
+
 function DrawingButtons({
   drawings,
   selectedIndex,
@@ -783,4 +869,16 @@ function ReferenceList({
       </div>
     </div>
   );
+}
+
+function findReferenceTaskId(ref: any, fallbackTaskId: string, tasks: any[]) {
+  const producer = tasks.find((task) =>
+    (task.output_refs || []).some(
+      (output: any) =>
+        output.protocol === ref.protocol &&
+        output.uri === ref.uri &&
+        output.format === ref.format,
+    ),
+  );
+  return producer?.task_id || fallbackTaskId;
 }

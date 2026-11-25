@@ -17,13 +17,8 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  getStoredRoleMode,
-  ROLE_MODE_CHANGE_EVENT,
-  ROLE_MODE_STORAGE_KEY,
-  roleModeLabels,
-  type RoleMode,
-} from "../../components/role-mode";
+import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
+import { apiErrorMessage } from "../../lib/solution-design";
 
 type Service = {
   id: string;
@@ -91,19 +86,19 @@ type SavedSolution = {
   name: string;
 };
 
-const API_BASE_URL = "http://localhost:18080";
+const API_BASE_URL = "/api";
 
 const initialNodes: Node[] = [
   {
     id: "input",
     position: { x: 120, y: 180 },
-    data: { label: "Workflow Input" },
+    data: { label: "Workflow Input", node_kind: "workflow_input" },
     type: "input",
   },
   {
     id: "output",
     position: { x: 760, y: 180 },
-    data: { label: "Workflow Output" },
+    data: { label: "Workflow Output", node_kind: "workflow_output" },
     type: "output",
   },
 ];
@@ -117,6 +112,7 @@ export default function BuilderPage() {
 }
 
 function BuilderContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const solutionId = searchParams.get("solutionId");
   const catalogueServiceId = searchParams.get("serviceId");
@@ -137,8 +133,9 @@ function BuilderContent() {
   const [runInputMode, setRunInputMode] = useState<"prompt" | "json">("prompt");
   const [runInput, setRunInput] = useState("");
   const [runInputError, setRunInputError] = useState("");
+  const [solutionLoadError, setSolutionLoadError] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
-  const [roleMode, setRoleMode] = useState<RoleMode>("solution_designer");
+  const roleMode: UserRole = user?.role || "solution_designer";
   const workflowRevisionRef = useRef(0);
   const solutionSavePromiseRef = useRef<Promise<SavedSolution> | null>(null);
   const saveDraftInFlightRef = useRef(false);
@@ -149,22 +146,6 @@ function BuilderContent() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-
-  useEffect(() => {
-    const syncRoleMode = () => setRoleMode(getStoredRoleMode());
-    const syncStoredRoleMode = (event: StorageEvent) => {
-      if (event.key === ROLE_MODE_STORAGE_KEY) syncRoleMode();
-    };
-
-    syncRoleMode();
-    window.addEventListener(ROLE_MODE_CHANGE_EVENT, syncRoleMode);
-    window.addEventListener("storage", syncStoredRoleMode);
-
-    return () => {
-      window.removeEventListener(ROLE_MODE_CHANGE_EVENT, syncRoleMode);
-      window.removeEventListener("storage", syncStoredRoleMode);
-    };
-  }, []);
 
   const invalidateWorkflowResults = useCallback(() => {
     workflowRevisionRef.current += 1;
@@ -216,16 +197,20 @@ function BuilderContent() {
   useEffect(() => {
     async function loadSolution() {
       if (!solutionId) return;
-
-      const res = await fetch(`${API_BASE_URL}/solutions/${solutionId}`);
-      if (!res.ok) return;
-
-      const solution = await res.json();
-
-      setCurrentSolutionId(solution.id);
-      setSolutionName(solution.name);
-      setNodes(solution.nodes || initialNodes);
-      setEdges(solution.edges || []);
+      setSolutionLoadError("");
+      try {
+        const res = await fetch(`${API_BASE_URL}/solutions/${solutionId}`);
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(apiErrorMessage(body, `Could not load this solution (HTTP ${res.status}).`));
+        }
+        setCurrentSolutionId(body.id);
+        setSolutionName(body.name);
+        setNodes(body.nodes || initialNodes);
+        setEdges(body.edges || []);
+      } catch (error) {
+        setSolutionLoadError(error instanceof Error ? error.message : "Could not load this solution.");
+      }
     }
 
     loadSolution();
@@ -289,6 +274,7 @@ function BuilderContent() {
           y: 120 + Math.random() * 180,
         },
         data: {
+          node_kind: "service",
           label:
             lifecycleStatus === "deprecated"
               ? `${service.name} (deprecated)`
@@ -655,6 +641,11 @@ function BuilderContent() {
 
   return (
     <div className="page builder-page">
+      {solutionLoadError && (
+        <section className="card" style={{ padding: 18, marginBottom: 18, borderColor: "#fda29b", color: "#b42318" }}>
+          <strong>Unable to load solution design.</strong> {solutionLoadError}
+        </section>
+      )}
       <div className="builder-page-header">
         <div>
           <span className="badge">AI Vendor Studio</span>
@@ -1032,7 +1023,7 @@ function RuntimeReadinessPanel({
   preflight: RuntimePreflightResult | null;
   onPrepare: () => void;
   preparing: boolean;
-  roleMode: RoleMode;
+  roleMode: UserRole;
   confirmationReady: boolean;
   onConfirm: () => void;
   confirming: boolean;
@@ -1056,7 +1047,7 @@ function RuntimeReadinessPanel({
         </button>
       </div>
 
-      <div className="runtime-role-note">Previewing guidance as: <strong>{roleModeLabels[roleMode]}</strong></div>
+      <div className="runtime-role-note">Signed in as: <strong>{roleLabels[roleMode]}</strong></div>
 
       {!preflight && (
         <div className="runtime-readiness-summary runtime-readiness-summary--neutral">

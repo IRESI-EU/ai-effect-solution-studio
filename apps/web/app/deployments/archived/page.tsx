@@ -48,7 +48,7 @@ function ArchivedDeploymentsContent() {
       params.set("solution_id", solutionId);
     }
 
-    return `http://localhost:18080/deployments?${params.toString()}`;
+    return `/api/deployments?${params.toString()}`;
   }, [solutionId]);
 
   async function loadArchivedDeployments() {
@@ -68,7 +68,7 @@ function ArchivedDeploymentsContent() {
 
     try {
       const res = await fetch(
-        `http://localhost:18080/deployments/${deploymentId}/restore`,
+        `/api/deployments/${deploymentId}/restore`,
         {
           method: "PUT",
         }

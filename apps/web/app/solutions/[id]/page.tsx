@@ -11,6 +11,7 @@ import {
   type Node,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { countServiceConnections, countServiceNodes } from "../../../lib/solution-design";
 
 type Deployment = {
   id: string;
@@ -56,7 +57,7 @@ export default function SolutionDetailsPage({
   const [syncSummary, setSyncSummary] = useState<SyncSummary | null>(null);
 
   async function loadSolution(id: string) {
-    const res = await fetch(`http://localhost:18080/solutions/${id}/workspace`);
+    const res = await fetch(`/api/solutions/${id}/workspace`);
 
     if (!res.ok) {
       throw new Error("Failed to load solution workspace.");
@@ -77,7 +78,7 @@ export default function SolutionDetailsPage({
 
     try {
       const syncRes = await fetch(
-        "http://localhost:18080/deployments/sync-statuses",
+        "/api/deployments/sync-statuses",
         {
           method: "POST",
         }
@@ -110,7 +111,7 @@ export default function SolutionDetailsPage({
 
     try {
       const res = await fetch(
-        `http://localhost:18080/deployments/${deploymentId}/archive`,
+        `/api/deployments/${deploymentId}/archive`,
         {
           method: "PUT",
         }
@@ -307,7 +308,7 @@ export default function SolutionDetailsPage({
                 label="Services"
                 value={String(countServiceNodes(solution.nodes))}
               />
-              <Info label="Connections" value={String(solution.edges.length)} />
+              <Info label="Service connections" value={String(countServiceConnections(solution.nodes, solution.edges))} />
               <Info
                 label="Deployments"
                 value={String(sortedDeployments.length)}
@@ -711,10 +712,6 @@ function Td({ children }: { children: React.ReactNode }) {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleString();
-}
-
-function countServiceNodes(nodes: Node[]) {
-  return nodes.filter((node) => node.id.startsWith("service-")).length;
 }
 
 function statusBackground(status: string) {

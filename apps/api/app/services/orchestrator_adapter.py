@@ -6,6 +6,13 @@ from fastapi import HTTPException
 from app.core.config import settings
 
 
+def _orchestrator_headers() -> dict[str, str]:
+    if not settings.orchestrator_api_key:
+        return {}
+
+    return {"Authorization": f"Bearer {settings.orchestrator_api_key}"}
+
+
 def _read_response_detail(response: requests.Response) -> Any:
     try:
         return response.json()
@@ -50,7 +57,12 @@ def submit_to_orchestrator(payload: dict[str, Any]) -> dict[str, Any]:
     url = f"{settings.orchestrator_base_url}/workflows"
 
     try:
-        response = requests.post(url, json=payload, timeout=20)
+        response = requests.post(
+            url,
+            json=payload,
+            headers=_orchestrator_headers(),
+            timeout=20,
+        )
     except requests.RequestException as exc:
         _raise_connection_error(
             exc=exc,
@@ -82,7 +94,11 @@ def get_workflow_status(workflow_id: str) -> dict[str, Any]:
     url = f"{settings.orchestrator_base_url}/workflows/{workflow_id}"
 
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(
+            url,
+            headers=_orchestrator_headers(),
+            timeout=10,
+        )
     except requests.RequestException as exc:
         _raise_connection_error(
             exc=exc,
@@ -114,7 +130,11 @@ def get_workflow_tasks(workflow_id: str) -> dict[str, Any]:
     url = f"{settings.orchestrator_base_url}/workflows/{workflow_id}/tasks"
 
     try:
-        response = requests.get(url, timeout=10)
+        response = requests.get(
+            url,
+            headers=_orchestrator_headers(),
+            timeout=10,
+        )
     except requests.RequestException as exc:
         _raise_connection_error(
             exc=exc,

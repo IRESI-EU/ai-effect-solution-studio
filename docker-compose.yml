@@ -6,9 +6,14 @@ services:
       POSTGRES_USER: solution_studio
       POSTGRES_PASSWORD: solution_studio
     ports:
-      - "15432:5432"
+      - "${POSTGRES_PORT:-15432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U solution_studio -d solution_studio"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   api:
     build: ./apps/api
@@ -17,30 +22,49 @@ services:
       ORCHESTRATOR_BASE_URL: http://host.docker.internal:18000
       ARTIFACT_BASE_PATH: /wp3-artifacts
       ARTIFACT_BASE_PATHS: /denmark-artifacts
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      BOOTSTRAP_ADMIN_NAME: ${BOOTSTRAP_ADMIN_NAME:-Platform Administrator}
+      SECURE_COOKIES: ${SECURE_COOKIES:-false}
+      SESSION_HOURS: ${SESSION_HOURS:-12}
+      SERVICE_CONTRACT_PATH: /service-contracts
     ports:
-      - "18080:8080"
+      - "${API_PORT:-18080}:8080"
     volumes:
       - wp3_artifacts:/wp3-artifacts:ro
       - wp3_artifacts:/app/data:ro
       - denmark_node_data:/denmark-artifacts:ro
+      - service_contracts:/service-contracts
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - services
 
   web:
-    build: ./apps/web
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_ENVIRONMENT_LABEL: ${NEXT_PUBLIC_ENVIRONMENT_LABEL:-Local environment}
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://api:8080
-      NEXT_PUBLIC_BROWSER_API_BASE_URL: http://localhost:18080
       INTERNAL_API_URL: http://api:8080
     ports:
-      - "13000:3000"
+      - "${WEB_PORT:-13000}:3000"
     depends_on:
       - api
 
 volumes:
   postgres_data:
+  service_contracts:
   wp3_artifacts:
     external: true
   denmark_node_data:
     external: true
     name: denmark-node-data
+
+networks:
+  services:
+    external: true
+    name: ai-effect-services

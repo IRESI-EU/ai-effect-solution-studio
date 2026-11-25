@@ -1,0 +1,14 @@
+services:
+  benchmark-runner:
+    container_name: nl-benchmark-runner
+    ports: !reset []
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      SELF_URL: http://benchmark-runner:8080
+      GRPC_HOST: benchmark-runner
+      GRPC_PORT: "50051"
+    networks:
+      services:
+        aliases:
+          - benchmark-runner
