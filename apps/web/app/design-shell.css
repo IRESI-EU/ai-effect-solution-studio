@@ -385,3 +385,10 @@ a { color: inherit; }
 .run-preview { margin-top: var(--space-6); padding: var(--space-6); }
 .run-preview__head { display: flex; align-items: center; justify-content: space-between; }
 @media (max-width: 640px) { .run-ref { grid-template-columns: 1fr auto; } .run-ref__meta { grid-column: 1 / -1; } }
+
+/* Builder run steps */
+.builder-run__step-head { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: var(--space-2); }
+.builder-run__step { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-sunken); color: var(--ink-600); font: 600 12px/1 var(--font-sans); }
+.builder-run__step.is-done { background: var(--mint-100); color: var(--success-600); }
+.builder-run__action { justify-self: start; }
+.builder-run__section + .builder-run__section { padding-top: var(--space-4); border-top: 1px solid var(--border); }
