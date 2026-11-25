@@ -1,0 +1,319 @@
+{
+ "snapshot": "staging-2026-11-25",
+ "description": "Connectable Design with AI catalogue cards exported from AI-EFFECT staging on 2026-11-25. Frozen so results stay comparable across models.",
+ "aliases": {
+  "nl_synth": "svc-imported-grid-synth-service-configureandsynthesize",
+  "nl_bench": "svc-imported-benchmark-runner-runbenchmark",
+  "dk_config": "svc-imported-config-assistant1-buildrunconfig",
+  "dk_topo": "svc-imported-topology-generator1-generatetopology",
+  "dk_draw": "svc-imported-draw-topology1-rendertopologies",
+  "de_provider": "svc-imported-data-provider1-providedata",
+  "de_chronics": "svc-imported-villas-chronics1-generatechronics",
+  "de_format": "svc-imported-output-formatter1-formatoutput",
+  "pt_loader": "svc-imported-data-loader1-executequery",
+  "pt_features": "svc-imported-feature-engineer1-applyfunction",
+  "pt_trainer": "svc-imported-model-trainer1-trainmodel",
+  "pt_generator": "svc-imported-data-generator1-generatedata",
+  "pt_pipeline_config": "pkg-pipeline-config-112211a4cd"
+ },
+ "cards": [
+  {
+   "id": "pkg-pipeline-config-112211a4cd",
+   "name": "Pipeline Config",
+   "provider": "Alexandre Torres Costa",
+   "node": "portugal",
+   "category": "DataSource",
+   "operation": "PipelineConfig",
+   "purpose": "Imported from Full Use Case: Fetch, Prepare, Train, Generate, Features, Benchmark",
+   "use_when": "",
+   "input_type": "DataReference",
+   "output_type": "DataReference",
+   "keywords": [],
+   "settings": null,
+   "container_name": "pipeline_config"
+  },
+  {
+   "id": "svc-imported-benchmark-runner-runbenchmark",
+   "name": "benchmark-runner / RunBenchmark",
+   "provider": "AI-EFFECT Dutch Node",
+   "node": "dutch",
+   "category": "Netherlands Use Case",
+   "operation": "RunBenchmark",
+   "purpose": "Runs a reproducible benchmark of AI/control approaches on a prepared grid scenario and reports KPIs.",
+   "use_when": "After a synthetic grid scenario has been prepared.",
+   "input_type": "benchmark-runner Input",
+   "output_type": "Workflow Output",
+   "keywords": [],
+   "settings": null,
+   "container_name": "benchmark-runner"
+  },
+  {
+   "id": "svc-imported-config-assistant1-buildrunconfig",
+   "name": "config_assistant1 / BuildRunConfig",
+   "provider": "AI-EFFECT Danish Node",
+   "node": "denmark",
+   "category": "Denmark Use Case",
+   "operation": "BuildRunConfig",
+   "purpose": "Turns a plain-language district-heating request into a structured run configuration (Danish node, uses a local language model).",
+   "use_when": "Start of a district-heating network design workflow; before topology generation.",
+   "input_type": "Workflow Start",
+   "output_type": "topology_generator1 Input",
+   "keywords": [],
+   "settings": {
+    "schema": {
+     "type": "object",
+     "required": [],
+     "properties": {
+      "allow_hx": {
+       "type": "boolean",
+       "title": "Allow heat exchangers",
+       "default": true
+      },
+      "how_many": {
+       "type": "integer",
+       "title": "Maximum topologies",
+       "default": 20,
+       "maximum": 200,
+       "minimum": 1,
+       "description": "Upper limit; fewer are returned when fewer are feasible."
+      },
+      "allow_bypass": {
+       "type": "boolean",
+       "title": "Allow bypass",
+       "default": false
+      }
+     },
+     "additionalProperties": false
+    },
+    "channel": "parameters"
+   },
+   "container_name": "config_assistant1"
+  },
+  {
+   "id": "svc-imported-data-generator1-generatedata",
+   "name": "data_generator1 / GenerateData",
+   "provider": "AI-EFFECT Portuguese Node",
+   "node": "portugal",
+   "category": "Portugal Use Case",
+   "operation": "GenerateData",
+   "purpose": "Generates data records for a downstream analysis step (synthetic data from a trained model, or simulated energy readings).",
+   "use_when": "After model training or configuration; before analysis or reporting.",
+   "input_type": "data_generator1 Input",
+   "output_type": "Workflow Output",
+   "keywords": [],
+   "settings": null,
+   "container_name": "data_generator1"
+  },
+  {
+   "id": "svc-imported-data-loader1-executequery",
+   "name": "data_loader1 / ExecuteQuery",
+   "provider": "AI-EFFECT Portuguese Node",
+   "node": "portugal",
+   "category": "Portugal Use Case",
+   "operation": "ExecuteQuery",
+   "purpose": "Loads energy data from a CSV file or a database query (Portuguese node) as the starting dataset.",
+   "use_when": "Start of the Portuguese synthetic-data workflow.",
+   "input_type": "Workflow Start",
+   "output_type": "feature_engineer1 Input",
+   "keywords": [],
+   "settings": {
+    "schema": {
+     "type": "object",
+     "required": [],
+     "properties": {
+      "max_rows": {
+       "type": "integer",
+       "title": "Maximum rows",
+       "default": 1000,
+       "maximum": 1000000,
+       "minimum": 1
+      },
+      "rename_columns": {
+       "type": "object",
+       "title": "Rename columns",
+       "description": "Map of old column name to new name."
+      }
+     },
+     "additionalProperties": false
+    },
+    "channel": "run_input"
+   },
+   "container_name": "data_loader1"
+  },
+  {
+   "id": "svc-imported-data-provider1-providedata",
+   "name": "data_provider1 / ProvideData",
+   "provider": "AI-EFFECT German Node",
+   "node": "germany",
+   "category": "Germany Use Case",
+   "operation": "ProvideData",
+   "purpose": "Prepares German grid and time-series data for generating load and generation profiles.",
+   "use_when": "Start of a German time-series (chronics) workflow.",
+   "input_type": "Workflow Start",
+   "output_type": "villas_chronics1 Input",
+   "keywords": [],
+   "settings": null,
+   "container_name": "data_provider1"
+  },
+  {
+   "id": "svc-imported-draw-topology1-rendertopologies",
+   "name": "draw_topology1 / RenderTopologies",
+   "provider": "AI-EFFECT Danish Node",
+   "node": "denmark",
+   "category": "Denmark Use Case",
+   "operation": "RenderTopologies",
+   "purpose": "Draws generated network topologies as SVG images for review.",
+   "use_when": "End of a district-heating workflow, to visualise candidate networks.",
+   "input_type": "draw_topology1 Input",
+   "output_type": "Workflow Output",
+   "keywords": [],
+   "settings": null,
+   "container_name": "draw_topology1"
+  },
+  {
+   "id": "svc-imported-feature-engineer1-applyfunction",
+   "name": "feature_engineer1 / ApplyFunction",
+   "provider": "AI-EFFECT Portuguese Node",
+   "node": "portugal",
+   "category": "Portugal Use Case",
+   "operation": "ApplyFunction",
+   "purpose": "Applies feature-engineering functions from a knowledge store to prepare data for model training.",
+   "use_when": "After loading data and before training a model.",
+   "input_type": "feature_engineer1 Input",
+   "output_type": "model_trainer1 Input",
+   "keywords": [],
+   "settings": null,
+   "container_name": "feature_engineer1"
+  },
+  {
+   "id": "svc-imported-grid-synth-service-configureandsynthesize",
+   "name": "grid_synth_service / ConfigureAndSynthesize",
+   "provider": "AI-EFFECT Dutch Node",
+   "node": "dutch",
+   "category": "Netherlands Use Case",
+   "operation": "ConfigureAndSynthesize",
+   "purpose": "Creates a reproducible synthetic electricity grid scenario (Dutch node) for benchmarking.",
+   "use_when": "Start of a grid benchmarking workflow when real grid data is not available.",
+   "input_type": "Workflow Start",
+   "output_type": "benchmark-runner Input",
+   "keywords": [],
+   "settings": {
+    "schema": {
+     "type": "object",
+     "required": [],
+     "properties": {
+      "seed": {
+       "type": "integer",
+       "title": "Random seed",
+       "default": 42,
+       "minimum": 0,
+       "description": "Same seed gives the same synthetic grid."
+      },
+      "ref_sys_id": {
+       "type": "integer",
+       "title": "Reference system",
+       "default": 1,
+       "minimum": 1
+      },
+      "loading_level": {
+       "enum": [
+        "L",
+        "M",
+        "H"
+       ],
+       "type": "string",
+       "title": "Loading level",
+       "default": "M",
+       "description": "Low, medium or high grid loading."
+      }
+     },
+     "additionalProperties": false
+    },
+    "channel": "run_input"
+   },
+   "container_name": "grid_synth_service"
+  },
+  {
+   "id": "svc-imported-model-trainer1-trainmodel",
+   "name": "model_trainer1 / TrainModel",
+   "provider": "AI-EFFECT Portuguese Node",
+   "node": "portugal",
+   "category": "Portugal Use Case",
+   "operation": "TrainModel",
+   "purpose": "Trains a DoppelGANger (DGAN) generative model on prepared time-series data.",
+   "use_when": "After feature engineering; before generating synthetic data.",
+   "input_type": "model_trainer1 Input",
+   "output_type": "data_generator1 Input",
+   "keywords": [],
+   "settings": null,
+   "container_name": "model_trainer1"
+  },
+  {
+   "id": "svc-imported-output-formatter1-formatoutput",
+   "name": "output_formatter1 / FormatOutput",
+   "provider": "AI-EFFECT German Node",
+   "node": "germany",
+   "category": "Germany Use Case",
+   "operation": "FormatOutput",
+   "purpose": "Checks generated time-series CSV files and produces a validation summary.",
+   "use_when": "End of the German time-series workflow.",
+   "input_type": "output_formatter1 Input",
+   "output_type": "Workflow Output",
+   "keywords": [],
+   "settings": null,
+   "container_name": "output_formatter1"
+  },
+  {
+   "id": "svc-imported-topology-generator1-generatetopology",
+   "name": "topology_generator1 / GenerateTopology",
+   "provider": "AI-EFFECT Danish Node",
+   "node": "denmark",
+   "category": "Denmark Use Case",
+   "operation": "GenerateTopology",
+   "purpose": "Generates candidate district-heating network topologies from a run configuration.",
+   "use_when": "After the run configuration; before rendering the topologies.",
+   "input_type": "topology_generator1 Input",
+   "output_type": "draw_topology1 Input",
+   "keywords": [],
+   "settings": null,
+   "container_name": "topology_generator1"
+  },
+  {
+   "id": "svc-imported-villas-chronics1-generatechronics",
+   "name": "villas_chronics1 / GenerateChronics",
+   "provider": "AI-EFFECT German Node",
+   "node": "germany",
+   "category": "Germany Use Case",
+   "operation": "GenerateChronics",
+   "purpose": "Generates electricity load and production time series (chronics) with the VILLASnode simulator.",
+   "use_when": "After grid data has been provided; produces CSV time series.",
+   "input_type": "villas_chronics1 Input",
+   "output_type": "output_formatter1 Input",
+   "keywords": [],
+   "settings": {
+    "schema": {
+     "type": "object",
+     "required": [],
+     "properties": {
+      "compress": {
+       "type": "boolean",
+       "title": "Compress output",
+       "default": false
+      },
+      "round_decimals": {
+       "type": "integer",
+       "title": "Decimal places",
+       "default": 3,
+       "maximum": 8,
+       "minimum": 0,
+       "description": "Number of decimals in the generated time series."
+      }
+     },
+     "additionalProperties": false
+    },
+    "channel": "parameters"
+   },
+   "container_name": "villas_chronics1"
+  }
+ ]
+}
