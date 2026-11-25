@@ -1,12 +1,13 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app.db import Base, SessionLocal, engine, get_db
 from app.models.deployment import Deployment
+from app.models.run_output_snapshot import RunOutputSnapshot  # noqa: F401  (table creation)
 from app.models.operation_contract import OperationContract
 from app.models.service import Service
 from app.models.solution import Solution
@@ -22,6 +23,7 @@ from app.dependencies.auth import (
 from app.routers.auth import bootstrap_admin, router as auth_router
 from app.routers.admin_users import router as admin_users_router
 from app.routers.operation_contracts import router as operation_contracts_router
+from app.routers.service_settings import router as service_settings_router
 from app.schemas.data_reference import DataReferencePreviewRequest
 from app.schemas.deployment import (
     DeploymentCreate,
@@ -54,6 +56,7 @@ from app.services.runtime_preflight import (
     run_runtime_preflight,
 )
 from app.services.workflow_compiler import compile_to_wp3_payload
+from app.services.run_snapshots import delete_expired_snapshots, saved_preview, watch_workflow
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.service_import import (
     ServiceImportManualConfirmRequest,
@@ -83,9 +86,11 @@ Base.metadata.create_all(bind=engine)
 
 with SessionLocal() as bootstrap_db:
     bootstrap_admin(bootstrap_db)
+    delete_expired_snapshots(bootstrap_db)
 
 app = FastAPI(title="AI-EFFECT Solution Studio API", version="0.1.0")
 app.include_router(operation_contracts_router)
+app.include_router(service_settings_router)
 app.include_router(auth_router)
 app.include_router(admin_users_router)
 
@@ -158,9 +163,16 @@ def admin_import_wp3_package(
 @app.post("/data-references/preview")
 def preview_data_reference_endpoint(
     payload: DataReferencePreviewRequest,
+    db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
-    return preview_data_reference(payload.protocol, payload.uri, payload.task_id)
+    if payload.workflow_id and payload.task_id:
+        saved = saved_preview(db, payload.workflow_id, payload.task_id, payload.uri)
+        if saved is not None:
+            return saved
+    return preview_data_reference(
+        payload.protocol, payload.uri, payload.task_id, format_hint=payload.format, db=db
+    )
 
 
 # ---------------------------------------------------------------------
@@ -668,6 +680,7 @@ def runtime_preflight_endpoint(
 @app.post("/workflows/submit-to-orchestrator")
 def submit_workflow_to_orchestrator_endpoint(
     workflow: WorkflowSubmitRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -710,7 +723,18 @@ def submit_workflow_to_orchestrator_endpoint(
     if "services_api_key" in compiled_payload:
         orchestrator_payload["services_api_key"] = compiled_payload["services_api_key"]
 
+    # Per-node settings. Only sent when present, so orchestrators without
+    # settings support keep accepting workflows that use none.
+    for key in ("parameters", "node_inputs"):
+        if compiled_payload.get(key):
+            orchestrator_payload[key] = compiled_payload[key]
+
     orchestrator_result = submit_to_orchestrator(orchestrator_payload)
+
+    # Save each step's gRPC output as it completes, so this run's results stay
+    # viewable after later runs replace the services' in-memory copies.
+    if isinstance(orchestrator_result, dict) and orchestrator_result.get("workflow_id"):
+        background_tasks.add_task(watch_workflow, orchestrator_result["workflow_id"])
 
     if isinstance(orchestrator_result, dict):
         orchestrator_result["solution_studio_metadata"] = compiled_payload.get(

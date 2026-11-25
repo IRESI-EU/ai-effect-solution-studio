@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { ServiceSettingsEditor } from "../../../components/service-settings-editor";
+import { settingsDefinitionOf } from "../../../lib/service-settings";
 
 type Service = {
   id: string;
@@ -27,6 +29,7 @@ type Service = {
   manifest_path?: string | null;
   interface_type?: string | null;
   interface_contract?: Record<string, unknown> | null;
+  owner_node?: string | null;
   orchestration_mode?: string | null;
   adapter_type?: string | null;
   health_path?: string | null;
@@ -234,6 +237,12 @@ export default async function ServiceDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           </section>
+
+          <ServiceSettingsEditor
+            serviceId={service.id}
+            ownerNode={service.owner_node || null}
+            initial={settingsDefinitionOf(service)}
+          />
 
           <section className="card service-detail-section">
             <p className="service-detail-eyebrow">Workflow guidance</p>

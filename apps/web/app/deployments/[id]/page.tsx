@@ -78,6 +78,7 @@ export default function DeploymentDetailPage({
           uri: ref.uri,
           format: ref.format,
           task_id: taskId,
+          workflow_id: workflowId || undefined,
         }),
       });
 
@@ -552,10 +553,15 @@ function PreviewPanel({
 
   if (preview.kind === "json" && preview.content) {
     const drawings = Array.isArray(preview.content?.drawings) ? preview.content.drawings : [];
-    const report = preview.content?.report;
+    const report =
+      preview.content?.report ||
+      (typeof preview.content?.summary === "string" ? preview.content : null);
+    const sections = Array.isArray(preview.content?.sections) ? preview.content.sections : [];
+    const fromGrpc = preview.source_kind === "grpc";
     return (
       <div className="deployment-json-preview">
         <PreviewHeader preview={preview} />
+        {preview.note && <p style={{ color: "#667085", fontSize: 13, margin: "4px 0 8px" }}>{String(preview.note)}</p>}
         {report && typeof report === "object" && (
           <div className="deployment-report-summary">
             <div>
@@ -570,10 +576,26 @@ function PreviewPanel({
             )}
           </div>
         )}
+        {sections.length > 0 && (
+          <div className="deployment-report-sections" style={{ display: "grid", gap: 10, margin: "8px 0" }}>
+            {sections.map((section: any, index: number) => (
+              <div key={index}>
+                <strong>{String(section?.title || `Section ${index + 1}`)}</strong>
+                {Array.isArray(section?.content) && (
+                  <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                    {section.content.map((line: unknown, lineIndex: number) => (
+                      <li key={lineIndex}>{String(line)}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         {drawings.length > 0 && (
           <DrawingButtons drawings={drawings} selectedIndex={null} onPreview={onPreview} />
         )}
-        <details className="deployment-raw-output">
+        <details className="deployment-raw-output" open={fromGrpc && sections.length === 0 && !report}>
           <summary>View raw JSON output</summary>
           <pre>{JSON.stringify(preview.content, null, 2)}</pre>
         </details>

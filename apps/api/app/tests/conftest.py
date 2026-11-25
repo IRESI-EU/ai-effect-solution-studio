@@ -62,6 +62,7 @@ from app.models.deployment import Deployment  # noqa: E402,F401
 from app.models.operation_contract import OperationContract  # noqa: E402,F401
 from app.models.service import Service  # noqa: E402,F401
 from app.models.solution import Solution  # noqa: E402,F401
+from app.models.run_output_snapshot import RunOutputSnapshot  # noqa: E402,F401
 from app.models.user import AuditEvent, User, UserSession  # noqa: E402,F401
 from app.core.security import hash_password  # noqa: E402
 from uuid import uuid4  # noqa: E402

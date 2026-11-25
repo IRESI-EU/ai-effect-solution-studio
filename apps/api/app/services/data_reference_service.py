@@ -384,7 +384,13 @@ def looks_like_csv(content: str):
     return "," in first_line and "," in second_line
 
 
-def preview_data_reference(protocol: str, uri: str, task_id: str | None = None):
+def preview_data_reference(
+    protocol: str,
+    uri: str,
+    task_id: str | None = None,
+    format_hint: str | None = None,
+    db=None,
+):
     protocol = (protocol or "").lower().strip()
 
     if protocol == "inline":
@@ -420,6 +426,12 @@ def preview_data_reference(protocol: str, uri: str, task_id: str | None = None):
         }
 
     if protocol == "grpc":
+        if uri not in GRPC_PREVIEW_TARGETS and db is not None:
+            from app.services.grpc_preview import preview_catalogue_grpc
+
+            catalogue_preview = preview_catalogue_grpc(db, uri, format_hint)
+            if catalogue_preview is not None:
+                return catalogue_preview
         return preview_grpc_reference(uri, task_id)
 
     return {
