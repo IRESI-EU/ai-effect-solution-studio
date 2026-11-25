@@ -1,6 +1,6 @@
-# Brief: a small language model for Design with AI
+# Brief: An SLM for the *Design with AI* of Builder replacing gpt4.1-mini
 
-**From:** Adarsh S (AI-EFFECT Solution Studio) · **Date:** 25 November 2026
+
 
 ## The task
 
