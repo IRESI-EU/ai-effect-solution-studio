@@ -82,5 +82,5 @@ catalogue in the prompt**, not memorise today's services.
 If the target is met, the portal will use the small model first and fall back to
 OpenAI only when the validator rejects its answer.
 
-**Questions:** Adarsh S. Please do not add the test cases to any training data,
+**Questions:**  Please do not add the test cases to any training data,
 and do not commit API keys or model weights to the repository.
