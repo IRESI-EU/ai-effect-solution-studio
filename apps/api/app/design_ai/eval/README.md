@@ -10,6 +10,7 @@ same task, with the same prompt, validator and repair loop the portal uses.
 | `cases.jsonl` | 87 test requests with the expected result (one JSON object per line). |
 | `scoring.py` | Scoring rules (pure functions, unit-tested in `app/tests/test_design_ai_eval.py`). |
 | `run_eval.py` | Runs the cases against a model and writes a JSON + Markdown report. |
+| `SLM_BRIEF.md` | One-page brief for the small-model work (what to run, what to send back). |
 | `results/` | Reference runs. `baseline-gpt-4.1-mini-2026-11-25` is the current baseline. |
 
 ## Running it
