@@ -23,7 +23,7 @@ import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsV
 import { DesignAssistant, type ProposedWorkflow } from "../../components/design-assistant";
 import { serviceText } from "../../lib/service-presentation";
 import Link from "next/link";
-import { CircleCheck, CircleX, Info as InfoIcon, Plus, Search, TriangleAlert } from "lucide-react";
+import { CircleCheck, CircleX, Info as InfoIcon, Play, Plus, Search, TriangleAlert } from "lucide-react";
 
 type Service = {
   id: string;
@@ -128,6 +128,7 @@ function BuilderContent() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<"assistant" | "inspector" | "run">("assistant");
   const [aiUndo, setAiUndo] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
+  const [canvasFitKey, setCanvasFitKey] = useState(0);
 
   function canvasAsProposal() {
     const serviceNodes = nodes.filter((node) => Boolean(node.data?.service));
@@ -193,6 +194,7 @@ function BuilderContent() {
     ]);
     setSelectedService(null);
     setSelectedNodeId(null);
+    setCanvasFitKey((key) => key + 1);
     invalidateWorkflowResults();
   }
 
@@ -838,6 +840,8 @@ function BuilderContent() {
 
         <main className="builder-canvas" aria-label="Workflow canvas">
           <ReactFlow
+            key={canvasFitKey}
+            fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }}
             nodes={nodes}
             edges={edges}
             onNodesChange={handleNodesChange}
@@ -872,9 +876,9 @@ function BuilderContent() {
           </div>
 
           <div className="builder-side__body">
-            {rightTab === "assistant" && (
+            <div hidden={rightTab !== "assistant"}>
               <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} />
-            )}
+            </div>
 
             {rightTab === "inspector" && !selectedService && (
               <div className="empty-state builder-empty-state">
@@ -924,37 +928,61 @@ function BuilderContent() {
             {rightTab === "run" && (
               <div className="builder-run">
                 <section className="builder-run__section">
-                  <h3 className="builder-run__title">Design check</h3>
-                  <div className="builder-run__status">
+                  <div className="builder-run__step-head">
+                    <span className={"builder-run__step" + (workflowDesignStatus === "valid" ? " is-done" : "")}>1</span>
+                    <h3 className="builder-run__title">Check the design</h3>
                     <span className={"ae-badge " + (workflowDesignStatus === "valid" ? "ae-badge--success" : workflowDesignStatus === "invalid" ? "ae-badge--danger" : "")}>
-                      Design: {workflowDesignStatus === "invalid" ? "needs attention" : workflowDesignStatus === "valid" ? "valid" : "not checked"}
-                    </span>
-                    <span className={"ae-badge " + (runtimePreflight?.status === "ready" ? "ae-badge--success" : runtimePreflight?.status === "blocked" ? "ae-badge--danger" : "")}>
-                      Services: {runtimePreflight?.status === "ready" ? "ready" : runtimePreflight?.status === "blocked" ? (runtimePreflight?.summary.blocked || 0) + " blocked" : "not checked"}
+                      {workflowDesignStatus === "invalid" ? "Needs attention" : workflowDesignStatus === "valid" ? "Valid" : "Not checked"}
                     </span>
                   </div>
-                  {validationResults.length === 0 ? (
-                    <p className="muted builder-run__hint">Select Check design to find missing connections and invalid settings.</p>
-                  ) : (
+                  <p className="muted builder-run__hint">Finds missing connections, incompatible steps and invalid settings.</p>
+                  {validationResults.length > 0 && (
                     <ul className="builder-checks">
-                      {validationResults.map((result, index) => {
-                        const tone = result.startsWith("Blocked") ? "danger" : result.startsWith("Warning") ? "warning" : result.startsWith("Passed") ? "success" : "info";
+                      {validationResults.filter((result) => !result.startsWith("Passed")).map((result, index) => {
+                        const tone = result.startsWith("Blocked") ? "danger" : result.startsWith("Warning") ? "warning" : "info";
                         return <li key={index} className={"builder-check builder-check--" + tone}>{result.replace(/^(Blocked|Passed|Warning|Note):\s*/, "")}</li>;
                       })}
                     </ul>
                   )}
-                  {runtimePreflight && <a href="#runtime-readiness" className="ae-btn ae-btn--ghost ae-btn--sm">See service readiness</a>}
+                  <button className="ae-btn ae-btn--secondary builder-run__action" onClick={() => validateWorkflow()}>Check design</button>
                 </section>
 
                 <section className="builder-run__section">
-                  <h3 className="builder-run__title">Run input <span className="muted">(optional)</span></h3>
+                  <div className="builder-run__step-head">
+                    <span className={"builder-run__step" + (runtimePreflight?.status === "ready" ? " is-done" : "")}>2</span>
+                    <h3 className="builder-run__title">Check the services</h3>
+                    <span className={"ae-badge " + (runtimePreflight?.status === "ready" ? "ae-badge--success" : runtimePreflight?.status === "blocked" ? "ae-badge--danger" : "")}>
+                      {runtimePreflight?.status === "ready" ? "All ready" : runtimePreflight?.status === "blocked" ? (runtimePreflight?.summary.blocked || 0) + " blocked" : "Not checked"}
+                    </span>
+                  </div>
+                  <p className="muted builder-run__hint">Saves the solution and checks that every node service is reachable and allowed to run.</p>
+                  {runtimePreflight?.status === "blocked" && (
+                    <ul className="builder-checks">
+                      {runtimePreflight.checks.filter((check) => check.blocking).map((check) => (
+                        <li key={check.node_id} className="builder-check builder-check--danger">
+                          <strong>{serviceText(catalogueEntry({ id: check.service_id, name: check.service_name } as Service)).title}:</strong> {check.message} {check.recommended_action}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button className="ae-btn ae-btn--secondary builder-run__action" onClick={prepareDeployment} disabled={preparingDeployment || savingSolution}>
+                    {preparingDeployment ? "Checking services..." : runtimePreflight ? "Check again" : "Check services"}
+                  </button>
+                </section>
+
+                <section className="builder-run__section">
+                  <div className="builder-run__step-head">
+                    <span className="builder-run__step">3</span>
+                    <h3 className="builder-run__title">Deploy</h3>
+                  </div>
                   <div className="ae-field">
+                    <label className="ae-field__label" htmlFor="run-input">Run input <span className="ae-field__unit">(optional)</span></label>
                     <select id="run-input-mode" className="ae-select" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} aria-label="Run input type">
                       <option value="prompt">Text prompt</option>
                       <option value="json">JSON object</option>
                     </select>
-                    <textarea className="ae-textarea" aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={3} placeholder={runInputMode === "prompt" ? "Describe what this run should do" : '{"prompt": "...", "option": true}'} />
-                    <span className="ae-field__help">Sent to the first step when you deploy. Leave empty to use the service defaults.</span>
+                    <textarea id="run-input" className="ae-textarea" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={3} placeholder={runInputMode === "prompt" ? "Only needed if the first step expects a prompt" : '{"prompt": "...", "option": true}'} />
+                    <span className="ae-field__help">Sent to the first step. Most workflows can leave this empty.</span>
                   </div>
                   {nodes.some((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service))) && (
                     <details className="details">
@@ -962,7 +990,7 @@ function BuilderContent() {
                         Settings for this run only{Object.values(runOverrides).some((values) => Object.keys(values).length) ? " · changed" : ""}
                       </summary>
                       <div className="details__body">
-                        <p className="muted" style={{ margin: 0 }}>Try different values without changing the saved solution.</p>
+                        <p className="muted" style={{ margin: 0 }}>Try different values once without changing the saved solution.</p>
                         {nodes
                           .filter((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service)))
                           .map((node) => {
@@ -984,25 +1012,29 @@ function BuilderContent() {
                     </details>
                   )}
                   {runInputError && <p role="alert" className="ae-field__error">{runInputError}</p>}
+                  <button className="ae-btn ae-btn--primary builder-run__action" onClick={confirmDeployment} disabled={!deploymentConfirmationReady || submittingToOrchestrator}>
+                    <Play size={16} aria-hidden="true" />{submittingToOrchestrator ? "Deploying..." : "Deploy now"}
+                  </button>
+                  {!deploymentConfirmationReady && !deploymentResult && (
+                    <p className="muted builder-run__hint">Available once the design is valid and every service is ready.</p>
+                  )}
                 </section>
 
-                {deploymentResult ? (
+                {deploymentResult && (
                   <div className={"ae-alert " + (deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? "ae-alert--danger" : "ae-alert--success")}>
                     {deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? <CircleX size={20} aria-hidden="true" /> : <CircleCheck size={20} aria-hidden="true" />}
                     <div>
                       {deploymentResult.workflow_id ? (
                         <>
-                          <span className="ae-alert__title">Deployment submitted.</span>{" "}
-                          <Link href={"/deployments/" + deploymentResult.workflow_id}>View the run</Link>
+                          <span className="ae-alert__title">Deployed.</span>{" "}
+                          <Link href={"/deployments/" + deploymentResult.workflow_id}>Follow the run</Link>
                           <div className="ae-mono">{deploymentResult.workflow_id}</div>
                         </>
                       ) : (
-                        <><span className="ae-alert__title">{deploymentResult.status === "blocked" ? "Deployment blocked." : "Deployment failed."}</span> {deploymentResult.error}</>
+                        <><span className="ae-alert__title">{deploymentResult.status === "blocked" ? "Not ready to deploy." : "Deployment failed."}</span> {deploymentResult.error}</>
                       )}
                     </div>
                   </div>
-                ) : (
-                  <p className="muted builder-run__hint">Check the design, prepare the deployment, then confirm once every service is ready.</p>
                 )}
               </div>
             )}
