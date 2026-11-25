@@ -173,7 +173,7 @@ export default function SolutionDetailsPage({
 
   return (
     <div className="page">
-      <Link href="/solutions" style={{ color: "#075985", fontWeight: 800 }}>
+      <Link href="/solutions" style={{ color: "var(--brand-600)", fontWeight: 600 }}>
         ← Back to saved solutions
       </Link>
 
@@ -185,7 +185,7 @@ export default function SolutionDetailsPage({
 
       {error && (
         <section className="card" style={{ padding: 30, marginTop: 20 }}>
-          <p style={{ color: "#b42318", fontWeight: 800 }}>{error}</p>
+          <p style={{ color: "var(--danger-600)", fontWeight: 600 }}>{error}</p>
         </section>
       )}
 
@@ -198,7 +198,7 @@ export default function SolutionDetailsPage({
               marginTop: 20,
               background: "linear-gradient(135deg, #ffffff 0%, #f7f4ff 100%)",
               border: "1px solid #ded7f5",
-              boxShadow: "0 18px 46px rgba(48, 35, 104, 0.08)",
+              
             }}
           >
             <div
@@ -210,9 +210,7 @@ export default function SolutionDetailsPage({
               }}
             >
               <div>
-                <span className="badge">Solution Workspace</span>
-
-                <h1 style={{ fontSize: 40, margin: "16px 0 10px" }}>
+                <h1 className="page-header__title">
                   {solution.name}
                 </h1>
 
@@ -223,7 +221,7 @@ export default function SolutionDetailsPage({
                   {solution.status}
                 </span>
 
-                <p style={{ color: "#526173", fontSize: 17, maxWidth: 850 }}>
+                <p className="page-header__lead">
                   {solution.description || "No description provided."}
                 </p>
               </div>
@@ -234,11 +232,11 @@ export default function SolutionDetailsPage({
                   disabled={refreshing}
                   style={{
                     border: "1px solid #d7ceff",
-                    background: refreshing ? "#f8fafc" : "white",
-                    color: "#6941c6",
+                    background: refreshing ? "var(--surface-sunken)" : "white",
+                    color: "var(--brand-600)",
                     padding: "12px 16px",
-                    borderRadius: 12,
-                    fontWeight: 800,
+                    borderRadius: 8,
+                    fontWeight: 600,
                     cursor: refreshing ? "not-allowed" : "pointer",
                     whiteSpace: "nowrap",
                   }}
@@ -253,8 +251,8 @@ export default function SolutionDetailsPage({
                       background: "#6d4aff",
                       color: "white",
                       padding: "12px 16px",
-                      borderRadius: 12,
-                      fontWeight: 800,
+                      borderRadius: 8,
+                      fontWeight: 600,
                       textDecoration: "none",
                       whiteSpace: "nowrap",
                     }}
@@ -264,11 +262,11 @@ export default function SolutionDetailsPage({
                 ) : (
                   <span
                     style={{
-                      background: "#f2f4f7",
-                      color: "#667085",
+                      background: "var(--surface-sunken)",
+                      color: "var(--ink-600)",
                       padding: "12px 16px",
-                      borderRadius: 12,
-                      fontWeight: 800,
+                      borderRadius: 8,
+                      fontWeight: 600,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -283,9 +281,9 @@ export default function SolutionDetailsPage({
                 style={{
                   marginTop: 18,
                   padding: 14,
-                  borderRadius: 14,
-                  background: "#f8fafc",
-                  color: "#344054",
+                  borderRadius: 8,
+                  background: "var(--surface-sunken)",
+                  color: "var(--ink-900)",
                 }}
               >
                 Status refresh complete:{" "}
@@ -329,15 +327,15 @@ export default function SolutionDetailsPage({
             }}
           >
             <div>
-              <h2 style={{ marginTop: 0 }}>Latest run</h2>
+              <h2 className="section__title">Latest run</h2>
 
               {!latestDeployment && (
                 <div
                   style={{
                     padding: 18,
-                    borderRadius: 14,
-                    background: "#f8fafc",
-                    color: "#667085",
+                    borderRadius: 8,
+                    background: "var(--surface-sunken)",
+                    color: "var(--ink-600)",
                   }}
                 >
                   This solution has not been deployed yet.
@@ -348,7 +346,7 @@ export default function SolutionDetailsPage({
                 <div
                   style={{
                     padding: 18,
-                    borderRadius: 16,
+                    borderRadius: 8,
                     background: statusBackground(latestDeployment.status),
                     border: "1px solid #d6dee9",
                   }}
@@ -373,14 +371,14 @@ export default function SolutionDetailsPage({
                         style={{
                           marginTop: 12,
                           fontFamily: "monospace",
-                          fontWeight: 800,
-                          color: "#0f172a",
+                          fontWeight: 600,
+                          color: "var(--ink-900)",
                         }}
                       >
                         {latestDeployment.workflow_id}
                       </div>
 
-                      <div style={{ color: "#526173", marginTop: 8 }}>
+                      <div style={{ color: "var(--ink-600)", marginTop: 8 }}>
                         Created {formatDate(latestDeployment.created_at)}
                       </div>
                     </div>
@@ -388,8 +386,8 @@ export default function SolutionDetailsPage({
                     <Link
                       href={`/deployments/${latestDeployment.workflow_id}`}
                       style={{
-                        color: "#075985",
-                        fontWeight: 800,
+                        color: "var(--brand-600)",
+                        fontWeight: 600,
                         whiteSpace: "nowrap",
                       }}
                     >
@@ -401,7 +399,7 @@ export default function SolutionDetailsPage({
             </div>
 
             <div>
-              <h2 style={{ marginTop: 0 }}>Run health</h2>
+              <h2 className="section__title">Run health</h2>
 
               <div
                 style={{
@@ -419,9 +417,9 @@ export default function SolutionDetailsPage({
                 style={{
                   marginTop: 14,
                   padding: 14,
-                  borderRadius: 14,
-                  background: "#f8fafc",
-                  color: "#526173",
+                  borderRadius: 8,
+                  background: "var(--surface-sunken)",
+                  color: "var(--ink-600)",
                   lineHeight: 1.6,
                 }}
               >
@@ -438,7 +436,7 @@ export default function SolutionDetailsPage({
               padding: 30,
               marginTop: 20,
               border: "1px solid #e8e4f4",
-              boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+              
             }}
           >
             <div
@@ -451,7 +449,7 @@ export default function SolutionDetailsPage({
             >
               <h2 style={{ margin: 0 }}>Workflow diagram</h2>
 
-              <span style={{ color: "#667085", fontSize: 14 }}>
+              <span style={{ color: "var(--ink-600)", fontSize: 14 }}>
                 Read-only preview
               </span>
             </div>
@@ -460,9 +458,9 @@ export default function SolutionDetailsPage({
               style={{
                 height: 340,
                 border: "1px solid #e4e9f2",
-                borderRadius: 16,
+                borderRadius: 8,
                 overflow: "hidden",
-                background: "#f8fafc",
+                background: "var(--surface-sunken)",
               }}
             >
               <ReactFlow
@@ -486,7 +484,7 @@ export default function SolutionDetailsPage({
               padding: 30,
               marginTop: 20,
               border: "1px solid #e8e4f4",
-              boxShadow: "0 14px 34px rgba(44, 36, 86, 0.05)",
+              
             }}
           >
             <div
@@ -500,7 +498,7 @@ export default function SolutionDetailsPage({
             >
               <div>
                 <h2 style={{ margin: 0 }}>Deployment history</h2>
-                <p style={{ color: "#667085", marginBottom: 0 }}>
+                <p style={{ color: "var(--ink-600)", marginBottom: 0 }}>
                   Active orchestrator runs created from this saved solution.
                   Archive old debug runs without deleting audit history.
                 </p>
@@ -510,8 +508,8 @@ export default function SolutionDetailsPage({
   <Link
     href={`/deployments/archived?solutionId=${solution.id}`}
     style={{
-      color: "#475467",
-      fontWeight: 800,
+      color: "var(--ink-600)",
+      fontWeight: 600,
       whiteSpace: "nowrap",
       textDecoration: "none",
     }}
@@ -523,8 +521,8 @@ export default function SolutionDetailsPage({
     <Link
       href={`/deployments/${latestDeployment.workflow_id}`}
       style={{
-        color: "#075985",
-        fontWeight: 800,
+        color: "var(--brand-600)",
+        fontWeight: 600,
         whiteSpace: "nowrap",
         textDecoration: "none",
       }}
@@ -540,9 +538,9 @@ export default function SolutionDetailsPage({
               <div
                 style={{
                   padding: 18,
-                  borderRadius: 14,
-                  background: "#f8fafc",
-                  color: "#667085",
+                  borderRadius: 8,
+                  background: "var(--surface-sunken)",
+                  color: "var(--ink-600)",
                 }}
               >
                 No active deployments linked to this solution. Open it in
@@ -555,12 +553,12 @@ export default function SolutionDetailsPage({
               <div
                 style={{
                   border: "1px solid #e4e9f2",
-                  borderRadius: 16,
+                  borderRadius: 8,
                   overflow: "hidden",
                 }}
               >
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead style={{ background: "#f8fafc" }}>
+                  <thead style={{ background: "var(--surface-sunken)" }}>
                     <tr>
                       <Th>Workflow ID</Th>
                       <Th>Status</Th>
@@ -606,8 +604,8 @@ export default function SolutionDetailsPage({
                             <Link
                               href={`/deployments/${deployment.workflow_id}`}
                               style={{
-                                color: "#075985",
-                                fontWeight: 800,
+                                color: "var(--brand-600)",
+                                fontWeight: 600,
                                 textDecoration: "none",
                               }}
                             >
@@ -625,9 +623,9 @@ export default function SolutionDetailsPage({
                                 background: "transparent",
                                 color:
                                   solution.status === "archived"
-                                    ? "#98a2b3"
-                                    : "#b42318",
-                                fontWeight: 800,
+                                    ? "var(--ink-400)"
+                                    : "var(--danger-600)",
+                                fontWeight: 600,
                                 cursor:
                                   archivingId === deployment.id ||
                                   solution.status === "archived"
@@ -661,11 +659,11 @@ function Info({ label, value }: { label: string; value: string }) {
       style={{
         background: "rgba(255, 255, 255, 0.88)",
         padding: 16,
-        borderRadius: 14,
+        borderRadius: 8,
         border: "1px solid #e8e4f4",
       }}
     >
-      <div style={{ color: "#667085", fontSize: 13 }}>{label}</div>
+      <div style={{ color: "var(--ink-600)", fontSize: 13 }}>{label}</div>
       <strong>{value}</strong>
     </div>
   );
@@ -681,10 +679,10 @@ function HealthCard({
   tone: "good" | "bad" | "neutral";
 }) {
   const background =
-    tone === "good" ? "#ecfdf3" : tone === "bad" ? "#fef3f2" : "#f8fafc";
+    tone === "good" ? "var(--mint-100)" : tone === "bad" ? "var(--danger-100)" : "var(--surface-sunken)";
 
   const color =
-    tone === "good" ? "#027a48" : tone === "bad" ? "#b42318" : "#344054";
+    tone === "good" ? "var(--success-600)" : tone === "bad" ? "var(--danger-600)" : "var(--ink-900)";
 
   return (
     <div
@@ -692,11 +690,11 @@ function HealthCard({
         background,
         color,
         padding: 16,
-        borderRadius: 14,
+        borderRadius: 8,
         textAlign: "center",
       }}
     >
-      <div style={{ fontSize: 26, fontWeight: 900 }}>{value}</div>
+      <div style={{ fontSize: 26, fontWeight: 600 }}>{value}</div>
       <div style={{ fontSize: 13, marginTop: 4 }}>{label}</div>
     </div>
   );
@@ -707,7 +705,7 @@ function Th({ children }: { children: React.ReactNode }) {
 }
 
 function Td({ children }: { children: React.ReactNode }) {
-  return <td style={{ padding: 16, color: "#344054" }}>{children}</td>;
+  return <td style={{ padding: 16, color: "var(--ink-900)" }}>{children}</td>;
 }
 
 function formatDate(value: string) {
@@ -716,35 +714,35 @@ function formatDate(value: string) {
 
 function statusBackground(status: string) {
   if (status === "completed") {
-    return "#ecfdf3";
+    return "var(--mint-100)";
   }
 
   if (status === "failed") {
-    return "#fef3f2";
+    return "var(--danger-100)";
   }
 
-  return "#f8fafc";
+  return "var(--surface-sunken)";
 }
 
 function statusBadgeStyle(status: string) {
   if (status === "completed") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "failed") {
     return {
-      background: "#fee4e2",
-      color: "#b42318",
+      background: "var(--danger-100)",
+      color: "var(--danger-600)",
     };
   }
 
   if (status === "running") {
     return {
-      background: "#e0f2fe",
-      color: "#075985",
+      background: "var(--brand-50)",
+      color: "var(--brand-600)",
     };
   }
 
@@ -755,12 +753,12 @@ function solutionStatusBadgeStyle(status: string) {
   const normalized = status.toLowerCase();
 
   if (normalized === "archived") {
-    return { background: "#f2f4f7", color: "#475467" };
+    return { background: "var(--surface-sunken)", color: "var(--ink-600)" };
   }
 
   if (normalized === "submitted" || normalized === "running") {
-    return { background: "#eaf2ff", color: "#2457a6" };
+    return { background: "var(--brand-50)", color: "var(--brand-600)" };
   }
 
-  return { background: "#eee8ff", color: "#6941c6" };
+  return { background: "#eee8ff", color: "var(--brand-600)" };
 }

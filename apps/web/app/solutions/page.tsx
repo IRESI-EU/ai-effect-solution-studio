@@ -108,7 +108,6 @@ export default async function SolutionsPage() {
 
   return (
     <div className="page">
-      <span className="badge">Solution Workspace</span>
 
       <div
         style={{
@@ -119,8 +118,8 @@ export default async function SolutionsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 40, marginBottom: 8 }}>Saved solutions</h1>
-          <p style={{ color: "#526173", fontSize: 17, maxWidth: 760 }}>
+          <h1 className="page-header__title">Saved solutions</h1>
+          <p className="page-header__lead">
             Manage draft and submitted AI-EFFECT workflows composed from
             trusted marketplace services.
           </p>
@@ -131,11 +130,11 @@ export default async function SolutionsPage() {
     href="/solutions/archived"
     style={{
       border: "1px solid #d0d5dd",
-      color: "#344054",
+      color: "var(--ink-900)",
       background: "white",
       padding: "12px 16px",
-      borderRadius: 12,
-      fontWeight: 800,
+      borderRadius: 8,
+      fontWeight: 600,
       textDecoration: "none",
       whiteSpace: "nowrap",
     }}
@@ -149,8 +148,8 @@ export default async function SolutionsPage() {
       background: "#6d4aff",
       color: "white",
       padding: "12px 16px",
-      borderRadius: 12,
-      fontWeight: 800,
+      borderRadius: 8,
+      fontWeight: 600,
       textDecoration: "none",
       whiteSpace: "nowrap",
     }}
@@ -186,8 +185,8 @@ export default async function SolutionsPage() {
           style={{
             padding: 24,
             marginTop: 28,
-            background: "#fef3f2",
-            color: "#b42318",
+            background: "var(--danger-100)",
+            color: "var(--danger-600)",
           }}
         >
           <strong>Unable to load solutions</strong>
@@ -197,12 +196,12 @@ export default async function SolutionsPage() {
 
       {!error && solutions.length === 0 && (
         <section className="card" style={{ padding: 30, marginTop: 28 }}>
-          <h2 style={{ marginTop: 0 }}>No saved solutions yet</h2>
-          <p style={{ color: "#526173" }}>
+          <h2 className="section__title">No saved solutions yet</h2>
+          <p style={{ color: "var(--ink-600)" }}>
             Create one from the Builder using Save draft.
           </p>
 
-          <Link href="/builder" style={{ color: "#075985", fontWeight: 800 }}>
+          <Link href="/builder" style={{ color: "var(--brand-600)", fontWeight: 600 }}>
             Open Builder →
           </Link>
         </section>
@@ -230,11 +229,11 @@ export default async function SolutionsPage() {
           >
             <div>
               <h2 style={{ margin: 0, fontSize: 20 }}>Solution library</h2>
-              <p style={{ margin: "5px 0 0", color: "#667085", fontSize: 14 }}>
+              <p style={{ margin: "5px 0 0", color: "var(--ink-600)", fontSize: 14 }}>
                 Saved designs and their latest orchestrator activity.
               </p>
             </div>
-            <span style={{ color: "#6941c6", fontWeight: 800, fontSize: 14 }}>
+            <span style={{ color: "var(--brand-600)", fontWeight: 600, fontSize: 14 }}>
               {solutions.length} active
             </span>
           </div>
@@ -258,14 +257,14 @@ export default async function SolutionsPage() {
                   style={{ borderTop: "1px solid #e4e9f2" }}
                 >
                   <Td>
-                    <div style={{ fontWeight: 900, color: "#0f172a" }}>
+                    <div style={{ fontWeight: 600, color: "var(--ink-900)" }}>
                       {solution.name}
                     </div>
 
                     <div
                       style={{
                         marginTop: 6,
-                        color: "#667085",
+                        color: "var(--ink-600)",
                         fontSize: 13,
                         maxWidth: 420,
                       }}
@@ -288,7 +287,7 @@ export default async function SolutionsPage() {
                       <span>
                         <strong>{solution.services_count}</strong> services
                       </span>
-                      <span style={{ color: "#667085" }}>
+                      <span style={{ color: "var(--ink-600)" }}>
                         {solution.connections_count} connections
                       </span>
                     </div>
@@ -314,8 +313,8 @@ export default async function SolutionsPage() {
                           <Link
                             href={`/deployments/${solution.latest_workflow_id}`}
                             style={{
-                              color: "#075985",
-                              fontWeight: 800,
+                              color: "var(--brand-600)",
+                              fontWeight: 600,
                               fontSize: 13,
                               textDecoration: "none",
                               fontFamily: "monospace",
@@ -326,7 +325,7 @@ export default async function SolutionsPage() {
                         )}
                       </div>
                     ) : (
-                      <span style={{ color: "#667085" }}>Not deployed</span>
+                      <span style={{ color: "var(--ink-600)" }}>Not deployed</span>
                     )}
                   </Td>
 
@@ -368,7 +367,7 @@ export default async function SolutionsPage() {
       {formatDate(solution.latest_deployment_created_at || solution.updated_at)}
     </span>
 
-    <span style={{ color: "#667085", fontSize: 13 }}>
+    <span style={{ color: "var(--ink-600)", fontSize: 13 }}>
       {solution.latest_deployment_created_at
         ? "Latest deployment"
         : "Design updated"}
@@ -383,7 +382,7 @@ export default async function SolutionsPage() {
                         style={{
                           color: "white",
                           background: "#6d4aff",
-                          fontWeight: 800,
+                          fontWeight: 600,
                           textDecoration: "none",
                           whiteSpace: "nowrap",
                           padding: "8px 11px",
@@ -400,7 +399,7 @@ export default async function SolutionsPage() {
                           color: "#5f42c7",
                           border: "1px solid #d9d0ff",
                           background: "#faf9ff",
-                          fontWeight: 800,
+                          fontWeight: 600,
                           textDecoration: "none",
                           padding: "8px 11px",
                           borderRadius: 9,
@@ -416,8 +415,8 @@ export default async function SolutionsPage() {
     style={{
       border: "1px solid #fecdca",
       background: "white",
-      color: "#b42318",
-      fontWeight: 800,
+      color: "var(--danger-600)",
+      fontWeight: 600,
       cursor: "pointer",
       padding: "8px 11px",
       borderRadius: 9,
@@ -482,8 +481,8 @@ function MetricCard({
   const tones = {
     neutral: { background: "#ffffff", color: "#17152b", accent: "#6d4aff" },
     purple: { background: "#f5f1ff", color: "#4d2ca3", accent: "#8b5cf6" },
-    blue: { background: "#eef5ff", color: "#2457a6", accent: "#4f7cff" },
-    muted: { background: "#f7f7fb", color: "#475467", accent: "#98a2b3" },
+    blue: { background: "#eef5ff", color: "var(--brand-600)", accent: "#4f7cff" },
+    muted: { background: "#f7f7fb", color: "var(--ink-600)", accent: "var(--ink-400)" },
   };
   const selected = tones[tone];
 
@@ -498,7 +497,7 @@ function MetricCard({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <span style={{ color: "#667085", fontSize: 13, fontWeight: 700 }}>
+        <span style={{ color: "var(--ink-600)", fontSize: 13, fontWeight: 700 }}>
           {label}
         </span>
         <span
@@ -515,7 +514,7 @@ function MetricCard({
         style={{
           color: selected.color,
           fontSize: 30,
-          fontWeight: 900,
+          fontWeight: 600,
           marginTop: 8,
         }}
       >
@@ -538,10 +537,10 @@ function MiniHealth({
   tone: "good" | "bad" | "neutral";
 }) {
   const background =
-    tone === "good" ? "#ecfdf3" : tone === "bad" ? "#fef3f2" : "#f8fafc";
+    tone === "good" ? "var(--mint-100)" : tone === "bad" ? "var(--danger-100)" : "var(--surface-sunken)";
 
   const color =
-    tone === "good" ? "#027a48" : tone === "bad" ? "#b42318" : "#344054";
+    tone === "good" ? "var(--success-600)" : tone === "bad" ? "var(--danger-600)" : "var(--ink-900)";
 
   return (
     <span
@@ -554,7 +553,7 @@ function MiniHealth({
         color,
         borderRadius: 999,
         padding: "5px 8px",
-        fontWeight: 800,
+        fontWeight: 600,
         fontSize: 13,
       }}
     >
@@ -569,7 +568,7 @@ function Th({ children }: { children: React.ReactNode }) {
 
 function Td({ children }: { children: React.ReactNode }) {
   return (
-    <td style={{ padding: 16, color: "#344054", verticalAlign: "top" }}>
+    <td style={{ padding: 16, color: "var(--ink-900)", verticalAlign: "top" }}>
       {children}
     </td>
   );
@@ -582,22 +581,22 @@ function formatDate(value: string) {
 function statusBadgeStyle(status: string) {
   if (status === "completed") {
     return {
-      background: "#dcfae6",
-      color: "#027a48",
+      background: "var(--mint-100)",
+      color: "var(--success-600)",
     };
   }
 
   if (status === "failed") {
     return {
-      background: "#fee4e2",
-      color: "#b42318",
+      background: "var(--danger-100)",
+      color: "var(--danger-600)",
     };
   }
 
   if (status === "running") {
     return {
-      background: "#e0f2fe",
-      color: "#075985",
+      background: "var(--brand-50)",
+      color: "var(--brand-600)",
     };
   }
 
@@ -608,12 +607,12 @@ function solutionStatusBadgeStyle(status: string) {
   const normalized = status.toLowerCase();
 
   if (normalized === "submitted" || normalized === "running") {
-    return { background: "#eaf2ff", color: "#2457a6" };
+    return { background: "var(--brand-50)", color: "var(--brand-600)" };
   }
 
   if (normalized === "archived") {
-    return { background: "#f2f4f7", color: "#475467" };
+    return { background: "var(--surface-sunken)", color: "var(--ink-600)" };
   }
 
-  return { background: "#f2edff", color: "#6941c6" };
+  return { background: "var(--brand-50)", color: "var(--brand-600)" };
 }

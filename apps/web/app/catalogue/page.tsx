@@ -1,6 +1,7 @@
-import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRight, Boxes, Building2, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { settingsDefinitionOf } from "../../lib/service-settings";
+import { serviceText } from "../../lib/service-presentation";
 
 type Service = {
   id: string;
@@ -24,6 +25,7 @@ type Service = {
   contract_uri?: string | null;
   operation_name?: string | null;
   node_type?: string | null;
+  interface_contract?: Record<string, unknown> | null;
 };
 
 type ServicePresentation = {
@@ -111,153 +113,18 @@ function getLifecycleStatus(service: Service) {
   return service.lifecycle_status || "active";
 }
 
-function formatInterfaceType(value?: string | null) {
-  if (!value) return "control";
-  return value.replaceAll("_", " ");
-}
 
-function formatOrchestrationMode(value?: string | null) {
-  if (!value) return "native";
-  return value.replaceAll("_", " ");
-}
-
-function interfaceBadgeStyle(value?: string | null): CSSProperties {
-  const normalized = value || "control";
-
-  if (normalized === "grpc") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#eef2ff",
-      color: "#3730a3",
-      borderColor: "#c7d2fe",
-    };
-  }
-
-  if (normalized === "http") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#ecfeff",
-      color: "#0e7490",
-      borderColor: "#a5f3fc",
-    };
-  }
-
-  if (normalized === "container_job") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#f5f3ff",
-      color: "#6d28d9",
-      borderColor: "#ddd6fe",
-    };
-  }
-
-  if (normalized === "legacy_sidecar") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#fff7ed",
-      color: "#c2410c",
-      borderColor: "#fed7aa",
-    };
-  }
-
-  return {
-    ...metadataBadgeStyle,
-    background: "#f0fdf4",
-    color: "#047857",
-    borderColor: "#bbf7d0",
-  };
-}
-
-function orchestrationBadgeStyle(value?: string | null): CSSProperties {
-  const normalized = value || "native";
-
-  if (normalized === "sidecar") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#fffbeb",
-      color: "#92400e",
-      borderColor: "#fde68a",
-    };
-  }
-
-  if (normalized === "external") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#f8fafc",
-      color: "#475569",
-      borderColor: "#cbd5e1",
-    };
-  }
-
-  if (normalized === "manual_review") {
-    return {
-      ...metadataBadgeStyle,
-      background: "#fef2f2",
-      color: "#b91c1c",
-      borderColor: "#fecaca",
-    };
-  }
-
-  return {
-    ...metadataBadgeStyle,
-    background: "#eff6ff",
-    color: "#1d4ed8",
-    borderColor: "#bfdbfe",
-  };
-}
-
-const metadataBadgeStyle: CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  border: "1px solid",
-  borderRadius: 999,
-  padding: "5px 9px",
-  fontSize: 11,
-  fontWeight: 800,
-  textTransform: "uppercase",
-  letterSpacing: "0.03em",
+const STATUS: Record<string, { label: string; tone: string }> = {
+  active: { label: "Active", tone: "success" },
+  deprecated: { label: "Deprecated", tone: "warning" },
+  archived: { label: "Archived", tone: "" },
 };
 
-function lifecycleBadgeStyle(status: string): CSSProperties {
-  if (status === "deprecated") {
-    return {
-      background: "#fef3c7",
-      color: "#92400e",
-      border: "1px solid #fde68a",
-      padding: "6px 10px",
-      borderRadius: 999,
-      fontSize: 12,
-      fontWeight: 800,
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
-    };
-  }
-
-  if (status === "archived") {
-    return {
-      background: "#f1f5f9",
-      color: "#475569",
-      border: "1px solid #cbd5e1",
-      padding: "6px 10px",
-      borderRadius: 999,
-      fontSize: 12,
-      fontWeight: 800,
-      textTransform: "uppercase",
-      letterSpacing: 0.4,
-    };
-  }
-
-  return {
-    background: "#dcfce7",
-    color: "#166534",
-    border: "1px solid #bbf7d0",
-    padding: "6px 10px",
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  };
+function settingsSummary(service: Service) {
+  const definition = settingsDefinitionOf(service);
+  const count = definition ? Object.keys(definition.schema.properties).length : 0;
+  if (!count) return "Fixed settings";
+  return count === 1 ? "1 adjustable setting" : `${count} adjustable settings`;
 }
 
 export default async function CataloguePage({
@@ -269,13 +136,7 @@ export default async function CataloguePage({
   const filters = await searchParams;
   const query = (filters.q || "").trim().toLowerCase();
 
-  const activeCount = services.filter((service) => getLifecycleStatus(service) === "active").length;
-  const deprecatedCount = services.filter(
-    (service) => getLifecycleStatus(service) === "deprecated"
-  ).length;
-  const archivedCount = services.filter(
-    (service) => getLifecycleStatus(service) === "archived"
-  ).length;
+  const deprecatedCount = services.filter((service) => getLifecycleStatus(service) === "deprecated").length;
   const categories = [...new Set(services.map((service) => service.category).filter(Boolean))] as string[];
   const providers = [...new Set(services.map((service) => service.provider).filter(Boolean))] as string[];
   const visibleServices = services.filter((service) => {
@@ -283,7 +144,6 @@ export default async function CataloguePage({
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
-
     return (
       (!query || searchable.includes(query)) &&
       (!filters.category || service.category === filters.category) &&
@@ -294,223 +154,72 @@ export default async function CataloguePage({
 
   return (
     <div className="page">
-      <div className="catalogue-page-header">
-        <div>
-          <span className="badge">Service Marketplace</span>
-          <h1 style={{ margin: "14px 0 8px", fontSize: 42, letterSpacing: "-0.04em" }}>Find the right service for your energy AI workflow</h1>
-          <p style={{ maxWidth: 700, margin: 0, color: "#626a83", fontSize: 16, lineHeight: 1.65 }}>
-            Understand what each service does, what it needs, and where it fits before adding it to a solution.
+      <header className="page-header">
+        <div className="page-header__text">
+          <h1 className="page-header__title">Service catalogue</h1>
+          <p className="page-header__lead">
+            AI services published by AI-EFFECT nodes. Open a service to see what it needs and produces, or add it straight to a solution.
           </p>
         </div>
+      </header>
 
-        <div className="card catalogue-status-card" style={{ padding: 19 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9, marginBottom: 14 }}>
-            <div style={{ display: "grid", width: 34, height: 34, placeItems: "center", borderRadius: 10, background: "#f0ecff", color: "#6240dd" }}><Boxes size={18} /></div>
-            <div><strong style={{ display: "block", fontSize: 13 }}>Catalogue status</strong><span style={{ color: "#7a7f94", fontSize: 9 }}>Live service registry</span></div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-            <StatusMetric label="Active" value={activeCount} color="#178055" background="#eaf8f1" />
-            <StatusMetric label="Deprecated" value={deprecatedCount} color="#a86711" background="#fff5e5" />
-            <StatusMetric label="Archived" value={archivedCount} color="#5e6477" background="#f1f2f5" />
-          </div>
-          <p style={{ margin: "13px 0 0", color: "#777c90", fontSize: 10, lineHeight: 1.5 }}>Archived services remain hidden from new workflow submissions.</p>
-        </div>
-      </div>
-
-      <form className="catalogue-filter-bar" method="get">
-        <label className="catalogue-search-control">
-          <Search size={18} color="#777c90" />
-          <input name="q" defaultValue={filters.q || ""} placeholder="Search services by name, provider or capability..." aria-label="Search services" />
+      <form className="toolbar catalogue-toolbar" method="get" role="search">
+        <label className="catalogue-search">
+          <Search size={16} aria-hidden="true" />
+          <input className="ae-input" name="q" defaultValue={filters.q || ""} placeholder="Search by name, node or capability" aria-label="Search services" />
         </label>
-        <label className="catalogue-select-control">
-          <SlidersHorizontal size={15} color="#777c90" />
-          <select name="category" defaultValue={filters.category || ""} aria-label="Filter by category">
-            <option value="">All categories</option>
-            {categories.map((category) => <option value={category} key={category}>{category}</option>)}
-          </select>
-        </label>
-        <label className="catalogue-select-control">
-          <Building2 size={15} color="#777c90" />
-          <select name="provider" defaultValue={filters.provider || ""} aria-label="Filter by provider">
-            <option value="">All providers</option>
-            {providers.map((provider) => <option value={provider} key={provider}>{provider}</option>)}
-          </select>
-        </label>
-        <button type="submit" style={{ whiteSpace: "nowrap" }}>Apply filters</button>
-        {hasFilters && <Link href="/catalogue" style={{ alignSelf: "center", padding: "8px 5px", color: "#5d3ddd", fontSize: 11, fontWeight: 800 }}>Clear</Link>}
+        <select className="ae-select catalogue-filter" name="category" defaultValue={filters.category || ""} aria-label="Category">
+          <option value="">All categories</option>
+          {categories.map((category) => <option value={category} key={category}>{category}</option>)}
+        </select>
+        <select className="ae-select catalogue-filter" name="provider" defaultValue={filters.provider || ""} aria-label="Node or provider">
+          <option value="">All nodes and providers</option>
+          {providers.map((provider) => <option value={provider} key={provider}>{provider}</option>)}
+        </select>
+        <button type="submit" className="ae-btn ae-btn--secondary"><SlidersHorizontal size={16} aria-hidden="true" />Apply</button>
+        {hasFilters && <Link href="/catalogue" className="ae-btn ae-btn--ghost">Clear</Link>}
+        <span className="catalogue-count muted">
+          {visibleServices.length} of {services.length} services{deprecatedCount ? ` · ${deprecatedCount} deprecated` : ""}
+        </span>
       </form>
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "25px 2px 13px" }}>
-        <div><span style={{ color: "#6b49e7", fontSize: 9, fontWeight: 900, letterSpacing: "0.12em", textTransform: "uppercase" }}>Trusted services</span><h2 style={{ margin: "5px 0 0", fontSize: 20 }}>Available in the catalogue</h2></div>
-        <span style={{ color: "#777c90", fontSize: 11 }}>{visibleServices.length} of {services.length} services</span>
-      </div>
-
-      {deprecatedCount > 0 && (
-        <div
-          className="card"
-          style={{
-            marginTop: 24,
-            padding: 18,
-            border: "1px solid #fde68a",
-            background: "#fffbeb",
-          }}
-        >
-          <strong style={{ color: "#92400e" }}>Deprecated services are present</strong>
-          <p style={{ color: "#92400e", margin: "8px 0 0", lineHeight: 1.6 }}>
-            Deprecated services remain available for compatibility, but they should be avoided for
-            new solution designs where an active replacement exists.
-          </p>
-        </div>
-      )}
-
-      <div className="catalogue-service-grid">
-        {visibleServices.map((service) => {
-          const lifecycleStatus = getLifecycleStatus(service);
-          const isDeprecated = lifecycleStatus === "deprecated";
-          const presentation = getServicePresentation(service);
-
-          return (
-            <div
-              className="card catalogue-service-card"
-              key={service.id}
-              style={{
-                display: "flex",
-                padding: 22,
-                flexDirection: "column",
-                border: isDeprecated ? "1px solid #fde68a" : undefined,
-                background: isDeprecated ? "#fffdf7" : undefined,
-              }}
-            >
-              <div className="catalogue-card-trust-row">
-                <span className="badge">{service.trust_badge || "Trusted"}</span>
-                <span style={{ color: "#777c90", fontSize: 11, fontWeight: 700 }}>
-                  v{service.version || "1.0.0"}
-                </span>
-              </div>
-
-              <div className="catalogue-card-title-row">
-                <div className="catalogue-card-title-copy">
-                  <h2 style={{ margin: 0, fontSize: 20, letterSpacing: "-0.02em" }}>{presentation.displayName}</h2>
-                  {presentation.displayName !== service.name && (
-                    <div className="catalogue-technical-name">{service.name}</div>
-                  )}
+      {visibleServices.length > 0 ? (
+        <div className="grid-cards catalogue-grid">
+          {visibleServices.map((service) => {
+            const status = STATUS[getLifecycleStatus(service)] || STATUS.active;
+            const text = serviceText(service);
+            return (
+              <article className="ae-card ae-card--interactive ae-service" key={service.id}>
+                <div className="ae-service__top">
+                  <span className="ae-service__node">{service.provider || "Unknown provider"}</span>
+                  <span className={`ae-badge ${status.tone ? `ae-badge--${status.tone}` : ""}`}>{status.label}</span>
                 </div>
-                <span className="catalogue-card-lifecycle" style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
-              </div>
-
-              <div className="catalogue-card-provider-row">
-                <span><strong style={{ color: "#343955" }}>Provider:</strong> {service.provider || "Unknown"}</span>
-                <span><strong style={{ color: "#343955" }}>Category:</strong> {service.category || "Uncategorised"}</span>
-              </div>
-
-              <div className="catalogue-card-badge-row">
-                <span style={interfaceBadgeStyle(service.interface_type)}>
-                  {formatInterfaceType(service.interface_type)}
-                </span>
-
-                <span style={orchestrationBadgeStyle(service.orchestration_mode)}>
-                  {formatOrchestrationMode(service.orchestration_mode)}
-                </span>
-
-                {service.adapter_type && (
-                  <span style={metadataBadgeStyle}>adapter: {service.adapter_type}</span>
-                )}
-
-                {service.contract_uri && (
-                  <span
-                    className="catalogue-contract-badge"
-                    title={service.contract_uri}
-                    aria-label={`Contract: ${service.contract_uri}`}
-                  >
-                    <span className="catalogue-contract-text">contract: {service.contract_uri}</span>
+                <h2 className="ae-service__title">
+                  <Link href={`/catalogue/${service.id}`} className="catalogue-card-link">{text.title}</Link>
+                </h2>
+                <p className="ae-service__desc">{text.purpose}</p>
+                <div className="ae-service__foot">
+                  <span className="ae-service__io">{settingsSummary(service)}</span>
+                  <span className="catalogue-card-actions">
+                    <Link href={`/builder?serviceId=${encodeURIComponent(service.id)}`} className="ae-btn ae-btn--ghost ae-btn--sm" aria-label={`Add ${text.title} to a solution`}>
+                      <Plus size={14} aria-hidden="true" />Add
+                    </Link>
+                    <Link href={`/catalogue/${service.id}`} className="ae-btn ae-btn--secondary ae-btn--sm">
+                      Details<ArrowRight size={14} aria-hidden="true" />
+                    </Link>
                   </span>
-                )}
-              </div>
-
-              {isDeprecated && (
-                <div
-                  style={{
-                    marginTop: 12,
-                    padding: 12,
-                    borderRadius: 12,
-                    background: "#fef3c7",
-                    color: "#92400e",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    fontWeight: 600,
-                  }}
-                >
-                  This service is deprecated. Existing solutions may still use it, but new designs
-                  should prefer an active replacement.
                 </div>
-              )}
-
-              <p className="catalogue-service-purpose">
-                {presentation.purpose}
-              </p>
-
-              <div className="catalogue-workflow-stage">{presentation.stage}</div>
-
-              <div className="catalogue-card-io-grid">
-                <div><span>INPUT</span><strong>{service.input_type || "Not specified"}</strong></div>
-                <div><span>OUTPUT</span><strong>{service.output_type || "Not specified"}</strong></div>
-              </div>
-
-              <div className="catalogue-card-actions">
-                <Link
-                  href={`/catalogue/${service.id}`}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 7,
-                    background: "linear-gradient(135deg, #5b2cf2, #4320ca)",
-                    color: "white",
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
-                >
-                  View details <ArrowRight size={14} />
-                </Link>
-                <Link
-                  href={`/builder?serviceId=${encodeURIComponent(service.id)}`}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "1px solid #d8d2f2",
-                    background: "#f8f6ff",
-                    color: "#5637ce",
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    fontSize: 11,
-                    fontWeight: 800,
-                  }}
-                >
-                  Add to solution
-                </Link>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {visibleServices.length === 0 && (
-        <div className="card" style={{ padding: 24, marginTop: 28 }}>
-          <h2>{services.length === 0 ? "No catalogue services available" : "No matching services"}</h2>
-          <p style={{ color: "#526173" }}>
-            {services.length === 0
-              ? "No active or deprecated services are currently visible. Archived services can be managed from Admin Governance."
-              : "Try adjusting your search, category, or provider filters."}
-          </p>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="ae-card empty-state">
+          <h3>{services.length === 0 ? "No services yet" : "No services match your filters"}</h3>
+          <p>{services.length === 0 ? "Services appear here once a node publishes them and an administrator approves them." : "Try a different search term, or clear the filters."}</p>
+          {hasFilters && <Link href="/catalogue" className="ae-btn ae-btn--secondary">Clear filters</Link>}
         </div>
       )}
     </div>
   );
-}
-
-function StatusMetric({ label, value, color, background }: { label: string; value: number; color: string; background: string }) {
-  return <div style={{ padding: "10px 8px", borderRadius: 10, background, textAlign: "center" }}><strong style={{ display: "block", color, fontSize: 19 }}>{value}</strong><span style={{ color, fontSize: 8, fontWeight: 800, textTransform: "uppercase" }}>{label}</span></div>;
 }

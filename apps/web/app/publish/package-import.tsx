@@ -130,5 +130,5 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
 function formatError(detail: unknown) { if (typeof detail === "string") return detail; if (Array.isArray(detail)) return detail.map(String).join(" "); return detail ? JSON.stringify(detail) : ""; }
 
 const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 7, fontSize: 13, fontWeight: 750, color: "#334155" };
-const inputStyle: CSSProperties = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 11, padding: "10px 11px", fontSize: 14, background: "#fff", boxSizing: "border-box" };
-const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 11, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 800, cursor: "pointer" };
+const inputStyle: CSSProperties = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 8, padding: "10px 11px", fontSize: 14, background: "#fff", boxSizing: "border-box" };
+const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 8, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 600, cursor: "pointer" };

@@ -152,12 +152,11 @@ export function ServiceSettingsEditor({
     setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
 
   return (
-    <section className="card service-detail-section" aria-label="Adjustable settings">
-      <p className="service-detail-eyebrow">Configuration</p>
+    <section className="ae-card service-section" aria-label="Adjustable settings">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0 }}>Adjustable settings</h2>
+        <h2 className="section__title">Adjustable settings</h2>
         {canEdit && !editing && (
-          <button type="button" style={secondaryButton} onClick={startEditing}>
+          <button type="button" className="ae-btn ae-btn--secondary" onClick={startEditing}>
             {definition ? "Edit settings" : "Declare settings"}
           </button>
         )}
@@ -165,7 +164,7 @@ export function ServiceSettingsEditor({
 
       {!editing && (
         definition ? (
-          <ul className="service-detail-limitations">
+          <ul className="service-list">
             {Object.entries(definition.schema.properties).map(([name, p]) => (
               <li key={name}>
                 <strong>{p.title || name}</strong> <code>{name}</code>: {describe(p)}
@@ -174,7 +173,7 @@ export function ServiceSettingsEditor({
             ))}
           </ul>
         ) : (
-          <p className="service-detail-lead">
+          <p className="muted" style={{ margin: 0 }}>
             Fixed settings: this service runs with the values chosen by its provider.
             {canEdit && " If the service reads values from its request, declare them so designers can adjust them."}
           </p>
@@ -183,26 +182,26 @@ export function ServiceSettingsEditor({
 
       {editing && (
         <div style={{ display: "grid", gap: 14 }}>
-          <p style={{ color: "#667085", margin: 0, lineHeight: 1.6 }}>
+          <p className="muted" style={{ margin: 0 }}>
             Declare only settings your service already reads. <strong>Name</strong> must match the key in your code exactly
             (for example <code>request.parameters.get(&quot;num_records&quot;)</code> means the name is <code>num_records</code>).
           </p>
-          <label style={{ display: "grid", gap: 4, maxWidth: 520 }}>
-            <span style={{ fontWeight: 600 }}>Where the service reads them</span>
-            <select value={channel} onChange={(e) => setChannel(e.target.value as SettingsDefinition["channel"])} style={{ padding: 8 }}>
+          <label className="ae-field" style={{ maxWidth: 520 }}>
+            <span className="ae-field__label">Where the service reads them</span>
+            <select value={channel} onChange={(e) => setChannel(e.target.value as SettingsDefinition["channel"])} className="ae-select">
               <option value="parameters">From the request&apos;s &quot;parameters&quot; field (any step)</option>
               <option value="run_input">From its input JSON (first steps only)</option>
             </select>
           </label>
 
           {rows.map((row, index) => (
-            <fieldset key={index} style={{ border: "1px solid #eaecf0", borderRadius: 12, padding: 12, display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
-              <legend style={{ fontWeight: 600, padding: "0 6px" }}>Setting {index + 1}</legend>
+            <fieldset key={index} style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
+              <legend className="ae-field__label" style={{ padding: "0 6px" }}>Setting {index + 1}</legend>
               <Field label="Name (key in code)" value={row.name} onChange={(v) => update(index, { name: v })} placeholder="num_records" />
               <Field label="Label shown to designers" value={row.title} onChange={(v) => update(index, { title: v })} placeholder="Records to generate" />
-              <label style={{ display: "grid", gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>Type</span>
-                <select value={row.type} onChange={(e) => update(index, { type: e.target.value as Row["type"] })} style={{ padding: 8 }}>
+              <label className="ae-field">
+                <span className="ae-field__label">Type</span>
+                <select value={row.type} onChange={(e) => update(index, { type: e.target.value as Row["type"] })} className="ae-select">
                   {Object.entries(TYPE_LABELS).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
@@ -223,7 +222,7 @@ export function ServiceSettingsEditor({
                 <Field label="Help text (optional)" value={row.description} onChange={(v) => update(index, { description: v })} placeholder="What changing this value does" />
               </div>
               <div style={{ gridColumn: "1 / -1" }}>
-                <button type="button" style={secondaryButton} onClick={() => setRows((current) => current.filter((_, i) => i !== index))}>
+                <button type="button" className="ae-btn ae-btn--secondary" onClick={() => setRows((current) => current.filter((_, i) => i !== index))}>
                   Remove this setting
                 </button>
               </div>
@@ -231,17 +230,17 @@ export function ServiceSettingsEditor({
           ))}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" style={secondaryButton} onClick={() => setRows((current) => [...current, emptyRow()])}>
+            <button type="button" className="ae-btn ae-btn--secondary" onClick={() => setRows((current) => [...current, emptyRow()])}>
               + Add setting
             </button>
-            <button type="button" style={primaryButton} disabled={saving} onClick={() => save(false)}>
+            <button type="button" className="ae-btn ae-btn--primary" disabled={saving} onClick={() => save(false)}>
               {saving ? "Saving..." : "Save settings"}
             </button>
-            <button type="button" style={secondaryButton} disabled={saving} onClick={() => setEditing(false)}>
+            <button type="button" className="ae-btn ae-btn--secondary" disabled={saving} onClick={() => setEditing(false)}>
               Cancel
             </button>
             {definition && (
-              <button type="button" disabled={saving} onClick={() => save(true)} style={{ ...secondaryButton, color: "#b42318" }}>
+              <button type="button" disabled={saving} onClick={() => save(true)} className="ae-btn ae-btn--ghost" style={{ color: "var(--danger-600)" }}>
                 Remove all settings
               </button>
             )}
@@ -249,27 +248,18 @@ export function ServiceSettingsEditor({
         </div>
       )}
 
-      {error && <p role="alert" style={{ color: "#b42318" }}>{error}</p>}
-      {saved && <p role="status" style={{ color: "#067647" }}>{saved}</p>}
+      {error && <p role="alert" className="ae-field__error">{error}</p>}
+      {saved && <p role="status" style={{ color: "var(--success-600)", margin: 0 }}>{saved}</p>}
     </section>
   );
 }
 
 function Field({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   return (
-    <label style={{ display: "grid", gap: 4 }}>
-      <span style={{ fontSize: 13, fontWeight: 600 }}>{label}</span>
-      <input value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} style={{ padding: 8, boxSizing: "border-box", width: "100%" }} />
+    <label className="ae-field">
+      <span className="ae-field__label">{label}</span>
+      <input className="ae-input" value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
     </label>
   );
 }
 
-const primaryButton = {
-  background: "linear-gradient(135deg, #5b2cf2, #4320ca)", color: "white", padding: "8px 12px",
-  borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer",
-} as const;
-
-const secondaryButton = {
-  background: "white", color: "#5635ce", padding: "8px 12px",
-  borderRadius: 10, border: "1px solid #d1c8f3", fontWeight: 700, cursor: "pointer",
-} as const;

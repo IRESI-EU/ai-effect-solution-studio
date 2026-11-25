@@ -21,6 +21,9 @@ import { roleLabels, useAuth, type UserRole } from "../../components/auth-contex
 import { apiErrorMessage } from "../../lib/solution-design";
 import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsValues } from "../../components/node-settings";
 import { DesignAssistant, type ProposedWorkflow } from "../../components/design-assistant";
+import { serviceText } from "../../lib/service-presentation";
+import Link from "next/link";
+import { CircleCheck, CircleX, Info as InfoIcon, Plus, Search, TriangleAlert } from "lucide-react";
 
 type Service = {
   id: string;
@@ -123,7 +126,7 @@ function BuilderContent() {
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [rightTab, setRightTab] = useState<"assistant" | "inspector">("assistant");
+  const [rightTab, setRightTab] = useState<"assistant" | "inspector" | "run">("assistant");
   const [aiUndo, setAiUndo] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
 
   function canvasAsProposal() {
@@ -169,7 +172,7 @@ function BuilderContent() {
         position: { x: 340 + d * 260, y: 120 + row * 130 },
         data: {
           node_kind: "service",
-          label: service ? service.name : step.service_name,
+          label: service ? serviceText(service).title : step.service_name,
           service: service || { id: step.service_id, name: step.service_name },
           settings: step.settings && Object.keys(step.settings).length ? step.settings : undefined,
         },
@@ -375,12 +378,7 @@ function BuilderContent() {
         },
         data: {
           node_kind: "service",
-          label:
-            lifecycleStatus === "deprecated"
-              ? `${service.name} (deprecated)`
-              : `${service.name} [${formatValue(interfaceType)} / ${formatValue(
-                  orchestrationMode
-                )}]`,
+          label: serviceText(service).title + (lifecycleStatus === "deprecated" ? " (deprecated)" : ""),
           service,
         },
       },
@@ -766,421 +764,248 @@ function BuilderContent() {
   }
 
   return (
-    <div className="page builder-page">
+    <div className="builder-page">
       {solutionLoadError && (
         <section className="card" style={{ padding: 18, marginBottom: 18, borderColor: "#fda29b", color: "#b42318" }}>
           <strong>Unable to load solution design.</strong> {solutionLoadError}
         </section>
       )}
-      <div className="builder-page-header">
-        <div>
-          <span className="badge">AI Vendor Studio</span>
-          <h1 style={{ fontSize: 42, margin: "14px 0 8px", letterSpacing: "-0.04em" }}>Build a solution</h1>
-          <p style={{ color: "#626a83", fontSize: 16, maxWidth: 850, margin: 0, lineHeight: 1.65 }}>
-            Compose AI-EFFECT services visually. Add services from the catalogue, connect them into a
-            workflow, and prepare the solution for deployment.
-          </p>
+      <header className="builder-header">
+        <div className="builder-header__title">
+          <input
+            className="builder-title-input"
+            value={solutionName}
+            onChange={(event) => setSolutionName(event.target.value)}
+            placeholder="Untitled solution"
+            aria-label="Solution name"
+          />
+          <span className="builder-header__meta">
+            {canvasServices.length} {canvasServices.length === 1 ? "service" : "services"} · {edges.length} {edges.length === 1 ? "connection" : "connections"}
+          </span>
         </div>
-        <div className="builder-top-actions">
-          <button onClick={saveSolution} style={secondaryButton} disabled={savingSolution || preparingDeployment}>
-            {savingSolution ? "Saving draft..." : "Save draft"}
+        <div className="page-header__actions">
+          <button className="ae-btn ae-btn--secondary" onClick={saveSolution} disabled={savingSolution || preparingDeployment}>
+            {savingSolution ? "Saving..." : "Save"}
           </button>
-          <button onClick={validateWorkflow} style={secondaryButton}>Validate design</button>
-          <button
-            onClick={prepareDeployment}
-            style={{ ...primaryButton, opacity: preparingDeployment ? 0.7 : 1 }}
-            disabled={preparingDeployment || savingSolution}
-          >
-            {preparingDeployment ? "Preparing deployment..." : "Prepare & deploy"}
+          <button className="ae-btn ae-btn--secondary" onClick={() => { validateWorkflow(); setRightTab("run"); }}>Check design</button>
+          <button className="ae-btn ae-btn--primary" onClick={() => { setRightTab("run"); prepareDeployment(); }} disabled={preparingDeployment || savingSolution}>
+            {preparingDeployment ? "Preparing..." : "Prepare and deploy"}
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="builder-name-row">
-        <div><span>Solution name</span><input value={solutionName} onChange={(event) => setSolutionName(event.target.value)} placeholder="Solution name" /></div>
-        <div className="builder-health-summary"><span>{nodes.length}</span> {nodes.length === 1 ? "node" : "nodes"} <span>{edges.length}</span> {edges.length === 1 ? "connection" : "connections"} <span>{validationResults.length}</span> {validationResults.length === 1 ? "check" : "checks"}</div>
-      </div>
-
-      {solutionNeedsRevalidation && (
-        <div className="builder-stale-message" role="status">
-          The solution changed and must be validated again before deployment.
-        </div>
-      )}
-
-      {deprecatedCanvasServices.length > 0 && (
-        <div
-          className="card"
-          style={{
-            marginTop: 20,
-            padding: 18,
-            border: "1px solid #fde68a",
-            background: "#fffbeb",
-          }}
-        >
-          <strong style={{ color: "#92400e" }}>This solution uses deprecated services</strong>
-          <p style={{ color: "#92400e", margin: "8px 0 0", lineHeight: 1.6 }}>
-            Deprecated services remain runnable for compatibility, but new workflows should move to
-            active replacements where available.
-          </p>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            {deprecatedCanvasServices.map((service) => (
-              <span key={service.id} style={lifecycleBadgeStyle("deprecated")}>
-                {service.name}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="builder-workbench" style={{ marginTop: deprecatedCanvasServices.length > 0 ? 32 : 24 }}>
-        <aside className="card builder-palette-card builder-service-palette">
-          <div className="builder-panel-heading"><div><span>Service palette</span><h2>Available services</h2></div><strong>{filteredServices.length}</strong></div>
-          <p style={{ color: "#697087", fontSize: 12, lineHeight: 1.55 }}>
-            Click a service to add it to the workflow canvas. Archived services are hidden.
-          </p>
-
-          <label className="builder-search-control">
-            <input value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services..." aria-label="Search services" />
-          </label>
-
-          {deprecatedAvailableCount > 0 && (
-            <div
-              style={{
-                marginTop: 12,
-                padding: 12,
-                borderRadius: 12,
-                background: "#fef3c7",
-                color: "#92400e",
-                fontSize: 13,
-                lineHeight: 1.5,
-                fontWeight: 600,
-              }}
-            >
-              {deprecatedAvailableCount} deprecated service
-              {deprecatedAvailableCount === 1 ? "" : "s"} available. Use only for compatibility.
-            </div>
+      {(solutionNeedsRevalidation || deprecatedCanvasServices.length > 0) && (
+        <div className="builder-notices">
+          {solutionNeedsRevalidation && (
+            <div className="ae-alert" role="status"><InfoIcon size={20} aria-hidden="true" /><div>The solution changed. Check the design again before deploying.</div></div>
           )}
+          {deprecatedCanvasServices.length > 0 && (
+            <div className="ae-alert ae-alert--warning"><TriangleAlert size={20} aria-hidden="true" /><div>
+              <span className="ae-alert__title">Uses deprecated services:</span> {deprecatedCanvasServices.map((service) => serviceText(service).title).join(", ")}. Prefer active replacements for new work.
+            </div></div>
+          )}
+        </div>
+      )}
 
-          <div className="builder-service-list-scroll">
+      <div className="builder-workbench">
+        <aside className="builder-pane builder-palette" aria-label="Services">
+          <div className="builder-pane__head">
+            <h2 className="builder-pane__title">Services</h2>
+            <span className="builder-pane__count">{filteredServices.length}</span>
+          </div>
+          <label className="catalogue-search builder-palette__search">
+            <Search size={16} aria-hidden="true" />
+            <input className="ae-input" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services" aria-label="Search services" />
+          </label>
+          <div className="builder-palette__list">
             {filteredServices.map((service) => {
-              const lifecycleStatus = getLifecycleStatus(service);
-              const isDeprecated = lifecycleStatus === "deprecated";
-
+              const text = serviceText(service);
+              const deprecated = getLifecycleStatus(service) === "deprecated";
               return (
-                <button
-                  className="builder-service-card"
-                  key={service.id}
-                  onClick={() => addServiceToCanvas(service)}
-                  style={{
-                    textAlign: "left",
-                    padding: 14,
-                    borderRadius: 14,
-                    border: isDeprecated ? "1px solid #f59e0b" : "1px solid #d6dee9",
-                    background: isDeprecated ? "#fffbeb" : "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 8,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <strong>{service.name}</strong>
-                    <span style={lifecycleBadgeStyle(lifecycleStatus)}>{lifecycleStatus}</span>
-                  </div>
-
-                  <div style={{ color: "#667085", fontSize: 13, marginTop: 6 }}>
+                <button className="builder-palette__item" key={service.id} onClick={() => addServiceToCanvas(service)} title={"Add " + text.title + " to the canvas"}>
+                  <span className="builder-palette__name">{text.title}</span>
+                  <span className="builder-palette__meta">
                     {service.provider}
-                  </div>
-
-                  <ServiceBadges service={service} />
-
-                  {isDeprecated && (
-                    <div
-                      style={{
-                        marginTop: 10,
-                        color: "#92400e",
-                        fontSize: 12,
-                        fontWeight: 700,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      Deprecated. Prefer an active replacement for new workflows.
-                    </div>
-                  )}
+                    {deprecated && <span className="ae-badge ae-badge--warning">Deprecated</span>}
+                  </span>
+                  <Plus size={16} className="builder-palette__add" aria-hidden="true" />
                 </button>
               );
             })}
-            {filteredServices.length === 0 && <div className="builder-empty-palette">No services match your search.</div>}
+            {filteredServices.length === 0 && <p className="builder-empty muted">No services match your search.</p>}
           </div>
         </aside>
 
-        <main className="card builder-canvas-card">
-          <div
-            className="builder-canvas-header"
+        <main className="builder-canvas" aria-label="Workflow canvas">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={handleEdgesChange}
+            onConnect={onConnect}
+            onEdgesDelete={onEdgesDelete}
+            deleteKeyCode={["Backspace", "Delete"]}
+            onNodeClick={(_, node) => {
+              const service = node.data?.service as Service | undefined;
+              setSelectedService(service || null);
+              setSelectedNodeId(service ? node.id : null);
+              if (service) setRightTab("inspector");
+            }}
+            fitView
           >
-            <div><span>Visual workflow</span><strong>Workflow canvas</strong></div>
-            <div className="builder-canvas-legend"><i /> Service <i /> Connection</div>
-          </div>
-
-          <div className="builder-canvas-area">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-              onConnect={onConnect}
-              onEdgesDelete={onEdgesDelete}
-              deleteKeyCode={["Backspace", "Delete"]}
-              onNodeClick={(_, node) => {
-                const service = node.data?.service as Service | undefined;
-                setSelectedService(service || null);
-                setSelectedNodeId(service ? node.id : null);
-                if (service) setRightTab("inspector");
-              }}
-              fitView
-            >
-              <Background />
-              <Controls />
-              <MiniMap />
-            </ReactFlow>
-          </div>
+            <Background gap={20} size={1} />
+            <Controls showInteractive={false} />
+          </ReactFlow>
+          {canvasServices.length === 0 && (
+            <div className="builder-canvas__empty">
+              <h3>Start your solution</h3>
+              <p>Describe your goal to Design with AI, or add services from the list on the left.</p>
+            </div>
+          )}
         </main>
 
-        <aside className="card builder-details-card">
-          <div role="tablist" aria-label="Right panel" style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-            {(["assistant", "inspector"] as const).map((tab) => (
-              <button
-                key={tab}
-                role="tab"
-                aria-selected={rightTab === tab}
-                onClick={() => setRightTab(tab)}
-                style={{
-                  flex: 1, padding: "8px 10px", borderRadius: 10, fontWeight: 700, cursor: "pointer",
-                  border: rightTab === tab ? "1px solid #5b2cf2" : "1px solid #e4e7ec",
-                  background: rightTab === tab ? "#f4f0ff" : "white", color: rightTab === tab ? "#4320ca" : "#475467",
-                }}
-              >
-                {tab === "assistant" ? "Design with AI" : "Service details"}
-              </button>
+        <aside className="builder-pane builder-side" aria-label="Solution panel">
+          <div className="ae-tabs builder-side__tabs" role="tablist">
+            {([["assistant", "Design with AI"], ["inspector", "Details"], ["run", "Run"]] as const).map(([tab, label]) => (
+              <button key={tab} className="ae-tab" role="tab" aria-selected={rightTab === tab} onClick={() => setRightTab(tab)}>{label}</button>
             ))}
           </div>
 
-          {rightTab === "assistant" && (
-            <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} />
-          )}
-
-          {rightTab === "inspector" && <div className="builder-panel-heading"><div><span>Inspector</span><h2>Service details</h2></div></div>}
-
-          {rightTab === "inspector" && !selectedService && (
-            <p style={{ color: "#667085", lineHeight: 1.6 }}>
-              Select a service on the canvas to inspect its provider, interface, lifecycle, and
-              trust status.
-            </p>
-          )}
-
-          {rightTab === "inspector" && selectedService && (
-            <div style={{ display: "grid", gap: 12 }}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <span className="badge">{selectedService.trust_badge}</span>
-                <span style={lifecycleBadgeStyle(getLifecycleStatus(selectedService))}>
-                  {getLifecycleStatus(selectedService)}
-                </span>
-              </div>
-
-              <ServiceBadges service={selectedService} />
-
-              {selectedNodeId && nodes.some((node) => node.id === selectedNodeId) && (
-                <NodeSettingsPanel
-                  definition={settingsDefinitionOf(catalogueEntry(selectedService))}
-                  values={nodes.find((node) => node.id === selectedNodeId)?.data?.settings as SettingsValues | undefined}
-                  onChange={(values) => updateNodeSettings(selectedNodeId, values)}
-                  isStartNode={isStartServiceNode(selectedNodeId)}
-                />
-              )}
-
-              <h3 style={{ marginBottom: 0 }}>{selectedService.name}</h3>
-
-              {getLifecycleStatus(selectedService) === "deprecated" && (
-                <div
-                  style={{
-                    padding: 12,
-                    borderRadius: 12,
-                    background: "#fef3c7",
-                    color: "#92400e",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    fontWeight: 600,
-                  }}
-                >
-                  This selected service is deprecated.
-                </div>
-              )}
-
-              {getOrchestrationMode(selectedService) === "sidecar" && (
-                <div
-                  style={{
-                    padding: 12,
-                    borderRadius: 12,
-                    background: "#fffbeb",
-                    color: "#92400e",
-                    fontSize: 13,
-                    lineHeight: 1.5,
-                    fontWeight: 600,
-                  }}
-                >
-                  This service uses sidecar orchestration. It will run through the AI-EFFECT Control
-                  Interface compatibility path.
-                </div>
-              )}
-
-              <Info label="Provider" value={selectedService.provider} />
-              <Info label="Category" value={selectedService.category} />
-              <Info label="Version" value={`v${selectedService.version}`} />
-              <Info label="Interface" value={formatValue(getInterfaceType(selectedService))} />
-              <Info
-                label="Orchestration"
-                value={formatValue(getOrchestrationMode(selectedService))}
-              />
-              <Info label="Adapter" value={selectedService.adapter_type || "none"} />
-              <Info label="Contract URI" value={selectedService.contract_uri || "Not declared"} />
-              <Info label="Proto URI" value={selectedService.proto_uri || "Not declared"} />
-              <Info label="Input" value={selectedService.input_type} />
-              <Info label="Output" value={selectedService.output_type} />
-            </div>
-          )}
-
-          <div style={{ marginTop: 30 }}>
-            <h3>Validation Results</h3>
-
-            {validationResults.length === 0 && (
-              <p style={{ color: "#667085" }}>Run workflow validation.</p>
+          <div className="builder-side__body">
+            {rightTab === "assistant" && (
+              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} />
             )}
 
-            <div style={{ display: "grid", gap: 10 }}>
-              {validationResults.map((result, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: 10,
-                    borderRadius: 10,
-                    background: validationResultBackground(result),
-                    color: validationResultColor(result),
-                    whiteSpace: "pre-line",
-                  }}
-                >
-                  {result}
-                </div>
-              ))}
-            </div>
+            {rightTab === "inspector" && !selectedService && (
+              <div className="empty-state builder-empty-state">
+                <h3>No service selected</h3>
+                <p>Select a service on the canvas to see what it does and adjust its settings.</p>
+              </div>
+            )}
 
-            <div className="runtime-preflight-compact">
-              <div className="runtime-preflight-statuses">
+            {rightTab === "inspector" && selectedService && (
+              <div className="builder-details">
                 <div>
-                  <span>Workflow design</span>
-                  <strong className={workflowDesignStatus === "invalid" ? "is-blocked" : workflowDesignStatus === "valid" ? "is-ready" : "is-neutral"}>
-                    {workflowDesignStatus === "invalid" ? "Needs attention" : workflowDesignStatus === "valid" ? "Valid" : "Not checked"}
-                  </strong>
+                  <div className="service-page__meta">
+                    <span className="ae-service__node">{selectedService.provider}</span>
+                    {getLifecycleStatus(selectedService) === "deprecated" && <span className="ae-badge ae-badge--warning">Deprecated</span>}
+                  </div>
+                  <h3 className="builder-details__title">{serviceText(catalogueEntry(selectedService)).title}</h3>
+                  <p className="builder-details__purpose">{serviceText(catalogueEntry(selectedService)).purpose}</p>
                 </div>
-                <div>
-                  <span>Deployment readiness</span>
-                  <strong className={runtimePreflight?.status === "ready" ? "is-ready" : runtimePreflight?.status === "blocked" ? "is-blocked" : "is-neutral"}>
-                    {runtimePreflight?.status === "ready" ? "Ready" : runtimePreflight?.status === "blocked" ? "Blocked" : "Not checked"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="runtime-preflight-counts">
-                <span><strong>{runtimePreflight?.summary.ready || 0}</strong> ready</span>
-                <span><strong>{runtimePreflight?.summary.blocked || 0}</strong> blocked</span>
-              </div>
-
-              {runtimePreflight?.status === "blocked" && (
-                <p>
-                  {workflowDesignStatus === "valid"
-                    ? "The design is valid, but one or more services require provider or operator action."
-                    : "Resolve the design blockers before preparing deployment."}
-                </p>
-              )}
-
-              <a href="#runtime-readiness">View deployment readiness</a>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 30 }}>
-            <h3>Deployment</h3>
-
-            <label htmlFor="run-input-mode" style={{ display: "block", marginBottom: 8, fontWeight: 600 }}>Run input (optional)</label>
-            <select id="run-input-mode" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} style={{ width: "100%", padding: 10, marginBottom: 10 }}>
-              <option value="prompt">Prompt</option>
-              <option value="json">JSON object</option>
-            </select>
-            <textarea aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={5} placeholder={runInputMode === "prompt" ? "Describe what this workflow should do..." : '{"prompt":"...", "option":true}'} style={{ width: "100%", padding: 10, boxSizing: "border-box" }} />
-            <p style={{ color: "#667085", fontSize: 13, marginTop: 5 }}>Sent as JSON to the first service when you confirm deployment. Leave empty to use the service default.</p>
-            {nodes.some((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service))) && (
-              <details style={{ margin: "12px 0", border: "1px solid #eaecf0", borderRadius: 12, padding: 12 }}>
-                <summary style={{ fontWeight: 600, cursor: "pointer" }}>
-                  Settings for this run only (optional)
-                  {Object.values(runOverrides).some((values) => Object.keys(values).length) ? " · changed" : ""}
-                </summary>
-                <p style={{ color: "#667085", fontSize: 13 }}>
-                  Try different values without changing the saved solution.
-                </p>
-                <div style={{ display: "grid", gap: 12 }}>
-                  {nodes
-                    .filter((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service)))
-                    .map((node) => {
-                      const service = node.data.service as Service;
-                      return (
-                        <NodeSettingsPanel
-                          key={node.id}
-                          title={service.name}
-                          mode="run"
-                          idPrefix={`run-${node.id}`}
-                          definition={settingsDefinitionOf(catalogueEntry(service))}
-                          values={runOverrides[node.id]}
-                          onChange={(values) => setRunOverrides((current) => ({ ...current, [node.id]: values }))}
-                          isStartNode={isStartServiceNode(node.id)}
-                        />
-                      );
-                    })}
-                </div>
-              </details>
-            )}
-            {runInputError && <p role="alert" style={{ color: "#b42318" }}>{runInputError}</p>}
-
-            {!deploymentResult && (
-              <p style={{ color: "#667085" }}>
-                Validate the design, prepare the deployment, then confirm when all services are ready.
-              </p>
-            )}
-
-            {deploymentResult && (
-              <div
-                style={{
-                  padding: 12,
-                  borderRadius: 12,
-                  background:
-                    deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? "#fef3f2" : "#ecfdf3",
-                  color: deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? "#b42318" : "#067647",
-                  whiteSpace: "pre-line",
-                }}
-              >
-                {deploymentResult.workflow_id
-                  ? `Deployment submitted\nID: ${deploymentResult.workflow_id}\nStatus: ${deploymentResult.status}`
-                  : `${deploymentResult.status === "blocked" ? "Deployment blocked" : "Deployment failed"}\n${deploymentResult.error}`}
+                {selectedNodeId && nodes.some((node) => node.id === selectedNodeId) && (
+                  <NodeSettingsPanel
+                    definition={settingsDefinitionOf(catalogueEntry(selectedService))}
+                    values={nodes.find((node) => node.id === selectedNodeId)?.data?.settings as SettingsValues | undefined}
+                    onChange={(values) => updateNodeSettings(selectedNodeId, values)}
+                    isStartNode={isStartServiceNode(selectedNodeId)}
+                  />
+                )}
+                <dl className="kv">
+                  <dt>Needs</dt><dd>{serviceText(catalogueEntry(selectedService)).needs}</dd>
+                  <dt>Produces</dt><dd>{serviceText(catalogueEntry(selectedService)).produces}</dd>
+                </dl>
+                <details className="details">
+                  <summary>Technical details</summary>
+                  <div className="details__body">
+                    <dl className="kv">
+                      <dt>Operation</dt><dd className="ae-mono">{selectedService.operation_name || selectedService.name}</dd>
+                      <dt>Interface</dt><dd>{formatValue(getInterfaceType(selectedService))} · {formatValue(getOrchestrationMode(selectedService))}</dd>
+                      <dt>Input</dt><dd className="ae-mono">{selectedService.input_type}</dd>
+                      <dt>Output</dt><dd className="ae-mono">{selectedService.output_type}</dd>
+                      <dt>Version</dt><dd>{selectedService.version}</dd>
+                    </dl>
+                  </div>
+                </details>
+                <Link href={"/catalogue/" + selectedService.id} className="ae-btn ae-btn--ghost">Open catalogue page</Link>
               </div>
             )}
-          </div>
 
-          <div className="builder-workflow-health">
-            <span>Workflow health</span>
-            <div><strong>{canvasServices.length}</strong><small>{canvasServices.length === 1 ? "Service" : "Services"}</small></div>
-            <div><strong>{edges.length}</strong><small>Connections</small></div>
-            <div><strong>{deprecatedCanvasServices.length}</strong><small>Deprecated</small></div>
+            {rightTab === "run" && (
+              <div className="builder-run">
+                <section className="builder-run__section">
+                  <h3 className="builder-run__title">Design check</h3>
+                  <div className="builder-run__status">
+                    <span className={"ae-badge " + (workflowDesignStatus === "valid" ? "ae-badge--success" : workflowDesignStatus === "invalid" ? "ae-badge--danger" : "")}>
+                      Design: {workflowDesignStatus === "invalid" ? "needs attention" : workflowDesignStatus === "valid" ? "valid" : "not checked"}
+                    </span>
+                    <span className={"ae-badge " + (runtimePreflight?.status === "ready" ? "ae-badge--success" : runtimePreflight?.status === "blocked" ? "ae-badge--danger" : "")}>
+                      Services: {runtimePreflight?.status === "ready" ? "ready" : runtimePreflight?.status === "blocked" ? (runtimePreflight?.summary.blocked || 0) + " blocked" : "not checked"}
+                    </span>
+                  </div>
+                  {validationResults.length === 0 ? (
+                    <p className="muted builder-run__hint">Select Check design to find missing connections and invalid settings.</p>
+                  ) : (
+                    <ul className="builder-checks">
+                      {validationResults.map((result, index) => {
+                        const tone = result.startsWith("Blocked") ? "danger" : result.startsWith("Warning") ? "warning" : result.startsWith("Passed") ? "success" : "info";
+                        return <li key={index} className={"builder-check builder-check--" + tone}>{result.replace(/^(Blocked|Passed|Warning|Note):\s*/, "")}</li>;
+                      })}
+                    </ul>
+                  )}
+                  {runtimePreflight && <a href="#runtime-readiness" className="ae-btn ae-btn--ghost ae-btn--sm">See service readiness</a>}
+                </section>
+
+                <section className="builder-run__section">
+                  <h3 className="builder-run__title">Run input <span className="muted">(optional)</span></h3>
+                  <div className="ae-field">
+                    <select id="run-input-mode" className="ae-select" value={runInputMode} onChange={(event) => { setRunInputMode(event.target.value as "prompt" | "json"); setRunInputError(""); }} aria-label="Run input type">
+                      <option value="prompt">Text prompt</option>
+                      <option value="json">JSON object</option>
+                    </select>
+                    <textarea className="ae-textarea" aria-label="Run input" value={runInput} onChange={(event) => { setRunInput(event.target.value); setRunInputError(""); }} rows={3} placeholder={runInputMode === "prompt" ? "Describe what this run should do" : '{"prompt": "...", "option": true}'} />
+                    <span className="ae-field__help">Sent to the first step when you deploy. Leave empty to use the service defaults.</span>
+                  </div>
+                  {nodes.some((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service))) && (
+                    <details className="details">
+                      <summary>
+                        Settings for this run only{Object.values(runOverrides).some((values) => Object.keys(values).length) ? " · changed" : ""}
+                      </summary>
+                      <div className="details__body">
+                        <p className="muted" style={{ margin: 0 }}>Try different values without changing the saved solution.</p>
+                        {nodes
+                          .filter((node) => node.data?.service && settingsDefinitionOf(catalogueEntry(node.data.service as Service)))
+                          .map((node) => {
+                            const service = node.data.service as Service;
+                            return (
+                              <NodeSettingsPanel
+                                key={node.id}
+                                title={serviceText(catalogueEntry(service)).title}
+                                mode="run"
+                                idPrefix={"run-" + node.id}
+                                definition={settingsDefinitionOf(catalogueEntry(service))}
+                                values={runOverrides[node.id]}
+                                onChange={(values) => setRunOverrides((current) => ({ ...current, [node.id]: values }))}
+                                isStartNode={isStartServiceNode(node.id)}
+                              />
+                            );
+                          })}
+                      </div>
+                    </details>
+                  )}
+                  {runInputError && <p role="alert" className="ae-field__error">{runInputError}</p>}
+                </section>
+
+                {deploymentResult ? (
+                  <div className={"ae-alert " + (deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? "ae-alert--danger" : "ae-alert--success")}>
+                    {deploymentResult.status === "failed" || deploymentResult.status === "blocked" ? <CircleX size={20} aria-hidden="true" /> : <CircleCheck size={20} aria-hidden="true" />}
+                    <div>
+                      {deploymentResult.workflow_id ? (
+                        <>
+                          <span className="ae-alert__title">Deployment submitted.</span>{" "}
+                          <Link href={"/deployments/" + deploymentResult.workflow_id}>View the run</Link>
+                          <div className="ae-mono">{deploymentResult.workflow_id}</div>
+                        </>
+                      ) : (
+                        <><span className="ae-alert__title">{deploymentResult.status === "blocked" ? "Deployment blocked." : "Deployment failed."}</span> {deploymentResult.error}</>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="muted builder-run__hint">Check the design, prepare the deployment, then confirm once every service is ready.</p>
+                )}
+              </div>
+            )}
           </div>
         </aside>
       </div>
