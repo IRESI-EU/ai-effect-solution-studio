@@ -29,9 +29,9 @@ type Status = { enabled: boolean; provider: string; model: string; daily_limit: 
 
 const EXAMPLES = [
   "Generate German grid load and production time series with 2 decimal places",
-  "Benchmark control approaches on a synthetic Dutch electricity grid",
-  "Design district-heating network topologies and draw them",
-  "Analyse household energy use and flag only serious anomalies",
+  "Synthesise a Dutch distribution grid with random seed 7 and high loading, then benchmark control approaches on it",
+  "Generate at most 5 district-heating network topologies and draw them",
+  "Benchmark control approaches on a low-loading Dutch grid, and separately design district-heating topologies",
 ];
 
 export function DesignAssistant({
