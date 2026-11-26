@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
   Background,
+  ControlButton,
   Controls,
   MiniMap,
   addEdge,
@@ -26,7 +27,7 @@ import { builderNodeTypes, type ServiceNodeView } from "../../components/builder
 import { SERVICE_DRAG_TYPE, ServicePalette, displayVersion, nodeLabelOf } from "../../components/builder/service-palette";
 import { WORKFLOW_OUTPUT, WORKFLOW_START, serviceIcon, servicePorts, serviceStage, serviceText } from "../../lib/service-presentation";
 import Link from "next/link";
-import { Check, CircleCheck, CircleX, Info as InfoIcon, MapPin, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Play, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
+import { Check, CircleCheck, LayoutGrid, CircleX, Info as InfoIcon, MapPin, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Play, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
 
 type Service = {
   id: string;
@@ -201,7 +202,7 @@ function BuilderContent() {
       const row = (rows[d] = (rows[d] ?? -1) + 1);
       return {
         id: idFor(step.ref),
-        position: { x: 340 + d * 260, y: 120 + row * 130 },
+        position: { x: 300 + d * 330, y: 110 + row * 170 },
         data: {
           node_kind: "service",
           label: service ? serviceText(service).title : step.service_name,
@@ -216,7 +217,7 @@ function BuilderContent() {
     setNodes([
       { ...initialNodes[0], position: { x: 80, y: 150 } },
       ...serviceNodes,
-      { ...initialNodes[1], position: { x: 340 + (maxDepth + 1) * 260, y: 150 } },
+      { ...initialNodes[1], position: { x: 300 + (maxDepth + 1) * 330, y: 150 } },
     ]);
     setEdges([
       ...startRefs.map((ref) => ({ id: `e-input-${idFor(ref)}`, source: "input", target: idFor(ref) })),
@@ -310,7 +311,7 @@ function BuilderContent() {
   }, [runtimePreflight]);
 
   // Nodes as drawn: start/end pills and service cards. The saved format is unchanged.
-  const displayNodes = useMemo(
+  const displayNodes = useMemo<Node[]>(
     () =>
       nodes.map((node) => {
         const kind = node.data?.node_kind;
@@ -340,7 +341,7 @@ function BuilderContent() {
     [nodes, services, readinessByNode]
   );
 
-  const displayEdges = useMemo(() => {
+  const displayEdges = useMemo<Edge[]>(() => {
     const byId = new Map(nodes.map((node) => [node.id, node]));
     return edges.map((edge) => {
       const source = byId.get(edge.source)?.data?.service as Service | undefined;
@@ -407,7 +408,7 @@ function BuilderContent() {
   function addServiceAfter(nodeId: string, service: Service) {
     const from = nodes.find((node) => node.id === nodeId);
     const newId = `service-${service.id}-${Date.now()}`;
-    const position = from ? { x: from.position.x + 280, y: from.position.y } : { x: 400, y: 200 };
+    const position = from ? { x: from.position.x + 330, y: from.position.y } : { x: 400, y: 200 };
     setNodes((current) => [
       ...current.map((node) =>
         node.id === "output" && node.position.x < position.x + 260 ? { ...node, position: { ...node.position, x: position.x + 300 } } : node
@@ -469,7 +470,8 @@ function BuilderContent() {
 
     for (const node of serviceNodes) {
       const service = catalogueEntry(node.data.service as Service);
-      const alternative = alternativesFor(service)[0];
+      // Same-name entries are usually duplicates; only offer a swap that is clearly different.
+      const alternative = alternativesFor(service).find((candidate) => serviceText(candidate).title !== serviceText(service).title);
       if (!alternative) continue;
       const from = serviceText(service).title;
       const to = serviceText(alternative).title;
@@ -575,8 +577,10 @@ function BuilderContent() {
         }
         setCurrentSolutionId(body.id);
         setSolutionName(body.name);
-        setNodes(body.nodes || initialNodes);
-        setEdges(body.edges || []);
+        const loadedNodes: Node[] = body.nodes || initialNodes;
+        const loadedEdges: Edge[] = body.edges || [];
+        setNodes(cardsOverlap(loadedNodes) ? tidyLayout(loadedNodes, loadedEdges) : loadedNodes);
+        setEdges(loadedEdges);
       } catch (error) {
         setSolutionLoadError(error instanceof Error ? error.message : "Could not load this solution.");
       }
@@ -1136,7 +1140,18 @@ function BuilderContent() {
             fitView
           >
             <Background gap={20} size={1} />
-            <Controls showInteractive={false} />
+            <Controls showInteractive={false}>
+              <ControlButton
+                onClick={() => {
+                  setNodes((current) => tidyLayout(current, edges));
+                  setTimeout(() => flowRef.current?.fitView({ padding: 0.15, maxZoom: 1.1, duration: 200 }), 50);
+                }}
+                title="Tidy up layout"
+                aria-label="Tidy up layout"
+              >
+                <LayoutGrid size={14} />
+              </ControlButton>
+            </Controls>
             {canvasServices.length > 0 && <MiniMap pannable zoomable position="bottom-right" nodeStrokeWidth={2} ariaLabel="Overview of the workflow" />}
           </ReactFlow>
           {canvasServices.length === 0 && (
@@ -1178,7 +1193,7 @@ function BuilderContent() {
                 {alternatives.map((alternative) => (
                   <button key={alternative.id} type="button" role="menuitem" onClick={() => { replaceService(nodeMenu.nodeId, alternative); setNodeMenu(null); }}>
                     {serviceText(alternative).title}
-                    {nodeLabelOf(alternative.owner_node) && <small>{nodeLabelOf(alternative.owner_node)}</small>}
+                    <small>{nodeLabelOf(alternative.owner_node) || alternative.provider}</small>
                   </button>
                 ))}
                 {alternatives.length === 0 && <div className="node-menu__note">No other service takes and produces the same data.</div>}
@@ -1498,6 +1513,50 @@ function ServiceBadges({ service }: { service: Service }) {
         <span style={metadataBadgeStyle}>adapter: {service.adapter_type}</span>
       )}
     </div>
+  );
+}
+
+const COLUMN_GAP = 330;
+const ROW_GAP = 170;
+
+/** Lays steps out left to right by how far they are from the start, so cards never overlap. */
+function tidyLayout(nodes: Node[], edges: Edge[]): Node[] {
+  const incoming = new Map<string, string[]>();
+  edges.forEach((edge) => incoming.set(edge.target, [...(incoming.get(edge.target) || []), edge.source]));
+  const depth = new Map<string, number>();
+  const depthOf = (id: string, seen: Set<string>): number => {
+    if (depth.has(id)) return depth.get(id)!;
+    if (seen.has(id)) return 0;
+    seen.add(id);
+    const parents = (incoming.get(id) || []).filter((parent) => parent !== "output");
+    const value = id === "input" ? 0 : parents.length ? Math.max(...parents.map((parent) => depthOf(parent, seen))) + 1 : 1;
+    depth.set(id, value);
+    return value;
+  };
+  nodes.forEach((node) => { if (node.id !== "output") depthOf(node.id, new Set()); });
+  const maxDepth = Math.max(1, ...Array.from(depth.values()));
+  depth.set("output", maxDepth + 1);
+  const rows = new Map<number, number>();
+  const placed = nodes.map((node) => {
+    const d = depth.get(node.id) ?? 1;
+    const row = rows.get(d) ?? 0;
+    rows.set(d, row + 1);
+    return { node, d, row };
+  });
+  const tallest = Math.max(1, ...Array.from(rows.values()));
+  const middle = 110 + ((tallest - 1) * ROW_GAP) / 2 + 40;
+  return placed.map(({ node, d, row }) => {
+    const terminal = node.id === "input" || node.id === "output";
+    const x = d === 0 ? 80 : 300 + (d - 1) * COLUMN_GAP;
+    return { ...node, position: { x, y: terminal ? middle : 110 + row * ROW_GAP } };
+  });
+}
+
+/** True when two service cards sit on top of each other (e.g. solutions saved with the older, smaller boxes). */
+function cardsOverlap(nodes: Node[]) {
+  const cards = nodes.filter((node) => node.data?.service);
+  return cards.some((a, i) =>
+    cards.slice(i + 1).some((b) => Math.abs(a.position.x - b.position.x) < 245 && Math.abs(a.position.y - b.position.y) < 100)
   );
 }
 

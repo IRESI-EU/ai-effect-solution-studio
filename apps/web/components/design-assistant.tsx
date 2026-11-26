@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowUp, CircleCheck, ChevronDown, Circle, GripVertical, Move, Spline, Sparkles, MousePointerClick } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 export type ProposedStep = {
@@ -23,7 +24,11 @@ type ChatTurn = {
   errors?: string[];
   question?: string | null;
   applied?: boolean;
+  local?: boolean; // a change made on the canvas from a suggestion, not by the model
 };
+
+/** A next step offered under the chat; act() changes the canvas and may return a note for the chat. */
+export type AssistantSuggestion = { id: string; label: string; act: () => string | null | void };
 
 type Status = { enabled: boolean; provider: string; model: string; daily_limit: number; used_last_24h: number };
 
@@ -39,8 +44,7 @@ export function DesignAssistant({
   onApply,
   onUndo,
   canUndo,
-  onRun,
-  onShowSettings,
+  suggestions = [],
 }: {
   getCurrent: () => { steps: unknown[]; connections: unknown[] } | null;
   onApply: (workflow: ProposedWorkflow) => void;
@@ -48,6 +52,7 @@ export function DesignAssistant({
   canUndo: boolean;
   onRun?: () => void;
   onShowSettings?: () => void;
+  suggestions?: AssistantSuggestion[];
 }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
@@ -55,6 +60,13 @@ export function DesignAssistant({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+  const [used, setUsed] = useState<Set<string>>(new Set());
+  const [guideOpen, setGuideOpen] = useState(true);
+
+  function runSuggestion(suggestion: AssistantSuggestion) {
+    const note = suggestion.act();
+    if (note) setTurns((current) => [...current, { role: "user", content: suggestion.label }, { role: "assistant", content: note, local: true }]);
+  }
 
   useEffect(() => {
     fetch("/api/design-ai/status", { credentials: "include" })
@@ -71,6 +83,8 @@ export function DesignAssistant({
     const content = text.trim();
     if (!content || busy) return;
     const history = [...turns, { role: "user" as const, content }];
+    setUsed((current) => new Set(current).add(content));
+    setGuideOpen(false);
     setTurns(history);
     setDraft("");
     setError("");
@@ -127,38 +141,62 @@ export function DesignAssistant({
   }
 
   return (
-    <div style={{ display: "grid", gap: 10 }} aria-label="Design with AI">
-      <div>
-        <h3 style={{ margin: 0 }}>Design with AI</h3>
-        <p style={{ color: "#667085", fontSize: 13, margin: "4px 0 0" }}>
-          Describe what you want to achieve. I&apos;ll build a workflow from the catalogue on the canvas, using only
-          services that fit together. You can then adjust, save and run it.
-        </p>
+    <div className="assistant" aria-label="Design with AI">
+      <section className={`assistant-guide${guideOpen ? " is-open" : ""}`}>
+        <button type="button" className="assistant-guide__toggle" aria-expanded={guideOpen} onClick={() => setGuideOpen((open) => !open)}>
+          How to build a solution <ChevronDown size={16} aria-hidden="true" />
+        </button>
+        {guideOpen && (
+          <div className="assistant-guide__body">
+            <h4>Try doing</h4>
+            <ul className="assistant-guide__do">
+              <li><GripVertical size={15} aria-hidden="true" /> Drag a service from the list onto the canvas</li>
+              <li><Move size={15} aria-hidden="true" /> Drag steps to rearrange the workflow</li>
+              <li><Spline size={15} aria-hidden="true" /> Drag from a step&apos;s output dot to connect it</li>
+              <li><MousePointerClick size={15} aria-hidden="true" /> Right-click a step to replace or remove it</li>
+            </ul>
+            <h4>Try asking</h4>
+            <ul className="assistant-guide__ask">
+              {EXAMPLES.map((example) => (
+                <li key={example}>
+                  <button type="button" onClick={() => send(example)} disabled={busy}>
+                    {used.has(example) ? <CircleCheck size={16} className="is-done" aria-hidden="true" /> : <Circle size={16} aria-hidden="true" />}
+                    {example}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <div className="assistant-head">
+        <span className="assistant-head__avatar" aria-hidden="true"><Sparkles size={18} /></span>
+        <div>
+          <strong>Assistant</strong>
+          <small>
+            {status ? `${status.model} · ${Math.max(0, status.daily_limit - status.used_last_24h)} requests left today` : "Builds workflows from the catalogue"}
+          </small>
+        </div>
       </div>
 
-      {turns.length === 0 && (
-        <div style={{ display: "grid", gap: 6 }}>
-          <small style={{ color: "#667085", fontWeight: 600 }}>Try for example:</small>
-          {EXAMPLES.map((example) => (
-            <button key={example} type="button" onClick={() => send(example)} disabled={busy} style={exampleButton}>
-              {example}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gap: 8, maxHeight: 420, overflowY: "auto" }}>
+      <div className="assistant-chat">
+        {turns.length === 0 && (
+          <div className="assistant-bubble assistant-bubble--ai">
+            Hi! Describe the experiment you want to run, and I&apos;ll put together a workflow from the catalogue, using only services that fit together.
+          </div>
+        )}
         {turns.map((turn, index) => (
-          <div key={index} style={turn.role === "user" ? userBubble : assistantBubble}>
+          <div key={index} className={`assistant-bubble ${turn.role === "user" ? "assistant-bubble--user" : "assistant-bubble--ai"}`}>
             <div style={{ whiteSpace: "pre-wrap" }}>{turn.content}</div>
             {turn.workflow && turn.workflow.steps.length > 0 && (
-              <ol style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13 }}>
+              <ol className="assistant-steps">
                 {turn.workflow.steps.map((step) => (
-                  <li key={step.ref} style={{ marginBottom: 4 }}>
-                    <strong>{step.service_name}</strong> <span style={{ color: "#667085" }}>({step.provider})</span>
-                    {step.why && <div style={{ color: "#475467" }}>{step.why}</div>}
+                  <li key={step.ref}>
+                    <strong>{step.service_name}</strong> <span className="muted">({step.provider})</span>
+                    {step.why && <div className="muted">{step.why}</div>}
                     {Object.keys(step.settings || {}).length > 0 && (
-                      <div style={{ color: "#5635ce" }}>
+                      <div className="assistant-steps__settings">
                         Settings: {Object.entries(step.settings).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(", ")}
                       </div>
                     )}
@@ -167,100 +205,55 @@ export function DesignAssistant({
               </ol>
             )}
             {turn.errors && turn.errors.length > 0 && (
-              <div role="alert" style={{ color: "#b42318", fontSize: 13, marginTop: 6 }}>
+              <div role="alert" className="assistant-error">
                 This proposal still has problems, so it was not placed on the canvas:
-                <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
-                  {turn.errors.map((e) => <li key={e}>{e}</li>)}
-                </ul>
+                <ul>{turn.errors.map((e) => <li key={e}>{e}</li>)}</ul>
               </div>
             )}
-            {turn.applied && <small style={{ color: "#067647" }}>Placed on the canvas.</small>}
+            {turn.applied && <small className="assistant-applied">Placed on the canvas.</small>}
           </div>
         ))}
-        {busy && <div style={assistantBubble}>Designing your workflow...</div>}
-        {!busy && lastTurn?.role === "assistant" && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }} aria-label="Suggested next steps">
-            {lastTurn.question && !lastTurn.applied && (
-              <button type="button" style={chipButton} onClick={() => send("Yes, go ahead")}>Yes, go ahead</button>
-            )}
-            {lastTurn.applied && onRun && (
-              <button type="button" style={chipButton} onClick={onRun}>Check and run it</button>
-            )}
-            {lastTurn.applied && onShowSettings && (
-              <button type="button" style={chipButton} onClick={onShowSettings}>Review settings</button>
-            )}
-          </div>
-        )}
+        {busy && <div className="assistant-bubble assistant-bubble--ai assistant-bubble--busy">Designing your workflow<span>.</span><span>.</span><span>.</span></div>}
         <div ref={endRef} />
       </div>
 
-      {error && <p role="alert" style={{ color: "#b42318", margin: 0 }}>{error}</p>}
+      {error && <p role="alert" className="assistant-error">{error}</p>}
 
-      <textarea
-        aria-label="Describe your experiment"
-        value={draft}
-        rows={3}
-        placeholder={turns.length ? "Ask for a change, e.g. use 4 decimal places" : "Describe your experiment"}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send(draft);
-          }
-        }}
-        style={{ width: "100%", padding: 10, boxSizing: "border-box" }}
-      />
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-        <button type="button" onClick={() => send(draft)} disabled={busy || !draft.trim()} style={primaryButton}>
-          {busy ? "Designing..." : "Send"}
-        </button>
-        {canUndo && (
-          <button type="button" onClick={onUndo} disabled={busy} style={secondaryButton}>
-            Undo last AI change
-          </button>
-        )}
-        {turns.length > 0 && (
-          <button type="button" onClick={() => setTurns([])} disabled={busy} style={secondaryButton}>
-            Start over
-          </button>
-        )}
-      </div>
-      {status && (
-        <small style={{ color: "#98a2b3" }}>
-          {status.used_last_24h}/{status.daily_limit} requests today · model: {status.model}. AI suggestions can be wrong;
-          review before running.
-        </small>
+      {!busy && (lastTurn?.question && !lastTurn.applied || (turns.length > 0 && suggestions.length > 0)) && (
+        <div className="assistant-chips" aria-label="Suggested next steps">
+          {lastTurn?.question && !lastTurn.applied && (
+            <button type="button" className="assistant-chip" onClick={() => send("Yes, go ahead")}>Yes, go ahead</button>
+          )}
+          {turns.length > 0 && suggestions.map((suggestion) => (
+            <button key={suggestion.id} type="button" className="assistant-chip" onClick={() => runSuggestion(suggestion)}>{suggestion.label}</button>
+          ))}
+        </div>
       )}
+
+      <div className="assistant-input">
+        <textarea
+          aria-label="Describe your experiment"
+          value={draft}
+          rows={2}
+          placeholder={turns.length ? "Ask for a change, e.g. use 4 decimal places" : "Describe your experiment..."}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send(draft);
+            }
+          }}
+        />
+        <button type="button" className="assistant-send" onClick={() => send(draft)} disabled={busy || !draft.trim()} aria-label="Send">
+          <ArrowUp size={18} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="assistant-actions">
+        {canUndo && <button type="button" onClick={onUndo} disabled={busy}>Undo last AI change</button>}
+        {turns.length > 0 && <button type="button" onClick={() => { setTurns([]); setGuideOpen(true); }} disabled={busy}>Start over</button>}
+        <span>AI suggestions can be wrong; review before running.</span>
+      </div>
     </div>
   );
 }
 
-const primaryButton = {
-  background: "linear-gradient(135deg, #5b2cf2, #4320ca)", color: "white", padding: "8px 12px",
-  borderRadius: 10, border: "none", fontWeight: 700, cursor: "pointer",
-} as const;
-
-const secondaryButton = {
-  background: "white", color: "#5635ce", padding: "8px 12px",
-  borderRadius: 10, border: "1px solid #d1c8f3", fontWeight: 700, cursor: "pointer",
-} as const;
-
-const exampleButton = {
-  textAlign: "left", background: "#f9f8ff", color: "#3e2a9b", padding: "8px 10px",
-  borderRadius: 10, border: "1px solid #e4defb", cursor: "pointer", fontSize: 13,
-} as const;
-
-const userBubble = {
-  justifySelf: "end", maxWidth: "90%", background: "#5b2cf2", color: "white",
-  padding: "8px 12px", borderRadius: "12px 12px 2px 12px", fontSize: 14,
-} as const;
-
-const assistantBubble = {
-  justifySelf: "start", maxWidth: "95%", background: "#f2f4f7", color: "#101828",
-  padding: "8px 12px", borderRadius: "12px 12px 12px 2px", fontSize: 14,
-} as const;
-
-const chipButton = {
-  background: "#eef0ff", color: "#3c3ee1", padding: "4px 12px",
-  borderRadius: 999, border: "1px solid #d6d8ff", cursor: "pointer", fontSize: 13, fontWeight: 600,
-} as const;
