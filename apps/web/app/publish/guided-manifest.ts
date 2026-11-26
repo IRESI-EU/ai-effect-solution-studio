@@ -6,6 +6,7 @@ export type GuidedServiceForm = {
   category: string;
   version: string;
   description: string;
+  useWhen: string;
   inputType: string;
   outputType: string;
   serviceId: string;
@@ -37,6 +38,7 @@ export const emptyGuidedForm: GuidedServiceForm = {
   category: "",
   version: "0.1.0",
   description: "",
+  useWhen: "",
   inputType: "",
   outputType: "",
   serviceId: "",
@@ -117,6 +119,8 @@ export function buildGuidedManifest(form: GuidedServiceForm): Record<string, unk
     },
     runtime,
     interface: interfaceBlock,
+    // Plain-language guidance for the catalogue and Design with AI.
+    ...(form.useWhen.trim() ? { design: { purpose: form.description.trim(), use_when: form.useWhen.trim() } } : {}),
     orchestration: {
       mode: ["http", "container_job", "legacy_sidecar"].includes(form.interfaceType)
         ? "sidecar"
@@ -146,6 +150,7 @@ export function formFromExample(manifest: Record<string, unknown>): GuidedServic
     category: textValue(service.category),
     version: textValue(service.version) || "0.1.0",
     description: textValue(service.description),
+    useWhen: textValue(objectValue(manifest.design).use_when),
     inputType: textValue(interfaceBlock.input_type),
     outputType: textValue(interfaceBlock.output_type),
     image: textValue(runtime.image),

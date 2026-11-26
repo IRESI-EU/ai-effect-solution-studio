@@ -320,3 +320,46 @@ def _result_check(
         "http_status": None,
         "failure_reason": failure_reason,
     }
+
+
+# The platform's own containers are never valid service runtimes.
+BLOCKED_HOSTS = {"localhost", "localhost.localdomain", "metadata.google.internal", "postgres", "api", "web", "redis"}
+
+
+def check_declared_runtime(internal_host: str, internal_port: str, health_path: str) -> dict:
+    """Check a runtime address someone is about to publish, before a service record exists.
+
+    Only a GET to the health path is made, redirects are not followed, and the
+    response body is never returned. Loopback, link-local and unspecified
+    addresses are refused so the check cannot be pointed at the platform itself.
+    """
+    import ipaddress
+    from types import SimpleNamespace
+
+    host = (internal_host or "").strip()
+    try:
+        bare = (urlsplit(host if "://" in host else f"http://{host}").hostname or "").lower()
+    except ValueError:
+        bare = ""
+    refused = bare in BLOCKED_HOSTS
+    try:
+        address = ipaddress.ip_address(bare)
+        refused = refused or address.is_loopback or address.is_link_local or address.is_unspecified or address.is_multicast
+    except ValueError:
+        pass
+    draft = SimpleNamespace(
+        id="draft", name="New service", provider="Service provider",
+        internal_host=host, internal_port=internal_port, health_path=health_path,
+    )
+    if refused:
+        return {
+            **_runtime_base("", draft, None),
+            "status": "misconfigured",
+            "blocking": True,
+            "failure_reason": "invalid_address",
+            "message": "This address points at the platform itself. Use the service's container name on the services network.",
+            "recommended_action": "Enter the name the container runs under.",
+        }
+    result = check_service_runtime(draft)
+    return {key: result[key] for key in ("status", "message", "recommended_action", "http_status", "runtime_url", "failure_reason")}
+

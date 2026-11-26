@@ -1,6 +1,8 @@
 "use client";
 
-import { Check, CircleAlert, CircleCheck, MapPin, Pencil, TriangleAlert } from "lucide-react";
+import { Check, CircleAlert, CircleCheck, LoaderCircle, MapPin, Pencil, PlugZap, TriangleAlert } from "lucide-react";
+import { SettingsRowsEditor, type SettingRow } from "../../components/service-settings-editor";
+import type { SettingsDefinition } from "../../components/node-settings";
 import { useMemo, useState } from "react";
 import { ServiceIcon } from "../../components/builder/service-icon";
 import {
@@ -35,6 +37,7 @@ export type PreviewResponse = {
   validation: { level: "success" | "warning" | "error"; message: string }[];
 };
 export type RuntimeChoice = "needs_deployment" | "already_running" | "unsure";
+export type ConnectionResult = { status: string; message: string; recommended_action: string; runtime_url: string | null; http_status?: number | null };
 export type Evidence = { revisionPinned: boolean; imageReviewed: boolean; secretsExternal: boolean; healthVerified: boolean };
 type Update = <K extends keyof GuidedServiceForm>(key: K, value: GuidedServiceForm[K]) => void;
 
@@ -97,10 +100,16 @@ export function DescribeStep({ form, update, catalogue, nodeLabel, isExample }: 
             placeholder="e.g. Forecasts household electricity use for the next 24 hours from half-hourly smart-meter readings." />
           <small>One to three sentences: what goes in, what comes out, and why it is useful.</small>
         </label>
+        <label className="wizard-field wizard-field--wide">
+          <span className="wizard-field__label">When should someone use it? <span className="muted">(optional)</span></span>
+          <textarea className="ae-input" rows={2} value={form.useWhen} onChange={(event) => update("useWhen", event.target.value)}
+            placeholder="e.g. Before planning demand response, when only past meter readings are available." />
+          <small>Helps people, and Design with AI, pick the right service for their experiment.</small>
+        </label>
         <TextField label="Provider" required value={form.provider} onChange={(value) => update("provider", value)} hint={nodeLabel ? `Your node: ${nodeLabel}.` : "Your organisation or node."} />
         <TextField label="Version" value={form.version} onChange={(value) => update("version", value)} hint="For example 1.0.0." />
         <label className="wizard-field">
-          <span className="wizard-field__label">Category</span>
+          <span className="wizard-field__label">Category<em aria-hidden="true"> *</em></span>
           <input className="ae-input" list="category-suggestions" value={form.category} onChange={(event) => update("category", event.target.value)} placeholder="e.g. Forecasting" />
           <datalist id="category-suggestions">{CATEGORY_SUGGESTIONS.map((c) => <option key={c} value={c} />)}</datalist>
         </label>
@@ -163,8 +172,16 @@ const INTERFACES: { key: InterfaceChoice; title: string; text: string; badge?: s
   { key: "legacy_sidecar", title: "Older service with an adapter", text: "An existing service wrapped by a node's adapter." },
 ];
 
-export function ConnectStep({ form, update, protoOperations, runtime, onRuntime }: {
+export function ConnectStep({
+  form, update, protoOperations, runtime, onRuntime, connection, testing, onTestConnection,
+  settingsChannel, settingsRows, onSettingsChannel, onSettingsRows, onAddFirstSetting, settingsError,
+}: {
   form: GuidedServiceForm; update: Update; protoOperations: ProtoOperation[]; runtime: RuntimeChoice; onRuntime: (value: RuntimeChoice) => void;
+  connection: ConnectionResult | null; testing: boolean; onTestConnection: () => void;
+  settingsChannel: SettingsDefinition["channel"]; settingsRows: SettingRow[];
+  onSettingsChannel: (channel: SettingsDefinition["channel"]) => void;
+  onSettingsRows: (change: (current: SettingRow[]) => SettingRow[]) => void;
+  onAddFirstSetting: () => void; settingsError: string | null;
 }) {
   function pickOperation(name: string) {
     const operation = protoOperations.find((candidate) => candidate.name === name);
@@ -224,6 +241,21 @@ export function ConnectStep({ form, update, protoOperations, runtime, onRuntime 
         {form.interfaceType === "legacy_sidecar" && <TextField label="Adapter" value={form.legacyAdapter} onChange={(value) => update("legacyAdapter", value)} placeholder="e.g. portugal-sidecar" hint="Which adapter must run next to it." />}
       </div>
 
+      <div className={`connection-test${connection ? ` connection-test--${connection.status === "ready" ? "ok" : "bad"}` : ""}`}>
+        <div>
+          <strong><PlugZap size={16} aria-hidden="true" /> Test the connection</strong>
+          <span>
+            {connection
+              ? connection.message + (connection.status !== "ready" && connection.recommended_action ? ` ${connection.recommended_action}` : "")
+              : "If the container is already running on the AI-EFFECT services network, check that the platform can reach its health check."}
+          </span>
+          {connection?.runtime_url && <code>{connection.runtime_url}</code>}
+        </div>
+        <button type="button" className="ae-btn ae-btn--secondary" onClick={onTestConnection} disabled={testing || !form.containerName.trim()}>
+          {testing ? <><LoaderCircle size={15} className="spin" aria-hidden="true" /> Testing…</> : connection ? "Test again" : "Test connection"}
+        </button>
+      </div>
+
       <fieldset className="fit-choice fit-choice--row">
         <legend>Is it already running on the AI-EFFECT server?</legend>
         <Radio name="runtime" checked={runtime === "already_running"} onChange={() => onRuntime("already_running")} title="Yes" text="It is up on the services network." />
@@ -231,8 +263,24 @@ export function ConnectStep({ form, update, protoOperations, runtime, onRuntime 
         <Radio name="runtime" checked={runtime === "unsure"} onChange={() => onRuntime("unsure")} title="Not sure" text="The platform team will check." />
       </fieldset>
 
+      <section className="wizard-settings">
+        <h3 className="wizard-section">Adjustable settings <span className="muted">(optional)</span></h3>
+        <p className="wizard-card__lead">
+          Does your service read values from its request, such as a forecast horizon or a number of records? Declare them so
+          designers can change them per run in the Builder, and Design with AI can fill them in from a request.
+        </p>
+        {settingsRows.length === 0 ? (
+          <button type="button" className="ae-btn ae-btn--secondary" onClick={onAddFirstSetting}>+ Add a setting</button>
+        ) : (
+          <div className="wizard-settings__rows">
+            <SettingsRowsEditor channel={settingsChannel} onChannel={onSettingsChannel} rows={settingsRows} onRows={onSettingsRows} />
+          </div>
+        )}
+        {settingsError && <p className="wizard-error" role="alert"><CircleAlert size={15} aria-hidden="true" /> {settingsError}</p>}
+      </section>
+
       <details className="wizard-advanced">
-        <summary>Advanced settings</summary>
+        <summary>Advanced connection details</summary>
         <div className="wizard-grid">
           <TextField label="Network host" value={form.internalHost} onChange={(value) => update("internalHost", value)} hint="Only if it differs from the container name." />
           <TextField label="Health check path" value={form.healthPath} onChange={(value) => update("healthPath", value)} />
@@ -254,10 +302,11 @@ export function ConnectStep({ form, update, protoOperations, runtime, onRuntime 
 
 /* ------------------------------------------------------------------ Review */
 
-export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEdit, evidence, onEvidence, acknowledged, onAcknowledge, catalogue }: {
+export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEdit, evidence, onEvidence, acknowledged, onAcknowledge, catalogue, settings, connection }: {
   form: GuidedServiceForm; nodeLabel: string | null; preview: PreviewResponse | null; checking: boolean; onRecheck: () => void;
   onEdit: (step: "describe" | "connect") => void; evidence: Evidence; onEvidence: (key: keyof Evidence, value: boolean) => void;
   acknowledged: boolean; onAcknowledge: (value: boolean) => void; catalogue: CatalogueEntry[];
+  settings: SettingsDefinition | null; connection: ConnectionResult | null;
 }) {
   const service = {
     name: form.name || "New service",
@@ -318,10 +367,13 @@ export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEd
 
       <dl className="review-summary">
         <div><dt>Name</dt><dd>{form.name}</dd><button type="button" className="link-button" onClick={() => onEdit("describe")}>Edit</button></div>
+        {form.useWhen.trim() && <div><dt>Use it when</dt><dd>{form.useWhen}</dd></div>}
         <div><dt>Takes</dt><dd>{takesLabel}</dd></div>
         <div><dt>Produces</dt><dd>{producesLabel}</dd></div>
         <div><dt>Called through</dt><dd>{INTERFACES.find((option) => option.key === form.interfaceType)?.title} · operation <code>{form.operationName}</code></dd><button type="button" className="link-button" onClick={() => onEdit("connect")}>Edit</button></div>
         <div><dt>Container</dt><dd><code>{form.image || form.dockerfile}</code> as <code>{form.containerName}:{form.internalPort}</code></dd></div>
+        <div><dt>Settings</dt><dd>{settings ? Object.entries(settings.schema.properties).map(([name, prop]) => prop.title || name).join(", ") : "None (fixed settings)"}</dd></div>
+        <div><dt>Connection</dt><dd>{connection ? (connection.status === "ready" ? "Reached by the platform" : "Not reachable yet") : "Not tested"}</dd></div>
         <div><dt>Catalogue ID</dt><dd><code>{form.serviceId}</code></dd></div>
       </dl>
 
@@ -348,7 +400,7 @@ export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEd
         <Tick checked={evidence.revisionPinned} onChange={(value) => onEvidence("revisionPinned", value)} text="The source version is fixed (a tag or commit)." />
         <Tick checked={evidence.imageReviewed} onChange={(value) => onEvidence("imageReviewed", value)} text="The image uses a fixed version tag." />
         <Tick checked={evidence.secretsExternal} onChange={(value) => onEvidence("secretsExternal", value)} text="No passwords or keys are built into the image." />
-        <Tick checked={evidence.healthVerified} onChange={(value) => onEvidence("healthVerified", value)} text="The health check answers when the container runs." />
+        <Tick checked={evidence.healthVerified} onChange={(value) => onEvidence("healthVerified", value)} text={connection?.status === "ready" ? "The health check answers (checked by the platform just now)." : "The health check answers when the container runs."} />
       </fieldset>
       <label className="review-ack">
         <input type="checkbox" checked={acknowledged} onChange={(event) => onAcknowledge(event.target.checked)} />

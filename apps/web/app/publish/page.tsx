@@ -18,7 +18,9 @@ import {
   type ProtoOperation,
 } from "./guided-manifest";
 import { PackageImportPanel } from "./package-import";
-import { ConnectStep, DescribeStep, ReviewStep, TextField, type CatalogueEntry, type PreviewResponse, type RuntimeChoice, type Evidence } from "./wizard-steps";
+import { emptyRow, toDefinition, toRows, type SettingRow } from "../../components/service-settings-editor";
+import type { SettingsDefinition } from "../../components/node-settings";
+import { ConnectStep, DescribeStep, ReviewStep, TextField, type CatalogueEntry, type ConnectionResult, type PreviewResponse, type RuntimeChoice, type Evidence } from "./wizard-steps";
 import { workshopExamples, type WorkshopExample } from "./workshop-examples";
 
 type Source = "package" | "git" | "container" | "unpackaged";
@@ -31,6 +33,8 @@ type Draft = {
   base: Record<string, unknown> | null;
   origin: { kind: "git" | "file" | "example" | "form"; label: string; repo?: string; branch?: string; path?: string };
   idEdited: boolean;
+  settingsChannel: SettingsDefinition["channel"];
+  settingsRows: SettingRow[];
 };
 
 const DRAFT_KEY = "publish.draft.v2";
@@ -41,7 +45,10 @@ const STEPS: { key: Step; label: string; hint: string }[] = [
   { key: "review", label: "Review", hint: "Check and submit" },
 ];
 
-const newDraft = (): Draft => ({ source: null, step: "start", form: { ...emptyGuidedForm }, base: null, origin: { kind: "form", label: "Form" }, idEdited: false });
+const newDraft = (): Draft => ({
+  source: null, step: "start", form: { ...emptyGuidedForm }, base: null, origin: { kind: "form", label: "Form" }, idEdited: false,
+  settingsChannel: "parameters", settingsRows: [],
+});
 const initialEvidence: Evidence = { revisionPinned: false, imageReviewed: false, secretsExternal: false, healthVerified: false };
 
 export default function PublishServicePage() {
@@ -59,6 +66,7 @@ export default function PublishServicePage() {
   const [evidence, setEvidence] = useState<Evidence>(initialEvidence);
   const [acknowledged, setAcknowledged] = useState(false);
   const [submitted, setSubmitted] = useState<{ name: string; id: string } | null>(null);
+  const [connection, setConnection] = useState<ConnectionResult | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const nodeCode = (user?.node || null) as NodeCode | null;
@@ -72,7 +80,7 @@ export default function PublishServicePage() {
       if (saved) {
         const parsed = JSON.parse(saved) as Draft;
         if (parsed?.form && parsed.step !== "done" && parsed.step !== "start") {
-          setDraft(parsed);
+          setDraft({ ...newDraft(), ...parsed, form: { ...emptyGuidedForm, ...parsed.form } });
           setRestored(true);
         }
       }
@@ -111,8 +119,39 @@ export default function PublishServicePage() {
       }
       return { ...current, form: next, idEdited: current.idEdited || key === "serviceId" };
     });
+    if (["containerName", "internalHost", "internalPort", "healthPath"].includes(key)) setConnection(null);
     setPreview(null);
     setAcknowledged(false);
+  }
+
+  function setSettings(patch: Partial<Pick<Draft, "settingsChannel" | "settingsRows">>) {
+    setDraft((current) => ({ ...current, ...patch }));
+    setPreview(null);
+    setAcknowledged(false);
+  }
+
+  async function testConnection() {
+    setBusy("connection");
+    setConnection(null);
+    try {
+      const response = await fetch("/api/services/runtime-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          internal_host: form.internalHost.trim() || form.containerName.trim(),
+          internal_port: form.internalPort.trim() || "8080",
+          health_path: form.healthPath.trim() || "/health",
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data?.detail) || "The connection could not be tested.");
+      setConnection(data);
+      if (data.status === "ready") setEvidence((current) => ({ ...current, healthVerified: true }));
+    } catch (caught) {
+      setConnection({ status: "unavailable", message: caught instanceof Error ? caught.message : "The connection could not be tested.", recommended_action: "", runtime_url: null });
+    } finally {
+      setBusy(null);
+    }
   }
 
   function goTo(step: Step) {
@@ -129,6 +168,7 @@ export default function PublishServicePage() {
     setEvidence(initialEvidence);
     setRuntime("unsure");
     setProtoOperations([]);
+    setConnection(null);
     setRestored(false);
     setError(null);
   }
@@ -139,7 +179,13 @@ export default function PublishServicePage() {
   }
 
   function startForm(origin: Draft["origin"], form: GuidedServiceForm, base: Record<string, unknown> | null) {
-    setDraft({ source: draft.source || "container", step: "describe", form, base, origin, idEdited: Boolean(form.serviceId) });
+    const declared = base?.settings as SettingsDefinition | undefined;
+    const rows = declared?.schema?.properties ? toRows(declared) : [];
+    setDraft({
+      source: draft.source || "container", step: "describe", form, base, origin, idEdited: Boolean(form.serviceId),
+      settingsChannel: declared?.channel || "parameters", settingsRows: rows,
+    });
+    setConnection(null);
     setPreview(null);
   }
 
@@ -221,7 +267,21 @@ export default function PublishServicePage() {
     );
   }
 
-  const manifest = useMemo(() => mergeManifest(draft.base, form), [draft.base, form]);
+  const settingsResult = useMemo(() => {
+    if (!draft.settingsRows.length) return { definition: null as SettingsDefinition | null, error: null as string | null };
+    try {
+      return { definition: toDefinition(draft.settingsChannel, draft.settingsRows), error: null };
+    } catch (caught) {
+      return { definition: null, error: caught instanceof Error ? caught.message : "Check the settings." };
+    }
+  }, [draft.settingsChannel, draft.settingsRows]);
+
+  const manifest = useMemo(() => {
+    const merged = mergeManifest(draft.base, form);
+    if (settingsResult.definition) merged.settings = settingsResult.definition;
+    else delete merged.settings;
+    return merged;
+  }, [draft.base, form, settingsResult]);
 
   async function checkWithPlatform() {
     setBusy("check");
@@ -281,11 +341,12 @@ export default function PublishServicePage() {
     }
   }
 
-  const describeMissing = [!form.name.trim() && "a name", !form.description.trim() && "what it does", !form.provider.trim() && "the provider", !form.inputType.trim() && "what it takes", !form.outputType.trim() && "what it produces"].filter(Boolean) as string[];
+  const describeMissing = [!form.name.trim() && "a name", !form.description.trim() && "what it does", !form.provider.trim() && "the provider", !form.category.trim() && "a category", !form.inputType.trim() && "what it takes", !form.outputType.trim() && "what it produces"].filter(Boolean) as string[];
   const connectMissing = [
     !form.containerName.trim() && "the container name",
     !form.operationName.trim() && "the operation",
     !form.image.trim() && !form.dockerfile.trim() && "a Docker image",
+    settingsResult.error && "valid settings",
   ].filter(Boolean) as string[];
   const stepIndex = STEPS.findIndex((step) => step.key === draft.step);
   const packageMode = draft.source === "package" && draft.step === "start";
@@ -409,7 +470,22 @@ export default function PublishServicePage() {
 
       {draft.step === "connect" && (
         <section className="wizard-card">
-          <ConnectStep form={form} update={update} protoOperations={protoOperations} runtime={runtime} onRuntime={setRuntime} />
+          <ConnectStep
+            form={form}
+            update={update}
+            protoOperations={protoOperations}
+            runtime={runtime}
+            onRuntime={setRuntime}
+            connection={connection}
+            testing={busy === "connection"}
+            onTestConnection={testConnection}
+            settingsChannel={draft.settingsChannel}
+            settingsRows={draft.settingsRows}
+            onSettingsChannel={(settingsChannel) => setSettings({ settingsChannel })}
+            onSettingsRows={(change) => setDraft((current) => ({ ...current, settingsRows: change(current.settingsRows) }))}
+            onAddFirstSetting={() => setSettings({ settingsRows: [emptyRow()] })}
+            settingsError={settingsResult.error}
+          />
           <WizardNav onBack={() => goTo("describe")} onNext={() => goTo("review")} nextLabel="Review" nextDisabled={connectMissing.length > 0} missing={connectMissing} />
         </section>
       )}
@@ -428,6 +504,8 @@ export default function PublishServicePage() {
             acknowledged={acknowledged}
             onAcknowledge={setAcknowledged}
             catalogue={catalogue}
+            settings={settingsResult.definition}
+            connection={connection}
           />
           {error && <p className="wizard-error" role="alert"><CircleAlert size={16} aria-hidden="true" /> {error}</p>}
           <div className="wizard-nav">
