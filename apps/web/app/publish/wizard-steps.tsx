@@ -3,7 +3,7 @@
 import { Check, CircleAlert, CircleCheck, LoaderCircle, MapPin, Pencil, PlugZap, TriangleAlert } from "lucide-react";
 import { SettingsRowsEditor, type SettingRow } from "../../components/service-settings-editor";
 import type { SettingsDefinition } from "../../components/node-settings";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ServiceIcon } from "../../components/builder/service-icon";
 import {
   WORKFLOW_OUTPUT,
@@ -61,8 +61,8 @@ function usable(catalogue: CatalogueEntry[]) {
 
 /* ------------------------------------------------------------------ Describe */
 
-export function DescribeStep({ form, update, catalogue, nodeLabel, isExample }: {
-  form: GuidedServiceForm; update: Update; catalogue: CatalogueEntry[]; nodeLabel: string | null; isExample: boolean;
+export function DescribeStep({ form, update, catalogue, nodeLabel, aiSlot }: {
+  form: GuidedServiceForm; update: Update; catalogue: CatalogueEntry[]; nodeLabel: string | null; isExample: boolean; aiSlot?: ReactNode;
 }) {
   const [editId, setEditId] = useState(false);
   const live = useMemo(() => usable(catalogue), [catalogue]);
@@ -100,6 +100,7 @@ export function DescribeStep({ form, update, catalogue, nodeLabel, isExample }: 
             placeholder="e.g. Forecasts household electricity use for the next 24 hours from half-hourly smart-meter readings." />
           <small>One to three sentences: what goes in, what comes out, and why it is useful.</small>
         </label>
+        {aiSlot && <div className="wizard-field--wide">{aiSlot}</div>}
         <label className="wizard-field wizard-field--wide">
           <span className="wizard-field__label">When should someone use it? <span className="muted">(optional)</span></span>
           <textarea className="ae-input" rows={2} value={form.useWhen} onChange={(event) => update("useWhen", event.target.value)}
@@ -302,11 +303,11 @@ export function ConnectStep({
 
 /* ------------------------------------------------------------------ Review */
 
-export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEdit, evidence, onEvidence, acknowledged, onAcknowledge, catalogue, settings, connection }: {
+export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEdit, evidence, onEvidence, acknowledged, onAcknowledge, catalogue, settings, connection, aiSlot }: {
   form: GuidedServiceForm; nodeLabel: string | null; preview: PreviewResponse | null; checking: boolean; onRecheck: () => void;
   onEdit: (step: "describe" | "connect") => void; evidence: Evidence; onEvidence: (key: keyof Evidence, value: boolean) => void;
   acknowledged: boolean; onAcknowledge: (value: boolean) => void; catalogue: CatalogueEntry[];
-  settings: SettingsDefinition | null; connection: ConnectionResult | null;
+  settings: SettingsDefinition | null; connection: ConnectionResult | null; aiSlot?: ReactNode;
 }) {
   const service = {
     name: form.name || "New service",
@@ -394,6 +395,7 @@ export function ReviewStep({ form, nodeLabel, preview, checking, onRecheck, onEd
         )}
         {!checking && <button type="button" className="link-button" onClick={onRecheck}>Check again</button>}
       </div>
+      {aiSlot}
 
       <fieldset className="review-evidence">
         <legend>Before you submit (optional, helps the review)</legend>
