@@ -53,6 +53,7 @@ from app.services.orchestrator_adapter import (
     submit_to_orchestrator,
 )
 from app.services.runtime_preflight import (
+    check_declared_runtime,
     build_runtime_health_url,
     check_service_runtime,
     run_runtime_preflight,
@@ -61,6 +62,7 @@ from app.services.workflow_compiler import compile_to_wp3_payload
 from app.services.run_snapshots import delete_expired_snapshots, saved_preview, watch_workflow
 from app.services.wp3_importer import import_wp3_package
 from app.schemas.service_import import (
+    RuntimeCheckRequest,
     ServiceImportManualConfirmRequest,
     ServiceImportManualPreviewRequest,
     ServiceImportPreviewRequest,
@@ -247,6 +249,15 @@ def create_service(
     db.refresh(service)
 
     return service
+@app.post("/services/runtime-check")
+def check_runtime_before_publishing(
+    request: RuntimeCheckRequest,
+    _: User = Depends(require_service_publisher),
+):
+    """Test connection: can the platform reach this health endpoint right now?"""
+    return check_declared_runtime(request.internal_host, request.internal_port, request.health_path)
+
+
 @app.post("/services/import/preview", response_model=ServiceImportPreviewResponse)
 def preview_service_import(
     request: ServiceImportPreviewRequest,

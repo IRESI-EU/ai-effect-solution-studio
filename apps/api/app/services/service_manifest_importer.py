@@ -5,6 +5,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+from app.services.service_settings import SETTINGS_KEY, SettingsDefinitionError, normalize_definition
 from app.schemas.service_import import (
     NormalizedImportedService,
     ServiceImportPreviewResponse,
@@ -217,6 +218,7 @@ def normalize_manifest(
     contract_uri = optional_str(interface.get("contract_uri"))
 
     interface_contract = build_interface_contract(interface, interface_type)
+    add_design_and_settings(manifest, interface_contract, validation)
 
     if interface_type == "grpc":
         grpc = interface.get("grpc") if isinstance(interface.get("grpc"), dict) else {}
@@ -333,6 +335,50 @@ def get_operation_name_from_specific_contract(interface: dict[str, Any], interfa
     if isinstance(specific, dict):
         return optional_str(specific.get("operation_name"))
     return None
+
+
+DESIGN_TEXT_FIELDS = ("title", "purpose", "use_when")
+MAX_DESIGN_TEXT = 1000
+MAX_KEYWORDS = 20
+
+
+def add_design_and_settings(
+    manifest: dict[str, Any],
+    interface_contract: dict[str, Any],
+    validation: list[ValidationMessage],
+) -> None:
+    """Keep the optional plain-language description and adjustable settings of a manifest.
+
+    ``design`` (title, purpose, use_when, keywords) is what the catalogue and
+    Design with AI show; ``settings`` uses the same format as
+    PUT /services/{id}/settings and is validated the same way.
+    """
+    design = manifest.get("design")
+    if isinstance(design, dict):
+        clean: dict[str, Any] = {
+            key: design[key].strip()[:MAX_DESIGN_TEXT]
+            for key in DESIGN_TEXT_FIELDS
+            if isinstance(design.get(key), str) and design[key].strip()
+        }
+        keywords = design.get("keywords")
+        if isinstance(keywords, list):
+            words = [str(word).strip()[:60] for word in keywords if isinstance(word, (str, int)) and str(word).strip()]
+            if words:
+                clean["keywords"] = words[:MAX_KEYWORDS]
+        if clean:
+            interface_contract["design"] = clean
+
+    if manifest.get("settings") is not None:
+        try:
+            definition = normalize_definition(manifest["settings"])
+        except SettingsDefinitionError as exc:
+            validation.append(ValidationMessage(level="error", message=f"settings: {exc}"))
+        else:
+            interface_contract[SETTINGS_KEY] = definition
+            count = len(definition["schema"]["properties"])
+            validation.append(
+                ValidationMessage(level="success", message=f"{count} adjustable setting{'s' if count != 1 else ''} declared.")
+            )
 
 
 def build_interface_contract(interface: dict[str, Any], interface_type: str) -> dict[str, Any]:

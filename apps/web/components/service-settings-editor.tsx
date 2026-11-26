@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useAuth } from "./auth-context";
 import type { SettingProperty, SettingsDefinition } from "./node-settings";
 
+export type SettingRow = Row;
+
 type Row = {
   name: string;
   title: string;
@@ -25,7 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
   object: "Structured value (JSON)",
 };
 
-function toRows(definition: SettingsDefinition | null): Row[] {
+export function toRows(definition: SettingsDefinition | null): Row[] {
   if (!definition) return [];
   return Object.entries(definition.schema.properties).map(([name, p]) => ({
     name,
@@ -48,7 +50,7 @@ function parseTyped(text: string, type: Row["type"]): unknown {
   return JSON.parse(value);
 }
 
-function toDefinition(channel: SettingsDefinition["channel"], rows: Row[]): SettingsDefinition {
+export function toDefinition(channel: SettingsDefinition["channel"], rows: Row[]): SettingsDefinition {
   const properties: Record<string, SettingProperty> = {};
   for (const row of rows) {
     const name = row.name.trim();
@@ -77,7 +79,7 @@ function toDefinition(channel: SettingsDefinition["channel"], rows: Row[]): Sett
   return { channel, schema: { type: "object", properties } };
 }
 
-const emptyRow = (): Row => ({
+export const emptyRow = (): Row => ({
   name: "", title: "", type: "integer", defaultText: "", minimum: "", maximum: "", options: "", unit: "", description: "",
 });
 
@@ -148,9 +150,6 @@ export function ServiceSettingsEditor({
     }
   }
 
-  const update = (index: number, patch: Partial<Row>) =>
-    setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
-
   return (
     <section className="ae-card service-section" aria-label="Adjustable settings">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -186,53 +185,8 @@ export function ServiceSettingsEditor({
             Declare only settings your service already reads. <strong>Name</strong> must match the key in your code exactly
             (for example <code>request.parameters.get(&quot;num_records&quot;)</code> means the name is <code>num_records</code>).
           </p>
-          <label className="ae-field" style={{ maxWidth: 520 }}>
-            <span className="ae-field__label">Where the service reads them</span>
-            <select value={channel} onChange={(e) => setChannel(e.target.value as SettingsDefinition["channel"])} className="ae-select">
-              <option value="parameters">From the request&apos;s &quot;parameters&quot; field (any step)</option>
-              <option value="run_input">From its input JSON (first steps only)</option>
-            </select>
-          </label>
-
-          {rows.map((row, index) => (
-            <fieldset key={index} style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
-              <legend className="ae-field__label" style={{ padding: "0 6px" }}>Setting {index + 1}</legend>
-              <Field label="Name (key in code)" value={row.name} onChange={(v) => update(index, { name: v })} placeholder="num_records" />
-              <Field label="Label shown to designers" value={row.title} onChange={(v) => update(index, { title: v })} placeholder="Records to generate" />
-              <label className="ae-field">
-                <span className="ae-field__label">Type</span>
-                <select value={row.type} onChange={(e) => update(index, { type: e.target.value as Row["type"] })} className="ae-select">
-                  {Object.entries(TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
-                </select>
-              </label>
-              <Field label="Default (what your service uses when empty)" value={row.defaultText} onChange={(v) => update(index, { defaultText: v })} placeholder={row.type === "boolean" ? "true / false" : "10"} />
-              {(row.type === "integer" || row.type === "number") && (
-                <>
-                  <Field label="Minimum" value={row.minimum} onChange={(v) => update(index, { minimum: v })} placeholder="1" />
-                  <Field label="Maximum" value={row.maximum} onChange={(v) => update(index, { maximum: v })} placeholder="1000" />
-                </>
-              )}
-              {(row.type === "string" || row.type === "integer" || row.type === "number") && (
-                <Field label="Allowed options (comma-separated, optional)" value={row.options} onChange={(v) => update(index, { options: v })} placeholder={row.type === "string" ? "json, csv" : ""} />
-              )}
-              <Field label="Unit (optional)" value={row.unit} onChange={(v) => update(index, { unit: v })} placeholder="W, s, %" />
-              <div style={{ gridColumn: "1 / -1", display: "grid", gap: 4 }}>
-                <Field label="Help text (optional)" value={row.description} onChange={(v) => update(index, { description: v })} placeholder="What changing this value does" />
-              </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <button type="button" className="ae-btn ae-btn--secondary" onClick={() => setRows((current) => current.filter((_, i) => i !== index))}>
-                  Remove this setting
-                </button>
-              </div>
-            </fieldset>
-          ))}
-
+          <SettingsRowsEditor channel={channel} onChannel={setChannel} rows={rows} onRows={setRows} />
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" className="ae-btn ae-btn--secondary" onClick={() => setRows((current) => [...current, emptyRow()])}>
-              + Add setting
-            </button>
             <button type="button" className="ae-btn ae-btn--primary" disabled={saving} onClick={() => save(false)}>
               {saving ? "Saving..." : "Save settings"}
             </button>
@@ -251,6 +205,76 @@ export function ServiceSettingsEditor({
       {error && <p role="alert" className="ae-field__error">{error}</p>}
       {saved && <p role="status" style={{ color: "var(--success-600)", margin: 0 }}>{saved}</p>}
     </section>
+  );
+}
+
+/** Channel choice and one card per setting, with an "Add setting" button. State lives with the caller. */
+export function SettingsRowsEditor({
+  channel,
+  onChannel,
+  rows,
+  onRows,
+}: {
+  channel: SettingsDefinition["channel"];
+  onChannel: (channel: SettingsDefinition["channel"]) => void;
+  rows: Row[];
+  onRows: (update: (current: Row[]) => Row[]) => void;
+}) {
+  const setChannel = onChannel;
+  const setRows = onRows;
+  const update = (index: number, patch: Partial<Row>) =>
+    setRows((current) => current.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  return (
+    <>
+          <label className="ae-field" style={{ maxWidth: 520 }}>
+        <span className="ae-field__label">Where the service reads them</span>
+        <select value={channel} onChange={(e) => setChannel(e.target.value as SettingsDefinition["channel"])} className="ae-select">
+          <option value="parameters">From the request&apos;s &quot;parameters&quot; field (any step)</option>
+          <option value="run_input">From its input JSON (first steps only)</option>
+        </select>
+      </label>
+
+      {rows.map((row, index) => (
+        <fieldset key={index} style={{ border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: "var(--space-4)", display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
+          <legend className="ae-field__label" style={{ padding: "0 6px" }}>Setting {index + 1}</legend>
+          <Field label="Name (key in code)" value={row.name} onChange={(v) => update(index, { name: v })} placeholder="num_records" />
+          <Field label="Label shown to designers" value={row.title} onChange={(v) => update(index, { title: v })} placeholder="Records to generate" />
+          <label className="ae-field">
+            <span className="ae-field__label">Type</span>
+            <select value={row.type} onChange={(e) => update(index, { type: e.target.value as Row["type"] })} className="ae-select">
+              {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </label>
+          <Field label="Default (what your service uses when empty)" value={row.defaultText} onChange={(v) => update(index, { defaultText: v })} placeholder={row.type === "boolean" ? "true / false" : "10"} />
+          {(row.type === "integer" || row.type === "number") && (
+            <>
+              <Field label="Minimum" value={row.minimum} onChange={(v) => update(index, { minimum: v })} placeholder="1" />
+              <Field label="Maximum" value={row.maximum} onChange={(v) => update(index, { maximum: v })} placeholder="1000" />
+            </>
+          )}
+          {(row.type === "string" || row.type === "integer" || row.type === "number") && (
+            <Field label="Allowed options (comma-separated, optional)" value={row.options} onChange={(v) => update(index, { options: v })} placeholder={row.type === "string" ? "json, csv" : ""} />
+          )}
+          <Field label="Unit (optional)" value={row.unit} onChange={(v) => update(index, { unit: v })} placeholder="W, s, %" />
+          <div style={{ gridColumn: "1 / -1", display: "grid", gap: 4 }}>
+            <Field label="Help text (optional)" value={row.description} onChange={(v) => update(index, { description: v })} placeholder="What changing this value does" />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <button type="button" className="ae-btn ae-btn--secondary" onClick={() => setRows((current) => current.filter((_, i) => i !== index))}>
+              Remove this setting
+            </button>
+          </div>
+        </fieldset>
+      ))}
+
+      <div>
+        <button type="button" className="ae-btn ae-btn--secondary" onClick={() => setRows((current) => [...current, emptyRow()])}>
+          + Add setting
+        </button>
+      </div>
+    </>
   );
 }
 

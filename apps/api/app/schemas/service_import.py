@@ -157,3 +157,10 @@ class PackageImportConfirmResponse(BaseModel):
     services: list[dict[str, Any]]
     solution: dict[str, Any] | None = None
     message: str
+
+
+class RuntimeCheckRequest(BaseModel):
+    internal_host: str = Field(min_length=1, max_length=253)
+    internal_port: str = Field(min_length=1, max_length=5)
+    health_path: str = Field(default="/health", max_length=200)
+
