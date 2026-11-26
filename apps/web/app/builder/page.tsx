@@ -21,10 +21,12 @@ import "@xyflow/react/dist/style.css";
 import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
 import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsValues } from "../../components/node-settings";
-import { DesignAssistant, type ProposedWorkflow } from "../../components/design-assistant";
-import { serviceText } from "../../lib/service-presentation";
+import { DesignAssistant, type AssistantSuggestion, type ProposedWorkflow } from "../../components/design-assistant";
+import { builderNodeTypes, type ServiceNodeView } from "../../components/builder/flow-nodes";
+import { SERVICE_DRAG_TYPE, ServicePalette, displayVersion, nodeLabelOf } from "../../components/builder/service-palette";
+import { WORKFLOW_OUTPUT, WORKFLOW_START, serviceIcon, servicePorts, serviceStage, serviceText } from "../../lib/service-presentation";
 import Link from "next/link";
-import { CircleCheck, CircleX, Info as InfoIcon, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Play, Plus, Search, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
+import { Check, CircleCheck, CircleX, Info as InfoIcon, MapPin, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Play, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
 
 type Service = {
   id: string;
@@ -36,6 +38,8 @@ type Service = {
   output_type: string;
   trust_badge: string;
   lifecycle_status?: "active" | "deprecated" | "archived" | string | null;
+  owner_node?: string | null;
+  description?: string | null;
 
   container_name?: string;
   image?: string;
@@ -266,7 +270,6 @@ function BuilderContent() {
   const [runInputError, setRunInputError] = useState("");
   const [runOverrides, setRunOverrides] = useState<Record<string, SettingsValues>>({});
   const [solutionLoadError, setSolutionLoadError] = useState("");
-  const [serviceSearch, setServiceSearch] = useState("");
   const roleMode: UserRole = user?.role || "solution_designer";
   const workflowRevisionRef = useRef(0);
   const solutionSavePromiseRef = useRef<Promise<SavedSolution> | null>(null);
@@ -300,6 +303,236 @@ function BuilderContent() {
 
   const servicesOnCanvas = useMemo(() => new Set(canvasServices.map((service) => service.id)), [canvasServices]);
 
+  const readinessByNode = useMemo(() => {
+    const map = new Map<string, "ready" | "blocked">();
+    runtimePreflight?.checks.forEach((check) => map.set(check.node_id, check.status === "ready" ? "ready" : "blocked"));
+    return map;
+  }, [runtimePreflight]);
+
+  // Nodes as drawn: start/end pills and service cards. The saved format is unchanged.
+  const displayNodes = useMemo(
+    () =>
+      nodes.map((node) => {
+        const kind = node.data?.node_kind;
+        if (node.id === "input" || node.id === "output" || kind === "workflow_input" || kind === "workflow_output") {
+          const end = node.id === "output" || kind === "workflow_output";
+          return { ...node, type: "terminal", data: { ...node.data, kind: end ? "end" : "start" } };
+        }
+        const raw = node.data?.service as Service | undefined;
+        if (!raw) return node;
+        const service = catalogueEntry(raw);
+        const ports = servicePorts({ ...service, input_type: service.input_type || "", output_type: service.output_type || "" });
+        const view: ServiceNodeView = {
+          title: serviceText(service).title,
+          version: displayVersion(service.version),
+          nodeLabel: nodeLabelOf(service.owner_node),
+          icon: serviceIcon(service),
+          stage: serviceStage(service, services),
+          input: ports.input,
+          output: ports.output,
+          readiness: readinessByNode.get(node.id) || null,
+          deprecated: getLifecycleStatus(service) === "deprecated",
+          settingsCount: Object.keys((node.data?.settings as SettingsValues | undefined) || {}).length,
+        };
+        return { ...node, type: "service", data: { ...node.data, view } };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nodes, services, readinessByNode]
+  );
+
+  const displayEdges = useMemo(() => {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    return edges.map((edge) => {
+      const source = byId.get(edge.source)?.data?.service as Service | undefined;
+      const label = source ? servicePorts(catalogueEntry(source)).output : undefined;
+      return { ...edge, type: "smoothstep", animated: true, label, className: "flow-edge" };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edges, nodes, services]);
+
+  function serviceOfNode(nodeId: string) {
+    const node = nodes.find((candidate) => candidate.id === nodeId);
+    return node?.data?.service ? catalogueEntry(node.data.service as Service) : null;
+  }
+
+  /** A link is allowed only where the data fits: output type of one equals input type of the next. */
+  function canConnect(sourceId: string, targetId: string) {
+    if (sourceId === targetId) return false;
+    const source = serviceOfNode(sourceId);
+    const target = serviceOfNode(targetId);
+    if (!source && !target) return false;
+    if (!source) return sourceId === "input" && target!.input_type === WORKFLOW_START;
+    if (!target) return targetId === "output" && source.output_type === WORKFLOW_OUTPUT;
+    return source.output_type === target.input_type;
+  }
+
+  function alternativesFor(service: Service) {
+    return services.filter(
+      (candidate) =>
+        candidate.id !== service.id &&
+        candidate.input_type === service.input_type &&
+        candidate.output_type === service.output_type &&
+        getLifecycleStatus(candidate) === "active"
+    );
+  }
+
+  function nextStepsFor(service: Service) {
+    return services.filter(
+      (candidate) => candidate.input_type === service.output_type && getLifecycleStatus(candidate) === "active"
+    );
+  }
+
+  function replaceService(nodeId: string, replacement: Service) {
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, service: replacement, label: serviceText(replacement).title, settings: undefined } }
+          : node
+      )
+    );
+    if (selectedNodeId === nodeId) setSelectedService(replacement);
+    invalidateWorkflowResults();
+  }
+
+  function removeNode(nodeId: string) {
+    setNodes((current) => current.filter((node) => node.id !== nodeId));
+    setEdges((current) => current.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+    if (selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+      setSelectedService(null);
+    }
+    invalidateWorkflowResults();
+  }
+
+  function addServiceAfter(nodeId: string, service: Service) {
+    const from = nodes.find((node) => node.id === nodeId);
+    const newId = `service-${service.id}-${Date.now()}`;
+    const position = from ? { x: from.position.x + 280, y: from.position.y } : { x: 400, y: 200 };
+    setNodes((current) => [
+      ...current.map((node) =>
+        node.id === "output" && node.position.x < position.x + 260 ? { ...node, position: { ...node.position, x: position.x + 300 } } : node
+      ),
+      { id: newId, position, data: { node_kind: "service", label: serviceText(service).title, service } },
+    ]);
+    setEdges((current) => {
+      const kept = current.filter((edge) => !(edge.source === nodeId && edge.target === "output"));
+      const added: Edge[] = [{ id: `e-${nodeId}-${newId}`, source: nodeId, target: newId }];
+      if (service.output_type === WORKFLOW_OUTPUT) added.push({ id: `e-${newId}-output`, source: newId, target: "output" });
+      return [...kept, ...added];
+    });
+    invalidateWorkflowResults();
+  }
+
+  const workflowStatus = useMemo(() => {
+    const serviceNodes = nodes.filter((node) => node.data?.service);
+    if (!serviceNodes.length) return null;
+    const outgoing = new Map<string, string[]>();
+    const incoming = new Map<string, string[]>();
+    edges.forEach((edge) => {
+      outgoing.set(edge.source, [...(outgoing.get(edge.source) || []), edge.target]);
+      incoming.set(edge.target, [...(incoming.get(edge.target) || []), edge.source]);
+    });
+    const fromStart = collectReachable(["input"], outgoing);
+    const toEnd = collectReachable(["output"], incoming);
+    const complete = serviceNodes.every((node) => fromStart.has(node.id) && toEnd.has(node.id));
+    const where = Array.from(
+      new Set(serviceNodes.map((node) => nodeLabelOf(catalogueEntry(node.data.service as Service).owner_node)).filter(Boolean))
+    ) as string[];
+    return { complete, where };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, services]);
+
+  // Next steps offered under Design with AI answers. All of them act on the canvas
+  // directly (no AI request), using only what the catalogue says fits.
+  function buildSuggestions(): AssistantSuggestion[] {
+    const serviceNodes = nodes.filter((node) => node.data?.service);
+    if (!serviceNodes.length) return [];
+    const found: AssistantSuggestion[] = [];
+
+    for (const node of serviceNodes) {
+      const service = catalogueEntry(node.data.service as Service);
+      const continues = edges.some((edge) => edge.source === node.id && edge.target !== "output");
+      if (continues || service.output_type === WORKFLOW_OUTPUT) continue;
+      const next = nextStepsFor(service).filter((candidate) => !servicesOnCanvas.has(candidate.id))[0];
+      if (!next) continue;
+      const title = serviceText(next).title;
+      found.push({
+        id: `add-${node.id}-${next.id}`,
+        label: `Add ${title}`,
+        act: () => {
+          addServiceAfter(node.id, next);
+          return `Added ${title} after ${serviceText(service).title} and connected it: it takes the ${servicePorts(service).output} as input.`;
+        },
+      });
+      break;
+    }
+
+    for (const node of serviceNodes) {
+      const service = catalogueEntry(node.data.service as Service);
+      const alternative = alternativesFor(service)[0];
+      if (!alternative) continue;
+      const from = serviceText(service).title;
+      const to = serviceText(alternative).title;
+      const where = nodeLabelOf(alternative.owner_node);
+      found.push({
+        id: `swap-${node.id}-${alternative.id}`,
+        label: `Use ${to}${where ? ` (${where})` : ""} instead`,
+        act: () => {
+          replaceService(node.id, alternative);
+          return `Swapped in ${to}${where ? ` from the ${where}` : ""}. It takes and produces the same data as ${from}, so all connections are kept.`;
+        },
+      });
+      break;
+    }
+
+    for (const node of serviceNodes) {
+      const service = catalogueEntry(node.data.service as Service);
+      const definition = settingsDefinitionOf(service);
+      if (!definition) continue;
+      const current = (node.data?.settings as SettingsValues | undefined) || {};
+      const entry = Object.entries(definition.schema.properties).find(
+        ([, prop]) => prop.type === "boolean" || Array.isArray((prop as { enum?: unknown[] }).enum)
+      );
+      if (!entry) continue;
+      const [name, prop] = entry;
+      const title = (prop.title || name).toLowerCase();
+      const value = name in current ? current[name] : prop.default;
+      let next: unknown;
+      let label: string;
+      if (prop.type === "boolean") {
+        next = !value;
+        label = `${next ? "Turn on" : "Turn off"} ${title}`;
+      } else {
+        const options = (prop as { enum?: unknown[] }).enum || [];
+        next = options[(options.indexOf(value) + 1) % options.length];
+        label = `Set ${title} to ${String(next)}`;
+      }
+      const stepTitle = serviceText(service).title;
+      found.push({
+        id: `set-${node.id}-${name}-${String(next)}`,
+        label,
+        act: () => {
+          updateNodeSettings(node.id, { ...current, [name]: next });
+          return `Set ${prop.title || name} to ${String(next)} on ${stepTitle}. You can change it any time under Details.`;
+        },
+      });
+      break;
+    }
+
+    found.push({ id: "run", label: "Check and run it", act: () => { openSideTab("run"); return null; } });
+    return found.slice(0, 3);
+  }
+  const suggestions = buildSuggestions();
+
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [nodeMenu, setNodeMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!nodeMenu) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setNodeMenu(null); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [nodeMenu]);
+
   // Open Details on the first step that has adjustable settings (follow-up from Design with AI).
   function showFirstAdjustableStep() {
     const node = nodes.find((n) => n.data?.service && settingsDefinitionOf(catalogueEntry(n.data.service as Service)));
@@ -322,16 +555,6 @@ function BuilderContent() {
     [services]
   );
 
-  const filteredServices = useMemo(() => {
-    const query = serviceSearch.trim().toLowerCase();
-    if (!query) return services;
-    return services.filter((service) =>
-      [service.name, service.provider, service.category, getInterfaceType(service)]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [services, serviceSearch]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/services`)
@@ -405,7 +628,7 @@ function BuilderContent() {
     [invalidateWorkflowResults, setEdges]
   );
 
-  function addServiceToCanvas(service: Service) {
+  function addServiceToCanvas(service: Service, at?: { x: number; y: number }) {
     const nodeId = `service-${service.id}-${Date.now()}`;
     const lifecycleStatus = getLifecycleStatus(service);
     const interfaceType = getInterfaceType(service);
@@ -415,7 +638,7 @@ function BuilderContent() {
       ...existing,
       {
         id: nodeId,
-        position: {
+        position: at || {
           x: 360 + Math.random() * 120,
           y: 120 + Math.random() * 180,
         },
@@ -861,50 +1084,50 @@ function BuilderContent() {
           <div className="builder-pane__head">
             <h2 className="builder-pane__title">Services</h2>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span className="builder-pane__count">{filteredServices.length}</span>
+              <span className="builder-pane__count">{services.length}</span>
               <button type="button" className="builder-icon-btn builder-collapse-btn" onClick={() => togglePalette(false)} aria-label="Hide services" title="Hide services">
                 <PanelLeftClose size={18} aria-hidden="true" />
               </button>
             </span>
           </div>
-          <label className="catalogue-search builder-palette__search">
-            <Search size={16} aria-hidden="true" />
-            <input className="ae-input" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services" aria-label="Search services" />
-          </label>
-          <div className="builder-palette__list">
-            {filteredServices.map((service) => {
-              const text = serviceText(service);
-              const deprecated = getLifecycleStatus(service) === "deprecated";
-              const onCanvas = servicesOnCanvas.has(service.id);
-              return (
-                <button className={"builder-palette__item" + (onCanvas ? " is-on-canvas" : "")} key={service.id} onClick={() => addServiceToCanvas(service)} title={"Add " + text.title + " to the canvas"}>
-                  <span className="builder-palette__name">{text.title}</span>
-                  <span className="builder-palette__meta">
-                    {service.provider}
-                    {onCanvas && <span className="builder-palette__badge">On canvas</span>}
-                    {deprecated && <span className="ae-badge ae-badge--warning">Deprecated</span>}
-                  </span>
-                  <Plus size={16} className="builder-palette__add" aria-hidden="true" />
-                </button>
-              );
-            })}
-            {filteredServices.length === 0 && <p className="builder-empty muted">No services match your search.</p>}
-          </div>
+          <ServicePalette services={services} inUse={servicesOnCanvas} onAdd={(service) => addServiceToCanvas(service)} />
         </aside>
 
-        <main className="builder-canvas" aria-label="Workflow canvas">
+        <main className="builder-canvas" aria-label="Workflow canvas" ref={canvasRef}>
           <ReactFlow
             key={canvasFitKey}
             onInit={(instance) => { flowRef.current = instance; }}
             fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }}
-            nodes={nodes}
-            edges={edges}
+            nodes={displayNodes}
+            edges={displayEdges}
+            nodeTypes={builderNodeTypes}
+            isValidConnection={(connection) => canConnect(connection.source, connection.target)}
+            onDragOver={(event) => {
+              if (event.dataTransfer.types.includes(SERVICE_DRAG_TYPE)) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }
+            }}
+            onDrop={(event) => {
+              const service = services.find((candidate) => candidate.id === event.dataTransfer.getData(SERVICE_DRAG_TYPE));
+              if (!service || !flowRef.current) return;
+              event.preventDefault();
+              addServiceToCanvas(service, flowRef.current.screenToFlowPosition({ x: event.clientX - 90, y: event.clientY - 30 }));
+            }}
+            onNodeContextMenu={(event, node) => {
+              if (!node.data?.service || !canvasRef.current) return;
+              event.preventDefault();
+              const box = canvasRef.current.getBoundingClientRect();
+              setNodeMenu({ nodeId: node.id, x: Math.min(event.clientX - box.left, box.width - 250), y: Math.min(event.clientY - box.top, box.height - 220) });
+            }}
+            onPaneClick={() => setNodeMenu(null)}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
             onEdgesDelete={onEdgesDelete}
             deleteKeyCode={["Backspace", "Delete"]}
             onNodeClick={(_, node) => {
+              setNodeMenu(null);
               const service = node.data?.service as Service | undefined;
               setSelectedService(service || null);
               setSelectedNodeId(service ? node.id : null);
@@ -918,10 +1141,51 @@ function BuilderContent() {
           </ReactFlow>
           {canvasServices.length === 0 && (
             <div className="builder-canvas__empty">
+              <span className="builder-canvas__empty-mark" aria-hidden="true" />
               <h3>Start your solution</h3>
-              <p>Describe your goal to Design with AI, or add services from the list on the left.</p>
+              <p>Describe your experiment to Design with AI, or drag services from the list onto the canvas.</p>
             </div>
           )}
+          {workflowStatus && (
+            <div className="canvas-status" aria-live="polite">
+              {workflowStatus.where.length > 0 && (
+                <span className="canvas-status__where">
+                  <MapPin size={13} aria-hidden="true" />
+                  {workflowStatus.where.length === 1
+                    ? `Runs on the ${workflowStatus.where[0]}`
+                    : `Runs on ${workflowStatus.where.length} nodes: ${workflowStatus.where.join(", ")}`}
+                </span>
+              )}
+              <span className={`canvas-status__state${workflowStatus.complete ? " is-complete" : ""}`}>
+                {workflowStatus.complete ? <>Workflow complete <Check size={14} aria-hidden="true" /></> : "Connect every step from Start to Results"}
+              </span>
+            </div>
+          )}
+          {nodeMenu && (() => {
+            const service = serviceOfNode(nodeMenu.nodeId);
+            if (!service) return null;
+            const alternatives = alternativesFor(service).slice(0, 5);
+            return (
+              <div className="node-menu" role="menu" style={{ left: nodeMenu.x, top: nodeMenu.y }}>
+                <div className="node-menu__title">{serviceText(service).title}</div>
+                <button type="button" role="menuitem" onClick={() => {
+                  setSelectedService(service);
+                  setSelectedNodeId(nodeMenu.nodeId);
+                  openSideTab("inspector");
+                  setNodeMenu(null);
+                }}>Details and settings</button>
+                <div className="node-menu__label">Replace with</div>
+                {alternatives.map((alternative) => (
+                  <button key={alternative.id} type="button" role="menuitem" onClick={() => { replaceService(nodeMenu.nodeId, alternative); setNodeMenu(null); }}>
+                    {serviceText(alternative).title}
+                    {nodeLabelOf(alternative.owner_node) && <small>{nodeLabelOf(alternative.owner_node)}</small>}
+                  </button>
+                ))}
+                {alternatives.length === 0 && <div className="node-menu__note">No other service takes and produces the same data.</div>}
+                <button type="button" role="menuitem" className="node-menu__danger" onClick={() => { removeNode(nodeMenu.nodeId); setNodeMenu(null); }}>Remove from workflow</button>
+              </div>
+            );
+          })()}
         </main>
 
         <aside className={"builder-pane builder-side" + (sideOpen ? "" : " is-collapsed")} aria-label="Solution panel">
@@ -946,7 +1210,7 @@ function BuilderContent() {
 
           <div className="builder-side__body">
             <div hidden={rightTab !== "assistant"}>
-              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} onRun={() => openSideTab("run")} onShowSettings={showFirstAdjustableStep} />
+              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} onRun={() => openSideTab("run")} onShowSettings={showFirstAdjustableStep} suggestions={suggestions} />
             </div>
 
             {rightTab === "inspector" && !selectedService && (

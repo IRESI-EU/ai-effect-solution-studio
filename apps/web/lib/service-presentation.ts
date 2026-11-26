@@ -156,3 +156,73 @@ export function serviceText(service: ServiceLike): ServiceText {
     produces: known?.produces || "A result for the next step or for review.",
   };
 }
+
+// Short labels for what flows in and out of a service, shown on the Builder's
+// connection points and links. Keyed by operation name.
+const PORTS: Record<string, { input?: string; output: string }> = {
+  BuildRunConfig: { input: "request", output: "run configuration" },
+  GenerateTopology: { input: "run configuration", output: "topologies" },
+  RenderTopologies: { input: "topologies", output: "drawings" },
+  ConfigureAndSynthesize: { input: "scenario settings", output: "grid scenario" },
+  RunBenchmark: { input: "grid scenario", output: "KPIs" },
+  ProvideData: { output: "grid data" },
+  GenerateChronics: { input: "grid data", output: "time series" },
+  FormatOutput: { input: "time series", output: "validation summary" },
+  ExecuteQuery: { input: "data source", output: "dataset" },
+  ApplyFunction: { input: "dataset", output: "features" },
+  TrainModel: { input: "features", output: "trained model" },
+  GenerateData: { input: "model or config", output: "synthetic records" },
+  GetConfiguration: { output: "configuration" },
+  AnalyzeData: { input: "energy readings", output: "analysis" },
+  GenerateReport: { input: "analysis", output: "report" },
+};
+
+export const WORKFLOW_START = "Workflow Start";
+export const WORKFLOW_OUTPUT = "Workflow Output";
+
+type TypedService = ServiceLike & { input_type: string; output_type: string };
+
+function typeLabel(type: string) {
+  return humanise(type.replace(/\s+(Input|Request|Response)$/i, "")).toLowerCase();
+}
+
+/** Plain labels for a service's input and output, or null for the workflow's own start/end. */
+export function servicePorts(service: TypedService): { input: string | null; output: string } {
+  const known = PORTS[service.operation_name || ""];
+  const input = service.input_type === WORKFLOW_START ? known?.input ?? null : known?.input || typeLabel(service.input_type);
+  const output = known?.output || (service.output_type === WORKFLOW_OUTPUT ? "results" : typeLabel(service.output_type));
+  return { input, output };
+}
+
+export type ServiceStage = "start" | "middle" | "finish" | "other";
+
+/**
+ * Where a service fits in a workflow, used to group the Builder's service list.
+ * "other" means nothing in the catalogue can feed it or use its result yet.
+ */
+export function serviceStage(service: TypedService, catalogue: TypedService[]): ServiceStage {
+  const starts = service.input_type === WORKFLOW_START;
+  const ends = service.output_type === WORKFLOW_OUTPUT;
+  const fed = starts || catalogue.some((other) => other !== service && other.output_type === service.input_type);
+  const used = ends || catalogue.some((other) => other !== service && other.input_type === service.output_type);
+  if (!fed || !used) return "other";
+  if (starts) return "start";
+  if (ends) return "finish";
+  return "middle";
+}
+
+export type ServiceIcon =
+  | "config" | "topology" | "drawing" | "grid" | "benchmark" | "data" | "timeseries" | "check"
+  | "features" | "model" | "generate" | "analysis" | "report" | "service";
+
+const ICONS: Record<string, ServiceIcon> = {
+  BuildRunConfig: "config", GenerateTopology: "topology", RenderTopologies: "drawing",
+  ConfigureAndSynthesize: "grid", RunBenchmark: "benchmark", ProvideData: "data",
+  GenerateChronics: "timeseries", FormatOutput: "check", ExecuteQuery: "data",
+  ApplyFunction: "features", TrainModel: "model", GenerateData: "generate",
+  GetConfiguration: "config", AnalyzeData: "analysis", GenerateReport: "report",
+};
+
+export function serviceIcon(service: ServiceLike): ServiceIcon {
+  return ICONS[service.operation_name || ""] || "service";
+}
