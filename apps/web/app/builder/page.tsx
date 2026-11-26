@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   ReactFlow,
   Background,
+  ControlButton,
   Controls,
   MiniMap,
   addEdge,
@@ -15,15 +16,18 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
 import { apiErrorMessage } from "../../lib/solution-design";
 import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsValues } from "../../components/node-settings";
-import { DesignAssistant, type ProposedWorkflow } from "../../components/design-assistant";
-import { serviceText } from "../../lib/service-presentation";
+import { DesignAssistant, type AssistantSuggestion, type ProposedWorkflow } from "../../components/design-assistant";
+import { builderNodeTypes, type ServiceNodeView } from "../../components/builder/flow-nodes";
+import { SERVICE_DRAG_TYPE, ServicePalette, displayVersion, nodeLabelOf } from "../../components/builder/service-palette";
+import { WORKFLOW_OUTPUT, WORKFLOW_START, serviceIcon, servicePorts, serviceStage, serviceText } from "../../lib/service-presentation";
 import Link from "next/link";
-import { CircleCheck, CircleX, Info as InfoIcon, Play, Plus, Search, TriangleAlert } from "lucide-react";
+import { Check, CircleCheck, LayoutGrid, CircleX, Info as InfoIcon, MapPin, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Play, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
 
 type Service = {
   id: string;
@@ -35,6 +39,8 @@ type Service = {
   output_type: string;
   trust_badge: string;
   lifecycle_status?: "active" | "deprecated" | "archived" | string | null;
+  owner_node?: string | null;
+  description?: string | null;
 
   container_name?: string;
   image?: string;
@@ -127,8 +133,34 @@ function BuilderContent() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<"assistant" | "inspector" | "run">("assistant");
+  // Side panels can be folded away so the canvas gets the width; remembered per browser.
+  const [paletteOpen, setPaletteOpen] = useState(true);
+  const [sideOpen, setSideOpen] = useState(true);
+  useEffect(() => {
+    try {
+      setPaletteOpen(localStorage.getItem("builder.paletteOpen") !== "0");
+      setSideOpen(localStorage.getItem("builder.sideOpen") !== "0");
+    } catch { /* storage unavailable: keep both open */ }
+  }, []);
+  function togglePalette(open: boolean) {
+    setPaletteOpen(open);
+    try { localStorage.setItem("builder.paletteOpen", open ? "1" : "0"); } catch { /* ignore */ }
+  }
+  function toggleSide(open: boolean) {
+    setSideOpen(open);
+    try { localStorage.setItem("builder.sideOpen", open ? "1" : "0"); } catch { /* ignore */ }
+  }
+  useEffect(() => {
+    const timer = setTimeout(() => flowRef.current?.fitView({ padding: 0.15, maxZoom: 1.1, duration: 200 }), 220);
+    return () => clearTimeout(timer);
+  }, [paletteOpen, sideOpen]);
+  function openSideTab(tab: "assistant" | "inspector" | "run") {
+    setRightTab(tab);
+    toggleSide(true);
+  }
   const [aiUndo, setAiUndo] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
   const [canvasFitKey, setCanvasFitKey] = useState(0);
+  const flowRef = useRef<ReactFlowInstance | null>(null);
 
   function canvasAsProposal() {
     const serviceNodes = nodes.filter((node) => Boolean(node.data?.service));
@@ -170,7 +202,7 @@ function BuilderContent() {
       const row = (rows[d] = (rows[d] ?? -1) + 1);
       return {
         id: idFor(step.ref),
-        position: { x: 340 + d * 260, y: 120 + row * 130 },
+        position: { x: 300 + d * 330, y: 110 + row * 170 },
         data: {
           node_kind: "service",
           label: service ? serviceText(service).title : step.service_name,
@@ -185,7 +217,7 @@ function BuilderContent() {
     setNodes([
       { ...initialNodes[0], position: { x: 80, y: 150 } },
       ...serviceNodes,
-      { ...initialNodes[1], position: { x: 340 + (maxDepth + 1) * 260, y: 150 } },
+      { ...initialNodes[1], position: { x: 300 + (maxDepth + 1) * 330, y: 150 } },
     ]);
     setEdges([
       ...startRefs.map((ref) => ({ id: `e-input-${idFor(ref)}`, source: "input", target: idFor(ref) })),
@@ -239,7 +271,6 @@ function BuilderContent() {
   const [runInputError, setRunInputError] = useState("");
   const [runOverrides, setRunOverrides] = useState<Record<string, SettingsValues>>({});
   const [solutionLoadError, setSolutionLoadError] = useState("");
-  const [serviceSearch, setServiceSearch] = useState("");
   const roleMode: UserRole = user?.role || "solution_designer";
   const workflowRevisionRef = useRef(0);
   const solutionSavePromiseRef = useRef<Promise<SavedSolution> | null>(null);
@@ -271,6 +302,251 @@ function BuilderContent() {
     [nodes]
   );
 
+  const servicesOnCanvas = useMemo(() => new Set(canvasServices.map((service) => service.id)), [canvasServices]);
+
+  const readinessByNode = useMemo(() => {
+    const map = new Map<string, "ready" | "blocked">();
+    runtimePreflight?.checks.forEach((check) => map.set(check.node_id, check.status === "ready" ? "ready" : "blocked"));
+    return map;
+  }, [runtimePreflight]);
+
+  // Nodes as drawn: start/end pills and service cards. The saved format is unchanged.
+  const displayNodes = useMemo<Node[]>(
+    () =>
+      nodes.map((node) => {
+        const kind = node.data?.node_kind;
+        if (node.id === "input" || node.id === "output" || kind === "workflow_input" || kind === "workflow_output") {
+          const end = node.id === "output" || kind === "workflow_output";
+          return { ...node, type: "terminal", data: { ...node.data, kind: end ? "end" : "start" } };
+        }
+        const raw = node.data?.service as Service | undefined;
+        if (!raw) return node;
+        const service = catalogueEntry(raw);
+        const ports = servicePorts({ ...service, input_type: service.input_type || "", output_type: service.output_type || "" });
+        const view: ServiceNodeView = {
+          title: serviceText(service).title,
+          version: displayVersion(service.version),
+          nodeLabel: nodeLabelOf(service.owner_node),
+          icon: serviceIcon(service),
+          stage: serviceStage(service, services),
+          input: ports.input,
+          output: ports.output,
+          readiness: readinessByNode.get(node.id) || null,
+          deprecated: getLifecycleStatus(service) === "deprecated",
+          settingsCount: Object.keys((node.data?.settings as SettingsValues | undefined) || {}).length,
+        };
+        return { ...node, type: "service", data: { ...node.data, view } };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nodes, services, readinessByNode]
+  );
+
+  const displayEdges = useMemo<Edge[]>(() => {
+    const byId = new Map(nodes.map((node) => [node.id, node]));
+    return edges.map((edge) => {
+      const source = byId.get(edge.source)?.data?.service as Service | undefined;
+      const label = source ? servicePorts(catalogueEntry(source)).output : undefined;
+      return { ...edge, type: "smoothstep", animated: true, label, className: "flow-edge" };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [edges, nodes, services]);
+
+  function serviceOfNode(nodeId: string) {
+    const node = nodes.find((candidate) => candidate.id === nodeId);
+    return node?.data?.service ? catalogueEntry(node.data.service as Service) : null;
+  }
+
+  /** A link is allowed only where the data fits: output type of one equals input type of the next. */
+  function canConnect(sourceId: string, targetId: string) {
+    if (sourceId === targetId) return false;
+    const source = serviceOfNode(sourceId);
+    const target = serviceOfNode(targetId);
+    if (!source && !target) return false;
+    if (!source) return sourceId === "input" && target!.input_type === WORKFLOW_START;
+    if (!target) return targetId === "output" && source.output_type === WORKFLOW_OUTPUT;
+    return source.output_type === target.input_type;
+  }
+
+  function alternativesFor(service: Service) {
+    return services.filter(
+      (candidate) =>
+        candidate.id !== service.id &&
+        candidate.input_type === service.input_type &&
+        candidate.output_type === service.output_type &&
+        getLifecycleStatus(candidate) === "active"
+    );
+  }
+
+  function nextStepsFor(service: Service) {
+    return services.filter(
+      (candidate) => candidate.input_type === service.output_type && getLifecycleStatus(candidate) === "active"
+    );
+  }
+
+  function replaceService(nodeId: string, replacement: Service) {
+    setNodes((current) =>
+      current.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, service: replacement, label: serviceText(replacement).title, settings: undefined } }
+          : node
+      )
+    );
+    if (selectedNodeId === nodeId) setSelectedService(replacement);
+    invalidateWorkflowResults();
+  }
+
+  function removeNode(nodeId: string) {
+    setNodes((current) => current.filter((node) => node.id !== nodeId));
+    setEdges((current) => current.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+    if (selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+      setSelectedService(null);
+    }
+    invalidateWorkflowResults();
+  }
+
+  function addServiceAfter(nodeId: string, service: Service) {
+    const from = nodes.find((node) => node.id === nodeId);
+    const newId = `service-${service.id}-${Date.now()}`;
+    const position = from ? { x: from.position.x + 330, y: from.position.y } : { x: 400, y: 200 };
+    setNodes((current) => [
+      ...current.map((node) =>
+        node.id === "output" && node.position.x < position.x + 260 ? { ...node, position: { ...node.position, x: position.x + 300 } } : node
+      ),
+      { id: newId, position, data: { node_kind: "service", label: serviceText(service).title, service } },
+    ]);
+    setEdges((current) => {
+      const kept = current.filter((edge) => !(edge.source === nodeId && edge.target === "output"));
+      const added: Edge[] = [{ id: `e-${nodeId}-${newId}`, source: nodeId, target: newId }];
+      if (service.output_type === WORKFLOW_OUTPUT) added.push({ id: `e-${newId}-output`, source: newId, target: "output" });
+      return [...kept, ...added];
+    });
+    invalidateWorkflowResults();
+  }
+
+  const workflowStatus = useMemo(() => {
+    const serviceNodes = nodes.filter((node) => node.data?.service);
+    if (!serviceNodes.length) return null;
+    const outgoing = new Map<string, string[]>();
+    const incoming = new Map<string, string[]>();
+    edges.forEach((edge) => {
+      outgoing.set(edge.source, [...(outgoing.get(edge.source) || []), edge.target]);
+      incoming.set(edge.target, [...(incoming.get(edge.target) || []), edge.source]);
+    });
+    const fromStart = collectReachable(["input"], outgoing);
+    const toEnd = collectReachable(["output"], incoming);
+    const complete = serviceNodes.every((node) => fromStart.has(node.id) && toEnd.has(node.id));
+    const where = Array.from(
+      new Set(serviceNodes.map((node) => nodeLabelOf(catalogueEntry(node.data.service as Service).owner_node)).filter(Boolean))
+    ) as string[];
+    return { complete, where };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, services]);
+
+  // Next steps offered under Design with AI answers. All of them act on the canvas
+  // directly (no AI request), using only what the catalogue says fits.
+  function buildSuggestions(): AssistantSuggestion[] {
+    const serviceNodes = nodes.filter((node) => node.data?.service);
+    if (!serviceNodes.length) return [];
+    const found: AssistantSuggestion[] = [];
+
+    for (const node of serviceNodes) {
+      const service = catalogueEntry(node.data.service as Service);
+      const continues = edges.some((edge) => edge.source === node.id && edge.target !== "output");
+      if (continues || service.output_type === WORKFLOW_OUTPUT) continue;
+      const next = nextStepsFor(service).filter((candidate) => !servicesOnCanvas.has(candidate.id))[0];
+      if (!next) continue;
+      const title = serviceText(next).title;
+      found.push({
+        id: `add-${node.id}-${next.id}`,
+        label: `Add ${title}`,
+        act: () => {
+          addServiceAfter(node.id, next);
+          return `Added ${title} after ${serviceText(service).title} and connected it: it takes the ${servicePorts(service).output} as input.`;
+        },
+      });
+      break;
+    }
+
+    for (const node of serviceNodes) {
+      const service = catalogueEntry(node.data.service as Service);
+      // Same-name entries are usually duplicates; only offer a swap that is clearly different.
+      const alternative = alternativesFor(service).find((candidate) => serviceText(candidate).title !== serviceText(service).title);
+      if (!alternative) continue;
+      const from = serviceText(service).title;
+      const to = serviceText(alternative).title;
+      const where = nodeLabelOf(alternative.owner_node);
+      found.push({
+        id: `swap-${node.id}-${alternative.id}`,
+        label: `Use ${to}${where ? ` (${where})` : ""} instead`,
+        act: () => {
+          replaceService(node.id, alternative);
+          return `Swapped in ${to}${where ? ` from the ${where}` : ""}. It takes and produces the same data as ${from}, so all connections are kept.`;
+        },
+      });
+      break;
+    }
+
+    for (const node of serviceNodes) {
+      const service = catalogueEntry(node.data.service as Service);
+      const definition = settingsDefinitionOf(service);
+      if (!definition) continue;
+      const current = (node.data?.settings as SettingsValues | undefined) || {};
+      const entry = Object.entries(definition.schema.properties).find(
+        ([, prop]) => prop.type === "boolean" || Array.isArray((prop as { enum?: unknown[] }).enum)
+      );
+      if (!entry) continue;
+      const [name, prop] = entry;
+      const title = (prop.title || name).toLowerCase();
+      const value = name in current ? current[name] : prop.default;
+      let next: unknown;
+      let label: string;
+      if (prop.type === "boolean") {
+        next = !value;
+        label = `${next ? "Turn on" : "Turn off"} ${title}`;
+      } else {
+        const options = (prop as { enum?: unknown[] }).enum || [];
+        next = options[(options.indexOf(value) + 1) % options.length];
+        label = `Set ${title} to ${String(next)}`;
+      }
+      const stepTitle = serviceText(service).title;
+      found.push({
+        id: `set-${node.id}-${name}-${String(next)}`,
+        label,
+        act: () => {
+          updateNodeSettings(node.id, { ...current, [name]: next });
+          return `Set ${prop.title || name} to ${String(next)} on ${stepTitle}. You can change it any time under Details.`;
+        },
+      });
+      break;
+    }
+
+    found.push({ id: "run", label: "Check and run it", act: () => { openSideTab("run"); return null; } });
+    return found.slice(0, 3);
+  }
+  const suggestions = buildSuggestions();
+
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [nodeMenu, setNodeMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  useEffect(() => {
+    if (!nodeMenu) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setNodeMenu(null); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [nodeMenu]);
+
+  // Open Details on the first step that has adjustable settings (follow-up from Design with AI).
+  function showFirstAdjustableStep() {
+    const node = nodes.find((n) => n.data?.service && settingsDefinitionOf(catalogueEntry(n.data.service as Service)));
+    if (!node) {
+      openSideTab("inspector");
+      return;
+    }
+    setSelectedService(node.data.service as Service);
+    setSelectedNodeId(node.id);
+    openSideTab("inspector");
+  }
+
   const deprecatedCanvasServices = useMemo(
     () => canvasServices.filter((service) => getLifecycleStatus(service) === "deprecated"),
     [canvasServices]
@@ -281,16 +557,6 @@ function BuilderContent() {
     [services]
   );
 
-  const filteredServices = useMemo(() => {
-    const query = serviceSearch.trim().toLowerCase();
-    if (!query) return services;
-    return services.filter((service) =>
-      [service.name, service.provider, service.category, getInterfaceType(service)]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
-    );
-  }, [services, serviceSearch]);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/services`)
@@ -311,8 +577,10 @@ function BuilderContent() {
         }
         setCurrentSolutionId(body.id);
         setSolutionName(body.name);
-        setNodes(body.nodes || initialNodes);
-        setEdges(body.edges || []);
+        const loadedNodes: Node[] = body.nodes || initialNodes;
+        const loadedEdges: Edge[] = body.edges || [];
+        setNodes(cardsOverlap(loadedNodes) ? tidyLayout(loadedNodes, loadedEdges) : loadedNodes);
+        setEdges(loadedEdges);
       } catch (error) {
         setSolutionLoadError(error instanceof Error ? error.message : "Could not load this solution.");
       }
@@ -364,7 +632,7 @@ function BuilderContent() {
     [invalidateWorkflowResults, setEdges]
   );
 
-  function addServiceToCanvas(service: Service) {
+  function addServiceToCanvas(service: Service, at?: { x: number; y: number }) {
     const nodeId = `service-${service.id}-${Date.now()}`;
     const lifecycleStatus = getLifecycleStatus(service);
     const interfaceType = getInterfaceType(service);
@@ -374,7 +642,7 @@ function BuilderContent() {
       ...existing,
       {
         id: nodeId,
-        position: {
+        position: at || {
           x: 360 + Math.random() * 120,
           y: 120 + Math.random() * 180,
         },
@@ -789,8 +1057,8 @@ function BuilderContent() {
           <button className="ae-btn ae-btn--secondary" onClick={saveSolution} disabled={savingSolution || preparingDeployment}>
             {savingSolution ? "Saving..." : "Save"}
           </button>
-          <button className="ae-btn ae-btn--secondary" onClick={() => { validateWorkflow(); setRightTab("run"); }}>Check design</button>
-          <button className="ae-btn ae-btn--primary" onClick={() => { setRightTab("run"); prepareDeployment(); }} disabled={preparingDeployment || savingSolution}>
+          <button className="ae-btn ae-btn--secondary" onClick={() => { validateWorkflow(); openSideTab("run"); }}>Check design</button>
+          <button className="ae-btn ae-btn--primary" onClick={() => { openSideTab("run"); prepareDeployment(); }} disabled={preparingDeployment || savingSolution}>
             {preparingDeployment ? "Preparing..." : "Prepare and deploy"}
           </button>
         </div>
@@ -809,47 +1077,61 @@ function BuilderContent() {
         </div>
       )}
 
-      <div className="builder-workbench">
-        <aside className="builder-pane builder-palette" aria-label="Services">
+      <div className={"builder-workbench" + (paletteOpen ? "" : " is-palette-closed") + (sideOpen ? "" : " is-side-closed")}>
+        <aside className={"builder-pane builder-palette" + (paletteOpen ? "" : " is-collapsed")} aria-label="Services">
+          <div className="builder-rail">
+            <button type="button" className="builder-icon-btn" onClick={() => togglePalette(true)} aria-label="Show services" title="Show services">
+              <PanelLeftOpen size={18} aria-hidden="true" />
+            </button>
+            <span className="builder-rail__label">Services</span>
+          </div>
           <div className="builder-pane__head">
             <h2 className="builder-pane__title">Services</h2>
-            <span className="builder-pane__count">{filteredServices.length}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span className="builder-pane__count">{services.length}</span>
+              <button type="button" className="builder-icon-btn builder-collapse-btn" onClick={() => togglePalette(false)} aria-label="Hide services" title="Hide services">
+                <PanelLeftClose size={18} aria-hidden="true" />
+              </button>
+            </span>
           </div>
-          <label className="catalogue-search builder-palette__search">
-            <Search size={16} aria-hidden="true" />
-            <input className="ae-input" value={serviceSearch} onChange={(event) => setServiceSearch(event.target.value)} placeholder="Search services" aria-label="Search services" />
-          </label>
-          <div className="builder-palette__list">
-            {filteredServices.map((service) => {
-              const text = serviceText(service);
-              const deprecated = getLifecycleStatus(service) === "deprecated";
-              return (
-                <button className="builder-palette__item" key={service.id} onClick={() => addServiceToCanvas(service)} title={"Add " + text.title + " to the canvas"}>
-                  <span className="builder-palette__name">{text.title}</span>
-                  <span className="builder-palette__meta">
-                    {service.provider}
-                    {deprecated && <span className="ae-badge ae-badge--warning">Deprecated</span>}
-                  </span>
-                  <Plus size={16} className="builder-palette__add" aria-hidden="true" />
-                </button>
-              );
-            })}
-            {filteredServices.length === 0 && <p className="builder-empty muted">No services match your search.</p>}
-          </div>
+          <ServicePalette services={services} inUse={servicesOnCanvas} onAdd={(service) => addServiceToCanvas(service)} />
         </aside>
 
-        <main className="builder-canvas" aria-label="Workflow canvas">
+        <main className="builder-canvas" aria-label="Workflow canvas" ref={canvasRef}>
           <ReactFlow
             key={canvasFitKey}
+            onInit={(instance) => { flowRef.current = instance; }}
             fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }}
-            nodes={nodes}
-            edges={edges}
+            nodes={displayNodes}
+            edges={displayEdges}
+            nodeTypes={builderNodeTypes}
+            isValidConnection={(connection) => canConnect(connection.source, connection.target)}
+            onDragOver={(event) => {
+              if (event.dataTransfer.types.includes(SERVICE_DRAG_TYPE)) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+              }
+            }}
+            onDrop={(event) => {
+              const service = services.find((candidate) => candidate.id === event.dataTransfer.getData(SERVICE_DRAG_TYPE));
+              if (!service || !flowRef.current) return;
+              event.preventDefault();
+              addServiceToCanvas(service, flowRef.current.screenToFlowPosition({ x: event.clientX - 90, y: event.clientY - 30 }));
+            }}
+            onNodeContextMenu={(event, node) => {
+              if (!node.data?.service || !canvasRef.current) return;
+              event.preventDefault();
+              const box = canvasRef.current.getBoundingClientRect();
+              setNodeMenu({ nodeId: node.id, x: Math.min(event.clientX - box.left, box.width - 250), y: Math.min(event.clientY - box.top, box.height - 220) });
+            }}
+            onPaneClick={() => setNodeMenu(null)}
             onNodesChange={handleNodesChange}
             onEdgesChange={handleEdgesChange}
             onConnect={onConnect}
             onEdgesDelete={onEdgesDelete}
             deleteKeyCode={["Backspace", "Delete"]}
             onNodeClick={(_, node) => {
+              setNodeMenu(null);
               const service = node.data?.service as Service | undefined;
               setSelectedService(service || null);
               setSelectedNodeId(service ? node.id : null);
@@ -858,26 +1140,92 @@ function BuilderContent() {
             fitView
           >
             <Background gap={20} size={1} />
-            <Controls showInteractive={false} />
+            <Controls showInteractive={false}>
+              <ControlButton
+                onClick={() => {
+                  setNodes((current) => tidyLayout(current, edges));
+                  setTimeout(() => flowRef.current?.fitView({ padding: 0.15, maxZoom: 1.1, duration: 200 }), 50);
+                }}
+                title="Tidy up layout"
+                aria-label="Tidy up layout"
+              >
+                <LayoutGrid size={14} />
+              </ControlButton>
+            </Controls>
+            {canvasServices.length > 0 && <MiniMap pannable zoomable position="bottom-right" nodeStrokeWidth={2} ariaLabel="Overview of the workflow" />}
           </ReactFlow>
           {canvasServices.length === 0 && (
             <div className="builder-canvas__empty">
+              <span className="builder-canvas__empty-mark" aria-hidden="true" />
               <h3>Start your solution</h3>
-              <p>Describe your goal to Design with AI, or add services from the list on the left.</p>
+              <p>Describe your experiment to Design with AI, or drag services from the list onto the canvas.</p>
             </div>
           )}
+          {workflowStatus && (
+            <div className="canvas-status" aria-live="polite">
+              {workflowStatus.where.length > 0 && (
+                <span className="canvas-status__where">
+                  <MapPin size={13} aria-hidden="true" />
+                  {workflowStatus.where.length === 1
+                    ? `Runs on the ${workflowStatus.where[0]}`
+                    : `Runs on ${workflowStatus.where.length} nodes: ${workflowStatus.where.join(", ")}`}
+                </span>
+              )}
+              <span className={`canvas-status__state${workflowStatus.complete ? " is-complete" : ""}`}>
+                {workflowStatus.complete ? <>Workflow complete <Check size={14} aria-hidden="true" /></> : "Connect every step from Start to Results"}
+              </span>
+            </div>
+          )}
+          {nodeMenu && (() => {
+            const service = serviceOfNode(nodeMenu.nodeId);
+            if (!service) return null;
+            const alternatives = alternativesFor(service).slice(0, 5);
+            return (
+              <div className="node-menu" role="menu" style={{ left: nodeMenu.x, top: nodeMenu.y }}>
+                <div className="node-menu__title">{serviceText(service).title}</div>
+                <button type="button" role="menuitem" onClick={() => {
+                  setSelectedService(service);
+                  setSelectedNodeId(nodeMenu.nodeId);
+                  openSideTab("inspector");
+                  setNodeMenu(null);
+                }}>Details and settings</button>
+                <div className="node-menu__label">Replace with</div>
+                {alternatives.map((alternative) => (
+                  <button key={alternative.id} type="button" role="menuitem" onClick={() => { replaceService(nodeMenu.nodeId, alternative); setNodeMenu(null); }}>
+                    {serviceText(alternative).title}
+                    <small>{nodeLabelOf(alternative.owner_node) || alternative.provider}</small>
+                  </button>
+                ))}
+                {alternatives.length === 0 && <div className="node-menu__note">No other service takes and produces the same data.</div>}
+                <button type="button" role="menuitem" className="node-menu__danger" onClick={() => { removeNode(nodeMenu.nodeId); setNodeMenu(null); }}>Remove from workflow</button>
+              </div>
+            );
+          })()}
         </main>
 
-        <aside className="builder-pane builder-side" aria-label="Solution panel">
-          <div className="ae-tabs builder-side__tabs" role="tablist">
-            {([["assistant", "Design with AI"], ["inspector", "Details"], ["run", "Run"]] as const).map(([tab, label]) => (
-              <button key={tab} className="ae-tab" role="tab" aria-selected={rightTab === tab} onClick={() => setRightTab(tab)}>{label}</button>
-            ))}
+        <aside className={"builder-pane builder-side" + (sideOpen ? "" : " is-collapsed")} aria-label="Solution panel">
+          <div className="builder-rail">
+            <button type="button" className="builder-icon-btn" onClick={() => toggleSide(true)} aria-label="Show panel" title="Show panel">
+              <PanelRightOpen size={18} aria-hidden="true" />
+            </button>
+            <button type="button" className="builder-icon-btn" onClick={() => openSideTab("assistant")} aria-label="Design with AI" title="Design with AI"><Sparkles size={18} aria-hidden="true" /></button>
+            <button type="button" className="builder-icon-btn" onClick={() => openSideTab("inspector")} aria-label="Details" title="Details"><SlidersHorizontal size={18} aria-hidden="true" /></button>
+            <button type="button" className="builder-icon-btn" onClick={() => openSideTab("run")} aria-label="Run" title="Run"><Play size={18} aria-hidden="true" /></button>
+          </div>
+          <div className="builder-side__head">
+            <div className="ae-tabs builder-side__tabs" role="tablist">
+              {([["assistant", "Design with AI"], ["inspector", "Details"], ["run", "Run"]] as const).map(([tab, label]) => (
+                <button key={tab} className="ae-tab" role="tab" aria-selected={rightTab === tab} onClick={() => setRightTab(tab)}>{label}</button>
+              ))}
+            </div>
+            <button type="button" className="builder-icon-btn builder-collapse-btn" onClick={() => toggleSide(false)} aria-label="Hide panel" title="Hide panel">
+              <PanelRightClose size={18} aria-hidden="true" />
+            </button>
           </div>
 
           <div className="builder-side__body">
             <div hidden={rightTab !== "assistant"}>
-              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} />
+              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} onRun={() => openSideTab("run")} onShowSettings={showFirstAdjustableStep} suggestions={suggestions} />
             </div>
 
             {rightTab === "inspector" && !selectedService && (
@@ -1165,6 +1513,50 @@ function ServiceBadges({ service }: { service: Service }) {
         <span style={metadataBadgeStyle}>adapter: {service.adapter_type}</span>
       )}
     </div>
+  );
+}
+
+const COLUMN_GAP = 330;
+const ROW_GAP = 170;
+
+/** Lays steps out left to right by how far they are from the start, so cards never overlap. */
+function tidyLayout(nodes: Node[], edges: Edge[]): Node[] {
+  const incoming = new Map<string, string[]>();
+  edges.forEach((edge) => incoming.set(edge.target, [...(incoming.get(edge.target) || []), edge.source]));
+  const depth = new Map<string, number>();
+  const depthOf = (id: string, seen: Set<string>): number => {
+    if (depth.has(id)) return depth.get(id)!;
+    if (seen.has(id)) return 0;
+    seen.add(id);
+    const parents = (incoming.get(id) || []).filter((parent) => parent !== "output");
+    const value = id === "input" ? 0 : parents.length ? Math.max(...parents.map((parent) => depthOf(parent, seen))) + 1 : 1;
+    depth.set(id, value);
+    return value;
+  };
+  nodes.forEach((node) => { if (node.id !== "output") depthOf(node.id, new Set()); });
+  const maxDepth = Math.max(1, ...Array.from(depth.values()));
+  depth.set("output", maxDepth + 1);
+  const rows = new Map<number, number>();
+  const placed = nodes.map((node) => {
+    const d = depth.get(node.id) ?? 1;
+    const row = rows.get(d) ?? 0;
+    rows.set(d, row + 1);
+    return { node, d, row };
+  });
+  const tallest = Math.max(1, ...Array.from(rows.values()));
+  const middle = 110 + ((tallest - 1) * ROW_GAP) / 2 + 40;
+  return placed.map(({ node, d, row }) => {
+    const terminal = node.id === "input" || node.id === "output";
+    const x = d === 0 ? 80 : 300 + (d - 1) * COLUMN_GAP;
+    return { ...node, position: { x, y: terminal ? middle : 110 + row * ROW_GAP } };
+  });
+}
+
+/** True when two service cards sit on top of each other (e.g. solutions saved with the older, smaller boxes). */
+function cardsOverlap(nodes: Node[]) {
+  const cards = nodes.filter((node) => node.data?.service);
+  return cards.some((a, i) =>
+    cards.slice(i + 1).some((b) => Math.abs(a.position.x - b.position.x) < 245 && Math.abs(a.position.y - b.position.y) < 100)
   );
 }
 
