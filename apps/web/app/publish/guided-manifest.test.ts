@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildGuidedManifest, emptyGuidedForm, formFromExample } from "./guided-manifest.ts";
+import { buildGuidedManifest, emptyGuidedForm, formFromExample, mergeManifest, parseProtoOperations, slugify } from "./guided-manifest.ts";
 
 test("guided REST details compile to the current importer schema", () => {
   const manifest = buildGuidedManifest({
@@ -91,4 +91,32 @@ test("using an example as a starting point clears its identity", () => {
   assert.equal(cloned.inputMessageName, "BuildRequest");
   assert.equal(cloned.outputMessageName, "BuildResponse");
   assert.equal(cloned.protoUri, "microservice/config.proto");
+});
+
+test("rpc operations are read from a proto file, ignoring comments", () => {
+  const proto = [
+    'syntax = "proto3";',
+    "// rpc Commented (A) returns (B);",
+    "service Forecaster {",
+    "  rpc Predict (PredictRequest) returns (PredictResponse);",
+    "  rpc Stream(stream In) returns (stream Out) {}",
+    "}",
+  ].join("\n");
+  assert.deepEqual(parseProtoOperations(proto), [
+    { name: "Predict", input: "PredictRequest", output: "PredictResponse" },
+    { name: "Stream", input: "In", output: "Out" },
+  ]);
+});
+
+test("applying the form keeps manifest fields the form does not know", () => {
+  const base = { schema_version: "1.0", extra: { keep: true }, service: { id: "x", name: "Old", custom: 1 } };
+  const merged = mergeManifest(base, { ...emptyGuidedForm, serviceId: "x", name: "New", containerName: "c", operationName: "Run" });
+  assert.deepEqual(merged.extra, { keep: true });
+  const service = merged.service as Record<string, unknown>;
+  assert.equal(service.custom, 1);
+  assert.equal(service.name, "New");
+});
+
+test("service ids are readable slugs", () => {
+  assert.equal(slugify("  Household Load Forecaster (v2)! "), "household-load-forecaster-v2");
 });

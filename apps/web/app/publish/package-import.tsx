@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { CircleAlert, CircleCheck, TriangleAlert, Upload } from "lucide-react";
+import { useState } from "react";
 
 type Operation = { operation_name: string; input_message_name: string; output_message_name: string; compatible_with_proto: boolean; compatibility_message: string };
 type Service = {
@@ -76,59 +77,67 @@ export function PackageImportPanel() {
   const unresolved = preview?.connections.filter((edge) => selectedKeys.has(edge.source_service) !== selectedKeys.has(edge.target_service)) || [];
   const selectedBlocked = services.some((service) => service.selected && (service.duplicate_conflicts.length > 0 || !service.operation_name || service.operations.find((operation) => operation.operation_name === service.operation_name)?.compatible_with_proto !== true));
 
-  return <div className="guided-form">
-    <div className="package-expectation">
-      <strong>Prepared AI4EU/WP3 package</strong>
-      <p>Upload a ZIP containing <code>blueprint.json</code>, <code>dockerinfo.json</code>, and <code>microservice/*.proto</code>, either at the archive root or inside one enclosing folder.</p>
-      <p>This importer does not accept arbitrary source-code ZIPs and does not build images, run Docker Compose, start containers, or generate adapters.</p>
-    </div>
-    <label style={labelStyle}>Service package (.zip)<input type="file" accept=".zip,application/zip" onChange={(event) => { setFile(event.target.files?.[0] || null); setPreview(null); setResult(null); setError(null); }} style={inputStyle} /></label>
-    {file && <small>{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MiB</small>}
-    <button type="button" style={primaryButtonStyle} disabled={!file || busy !== null} onClick={inspectPackage}>{busy === "preview" ? "Inspecting safely…" : "Inspect package"}</button>
+  return <div className="package-flow">
+    <label
+      className={`drop-zone drop-zone--package${file ? " has-file" : ""}`}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => { event.preventDefault(); const dropped = event.dataTransfer.files?.[0]; if (dropped) { setFile(dropped); setPreview(null); setResult(null); setError(null); } }}
+    >
+      <Upload size={20} aria-hidden="true" />
+      <div>
+        <strong>{file ? file.name : "Drop your package ZIP here, or click to choose it"}</strong>
+        <span>{file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "It should contain blueprint.json, dockerinfo.json and the microservice .proto files."}</span>
+      </div>
+      <input type="file" accept=".zip,application/zip" hidden onChange={(event) => { setFile(event.target.files?.[0] || null); setPreview(null); setResult(null); setError(null); }} />
+    </label>
+    <button type="button" className="ae-btn ae-btn--primary" disabled={!file || busy !== null} onClick={inspectPackage}>{busy === "preview" ? "Reading the package…" : "Read the package"}</button>
+    <p className="muted package-note">Nothing is built or started: the package is only read to fill in the catalogue entries.</p>
 
     {preview && <div className="package-preview">
-      <div className="package-status-grid">
-        <Status label="Registration" value={preview.registration_status} />
-        <Status label="Runtime verification" value="Unverified declarations" />
-        <Status label="Operation compatibility" value={preview.operation_compatibility} />
-      </div>
-      <h3>{preview.package_name}</h3>
-      {preview.warnings.map((warning) => <p key={warning} className="package-warning">{warning}</p>)}
-      <p>Review every detected service. Runtime addresses came from the package and remain unverified until checked from the platform API network.</p>
+      <h3 className="wizard-section">{preview.package_name}: {services.length} service{services.length === 1 ? "" : "s"} found</h3>
+      <p className="wizard-card__lead">Tick the services to add. Names and descriptions are what others will see; the technical details came from the package.</p>
+      {preview.warnings.map((warning) => <p key={warning} className="wizard-note"><TriangleAlert size={15} aria-hidden="true" /> {warning}</p>)}
       <div className="package-service-list">
-        {services.map((service) => <section key={service.key} className="package-service-card">
-          <label className="package-service-select"><input type="checkbox" checked={service.selected} onChange={(e) => edit(service.key, "selected", e.target.checked)} /><strong>{service.container_name}</strong><span>{service.image}</span></label>
-          <div className="guided-grid">
-            <Field label="Catalogue service ID" value={service.proposed_id} onChange={(value) => edit(service.key, "proposed_id", value)} />
-            <Field label="Catalogue name" value={service.name} onChange={(value) => edit(service.key, "name", value)} />
-            <Field label="Category" value={service.category} onChange={(value) => edit(service.key, "category", value)} />
-            <Field label="Runtime network host" value={service.internal_host || ""} onChange={(value) => edit(service.key, "internal_host", value)} />
-            <Field label="Runtime port" value={service.internal_port || ""} onChange={(value) => edit(service.key, "internal_port", value)} />
-            <Field label="Health path" value={service.health_path} onChange={(value) => edit(service.key, "health_path", value)} />
-            <label style={labelStyle}>Supported operation<select value={service.operation_name} onChange={(e) => edit(service.key, "operation_name", e.target.value)} style={inputStyle}><option value="">Select explicitly</option>{service.operations.map((operation) => <option key={operation.operation_name} value={operation.operation_name} disabled={!operation.compatible_with_proto}>{operation.operation_name} ({operation.input_message_name} → {operation.output_message_name})</option>)}</select></label>
-            <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>Description<textarea value={service.description} onChange={(e) => edit(service.key, "description", e.target.value)} style={{ ...inputStyle, minHeight: 74 }} /></label>
-          </div>
-          <p><strong>Declared health URL:</strong> <code>http://{service.internal_host || "missing-host"}:{service.internal_port || "missing-port"}{service.health_path.startsWith("/") ? service.health_path : `/${service.health_path}`}</code> · not verified</p>
-          <details><summary>All detected operations and contract</summary>{service.operations.map((operation) => <p key={operation.operation_name}><strong>{operation.operation_name}</strong>: {operation.input_message_name} → {operation.output_message_name} · {operation.compatibility_message}</p>)}<p>Protobuf: <code>{service.proto_path}</code></p></details>
-          {(service.blockers.length > 0 || service.duplicate_conflicts.length > 0) && <div className="package-errors">{[...service.blockers, ...service.duplicate_conflicts].map((message) => <p key={message}>{message}</p>)}</div>}
-          {(!service.internal_host || !service.internal_port) && <label className="onboarding-acknowledgement"><input type="checkbox" checked={service.register_incomplete_draft} onChange={(e) => edit(service.key, "register_incomplete_draft", e.target.checked)} /><span>Register this as an incomplete draft for later runtime completion. It will not be runnable.</span></label>}
-        </section>)}
+        {services.map((service) => {
+          const problems = [...service.blockers, ...service.duplicate_conflicts];
+          return <section key={service.key} className={`package-service${service.selected ? " is-selected" : ""}`}>
+            <label className="package-service__pick">
+              <input type="checkbox" checked={service.selected} onChange={(e) => edit(service.key, "selected", e.target.checked)} />
+              <span><strong>{service.name || service.container_name}</strong><small>{service.image}</small></span>
+            </label>
+            {service.selected && <>
+              <div className="wizard-grid">
+                <label className="wizard-field"><span className="wizard-field__label">Name</span><input className="ae-input" value={service.name} onChange={(e) => edit(service.key, "name", e.target.value)} /></label>
+                <label className="wizard-field"><span className="wizard-field__label">Operation</span><select className="ae-input" value={service.operation_name} onChange={(e) => edit(service.key, "operation_name", e.target.value)}><option value="">Choose one</option>{service.operations.map((operation) => <option key={operation.operation_name} value={operation.operation_name} disabled={!operation.compatible_with_proto}>{operation.operation_name} ({operation.input_message_name} → {operation.output_message_name})</option>)}</select></label>
+                <label className="wizard-field wizard-field--wide"><span className="wizard-field__label">What does it do?</span><textarea className="ae-input" rows={3} value={service.description} onChange={(e) => edit(service.key, "description", e.target.value)} placeholder="One to three sentences for researchers from other nodes." />{/^imported from/i.test(service.description.trim()) && <small>Replace this with what the service does, so others can find it.</small>}</label>
+              </div>
+              <details className="wizard-advanced">
+                <summary>Technical details from the package</summary>
+                <div className="wizard-grid">
+                  <label className="wizard-field"><span className="wizard-field__label">Catalogue ID</span><input className="ae-input" value={service.proposed_id} onChange={(e) => edit(service.key, "proposed_id", e.target.value)} /></label>
+                  <label className="wizard-field"><span className="wizard-field__label">Category</span><input className="ae-input" value={service.category} onChange={(e) => edit(service.key, "category", e.target.value)} /></label>
+                  <label className="wizard-field"><span className="wizard-field__label">Network host</span><input className="ae-input" value={service.internal_host || ""} onChange={(e) => edit(service.key, "internal_host", e.target.value)} /></label>
+                  <label className="wizard-field"><span className="wizard-field__label">Port</span><input className="ae-input" value={service.internal_port || ""} onChange={(e) => edit(service.key, "internal_port", e.target.value)} /></label>
+                  <label className="wizard-field"><span className="wizard-field__label">Health check path</span><input className="ae-input" value={service.health_path} onChange={(e) => edit(service.key, "health_path", e.target.value)} /></label>
+                  <div className="wizard-field"><span className="wizard-field__label">Contract</span><code>{service.proto_path}</code></div>
+                </div>
+              </details>
+              {problems.length > 0 && <ul className="wizard-problems">{problems.map((message) => <li key={message}><CircleAlert size={14} aria-hidden="true" /> {message}</li>)}</ul>}
+              {(!service.internal_host || !service.internal_port) && <label className="review-ack"><input type="checkbox" checked={service.register_incomplete_draft} onChange={(e) => edit(service.key, "register_incomplete_draft", e.target.checked)} /><span>The package has no network address for this service. Add it as an unfinished draft; it cannot run until the address is added.</span></label>}
+            </>}
+          </section>;
+        })}
       </div>
-      {preview.connections.length > 0 && <details open><summary>Detected pipeline connections ({preview.connections.length})</summary>{preview.connections.map((edge, index) => <p key={`${edge.source_service}-${index}`}><code>{edge.source_service}:{edge.source_operation}</code> → <code>{edge.target_service}:{edge.target_operation}</code></p>)}</details>}
-      <label className="onboarding-acknowledgement"><input type="checkbox" checked={createSolution} onChange={(e) => setCreateSolution(e.target.checked)} /><span>Also create a draft solution from these connections.</span></label>
-      {createSolution && <><Field label="Draft solution name" value={solutionName} onChange={setSolutionName} />{unresolved.length > 0 && <div className="package-errors">A draft solution cannot be created while selected services leave {unresolved.length} unresolved connection(s). Select both sides or turn this option off.</div>}</>}
-      <label className="onboarding-acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(e) => setAcknowledged(e.target.checked)} /><span>I understand this creates pending-review catalogue records only; it does not deploy or activate containers.</span></label>
-      <button type="button" style={primaryButtonStyle} disabled={!acknowledged || selectedBlocked || selectedKeys.size === 0 || (createSolution && unresolved.length > 0) || busy !== null} onClick={confirm}>{busy === "confirm" ? "Registering atomically…" : "Submit selected services for approval"}</button>
+      {preview.connections.length > 0 && <>
+        <label className="review-ack"><input type="checkbox" checked={createSolution} onChange={(e) => setCreateSolution(e.target.checked)} /><span>Also create a draft solution from the package&apos;s {preview.connections.length} connection{preview.connections.length === 1 ? "" : "s"}.</span></label>
+        {createSolution && <><label className="wizard-field"><span className="wizard-field__label">Solution name</span><input className="ae-input" value={solutionName} onChange={(e) => setSolutionName(e.target.value)} /></label>{unresolved.length > 0 && <p className="wizard-error"><CircleAlert size={15} aria-hidden="true" /> Tick both ends of every connection ({unresolved.length} open), or turn this option off.</p>}</>}
+      </>}
+      <label className="review-ack"><input type="checkbox" checked={acknowledged} onChange={(e) => setAcknowledged(e.target.checked)} /><span>I understand that submitting adds these services for review. It does not start or deploy any container.</span></label>
+      <button type="button" className="ae-btn ae-btn--primary" disabled={!acknowledged || selectedBlocked || selectedKeys.size === 0 || (createSolution && unresolved.length > 0) || busy !== null} onClick={confirm}>{busy === "confirm" ? "Submitting…" : `Submit ${selectedKeys.size} service${selectedKeys.size === 1 ? "" : "s"} for review`}</button>
     </div>}
-    {error && <div className="package-errors">{error}</div>}
-    {result && <div className="package-success"><strong>{result.message}</strong><p>{result.services?.map((service: any) => service.name).join(", ")}</p>{result.solution && <p>Draft solution created: {result.solution.name}</p>}</div>}
+    {error && <p className="wizard-error" role="alert"><CircleAlert size={15} aria-hidden="true" /> {error}</p>}
+    {result && <div className="review-check review-check--valid"><strong><CircleCheck size={16} aria-hidden="true" /> {result.message}</strong><p>{result.services?.map((service: { name: string }) => service.name).join(", ")}</p>{result.solution && <p>Draft solution created: {result.solution.name}</p>}<p className="muted">An administrator reviews them next; once approved they appear in the catalogue.</p></div>}
   </div>;
 }
 
-function Status({ label, value }: { label: string; value: string }) { return <div><span>{label}</span><strong>{value}</strong></div>; }
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) { return <label style={labelStyle}>{label}<input value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle} /></label>; }
 function formatError(detail: unknown) { if (typeof detail === "string") return detail; if (Array.isArray(detail)) return detail.map(String).join(" "); return detail ? JSON.stringify(detail) : ""; }
-
-const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 7, fontSize: 13, fontWeight: 750, color: "#334155" };
-const inputStyle: CSSProperties = { width: "100%", border: "1px solid #cbd5e1", borderRadius: 8, padding: "10px 11px", fontSize: 14, background: "#fff", boxSizing: "border-box" };
-const primaryButtonStyle: CSSProperties = { marginTop: 14, border: 0, borderRadius: 8, padding: "11px 16px", color: "#fff", background: "linear-gradient(135deg,#5b2cf2,#4320ca)", fontWeight: 600, cursor: "pointer" };
