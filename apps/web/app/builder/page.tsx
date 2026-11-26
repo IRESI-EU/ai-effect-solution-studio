@@ -15,6 +15,7 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { roleLabels, useAuth, type UserRole } from "../../components/auth-context";
@@ -23,7 +24,7 @@ import { NodeSettingsPanel, settingsDefinitionOf, settingsErrors, type SettingsV
 import { DesignAssistant, type ProposedWorkflow } from "../../components/design-assistant";
 import { serviceText } from "../../lib/service-presentation";
 import Link from "next/link";
-import { CircleCheck, CircleX, Info as InfoIcon, Play, Plus, Search, TriangleAlert } from "lucide-react";
+import { CircleCheck, CircleX, Info as InfoIcon, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Play, Plus, Search, SlidersHorizontal, Sparkles, TriangleAlert } from "lucide-react";
 
 type Service = {
   id: string;
@@ -127,8 +128,34 @@ function BuilderContent() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<"assistant" | "inspector" | "run">("assistant");
+  // Side panels can be folded away so the canvas gets the width; remembered per browser.
+  const [paletteOpen, setPaletteOpen] = useState(true);
+  const [sideOpen, setSideOpen] = useState(true);
+  useEffect(() => {
+    try {
+      setPaletteOpen(localStorage.getItem("builder.paletteOpen") !== "0");
+      setSideOpen(localStorage.getItem("builder.sideOpen") !== "0");
+    } catch { /* storage unavailable: keep both open */ }
+  }, []);
+  function togglePalette(open: boolean) {
+    setPaletteOpen(open);
+    try { localStorage.setItem("builder.paletteOpen", open ? "1" : "0"); } catch { /* ignore */ }
+  }
+  function toggleSide(open: boolean) {
+    setSideOpen(open);
+    try { localStorage.setItem("builder.sideOpen", open ? "1" : "0"); } catch { /* ignore */ }
+  }
+  useEffect(() => {
+    const timer = setTimeout(() => flowRef.current?.fitView({ padding: 0.15, maxZoom: 1.1, duration: 200 }), 220);
+    return () => clearTimeout(timer);
+  }, [paletteOpen, sideOpen]);
+  function openSideTab(tab: "assistant" | "inspector" | "run") {
+    setRightTab(tab);
+    toggleSide(true);
+  }
   const [aiUndo, setAiUndo] = useState<{ nodes: Node[]; edges: Edge[] } | null>(null);
   const [canvasFitKey, setCanvasFitKey] = useState(0);
+  const flowRef = useRef<ReactFlowInstance | null>(null);
 
   function canvasAsProposal() {
     const serviceNodes = nodes.filter((node) => Boolean(node.data?.service));
@@ -270,6 +297,20 @@ function BuilderContent() {
         .filter(Boolean) as Service[],
     [nodes]
   );
+
+  const servicesOnCanvas = useMemo(() => new Set(canvasServices.map((service) => service.id)), [canvasServices]);
+
+  // Open Details on the first step that has adjustable settings (follow-up from Design with AI).
+  function showFirstAdjustableStep() {
+    const node = nodes.find((n) => n.data?.service && settingsDefinitionOf(catalogueEntry(n.data.service as Service)));
+    if (!node) {
+      openSideTab("inspector");
+      return;
+    }
+    setSelectedService(node.data.service as Service);
+    setSelectedNodeId(node.id);
+    openSideTab("inspector");
+  }
 
   const deprecatedCanvasServices = useMemo(
     () => canvasServices.filter((service) => getLifecycleStatus(service) === "deprecated"),
@@ -789,8 +830,8 @@ function BuilderContent() {
           <button className="ae-btn ae-btn--secondary" onClick={saveSolution} disabled={savingSolution || preparingDeployment}>
             {savingSolution ? "Saving..." : "Save"}
           </button>
-          <button className="ae-btn ae-btn--secondary" onClick={() => { validateWorkflow(); setRightTab("run"); }}>Check design</button>
-          <button className="ae-btn ae-btn--primary" onClick={() => { setRightTab("run"); prepareDeployment(); }} disabled={preparingDeployment || savingSolution}>
+          <button className="ae-btn ae-btn--secondary" onClick={() => { validateWorkflow(); openSideTab("run"); }}>Check design</button>
+          <button className="ae-btn ae-btn--primary" onClick={() => { openSideTab("run"); prepareDeployment(); }} disabled={preparingDeployment || savingSolution}>
             {preparingDeployment ? "Preparing..." : "Prepare and deploy"}
           </button>
         </div>
@@ -809,11 +850,22 @@ function BuilderContent() {
         </div>
       )}
 
-      <div className="builder-workbench">
-        <aside className="builder-pane builder-palette" aria-label="Services">
+      <div className={"builder-workbench" + (paletteOpen ? "" : " is-palette-closed") + (sideOpen ? "" : " is-side-closed")}>
+        <aside className={"builder-pane builder-palette" + (paletteOpen ? "" : " is-collapsed")} aria-label="Services">
+          <div className="builder-rail">
+            <button type="button" className="builder-icon-btn" onClick={() => togglePalette(true)} aria-label="Show services" title="Show services">
+              <PanelLeftOpen size={18} aria-hidden="true" />
+            </button>
+            <span className="builder-rail__label">Services</span>
+          </div>
           <div className="builder-pane__head">
             <h2 className="builder-pane__title">Services</h2>
-            <span className="builder-pane__count">{filteredServices.length}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span className="builder-pane__count">{filteredServices.length}</span>
+              <button type="button" className="builder-icon-btn builder-collapse-btn" onClick={() => togglePalette(false)} aria-label="Hide services" title="Hide services">
+                <PanelLeftClose size={18} aria-hidden="true" />
+              </button>
+            </span>
           </div>
           <label className="catalogue-search builder-palette__search">
             <Search size={16} aria-hidden="true" />
@@ -823,11 +875,13 @@ function BuilderContent() {
             {filteredServices.map((service) => {
               const text = serviceText(service);
               const deprecated = getLifecycleStatus(service) === "deprecated";
+              const onCanvas = servicesOnCanvas.has(service.id);
               return (
-                <button className="builder-palette__item" key={service.id} onClick={() => addServiceToCanvas(service)} title={"Add " + text.title + " to the canvas"}>
+                <button className={"builder-palette__item" + (onCanvas ? " is-on-canvas" : "")} key={service.id} onClick={() => addServiceToCanvas(service)} title={"Add " + text.title + " to the canvas"}>
                   <span className="builder-palette__name">{text.title}</span>
                   <span className="builder-palette__meta">
                     {service.provider}
+                    {onCanvas && <span className="builder-palette__badge">On canvas</span>}
                     {deprecated && <span className="ae-badge ae-badge--warning">Deprecated</span>}
                   </span>
                   <Plus size={16} className="builder-palette__add" aria-hidden="true" />
@@ -841,6 +895,7 @@ function BuilderContent() {
         <main className="builder-canvas" aria-label="Workflow canvas">
           <ReactFlow
             key={canvasFitKey}
+            onInit={(instance) => { flowRef.current = instance; }}
             fitViewOptions={{ padding: 0.15, maxZoom: 1.1 }}
             nodes={nodes}
             edges={edges}
@@ -859,6 +914,7 @@ function BuilderContent() {
           >
             <Background gap={20} size={1} />
             <Controls showInteractive={false} />
+            {canvasServices.length > 0 && <MiniMap pannable zoomable position="bottom-right" nodeStrokeWidth={2} ariaLabel="Overview of the workflow" />}
           </ReactFlow>
           {canvasServices.length === 0 && (
             <div className="builder-canvas__empty">
@@ -868,16 +924,29 @@ function BuilderContent() {
           )}
         </main>
 
-        <aside className="builder-pane builder-side" aria-label="Solution panel">
-          <div className="ae-tabs builder-side__tabs" role="tablist">
-            {([["assistant", "Design with AI"], ["inspector", "Details"], ["run", "Run"]] as const).map(([tab, label]) => (
-              <button key={tab} className="ae-tab" role="tab" aria-selected={rightTab === tab} onClick={() => setRightTab(tab)}>{label}</button>
-            ))}
+        <aside className={"builder-pane builder-side" + (sideOpen ? "" : " is-collapsed")} aria-label="Solution panel">
+          <div className="builder-rail">
+            <button type="button" className="builder-icon-btn" onClick={() => toggleSide(true)} aria-label="Show panel" title="Show panel">
+              <PanelRightOpen size={18} aria-hidden="true" />
+            </button>
+            <button type="button" className="builder-icon-btn" onClick={() => openSideTab("assistant")} aria-label="Design with AI" title="Design with AI"><Sparkles size={18} aria-hidden="true" /></button>
+            <button type="button" className="builder-icon-btn" onClick={() => openSideTab("inspector")} aria-label="Details" title="Details"><SlidersHorizontal size={18} aria-hidden="true" /></button>
+            <button type="button" className="builder-icon-btn" onClick={() => openSideTab("run")} aria-label="Run" title="Run"><Play size={18} aria-hidden="true" /></button>
+          </div>
+          <div className="builder-side__head">
+            <div className="ae-tabs builder-side__tabs" role="tablist">
+              {([["assistant", "Design with AI"], ["inspector", "Details"], ["run", "Run"]] as const).map(([tab, label]) => (
+                <button key={tab} className="ae-tab" role="tab" aria-selected={rightTab === tab} onClick={() => setRightTab(tab)}>{label}</button>
+              ))}
+            </div>
+            <button type="button" className="builder-icon-btn builder-collapse-btn" onClick={() => toggleSide(false)} aria-label="Hide panel" title="Hide panel">
+              <PanelRightClose size={18} aria-hidden="true" />
+            </button>
           </div>
 
           <div className="builder-side__body">
             <div hidden={rightTab !== "assistant"}>
-              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} />
+              <DesignAssistant getCurrent={canvasAsProposal} onApply={applyAiWorkflow} onUndo={undoAiWorkflow} canUndo={Boolean(aiUndo)} onRun={() => openSideTab("run")} onShowSettings={showFirstAdjustableStep} />
             </div>
 
             {rightTab === "inspector" && !selectedService && (

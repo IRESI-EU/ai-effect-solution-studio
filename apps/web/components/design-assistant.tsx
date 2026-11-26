@@ -39,11 +39,15 @@ export function DesignAssistant({
   onApply,
   onUndo,
   canUndo,
+  onRun,
+  onShowSettings,
 }: {
   getCurrent: () => { steps: unknown[]; connections: unknown[] } | null;
   onApply: (workflow: ProposedWorkflow) => void;
   onUndo: () => void;
   canUndo: boolean;
+  onRun?: () => void;
+  onShowSettings?: () => void;
 }) {
   const [status, setStatus] = useState<Status | null>(null);
   const [turns, setTurns] = useState<ChatTurn[]>([]);
@@ -111,6 +115,8 @@ export function DesignAssistant({
     }
   }
 
+  const lastTurn = turns.length ? turns[turns.length - 1] : null;
+
   if (status && !status.enabled) {
     return (
       <div style={{ color: "#667085", lineHeight: 1.6 }}>
@@ -172,6 +178,19 @@ export function DesignAssistant({
           </div>
         ))}
         {busy && <div style={assistantBubble}>Designing your workflow...</div>}
+        {!busy && lastTurn?.role === "assistant" && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }} aria-label="Suggested next steps">
+            {lastTurn.question && !lastTurn.applied && (
+              <button type="button" style={chipButton} onClick={() => send("Yes, go ahead")}>Yes, go ahead</button>
+            )}
+            {lastTurn.applied && onRun && (
+              <button type="button" style={chipButton} onClick={onRun}>Check and run it</button>
+            )}
+            {lastTurn.applied && onShowSettings && (
+              <button type="button" style={chipButton} onClick={onShowSettings}>Review settings</button>
+            )}
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -239,4 +258,9 @@ const userBubble = {
 const assistantBubble = {
   justifySelf: "start", maxWidth: "95%", background: "#f2f4f7", color: "#101828",
   padding: "8px 12px", borderRadius: "12px 12px 12px 2px", fontSize: 14,
+} as const;
+
+const chipButton = {
+  background: "#eef0ff", color: "#3c3ee1", padding: "4px 12px",
+  borderRadius: 999, border: "1px solid #d6d8ff", cursor: "pointer", fontSize: 13, fontWeight: 600,
 } as const;

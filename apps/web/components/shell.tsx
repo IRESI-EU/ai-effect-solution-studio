@@ -56,6 +56,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
     }
   }, [loading, pathname, router, user]);
 
+  // The Builder needs the full width for the canvas: the menu shrinks to icons there
+  // and opens over the page when hovered or focused.
+  const compact = pathname.startsWith("/builder");
+
   if (authPages.has(pathname)) return <>{children}</>;
   if ((!isPublicPath(pathname) && loading) || (!isPublicPath(pathname) && !user)) {
     return <div className="auth-loading">Checking your account…</div>;
@@ -81,7 +85,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${compact ? " app-shell--compact" : ""}`}>
       <button className="mobile-menu-button" type="button" aria-label={navigationOpen ? "Close navigation" : "Open navigation"} aria-expanded={navigationOpen} onClick={() => setNavigationOpen((open) => !open)}>
         {navigationOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -98,7 +102,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {group.items.map(({ label, href, icon: Icon }) => {
                 const active = isActive(href);
                 return (
-                  <Link key={href} href={href} className={active ? "active" : undefined} aria-current={active ? "page" : undefined} onClick={() => setNavigationOpen(false)}>
+                  <Link key={href} href={href} className={active ? "active" : undefined} aria-current={active ? "page" : undefined} title={compact ? label : undefined} onClick={() => setNavigationOpen(false)}>
                     <Icon strokeWidth={1.75} aria-hidden="true" />
                     <span>{label}</span>
                   </Link>
