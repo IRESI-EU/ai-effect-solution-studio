@@ -1,298 +1,302 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { useAuth } from "../../components/auth-context";
+import {
+  ArrowLeft, ArrowRight, Box, Check, CircleAlert, FileCode2, FolderGit2, GitBranch, Lightbulb, Package, Upload,
+} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { nodeLabels, useAuth, type NodeCode } from "../../components/auth-context";
 import { ServiceRuntimeManager, type ManagedRuntimeService } from "../../components/service-runtime-manager";
 import {
-  buildGuidedManifest,
   emptyGuidedForm,
   formFromExample,
+  formFromManifest,
+  mergeManifest,
+  parseProtoOperations,
+  slugify,
   type GuidedServiceForm,
-  type InterfaceChoice,
+  type ProtoOperation,
 } from "./guided-manifest";
-import { workshopExamples, type WorkshopExample } from "./workshop-examples";
 import { PackageImportPanel } from "./package-import";
+import { ConnectStep, DescribeStep, ReviewStep, TextField, type CatalogueEntry, type PreviewResponse, type RuntimeChoice, type Evidence } from "./wizard-steps";
+import { workshopExamples, type WorkshopExample } from "./workshop-examples";
 
-const API_BASE_URL = "/api";
+type Source = "package" | "git" | "container" | "unpackaged";
+type Step = "start" | "describe" | "connect" | "review" | "done";
 
-type EntryMode = "package" | "guided" | "git" | "manual";
-type RuntimeChoice = "needs_deployment" | "already_running" | "unsure";
-type RuntimeEvidence = {
-  revisionPinned: boolean;
-  imageReviewed: boolean;
-  secretsExternal: boolean;
-  healthVerified: boolean;
-};
-type ValidationMessage = { level: "success" | "warning" | "error"; message: string };
-type ImportedService = {
-  id: string | null;
-  name: string;
-  provider: string;
-  category: string;
-  version: string;
-  description?: string | null;
-  repository_url: string;
-  repository_branch: string;
-  manifest_path: string;
-  interface_type: string;
-  orchestration_mode: string;
-  adapter_type?: string | null;
-  container_name: string;
-  internal_host: string;
-  image?: string | null;
-  dockerfile?: string | null;
-  internal_port: string;
-  health_path: string;
-  input_type?: string | null;
-  output_type?: string | null;
-  operation_name: string;
-  input_message_name?: string | null;
-  output_message_name?: string | null;
-  proto_uri?: string | null;
-  contract_uri?: string | null;
-};
-type PreviewResponse = {
-  status: "valid" | "warning" | "invalid";
-  raw_manifest: Record<string, unknown>;
-  service: ImportedService | null;
-  validation: ValidationMessage[];
-};
-type ConfirmedService = {
-  id: string;
-  name: string;
-  provider: string;
-  category: string;
-  trust_badge: string;
-  container_name: string;
-  operation_name: string;
+type Draft = {
+  source: Source | null;
+  step: Step;
+  form: GuidedServiceForm;
+  base: Record<string, unknown> | null;
+  origin: { kind: "git" | "file" | "example" | "form"; label: string; repo?: string; branch?: string; path?: string };
+  idEdited: boolean;
 };
 
-const initialEvidence: RuntimeEvidence = {
-  revisionPinned: false,
-  imageReviewed: false,
-  secretsExternal: false,
-  healthVerified: false,
-};
+const DRAFT_KEY = "publish.draft.v2";
+const STEPS: { key: Step; label: string; hint: string }[] = [
+  { key: "start", label: "Start", hint: "What do you have?" },
+  { key: "describe", label: "Describe", hint: "What it does and where it fits" },
+  { key: "connect", label: "Connect", hint: "How the platform calls it" },
+  { key: "review", label: "Review", hint: "Check and submit" },
+];
+
+const newDraft = (): Draft => ({ source: null, step: "start", form: { ...emptyGuidedForm }, base: null, origin: { kind: "form", label: "Form" }, idEdited: false });
+const initialEvidence: Evidence = { revisionPinned: false, imageReviewed: false, secretsExternal: false, healthVerified: false };
 
 export default function PublishServicePage() {
   const { user } = useAuth();
-  const [mode, setMode] = useState<EntryMode>("package");
-  const [form, setForm] = useState<GuidedServiceForm>(emptyGuidedForm);
-  const [repoUrl, setRepoUrl] = useState("");
-  const [branch, setBranch] = useState("");
-  const [manifestPath, setManifestPath] = useState("");
-  const [manifestText, setManifestText] = useState("");
-  const [preview, setPreview] = useState<PreviewResponse | null>(null);
-  const [confirmed, setConfirmed] = useState<ConfirmedService | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [runtimeChoice, setRuntimeChoice] = useState<RuntimeChoice>("unsure");
-  const [runtimeEvidence, setRuntimeEvidence] = useState<RuntimeEvidence>(initialEvidence);
-  const [registrationAcknowledged, setRegistrationAcknowledged] = useState(false);
-  const [examplePreviewOnly, setExamplePreviewOnly] = useState<WorkshopExample | null>(null);
-  const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const [draft, setDraft] = useState<Draft>(newDraft);
+  const [restored, setRestored] = useState(false);
+  const [catalogue, setCatalogue] = useState<CatalogueEntry[]>([]);
   const [managedServices, setManagedServices] = useState<ManagedRuntimeService[]>([]);
+  const [protoOperations, setProtoOperations] = useState<ProtoOperation[]>([]);
+  const [git, setGit] = useState({ repo: "", branch: "main", path: "ai-effect.service.json" });
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<PreviewResponse | null>(null);
+  const [runtime, setRuntime] = useState<RuntimeChoice>("unsure");
+  const [evidence, setEvidence] = useState<Evidence>(initialEvidence);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [submitted, setSubmitted] = useState<{ name: string; id: string } | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
-  const generatedManifest = useMemo(() => buildGuidedManifest(form), [form]);
-  const generatedJson = useMemo(() => JSON.stringify(generatedManifest, null, 2), [generatedManifest]);
-  const canConfirm = Boolean(
-    preview?.service &&
-      preview.status !== "invalid" &&
-      registrationAcknowledged &&
-      !examplePreviewOnly,
-  );
-  const activeStep = confirmed ? 5 : preview ? (registrationAcknowledged ? 4 : 3) : 1;
+  const nodeCode = (user?.node || null) as NodeCode | null;
+  const nodeLabel = nodeCode ? nodeLabels[nodeCode] : null;
+  const form = draft.form;
 
-  async function loadManagedServices() {
-    if (!user || !["node_manager", "platform_admin"].includes(user.role)) return;
-    const response = await fetch("/api/services?include_archived=true", { cache: "no-store" });
-    if (!response.ok) return;
-    const data = await response.json();
-    setManagedServices(Array.isArray(data) ? data : []);
-  }
-
+  // Restore an unfinished draft from this browser.
   useEffect(() => {
-    void loadManagedServices();
-  }, [user?.id]);
-
-  function resetReviewState() {
-    setPreview(null);
-    setConfirmed(null);
-    setError(null);
-    setRegistrationAcknowledged(false);
-    setRuntimeChoice("unsure");
-    setRuntimeEvidence(initialEvidence);
-  }
-
-  function changeMode(nextMode: EntryMode) {
-    setMode(nextMode);
-    setExamplePreviewOnly(null);
-    resetReviewState();
-  }
-
-  function updateForm<K extends keyof GuidedServiceForm>(key: K, value: GuidedServiceForm[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
-    setExamplePreviewOnly(null);
-    resetReviewState();
-  }
-
-  async function checkManualManifest(manifest: Record<string, unknown>, source: string, revision: string, path: string) {
-    setLoading(true);
-    resetReviewState();
     try {
-      const response = await fetch(`${API_BASE_URL}/services/import/preview-manual`, {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Draft;
+        if (parsed?.form && parsed.step !== "done" && parsed.step !== "start") {
+          setDraft(parsed);
+          setRestored(true);
+        }
+      }
+    } catch { /* no saved draft */ }
+  }, []);
+  useEffect(() => {
+    try {
+      if (draft.step === "start" || draft.step === "done") localStorage.removeItem(DRAFT_KEY);
+      else localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch { /* storage unavailable */ }
+  }, [draft]);
+
+  async function loadServices() {
+    const response = await fetch("/api/services?include_archived=true", { cache: "no-store" }).catch(() => null);
+    if (!response?.ok) return;
+    const data = await response.json();
+    if (!Array.isArray(data)) return;
+    setCatalogue(data);
+    if (user && ["node_manager", "platform_admin"].includes(user.role)) setManagedServices(data);
+  }
+  useEffect(() => { void loadServices(); }, [user?.id]);
+
+  // Provider defaults to the person's node.
+  useEffect(() => {
+    if (nodeLabel && !draft.form.provider) update("provider", `AI-EFFECT ${nodeLabel}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeLabel, draft.step]);
+
+  function update<K extends keyof GuidedServiceForm>(key: K, value: GuidedServiceForm[K]) {
+    setDraft((current) => {
+      const next = { ...current.form, [key]: value };
+      // Keep the ID in step with the name until someone edits it.
+      if (key === "name" && !current.idEdited) next.serviceId = suggestedId(String(value), nodeCode);
+      if (key === "containerName" && (!current.form.internalHost || current.form.internalHost === current.form.containerName)) {
+        next.internalHost = String(value);
+      }
+      return { ...current, form: next, idEdited: current.idEdited || key === "serviceId" };
+    });
+    setPreview(null);
+    setAcknowledged(false);
+  }
+
+  function goTo(step: Step) {
+    setError(null);
+    setDraft((current) => ({ ...current, step }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function startOver() {
+    setDraft(newDraft());
+    setPreview(null);
+    setSubmitted(null);
+    setAcknowledged(false);
+    setEvidence(initialEvidence);
+    setRuntime("unsure");
+    setProtoOperations([]);
+    setRestored(false);
+    setError(null);
+  }
+
+  function choose(source: Source) {
+    setError(null);
+    setDraft((current) => ({ ...current, source }));
+  }
+
+  function startForm(origin: Draft["origin"], form: GuidedServiceForm, base: Record<string, unknown> | null) {
+    setDraft({ source: draft.source || "container", step: "describe", form, base, origin, idEdited: Boolean(form.serviceId) });
+    setPreview(null);
+  }
+
+  async function readGitManifest() {
+    setBusy("git");
+    setError(null);
+    try {
+      const response = await fetch("/api/services/import/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          repo_url: source || "provider-supplied",
-          branch: revision || "unversioned",
-          manifest_path: path || "ai-effect.service.json",
-          manifest,
-        }),
+        body: JSON.stringify({ repo_url: git.repo.trim(), branch: git.branch.trim(), manifest_path: git.path.trim() }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(formatApiError(data?.detail) || "Service check failed.");
-      setPreview(data);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data?.detail) || "The manifest could not be read from that repository.");
+      const manifestFound = data?.raw_manifest && Object.keys(data.raw_manifest).length > 0;
+      if (!manifestFound) {
+        const reasons = (data?.validation || []).filter((item: { level: string }) => item.level === "error").map((item: { message: string }) => item.message);
+        throw new Error(reasons.join(" ") || "No service manifest was found at that location.");
+      }
+      startForm(
+        { kind: "git", label: `${git.repo.trim()} @ ${git.branch.trim()}`, repo: git.repo.trim(), branch: git.branch.trim(), path: git.path.trim() },
+        { ...formFromManifest(data.raw_manifest), sourceReference: git.repo.trim(), sourceRevision: git.branch.trim() },
+        data.raw_manifest,
+      );
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Service check failed.");
+      setError(caught instanceof Error ? caught.message : "The manifest could not be read.");
     } finally {
-      setLoading(false);
+      setBusy(null);
     }
   }
 
-  async function checkGuidedDetails() {
-    if (!form.serviceId.trim()) {
-      setError("Enter a distinct service ID before checking this service.");
-      setPreview(null);
+  async function readFile(file: File) {
+    setError(null);
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".zip")) {
+      choose("package");
+      setError("ZIP packages are reviewed on their own screen: choose “A service package (ZIP)”.");
       return;
     }
-    await checkManualManifest(
-      generatedManifest,
-      form.sourceReference,
-      form.sourceRevision,
-      "guided/ai-effect.service.json",
+    const text = await file.text();
+    if (name.endsWith(".proto")) {
+      const operations = parseProtoOperations(text);
+      if (!operations.length) {
+        setError(`No rpc operations were found in ${file.name}.`);
+        return;
+      }
+      setProtoOperations(operations);
+      const first = operations[0];
+      startForm(
+        { kind: "file", label: file.name },
+        {
+          ...form,
+          interfaceType: "grpc",
+          protoUri: file.name,
+          contractUri: file.name,
+          operationName: first.name,
+          inputMessageName: first.input,
+          outputMessageName: first.output,
+          grpcInputMessage: first.input,
+          grpcOutputMessage: first.output,
+        },
+        draft.base,
+      );
+      return;
+    }
+    try {
+      const manifest = JSON.parse(text) as Record<string, unknown>;
+      startForm({ kind: "file", label: file.name }, formFromManifest(manifest), manifest);
+    } catch {
+      setError(`${file.name} is not valid JSON. Drop an AI-EFFECT service manifest (.json) or a gRPC contract (.proto).`);
+    }
+  }
+
+  function startFromExample(example: WorkshopExample) {
+    startForm(
+      { kind: "example", label: `${example.country} example (${example.service})` },
+      { ...formFromExample(example.manifest), provider: nodeLabel ? `AI-EFFECT ${nodeLabel}` : "" },
+      null,
     );
   }
 
-  async function checkPastedManifest() {
-    try {
-      await checkManualManifest(
-        JSON.parse(manifestText) as Record<string, unknown>,
-        repoUrl,
-        branch,
-        manifestPath,
-      );
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Manifest JSON is invalid.");
-    }
-  }
+  const manifest = useMemo(() => mergeManifest(draft.base, form), [draft.base, form]);
 
-  async function checkGitManifest() {
-    setLoading(true);
-    resetReviewState();
-    try {
-      const response = await fetch(`${API_BASE_URL}/services/import/preview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ repo_url: repoUrl, branch, manifest_path: manifestPath }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(formatApiError(data?.detail) || "Git manifest check failed.");
-      setPreview(data);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Git manifest check failed.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function submitRequest() {
-    if (!preview?.raw_manifest || !canConfirm) return;
-    setConfirming(true);
-    setConfirmed(null);
+  async function checkWithPlatform() {
+    setBusy("check");
     setError(null);
     try {
-      const source = mode === "guided" ? form.sourceReference : repoUrl;
-      const revision = mode === "guided" ? form.sourceRevision : branch;
-      const path = mode === "guided" ? "guided/ai-effect.service.json" : manifestPath;
-      const response = await fetch(`${API_BASE_URL}/services/import/confirm-manual`, {
+      const response = await fetch("/api/services/import/preview-manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sourceFields(draft, form, manifest)),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data?.detail) || "The platform could not check this service.");
+      setPreview(data);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The platform could not check this service.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  useEffect(() => {
+    if (draft.step === "review" && !preview && busy !== "check") void checkWithPlatform();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.step]);
+
+  async function submit() {
+    if (!preview || preview.status === "invalid" || !acknowledged) return;
+    setBusy("submit");
+    setError(null);
+    try {
+      const response = await fetch("/api/services/import/confirm-manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          repo_url: source || "provider-supplied",
-          branch: revision || "unversioned",
-          manifest_path: path || "ai-effect.service.json",
-          manifest: preview.raw_manifest,
+          ...sourceFields(draft, form, preview.raw_manifest),
           onboarding: {
-            source_type: mode === "git" ? "public_git" : "manual_manifest",
-            source_revision: revision || null,
-            runtime_status: runtimeChoice === "already_running" ? "already_running" : "needs_deployment",
-            revision_pinned: runtimeEvidence.revisionPinned,
-            image_reviewed: runtimeEvidence.imageReviewed,
-            secrets_external: runtimeEvidence.secretsExternal,
-            health_verified: runtimeEvidence.healthVerified,
-            registration_only_acknowledged: registrationAcknowledged,
+            source_type: draft.origin.kind === "git" ? "public_git" : "manual_manifest",
+            source_revision: form.sourceRevision || null,
+            runtime_status: runtime === "already_running" ? "already_running" : "needs_deployment",
+            revision_pinned: evidence.revisionPinned,
+            image_reviewed: evidence.imageReviewed,
+            secrets_external: evidence.secretsExternal,
+            health_verified: evidence.healthVerified,
+            registration_only_acknowledged: acknowledged,
           },
         }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(formatApiError(data?.detail) || "Submission failed.");
-      setConfirmed(data);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiError(data?.detail) || "Submission failed.");
+      setSubmitted({ name: data.name || form.name, id: data.id || form.serviceId });
+      setDraft((current) => ({ ...current, step: "done" }));
+      void loadServices();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Submission failed.");
     } finally {
-      setConfirming(false);
+      setBusy(null);
     }
   }
 
-  function loadWorkshopExample(example: WorkshopExample) {
-    setMode("manual");
-    setRepoUrl(`${example.sourceUrl} @ ${example.revision} · ${example.manifestPath}`);
-    setBranch(example.revision);
-    setManifestPath("reference-example.json");
-    setManifestText(JSON.stringify(example.manifest, null, 2));
-    setExamplePreviewOnly(example);
-    resetReviewState();
-  }
-
-  function useExampleAsStartingPoint() {
-    if (!examplePreviewOnly) return;
-    const example = examplePreviewOnly;
-    setForm({
-      ...formFromExample(example.manifest),
-      sourceReference: `${example.sourceUrl} @ ${example.revision} · ${example.manifestPath}`,
-      sourceRevision: example.revision,
-    });
-    setMode("guided");
-    setExamplePreviewOnly(null);
-    resetReviewState();
-  }
-
-  async function copyGeneratedJson() {
-    await navigator.clipboard.writeText(generatedJson);
-    setCopyNotice("Copied");
-    window.setTimeout(() => setCopyNotice(null), 1600);
-  }
-
-  function downloadGeneratedJson() {
-    const blob = new Blob([generatedJson], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${form.serviceId.trim() || "ai-effect-service"}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
+  const describeMissing = [!form.name.trim() && "a name", !form.description.trim() && "what it does", !form.provider.trim() && "the provider", !form.inputType.trim() && "what it takes", !form.outputType.trim() && "what it produces"].filter(Boolean) as string[];
+  const connectMissing = [
+    !form.containerName.trim() && "the container name",
+    !form.operationName.trim() && "the operation",
+    !form.image.trim() && !form.dockerfile.trim() && "a Docker image",
+  ].filter(Boolean) as string[];
+  const stepIndex = STEPS.findIndex((step) => step.key === draft.step);
+  const packageMode = draft.source === "package" && draft.step === "start";
 
   return (
-    <main className="page publish-page">
+    <main className="page publish-page publish-wizard">
       <header className="page-header">
         <div className="page-header__text">
-          <h1 className="page-header__title">Publish a service</h1>
+          <h1 className="page-header__title">Add a service</h1>
           <p className="page-header__lead">
-            Describe your service and how the platform connects to it, then submit it for review. Publishing records the service; an administrator approves it before it appears in the catalogue.
+            Put your service in the AI-EFFECT catalogue so others can use it in their workflows. It takes a few minutes; an administrator reviews it before it appears.
           </p>
         </div>
         <div className="page-header__actions">
@@ -301,178 +305,162 @@ export default function PublishServicePage() {
         </div>
       </header>
 
-      <section className="onboarding-boundary-grid" aria-label="Who does what">
-        <Boundary title="Node owner" text="Supplies the service purpose, description, inputs, and outputs." />
-        <Boundary title="Technical colleague" text="Supplies the container and execution-interface details." />
-        <Boundary title="Platform team" text="Verifies runtime and integration evidence, then decides whether to approve the service." />
-      </section>
-
-      <div className="publish-workbench">
-        <aside className="card publish-step-card">
-          <p style={{ ...eyebrowStyle, marginBottom: 16 }}>Progress</p>
-          {[
-            ["1", "Provide details", "Package upload, guided form, or advanced import"],
-            ["2", "Check details", "Readable summary and validation"],
-            ["3", "Runtime", "Provider claims and evidence"],
-            ["4", "Submit", "Await administrator review"],
-            ["5", "Admin decision", "Approve and activate"],
-          ].map(([number, title, detail], index) => (
-            <div className={`publish-step${index + 1 === activeStep ? " publish-step-active" : ""}`} key={number}>
-              <span className="publish-step-number">{number}</span>
-              <div><strong>{title}</strong><small>{detail}</small></div>
-            </div>
+      {draft.step !== "done" && !packageMode && (
+        <ol className="wizard-steps" aria-label="Steps">
+          {STEPS.map((step, index) => (
+            <li key={step.key} className={index === stepIndex ? "is-current" : index < stepIndex ? "is-done" : ""} aria-current={index === stepIndex ? "step" : undefined}>
+              <span className="wizard-steps__dot">{index < stepIndex ? <Check size={14} aria-hidden="true" /> : index + 1}</span>
+              <span><strong>{step.label}</strong><small>{step.hint}</small></span>
+            </li>
           ))}
-          <div className="publish-step-note">
-            <strong>Count services, not use cases</strong>
-            <span>Register each independently callable service separately. A solution can combine several services.</span>
-          </div>
-        </aside>
+        </ol>
+      )}
 
-        <div className="publish-main-column">
-          <section style={cardStyle}>
-            <p style={eyebrowStyle}>1 · Provide service details</p>
-            <h2 style={sectionTitleStyle}>Choose an onboarding method</h2>
-            <div style={tabRowStyle}>
-              <ModeButton active={mode === "package"} onClick={() => changeMode("package")}>Upload service package · Recommended</ModeButton>
-              <ModeButton active={mode === "guided"} onClick={() => changeMode("guided")}>Enter service details</ModeButton>
-              <ModeButton active={mode === "git" || mode === "manual"} onClick={() => changeMode("git")}>Advanced import</ModeButton>
-            </div>
-
-            {mode === "package" && <PackageImportPanel />}
-
-            {mode === "guided" && (
-              <GuidedForm
-                form={form}
-                onChange={updateForm}
-                generatedJson={generatedJson}
-                onCopy={copyGeneratedJson}
-                onDownload={downloadGeneratedJson}
-                copyNotice={copyNotice}
-                onCheck={checkGuidedDetails}
-                loading={loading}
-              />
-            )}
-
-            {mode === "git" && (
-              <><div style={tabRowStyle}><ModeButton active onClick={() => changeMode("git")}>Public Git manifest</ModeButton><ModeButton active={false} onClick={() => changeMode("manual")}>Paste JSON</ModeButton></div><ImportFields
-                repoUrl={repoUrl} branch={branch} manifestPath={manifestPath}
-                onRepo={(value) => { setRepoUrl(value); resetReviewState(); }}
-                onBranch={(value) => { setBranch(value); resetReviewState(); }}
-                onPath={(value) => { setManifestPath(value); resetReviewState(); }}
-                git
-              >
-                <button style={primaryButtonStyle} type="button" onClick={checkGitManifest} disabled={loading}>
-                  {loading ? "Checking…" : "Check service details"}
-                </button>
-              </ImportFields></>
-            )}
-
-            {mode === "manual" && (
-              <><div style={tabRowStyle}><ModeButton active={false} onClick={() => changeMode("git")}>Public Git manifest</ModeButton><ModeButton active onClick={() => changeMode("manual")}>Paste JSON</ModeButton></div><ImportFields
-                repoUrl={repoUrl} branch={branch} manifestPath={manifestPath}
-                onRepo={(value) => { setRepoUrl(value); resetReviewState(); }}
-                onBranch={(value) => { setBranch(value); resetReviewState(); }}
-                onPath={(value) => { setManifestPath(value); resetReviewState(); }}
-              >
-                <label style={labelStyle}>Manifest JSON
-                  <textarea
-                    value={manifestText}
-                    onChange={(event) => { setManifestText(event.target.value); resetReviewState(); }}
-                    spellCheck={false}
-                    style={textareaStyle}
-                  />
-                </label>
-                <p style={helpTextStyle}>The original JSON is submitted unchanged, including fields the guided form does not know about.</p>
-                <button style={primaryButtonStyle} type="button" onClick={checkPastedManifest} disabled={loading}>
-                  {loading ? "Checking…" : "Check service details"}
-                </button>
-              </ImportFields></>
-            )}
-
-            <details className="publish-help-details">
-              <summary>Examples, supported sources, and current limitations</summary>
-              <p>Public Git reads one exact JSON manifest. Paste JSON preserves the complete object. Package upload accepts the documented AI4EU/WP3 structure only. No onboarding method builds images, executes Compose, or starts containers.</p>
-              <details className="workshop-example-panel">
-                <summary>View reference manifests</summary>
-                <p>These node manifests are preview-only references. They cannot be submitted until you explicitly use one as a starting point and give the new service a distinct name and ID.</p>
-                <div className="workshop-example-buttons">
-                  {workshopExamples.map((example) => (
-                    <button type="button" key={example.key} onClick={() => loadWorkshopExample(example)}>
-                      <strong>{example.country}</strong><span>{example.service}</span>
-                    </button>
-                  ))}
-                </div>
-              </details>
-            </details>
-            {error && <div style={errorBoxStyle}>{error}</div>}
-          </section>
-
-          {preview && (
-            <section style={cardStyle}>
-              <div style={rowBetweenStyle}>
-                <div><p style={eyebrowStyle}>2 · Check service details</p><h2 style={sectionTitleStyle}>Review before submitting</h2></div>
-                <span style={statusBadgeStyle(preview.status)}>{preview.status.toUpperCase()}</span>
-              </div>
-
-              {preview.service && <ServicePreview service={preview.service} />}
-              <ValidationSummary validation={preview.validation} />
-
-              {examplePreviewOnly && (
-                <div className="example-preview-lock">
-                  <strong>Preview only</strong>
-                  <p>This pinned example cannot be submitted as another production service. Create a distinct record and review the provider details first.</p>
-                  <button type="button" style={smallButtonStyle} onClick={useExampleAsStartingPoint}>Use as starting point</button>
-                </div>
-              )}
-
-              {preview.service && !examplePreviewOnly && (
-                <RuntimeSection
-                  choice={runtimeChoice}
-                  onChoice={(value) => { setRuntimeChoice(value); setRegistrationAcknowledged(false); }}
-                  evidence={runtimeEvidence}
-                  onEvidence={(field, checked) => setRuntimeEvidence((current) => ({ ...current, [field]: checked }))}
-                  service={preview.service}
-                  acknowledged={registrationAcknowledged}
-                  onAcknowledge={setRegistrationAcknowledged}
-                />
-              )}
-
-              {!examplePreviewOnly && preview.service && (
-                <button
-                  type="button" onClick={submitRequest} disabled={!canConfirm || confirming}
-                  style={{ ...primaryButtonStyle, opacity: !canConfirm || confirming ? 0.55 : 1 }}
-                >
-                  {confirming ? "Submitting…" : "Submit for administrator review"}
-                </button>
-              )}
-            </section>
-          )}
-
-          {confirmed && (
-            <section style={successCardStyle}>
-              <p style={eyebrowStyle}>Submitted</p>
-              <h2 style={sectionTitleStyle}>Submitted — awaiting administrator review</h2>
-              <p>{confirmed.name} is registered as <strong>{confirmed.trust_badge}</strong>. Submission did not deploy or activate its container.</p>
-              <div className="onboarding-next-steps">
-                <strong>Next steps</strong>
-                <ol>
-                  <li>The provider or platform operator supplies any missing runtime evidence.</li>
-                  <li>An administrator verifies ownership, source, image, secrets, health, and contract.</li>
-                  <li>Only an administrator can approve and activate the service.</li>
-                </ol>
-              </div>
-              <Link href="/catalogue" style={secondaryButtonStyle}>Open catalogue</Link>
-              {user?.role === "platform_admin" && <Link href="/admin" style={primaryLinkStyle}>Review in Admin</Link>}
-            </section>
-          )}
+      {restored && draft.step !== "done" && (
+        <div className="ae-alert wizard-restored" role="status">
+          <span>We kept your unfinished service <strong>{form.name || "draft"}</strong> from last time.</span>
+          <button type="button" className="ae-btn ae-btn--secondary" onClick={startOver}>Start a new one</button>
         </div>
-      </div>
+      )}
+
+      {draft.step === "start" && (
+        <section className="wizard-card">
+          <h2 className="wizard-card__title">What do you have?</h2>
+          <p className="wizard-card__lead">Pick the closest match. You can change details on the next screens.</p>
+          <div className="source-grid">
+            <SourceCard icon={Package} title="A service package (ZIP)" text="An AI4EU / WP3 export with blueprint.json, dockerinfo.json and .proto files. Everything is filled in for you." active={draft.source === "package"} onClick={() => choose("package")} badge="Fastest" />
+            <SourceCard icon={FolderGit2} title="A GitHub repository" text="A public repository with an AI-EFFECT service manifest (ai-effect.service.json)." active={draft.source === "git"} onClick={() => choose("git")} />
+            <SourceCard icon={Box} title="A Docker image or running container" text="Answer a few questions about the service and how it is called." active={draft.source === "container"} onClick={() => choose("container")} />
+            <SourceCard icon={Lightbulb} title="It isn't packaged yet" text="See what a service needs before it can join the platform, and save a draft." active={draft.source === "unpackaged"} onClick={() => choose("unpackaged")} />
+          </div>
+
+          {draft.source === "package" && <div className="wizard-panel"><PackageImportPanel /></div>}
+
+          {draft.source === "git" && (
+            <div className="wizard-panel">
+              <div className="wizard-grid">
+                <TextField label="Repository URL" value={git.repo} onChange={(repo) => setGit({ ...git, repo })} placeholder="https://github.com/your-org/your-service" wide />
+                <TextField label="Branch, tag or commit" value={git.branch} onChange={(branch) => setGit({ ...git, branch })} hint="A tag or commit keeps the reviewed version fixed." />
+                <TextField label="Manifest file" value={git.path} onChange={(path) => setGit({ ...git, path })} />
+              </div>
+              <button type="button" className="ae-btn ae-btn--primary" disabled={!git.repo.trim() || busy === "git"} onClick={readGitManifest}>
+                {busy === "git" ? "Reading the manifest…" : "Read the manifest"} <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+
+          {draft.source === "container" && (
+            <div className="wizard-panel">
+              <p>You will describe the service, then say how the platform calls it. Have the Docker image name and the port at hand.</p>
+              <button type="button" className="ae-btn ae-btn--primary" onClick={() => startForm({ kind: "form", label: "Form" }, { ...emptyGuidedForm, provider: nodeLabel ? `AI-EFFECT ${nodeLabel}` : "" }, null)}>
+                Start <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+
+          {draft.source === "unpackaged" && (
+            <div className="wizard-panel">
+              <p>To run on the platform, a service needs:</p>
+              <ul className="wizard-checklist">
+                <li><Check size={15} aria-hidden="true" /> <span><strong>A Docker image</strong>, built from your code, that starts on its own.</span></li>
+                <li><Check size={15} aria-hidden="true" /> <span><strong>A way to be called</strong>: the AI-EFFECT control interface (<code>/control/execute</code>), a gRPC contract (<code>.proto</code>), or a REST endpoint behind an adapter.</span></li>
+                <li><Check size={15} aria-hidden="true" /> <span><strong>A health check</strong> (for example <code>GET /health</code>) so the platform can see it is up.</span></li>
+                <li><Check size={15} aria-hidden="true" /> <span><strong>Clear inputs and outputs</strong>: what data it takes and what it produces.</span></li>
+              </ul>
+              <p className="muted">The service onboarding guide and the node examples below show working services. You can also describe your service now and finish the technical part later.</p>
+              <button type="button" className="ae-btn ae-btn--secondary" onClick={() => startForm({ kind: "form", label: "Form" }, { ...emptyGuidedForm, provider: nodeLabel ? `AI-EFFECT ${nodeLabel}` : "" }, null)}>
+                Describe it now <ArrowRight size={16} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+
+          <div
+            className="drop-zone"
+            onDragOver={(event) => { event.preventDefault(); }}
+            onDrop={(event) => { event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) void readFile(file); }}
+          >
+            <Upload size={20} aria-hidden="true" />
+            <div>
+              <strong>Already have a manifest (.json) or a gRPC contract (.proto)?</strong>
+              <span>Drop it here, or <button type="button" className="link-button" onClick={() => fileInput.current?.click()}>choose a file</button>, and the form is filled in for you.</span>
+            </div>
+            <input ref={fileInput} type="file" accept=".json,.proto,application/json" hidden onChange={(event) => { const file = event.target.files?.[0]; if (file) void readFile(file); event.target.value = ""; }} />
+          </div>
+
+          <div className="example-row">
+            <span>Or start from a node&apos;s example:</span>
+            {workshopExamples.map((example) => (
+              <button key={example.key} type="button" className="example-chip" onClick={() => startFromExample(example)}>
+                {example.country} · {example.service}
+              </button>
+            ))}
+          </div>
+          {error && <p className="wizard-error" role="alert"><CircleAlert size={16} aria-hidden="true" /> {error}</p>}
+        </section>
+      )}
+
+      {draft.step === "describe" && (
+        <section className="wizard-card">
+          <SourceNote origin={draft.origin} />
+          <DescribeStep form={form} update={update} catalogue={catalogue} nodeLabel={nodeLabel} isExample={draft.origin.kind === "example"} />
+          <WizardNav onBack={() => goTo("start")} onNext={() => goTo("connect")} nextDisabled={describeMissing.length > 0} missing={describeMissing} />
+        </section>
+      )}
+
+      {draft.step === "connect" && (
+        <section className="wizard-card">
+          <ConnectStep form={form} update={update} protoOperations={protoOperations} runtime={runtime} onRuntime={setRuntime} />
+          <WizardNav onBack={() => goTo("describe")} onNext={() => goTo("review")} nextLabel="Review" nextDisabled={connectMissing.length > 0} missing={connectMissing} />
+        </section>
+      )}
+
+      {draft.step === "review" && (
+        <section className="wizard-card">
+          <ReviewStep
+            form={form}
+            nodeLabel={nodeLabel}
+            preview={preview}
+            checking={busy === "check"}
+            onRecheck={checkWithPlatform}
+            onEdit={(step) => goTo(step)}
+            evidence={evidence}
+            onEvidence={(key, value) => setEvidence((current) => ({ ...current, [key]: value }))}
+            acknowledged={acknowledged}
+            onAcknowledge={setAcknowledged}
+            catalogue={catalogue}
+          />
+          {error && <p className="wizard-error" role="alert"><CircleAlert size={16} aria-hidden="true" /> {error}</p>}
+          <div className="wizard-nav">
+            <button type="button" className="ae-btn ae-btn--secondary" onClick={() => goTo("connect")}><ArrowLeft size={16} aria-hidden="true" /> Back</button>
+            <button type="button" className="ae-btn ae-btn--primary" disabled={!preview || preview.status === "invalid" || !acknowledged || busy === "submit"} onClick={submit}>
+              {busy === "submit" ? "Submitting…" : "Submit for review"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {draft.step === "done" && submitted && (
+        <section className="wizard-card wizard-done">
+          <span className="wizard-done__mark"><Check size={28} aria-hidden="true" /></span>
+          <h2 className="wizard-card__title">{submitted.name} is submitted</h2>
+          <ol className="wizard-timeline">
+            <li className="is-done"><strong>Submitted</strong><span>Saved as a pending service. Nothing was started or deployed.</span></li>
+            <li><strong>Administrator review</strong><span>Checks ownership, image, interface and health. You may be asked for missing details.</span></li>
+            <li><strong>In the catalogue</strong><span>Once approved, people can find it and use it in the Builder.</span></li>
+          </ol>
+          <div className="wizard-nav wizard-nav--start">
+            <Link href={`/catalogue/${encodeURIComponent(submitted.id)}`} className="ae-btn ae-btn--secondary">Open its catalogue page</Link>
+            <button type="button" className="ae-btn ae-btn--primary" onClick={startOver}>Add another service</button>
+          </div>
+        </section>
+      )}
+
       {managedServices.length > 0 && (
-        <details style={{ ...cardStyle, marginTop: 24 }}>
-          <summary style={{ cursor: "pointer", fontWeight: 850, fontSize: 18 }}>Manage and verify existing service runtimes</summary>
-          <p style={helpTextStyle}>This section is separate from registration. Authorized node providers can correct services assigned to their node; platform administrators can manage all services. Saving runtime or interface metadata invalidates earlier verification.</p>
+        <details className="wizard-card wizard-manage">
+          <summary>Manage your existing services</summary>
+          <p className="muted">Correct the runtime details of services assigned to your node. Saving changes means they are verified again.</p>
           <div style={{ display: "grid", gap: 10 }}>
-            {managedServices.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadManagedServices} />)}
+            {managedServices.map((service) => <ServiceRuntimeManager key={service.id} service={service} onUpdated={loadServices} />)}
           </div>
         </details>
       )}
@@ -480,250 +468,56 @@ export default function PublishServicePage() {
   );
 }
 
-function Boundary({ title, text }: { title: string; text: string }) {
-  return <div className="onboarding-boundary-card"><span>{title}</span><p>{text}</p></div>;
+function suggestedId(name: string, node: NodeCode | null) {
+  const slug = slugify(name);
+  if (!slug) return "";
+  return node ? `${node}-${slug}` : slug;
 }
 
-function ModeButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button type="button" onClick={onClick} style={active ? activeTabStyle : tabStyle}>{children}</button>;
+function sourceFields(draft: Draft, form: GuidedServiceForm, manifest: Record<string, unknown>) {
+  return {
+    repo_url: draft.origin.repo || form.sourceReference || "provider-supplied",
+    branch: draft.origin.branch || form.sourceRevision || "unversioned",
+    manifest_path: draft.origin.path || (draft.origin.kind === "file" ? draft.origin.label : "guided/ai-effect.service.json"),
+    manifest,
+  };
 }
 
-function GuidedForm({
-  form, onChange, generatedJson, onCopy, onDownload, copyNotice, onCheck, loading,
-}: {
-  form: GuidedServiceForm;
-  onChange: <K extends keyof GuidedServiceForm>(key: K, value: GuidedServiceForm[K]) => void;
-  generatedJson: string;
-  onCopy: () => void;
-  onDownload: () => void;
-  copyNotice: string | null;
-  onCheck: () => void;
-  loading: boolean;
-}) {
+function apiError(detail: unknown) {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) return detail.map((item) => (typeof item === "object" && item && "msg" in item ? String((item as { msg: unknown }).msg) : String(item))).join(" ");
+  return detail ? JSON.stringify(detail) : "";
+}
+
+function SourceCard({ icon: Icon, title, text, active, onClick, badge }: { icon: typeof Box; title: string; text: string; active: boolean; onClick: () => void; badge?: string }) {
   return (
-    <div className="guided-form">
-      <div className="guided-section">
-        <h3>Service description</h3>
-        <div className="guided-grid">
-          <Field label="Service name" value={form.name} onChange={(v) => onChange("name", v)} required />
-          <Field label="Provider display name" value={form.provider} onChange={(v) => onChange("provider", v)} required help="Descriptive only. Your signed-in account and assigned node control ownership and permissions." />
-          <Field label="Category" value={form.category} onChange={(v) => onChange("category", v)} required />
-          <Field label="Version" value={form.version} onChange={(v) => onChange("version", v)} required />
-          <Field label="Input data / DataReference type" value={form.inputType} onChange={(v) => onChange("inputType", v)} required />
-          <Field label="Output data / DataReference type" value={form.outputType} onChange={(v) => onChange("outputType", v)} required />
-          <label style={{ ...labelStyle, gridColumn: "1 / -1" }}>Description
-            <textarea value={form.description} onChange={(e) => onChange("description", e.target.value)} style={{ ...textareaStyle, minHeight: 100 }} />
-          </label>
-        </div>
-      </div>
-
-      <div className="guided-section">
-        <h3>Technical details</h3>
-        <div className="guided-grid">
-          <Field label="Unique service ID" value={form.serviceId} onChange={(v) => onChange("serviceId", v)} required help="Use a stable, lowercase identifier. It cannot duplicate an existing catalogue service." />
-          <Field label="Container name" value={form.containerName} onChange={(v) => onChange("containerName", v)} required />
-          <Field
-            label="Runtime network host"
-            value={form.internalHost}
-            onChange={(v) => onChange("internalHost", v)}
-            required
-            help="The hostname reachable from the platform network. It may differ from the logical service name."
-          />
-          <Field label="Docker image" value={form.image} onChange={(v) => onChange("image", v)} help="Provide an image or a Dockerfile path. A pre-built, pinned image is preferred." />
-          <Field label="Dockerfile path" value={form.dockerfile} onChange={(v) => onChange("dockerfile", v)} />
-          <Field label="Internal port" value={form.internalPort} onChange={(v) => onChange("internalPort", v)} required />
-          <Field label="Health path" value={form.healthPath} onChange={(v) => onChange("healthPath", v)} required />
-          <Field label="Operation name" value={form.operationName} onChange={(v) => onChange("operationName", v)} required />
-          <label style={labelStyle}>Interface type
-            <select value={form.interfaceType} onChange={(e) => onChange("interfaceType", e.target.value as InterfaceChoice)} style={inputStyle}>
-              <option value="control">AI-EFFECT Control</option>
-              <option value="http">REST / HTTP</option>
-              <option value="grpc">gRPC</option>
-              <option value="container_job">Script / batch container</option>
-              <option value="legacy_sidecar">Legacy adapter</option>
-            </select>
-            <small style={fieldHelpStyle}>{interfaceHelp(form.interfaceType)}</small>
-          </label>
-          <Field label={form.interfaceType === "grpc" ? "Proto contract path or URL" : "Contract reference"} value={form.contractUri} onChange={(v) => onChange("contractUri", v)} required={form.interfaceType === "grpc"} help="A declaration for review—not proof that the endpoint is reachable or compatible." />
-          <details style={{ gridColumn: "1 / -1" }} className="technical-details">
-            <summary>Advanced WP3 operation fields</summary>
-            <div className="guided-grid" style={{ marginTop: 12 }}>
-              <Field label="Input message name" value={form.inputMessageName} onChange={(v) => onChange("inputMessageName", v)} help="For example ProvideDataRequest. Supplied values are preserved exactly." />
-              <Field label="Output message name" value={form.outputMessageName} onChange={(v) => onChange("outputMessageName", v)} help="For example ProvideDataResponse. Supplied values are preserved exactly." />
-              <Field label="WP3 proto reference" value={form.protoUri} onChange={(v) => onChange("protoUri", v)} help="Separate compiler-facing proto_uri; it may differ from the review contract reference." />
-            </div>
-          </details>
-          {form.interfaceType === "grpc" && <>
-            <Field label="gRPC input message" value={form.grpcInputMessage} onChange={(v) => onChange("grpcInputMessage", v)} />
-            <Field label="gRPC output message" value={form.grpcOutputMessage} onChange={(v) => onChange("grpcOutputMessage", v)} />
-          </>}
-          {form.interfaceType === "http" && <>
-            <Field label="HTTP method" value={form.httpMethod} onChange={(v) => onChange("httpMethod", v)} required />
-            <Field label="HTTP operation path" value={form.httpPath} onChange={(v) => onChange("httpPath", v)} required />
-          </>}
-          {form.interfaceType === "container_job" && <Field label="Container command" value={form.jobCommand} onChange={(v) => onChange("jobCommand", v)} required />}
-          {form.interfaceType === "legacy_sidecar" && <Field label="Adapter type" value={form.legacyAdapter} onChange={(v) => onChange("legacyAdapter", v)} help="Recommended so operators know which adapter must be deployed." />}
-          <Field label="Source reference" value={form.sourceReference} onChange={(v) => onChange("sourceReference", v)} required help="Repository URL, package location, or another traceable provider reference." />
-          <Field label="Source revision" value={form.sourceRevision} onChange={(v) => onChange("sourceRevision", v)} help="Prefer an immutable commit SHA or release tag." />
-        </div>
-      </div>
-
-      <details className="generated-json">
-        <summary>View generated manifest JSON</summary>
-        <div><button type="button" onClick={onCopy} style={smallButtonStyle}>{copyNotice || "Copy JSON"}</button><button type="button" onClick={onDownload} style={smallButtonStyle}>Download JSON</button></div>
-        <pre>{generatedJson}</pre>
-      </details>
-      <button type="button" onClick={onCheck} disabled={loading} style={primaryButtonStyle}>{loading ? "Checking…" : "Check service details"}</button>
-    </div>
+    <button type="button" className={`source-card${active ? " is-active" : ""}`} onClick={onClick} aria-pressed={active}>
+      <span className="source-card__icon"><Icon size={20} aria-hidden="true" /></span>
+      <span className="source-card__title">{title}{badge && <em>{badge}</em>}</span>
+      <span className="source-card__text">{text}</span>
+    </button>
   );
 }
 
-function Field({ label, value, onChange, required, help }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; help?: string }) {
-  return <label style={labelStyle}>{label}{required && <span className="required-label">Required</span>}<input value={value} onChange={(e) => onChange(e.target.value)} style={inputStyle} />{help && <small style={fieldHelpStyle}>{help}</small>}</label>;
+function SourceNote({ origin }: { origin: Draft["origin"] }) {
+  if (origin.kind === "form") return null;
+  const Icon = origin.kind === "git" ? GitBranch : FileCode2;
+  return (
+    <p className="source-note">
+      <Icon size={15} aria-hidden="true" />
+      {origin.kind === "example"
+        ? <>Started from the <strong>{origin.label}</strong>. Give your service its own name and description.</>
+        : <>Filled in from <strong>{origin.label}</strong>. Check and complete the details.</>}
+    </p>
+  );
 }
 
-function ImportFields({ repoUrl, branch, manifestPath, onRepo, onBranch, onPath, git, children }: {
-  repoUrl: string; branch: string; manifestPath: string; onRepo: (v: string) => void; onBranch: (v: string) => void; onPath: (v: string) => void; git?: boolean; children: React.ReactNode;
-}) {
-  return <div className="guided-form">
-    <div className="guided-grid">
-      <Field label={git ? "Public repository URL" : "Source reference"} value={repoUrl} onChange={onRepo} required />
-      <Field label="Commit SHA, tag, or revision" value={branch} onChange={onBranch} required={git} />
-      <div style={{ gridColumn: "1 / -1" }}><Field label={git ? "Exact JSON manifest path" : "Manifest name or path"} value={manifestPath} onChange={onPath} required={git} /></div>
+function WizardNav({ onBack, onNext, nextLabel = "Next", nextDisabled, missing }: { onBack: () => void; onNext: () => void; nextLabel?: string; nextDisabled?: boolean; missing: string[] }) {
+  return (
+    <div className="wizard-nav">
+      <button type="button" className="ae-btn ae-btn--secondary" onClick={onBack}><ArrowLeft size={16} aria-hidden="true" /> Back</button>
+      <span className="wizard-nav__hint">{missing.length ? `Still needed: ${missing.join(", ")}` : ""}</span>
+      <button type="button" className="ae-btn ae-btn--primary" onClick={onNext} disabled={nextDisabled}>{nextLabel} <ArrowRight size={16} aria-hidden="true" /></button>
     </div>
-    {git && <p style={helpTextStyle}>Git import fetches only the exact JSON path. Use a commit SHA or immutable tag when possible.</p>}
-    {children}
-  </div>;
+  );
 }
-
-function ServicePreview({ service }: { service: ImportedService }) {
-  return <div style={previewBoxStyle}>
-    <h3 style={previewTitleStyle}>{service.name}</h3>
-    <p style={previewDescriptionStyle}>{service.description || "No description provided."}</p>
-    <div style={detailsGridStyle}>
-      <Detail label="Provider" value={service.provider} />
-      <Detail label="Operation" value={service.operation_name} />
-      <Detail label="Input" value={service.input_type || "Not declared"} />
-      <Detail label="Output" value={service.output_type || "Not declared"} />
-      <Detail label="Next action" value="Review runtime claims and submit for admin review" />
-    </div>
-    <details className="technical-details"><summary>Technical details</summary>
-      <div style={detailsGridStyle}>
-        <Detail label="Service ID" value={service.id || "Generated on submission"} />
-        <Detail label="Category / version" value={`${service.category} · ${service.version}`} />
-        <Detail label="Interface" value={service.interface_type} />
-        <Detail label="Orchestration" value={service.orchestration_mode} />
-        <Detail label="Adapter" value={service.adapter_type || "Not declared"} />
-        <Detail label="Image / Dockerfile" value={service.image || service.dockerfile || "Missing"} />
-        <Detail label="Logical container" value={service.container_name} />
-        <Detail label="Runtime network host" value={service.internal_host} />
-        <Detail label="Configured health URL" value={`http://${service.internal_host}:${service.internal_port}${service.health_path}`} />
-        <Detail label="Contract reference" value={service.contract_uri || service.proto_uri || "Not declared"} />
-        <Detail label="Compatibility proto_uri" value={service.proto_uri || "Not declared"} />
-        <Detail label="Input message" value={service.input_message_name || "Not declared"} />
-        <Detail label="Output message" value={service.output_message_name || "Not declared"} />
-        <Detail label="Recorded source" value={`${service.repository_url} @ ${service.repository_branch}`} />
-      </div>
-    </details>
-  </div>;
-}
-
-function ValidationSummary({ validation }: { validation: ValidationMessage[] }) {
-  const errors = validation.filter((item) => item.level === "error");
-  const actionableWarnings = validation.filter((item) => item.level === "warning" && !isCompilerInfo(item.message));
-  const compilerInfo = validation.filter((item) => item.level === "warning" && isCompilerInfo(item.message));
-  const successes = validation.filter((item) => item.level === "success");
-  return <div className="validation-summary">
-    {errors.map((item, i) => <ValidationItem key={`e-${i}`} level="error" title="Fix required" message={item.message} />)}
-    {actionableWarnings.map((item, i) => <ValidationItem key={`w-${i}`} level="warning" title="Review recommended" message={item.message} />)}
-    {compilerInfo.length > 0 && <details><summary>Compiler compatibility information</summary>{compilerInfo.map((item, i) => <p key={i}>{item.message}</p>)}</details>}
-    <details><summary>All validation details ({validation.length})</summary>{successes.map((item, i) => <p key={i}>✓ {item.message}</p>)}</details>
-  </div>;
-}
-
-function ValidationItem({ level, title, message }: { level: ValidationMessage["level"]; title: string; message: string }) {
-  return <div style={validationItemStyle(level)}><strong>{title}</strong><span>{message}</span></div>;
-}
-
-function RuntimeSection({ choice, onChoice, evidence, onEvidence, service, acknowledged, onAcknowledge }: {
-  choice: RuntimeChoice; onChoice: (value: RuntimeChoice) => void; evidence: RuntimeEvidence; onEvidence: (field: keyof RuntimeEvidence, checked: boolean) => void; service: ImportedService; acknowledged: boolean; onAcknowledge: (value: boolean) => void;
-}) {
-  return <div className="onboarding-runtime-panel">
-    <div><p style={eyebrowStyle}>3 · Runtime readiness</p><h3>What happens after registration?</h3><p>These are provider claims for administrator review. None are automatically checked.</p></div>
-    <div className="onboarding-runtime-choice">
-      {([
-        ["needs_deployment", "Needs deployment", "An operator must build or pull and start it."],
-        ["already_running", "Provider reports running", "An administrator must still verify it from production."],
-        ["unsure", "Not sure", "Recorded conservatively as needing deployment until verified."],
-      ] as Array<[RuntimeChoice, string, string]>).map(([value, title, text]) => <label key={value}><input type="radio" name="runtime" checked={choice === value} onChange={() => onChoice(value)} /><span><strong>{title}</strong><small>{text}</small></span></label>)}
-    </div>
-    <div className="onboarding-evidence-grid">
-      {([
-        ["revisionPinned", "Exact source revision recorded"],
-        ["imageReviewed", "Docker image built or reviewed"],
-        ["secretsExternal", "Secrets kept outside source and manifest"],
-        ["healthVerified", `Provider reports testing ${service.internal_host}:${service.internal_port}${service.health_path}`],
-      ] as Array<[keyof RuntimeEvidence, string]>).map(([field, label]) => <label key={field}><input type="checkbox" checked={evidence[field]} onChange={(e) => onEvidence(field, e.target.checked)} /><span>{label}</span></label>)}
-    </div>
-    <label className="onboarding-acknowledgement"><input type="checkbox" checked={acknowledged} onChange={(e) => onAcknowledge(e.target.checked)} /><span>I understand this submits metadata for review and does not deploy or activate the service.</span></label>
-  </div>;
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return <div style={detailStyle}><span style={detailLabelStyle}>{label}</span><span style={detailValueStyle}>{value}</span></div>;
-}
-
-function isCompilerInfo(message: string) {
-  return message.includes("Short-term compiler compatibility") || message.includes("will use AI-EFFECT Control Interface");
-}
-
-function interfaceHelp(type: InterfaceChoice) {
-  if (type === "grpc") return "gRPC requires a .proto reference and operation information. Message names should be supplied when the contract defines them.";
-  if (type === "http") return "REST services require an HTTP method and path and may need a deployed Control Interface adapter. Selecting REST does not create that adapter.";
-  if (type === "container_job") return "Batch services require a container command and may need a deployed Control Interface adapter. Selecting batch does not create that adapter.";
-  if (type === "legacy_sidecar") return "Declare the existing adapter type. This page records it but does not generate or deploy an adapter.";
-  return "Use this only when the service already implements the AI-EFFECT Control Interface; this page does not add the interface to a container.";
-}
-
-function formatApiError(detail: unknown): string | null {
-  if (!detail) return null;
-  if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) return detail.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join(" ");
-  return JSON.stringify(detail);
-}
-
-function statusBadgeStyle(status: PreviewResponse["status"]): CSSProperties {
-  return { ...badgeStyle, ...(status === "valid" ? { background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" } : status === "warning" ? { background: "var(--warning-100)", color: "var(--warning-600)", borderColor: "#fde68a" } : { background: "#fef2f2", color: "#b91c1c", borderColor: "#fecaca" }) };
-}
-
-function validationItemStyle(level: ValidationMessage["level"]): CSSProperties {
-  const colors = level === "error" ? { borderColor: "#fecaca", background: "#fef2f2" } : { borderColor: "#fde68a", background: "var(--warning-100)" };
-  return { display: "grid", gap: 4, padding: 13, border: "1px solid", borderRadius: 8, ...colors };
-}
-
-const eyebrowStyle: CSSProperties = { margin: 0, fontSize: 12, fontWeight: 600, color: "var(--brand-600)" };
-const cardStyle: CSSProperties = { background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 12, padding: 24, marginBottom: 16 };
-const successCardStyle: CSSProperties = { ...cardStyle, borderColor: "var(--mint-100)", background: "var(--mint-100)" };
-const sectionTitleStyle: CSSProperties = { margin: "4px 0 16px", font: "600 19px/26px var(--font-sans)", color: "var(--ink-900)" };
-const tabRowStyle: CSSProperties = { display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 16, borderBottom: "1px solid var(--border)" };
-const tabStyle: CSSProperties = { border: 0, borderBottom: "2px solid transparent", background: "transparent", color: "var(--ink-600)", borderRadius: 0, padding: "8px 12px", font: "600 13px/18px var(--font-sans)", cursor: "pointer", marginBottom: -1 };
-const activeTabStyle: CSSProperties = { ...tabStyle, color: "var(--brand-600)", borderBottomColor: "var(--brand-600)" };
-const labelStyle: CSSProperties = { display: "flex", flexDirection: "column", gap: 4, font: "600 13px/18px var(--font-sans)", color: "var(--ink-900)" };
-const inputStyle: CSSProperties = { width: "100%", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "8px 12px", font: "400 14px/20px var(--font-sans)", background: "var(--surface)", color: "var(--ink-900)" };
-const textareaStyle: CSSProperties = { ...inputStyle, minHeight: 280, fontFamily: "var(--font-mono), ui-monospace, monospace", fontSize: 13, resize: "vertical" };
-const fieldHelpStyle: CSSProperties = { color: "var(--ink-600)", fontWeight: 400, fontSize: 12, lineHeight: "16px" };
-const helpTextStyle: CSSProperties = { margin: "8px 0", color: "var(--ink-600)", fontSize: 13, lineHeight: "20px" };
-const primaryButtonStyle: CSSProperties = { marginTop: 16, border: 0, borderRadius: 8, height: 36, padding: "0 16px", color: "var(--on-brand)", background: "var(--brand-600)", font: "600 13px/18px var(--font-sans)", cursor: "pointer" };
-const smallButtonStyle: CSSProperties = { border: "1px solid var(--border-strong)", borderRadius: 8, height: 30, padding: "0 12px", background: "var(--surface)", color: "var(--ink-900)", font: "600 12px/16px var(--font-sans)", cursor: "pointer" };
-const secondaryButtonStyle: CSSProperties = { display: "inline-flex", margin: "8px 8px 0 0", alignItems: "center", height: 36, border: "1px solid var(--border-strong)", borderRadius: 8, padding: "0 16px", background: "var(--surface)", color: "var(--ink-900)", textDecoration: "none", font: "600 13px/18px var(--font-sans)" };
-const primaryLinkStyle: CSSProperties = { ...secondaryButtonStyle, background: "var(--brand-600)", borderColor: "var(--brand-600)", color: "var(--on-brand)" };
-const errorBoxStyle: CSSProperties = { marginTop: 16, padding: "12px 16px", border: 0, borderRadius: 8, background: "var(--danger-100)", color: "var(--danger-600)", fontWeight: 500 };
-const rowBetweenStyle: CSSProperties = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 };
-const badgeStyle: CSSProperties = { border: "1px solid", borderRadius: 999, padding: "2px 8px", fontSize: 12, fontWeight: 500 };
-const previewBoxStyle: CSSProperties = { marginTop: 16, padding: 16, border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface-sunken)" };
-const previewTitleStyle: CSSProperties = { margin: 0, color: "var(--ink-900)", font: "600 17px/24px var(--font-sans)" };
-const previewDescriptionStyle: CSSProperties = { color: "var(--ink-600)", lineHeight: "21px" };
-const detailsGridStyle: CSSProperties = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 8 };
-const detailStyle: CSSProperties = { display: "grid", gap: 2, padding: 10, borderRadius: 8, background: "var(--surface)", overflowWrap: "anywhere" };
-const detailLabelStyle: CSSProperties = { color: "var(--ink-600)", fontSize: 12, fontWeight: 500 };
-const detailValueStyle: CSSProperties = { color: "var(--ink-900)", fontSize: 13, fontWeight: 600 };

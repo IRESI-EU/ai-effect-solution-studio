@@ -184,3 +184,46 @@ function supportedInterface(value: unknown): InterfaceChoice {
     ? (String(value) as InterfaceChoice)
     : "control";
 }
+
+/** Like formFromExample, but keeps the service's own name and ID (for the person's own manifest). */
+export function formFromManifest(manifest: Record<string, unknown>): GuidedServiceForm {
+  const service = objectValue(manifest.service);
+  return { ...formFromExample(manifest), name: textValue(service.name), serviceId: textValue(service.id) };
+}
+
+/**
+ * The manifest to submit: the original one (from Git or a file) with the form's values on top,
+ * so fields the form does not know about are kept unchanged.
+ */
+export function mergeManifest(base: Record<string, unknown> | null, form: GuidedServiceForm): Record<string, unknown> {
+  const built = buildGuidedManifest(form);
+  return base ? deepMerge(base, built) : built;
+}
+
+function deepMerge(base: Record<string, unknown>, top: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(top)) {
+    const current = out[key];
+    out[key] =
+      value && typeof value === "object" && !Array.isArray(value) && current && typeof current === "object" && !Array.isArray(current)
+        ? deepMerge(current as Record<string, unknown>, value as Record<string, unknown>)
+        : value;
+  }
+  return out;
+}
+
+export function slugify(text: string) {
+  return text.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+}
+
+export type ProtoOperation = { name: string; input: string; output: string };
+
+/** Reads the rpc lines of a .proto file: rpc Name (Request) returns (Response). */
+export function parseProtoOperations(text: string): ProtoOperation[] {
+  const withoutComments = text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  const found: ProtoOperation[] = [];
+  const rpc = /rpc\s+(\w+)\s*\(\s*(?:stream\s+)?([\w.]+)\s*\)\s*returns\s*\(\s*(?:stream\s+)?([\w.]+)\s*\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = rpc.exec(withoutComments))) found.push({ name: match[1], input: match[2], output: match[3] });
+  return found;
+}
