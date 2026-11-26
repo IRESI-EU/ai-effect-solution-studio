@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db import get_db
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, require_service_publisher
 from app.design_ai.catalogue import build_catalogue
 from app.design_ai.composer import compose
+from app.design_ai.onboarding import assist
 from app.design_ai.providers import ModelError, get_model
 from app.design_ai.usage import DesignAIUsage, requests_last_24h
 from app.models.user import User
@@ -35,6 +36,8 @@ def design_ai_status(db: Session = Depends(get_db), user: User = Depends(get_cur
         "model": get_model().model,
         "daily_limit": settings.design_ai_daily_requests_per_user,
         "used_last_24h": used,
+        # The onboarding helper needs a real model; the offline composer cannot write text.
+        "onboarding_helper": settings.design_ai_enabled and settings.design_ai_provider == "openai",
     }
 
 
@@ -70,3 +73,38 @@ def design_ai_compose(payload: ComposeRequest, db: Session = Depends(get_db), us
         "provider": model.name,
         "model": model.model,
     }
+
+
+class OnboardingRequest(BaseModel):
+    task: Literal["draft", "explain", "ask"]
+    # Only the text the person chose to send. Keys are short labels such as "notes" or "check".
+    fields: dict[Annotated[str, Field(max_length=40)], Annotated[str, Field(max_length=20000)]] = Field(default_factory=dict, max_length=12)
+
+
+@router.post("/design-ai/onboarding")
+def onboarding_assist(
+    payload: OnboardingRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_service_publisher),
+):
+    """Add a service helper: draft a description, explain check results, or answer a question."""
+    if not (settings.design_ai_enabled and settings.design_ai_provider == "openai"):
+        raise HTTPException(status_code=503, detail="The onboarding helper is switched off on this platform.")
+    if not any(value.strip() for value in payload.fields.values()):
+        raise HTTPException(status_code=422, detail="Nothing was sent to the helper.")
+    if requests_last_24h(db, user.id) >= settings.design_ai_daily_requests_per_user:
+        raise HTTPException(status_code=429, detail="You have reached today's AI limit. Please try again tomorrow.")
+
+    model = get_model()
+    try:
+        result = assist(model, payload.task, payload.fields)
+    except ModelError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    db.add(DesignAIUsage(
+        user_id=user.id, provider=f"{model.name}:onboarding", model=model.model, attempts=1,
+        prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, valid=True,
+    ))
+    db.commit()
+    return {"task": payload.task, "result": result.data, "removed_secrets": result.removed, "model": model.model}
+

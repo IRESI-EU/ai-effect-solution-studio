@@ -18,6 +18,7 @@ import {
   type ProtoOperation,
 } from "./guided-manifest";
 import { PackageImportPanel } from "./package-import";
+import { AskHelper, DraftHelper, ExplainHelper, useHelperStatus } from "./ai-helper";
 import { emptyRow, toDefinition, toRows, type SettingRow } from "../../components/service-settings-editor";
 import type { SettingsDefinition } from "../../components/node-settings";
 import { ConnectStep, DescribeStep, ReviewStep, TextField, type CatalogueEntry, type ConnectionResult, type PreviewResponse, type RuntimeChoice, type Evidence } from "./wizard-steps";
@@ -68,6 +69,7 @@ export default function PublishServicePage() {
   const [submitted, setSubmitted] = useState<{ name: string; id: string } | null>(null);
   const [connection, setConnection] = useState<ConnectionResult | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const helper = useHelperStatus();
 
   const nodeCode = (user?.node || null) as NodeCode | null;
   const nodeLabel = nodeCode ? nodeLabels[nodeCode] : null;
@@ -463,7 +465,29 @@ export default function PublishServicePage() {
       {draft.step === "describe" && (
         <section className="wizard-card">
           <SourceNote origin={draft.origin} />
-          <DescribeStep form={form} update={update} catalogue={catalogue} nodeLabel={nodeLabel} isExample={draft.origin.kind === "example"} />
+          <DescribeStep
+            form={form}
+            update={update}
+            catalogue={catalogue}
+            nodeLabel={nodeLabel}
+            isExample={draft.origin.kind === "example"}
+            aiSlot={
+              <DraftHelper
+                status={helper}
+                context={{
+                  name: form.name,
+                  description: form.description,
+                  operations: protoOperations.length ? protoOperations.map((op) => `${op.name} (${op.input} -> ${op.output})`).join(", ") : form.operationName,
+                  interface: form.interfaceType,
+                }}
+                onUse={(patch) => {
+                  if (patch.description !== undefined) update("description", patch.description);
+                  if (patch.use_when !== undefined) update("useWhen", patch.use_when);
+                  if (patch.category !== undefined) update("category", patch.category);
+                }}
+              />
+            }
+          />
           <WizardNav onBack={() => goTo("start")} onNext={() => goTo("connect")} nextDisabled={describeMissing.length > 0} missing={describeMissing} />
         </section>
       )}
@@ -506,6 +530,18 @@ export default function PublishServicePage() {
             catalogue={catalogue}
             settings={settingsResult.definition}
             connection={connection}
+            aiSlot={
+              <ExplainHelper
+                status={helper}
+                messages={(preview?.validation || []).filter((item) => item.level === "error").map((item) => item.message)}
+                details={[
+                  `Interface: ${form.interfaceType}`, `Operation: ${form.operationName}`,
+                  `Container: ${form.containerName}:${form.internalPort}`, `Image: ${form.image || form.dockerfile}`,
+                  `Takes: ${form.inputType}`, `Produces: ${form.outputType}`, `Category: ${form.category || "(none)"}`,
+                ].join("\n")}
+                onGo={(step) => goTo(step)}
+              />
+            }
           />
           {error && <p className="wizard-error" role="alert"><CircleAlert size={16} aria-hidden="true" /> {error}</p>}
           <div className="wizard-nav">
@@ -532,6 +568,8 @@ export default function PublishServicePage() {
           </div>
         </section>
       )}
+
+      {["describe", "connect", "review"].includes(draft.step) && <AskHelper status={helper} />}
 
       {managedServices.length > 0 && (
         <details className="wizard-card wizard-manage">

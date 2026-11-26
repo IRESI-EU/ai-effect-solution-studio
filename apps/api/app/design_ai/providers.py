@@ -125,7 +125,11 @@ class OpenAICompatibleModel:
         )
 
     def complete(self, messages: list[dict], cards: list[ServiceCard]) -> ModelResult:
-        schema_format = {"type": "json_schema", "json_schema": {"name": "workflow_design", "strict": True, "schema": RESPONSE_SCHEMA}}
+        return self.complete_json(messages, "workflow_design", RESPONSE_SCHEMA)
+
+    def complete_json(self, messages: list[dict], name: str, schema: dict) -> ModelResult:
+        """One chat completion whose answer must follow ``schema`` (strict structured output)."""
+        schema_format = {"type": "json_schema", "json_schema": {"name": name, "strict": True, "schema": schema}}
         try:
             response = self._post(messages, schema_format)
             if response.status_code == 400:  # endpoint without structured outputs (some local servers)

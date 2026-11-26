@@ -45,7 +45,13 @@ export function toRows(definition: SettingsDefinition | null): Row[] {
 function parseTyped(text: string, type: Row["type"]): unknown {
   const value = text.trim();
   if (type === "string") return value;
-  if (type === "integer" || type === "number") return Number(value);
+  if (type === "integer" || type === "number") {
+    const number = Number(value);
+    if (!value || !Number.isFinite(number) || (type === "integer" && !Number.isInteger(number))) {
+      throw new Error(type === "integer" ? "a whole number" : "a number");
+    }
+    return number;
+  }
   if (type === "boolean") return value.toLowerCase() === "true" || value.toLowerCase() === "yes";
   return JSON.parse(value);
 }
@@ -65,13 +71,17 @@ export function toDefinition(channel: SettingsDefinition["channel"], rows: Row[]
       if (row.maximum.trim()) prop.maximum = Number(row.maximum);
     }
     if (row.options.trim()) {
-      prop.enum = row.options.split(",").map((o) => parseTyped(o, row.type));
+      try {
+        prop.enum = row.options.split(",").map((o) => parseTyped(o, row.type));
+      } catch (e) {
+        throw new Error(`Each option for "${name}" must be ${e instanceof SyntaxError ? "valid JSON" : (e as Error).message}.`);
+      }
     }
     if (row.defaultText.trim()) {
       try {
         prop.default = parseTyped(row.defaultText, row.type);
-      } catch {
-        throw new Error(`The default for "${name}" is not valid JSON.`);
+      } catch (e) {
+        throw new Error(`The default for "${name}" must be ${e instanceof SyntaxError ? "valid JSON" : (e as Error).message}.`);
       }
     }
     properties[name] = prop;
